@@ -1,0 +1,62 @@
+/*
+ * Estilos globales de MERDN (TASK-002).
+ *
+ * Solo base transversal: reset mínimo, tipografía Nunito, lienzo y foco
+ * visible. La identidad visual completa vive en `src/styles/tokens.css`
+ * (Línea Visual B) y en los módulos CSS de cada primitiva o pantalla.
+ */
+
+@import url('../styles/tokens.css');
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: var(--b-lienzo);
+  color: var(--b-tinta);
+  font-family: var(--b-font);
+  font-weight: var(--b-peso-fuerte);
+  -webkit-font-smoothing: antialiased;
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+/* Texto disponible solo para tecnología asistiva. */
+.merdn-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,75 @@
+/*
+ * Vista «Novedades» (TASK-003H-04, alcance E).
+ *
+ * Fuente visual vinculante: `prototype-claude/Eligeme-Hospital.dc.html`,
+ * vista `vNovedades` (líneas 624–645). La tarjeta de filas reutiliza el patrón
+ * compartido de `hospitalViews.module.css`.
+ */
+
+/* La referencia usa 17px de relleno vertical en estas filas (línea 631). */
+.novedades {
+  --h-fila-alto: 17px;
+}
+
+/*
+ * Indicador «hay algo nuevo». Reserva siempre su espacio, igual que la
+ * referencia, y su significado se anuncia además como texto: el color nunca es
+ * el único medio para saber que la novedad no se ha abierto.
+ */
+.punto {
+  flex: 0 0 10px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.puntoNuevo {
+  background: var(--b-fucsia-novedades);
+}
+
+.icono {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--h-tono-fondo);
+  color: var(--h-tono-texto);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.textos {
+  flex: 1;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.titulo {
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1.4;
+}
+
+.meta {
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.tipo {
+  flex: 0 0 auto;
+  gap: 0;
+  padding: 8px 13px;
+  font-size: 13px;
+}
+
+.cuando {
+  flex: 0 0 90px;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}

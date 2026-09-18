@@ -1,0 +1,279 @@
+/*
+ * Vista «Semáforo de alarmas» (TASK-003H-03, FR-04).
+ *
+ * Fuente visual vinculante: `prototype-claude/Eligeme-Hospital.dc.html`,
+ * bandeja `Alarmas recientes` (líneas 183–200) y vista `vAlarmas`
+ * (líneas 361–417). Cada medida, color, radio, peso y espaciado reproduce el
+ * valor declarado allí; los patrones compartidos viven en
+ * `hospitalViews.module.css`.
+ */
+
+/* ---------------------------- Alarmas recientes --------------------------- */
+
+.bandeja {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--h-card-gap, 14px);
+}
+
+.alarma {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px;
+  border-radius: 14px;
+  background: var(--h-tono-fondo);
+  border-left: 4px solid var(--h-tono-texto);
+  flex-wrap: wrap;
+}
+
+.alarmaIcono {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--b-blanco);
+  color: var(--h-tono-texto);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alarmaTextos {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.alarmaPaciente {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.alarmaMotivo {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* El nivel usa fondo blanco sobre la fila tintada (prototipo, línea 195). */
+.alarmaNivel {
+  flex: 0 0 auto;
+  padding: 8px 13px;
+  font-size: 13px;
+  background: var(--b-blanco);
+}
+
+.alarmaCuando {
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.alarmaVer {
+  flex: 0 0 auto;
+  font-family: inherit;
+  padding: 10px 18px;
+  border: 2px solid var(--h-tono-texto);
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-blanco);
+  color: var(--h-tono-texto);
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+}
+
+.alarmaVer:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+/* -------------------------------- Resumen --------------------------------- */
+
+.resumen {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+.resumenCard {
+  min-width: 0;
+  background: var(--b-blanco);
+  border-radius: var(--b-radio-tarjeta);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--h-sombra-tarjeta);
+  border-left: 5px solid var(--h-tono-texto);
+}
+
+.resumenIcono {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--h-tono-fondo);
+  color: var(--h-tono-texto);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.resumenTextos {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.resumenValor {
+  margin: 0;
+  font-size: 30px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1;
+  color: var(--h-tono-texto);
+}
+
+.resumenEtiqueta {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--h-tono-texto);
+}
+
+/* --------------------------- Detalle de la alerta ------------------------- */
+
+.detalleCard {
+  padding: 24px;
+  border-left: 5px solid var(--b-rojo);
+}
+
+.detalleCard:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.detalleEtiqueta {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-rojo);
+  letter-spacing: 0.09em;
+}
+
+.detalleEstado {
+  padding: 9px 14px;
+  font-size: 13px;
+}
+
+.detalleTitulo {
+  margin: 0;
+  font-size: 23px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1.3;
+}
+
+.acciones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.accion {
+  font-family: inherit;
+  padding: 14px 20px;
+  border-radius: var(--b-radio-campo);
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+}
+
+.accion:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.accionPrimaria {
+  border: none;
+  background: var(--b-azul);
+  color: var(--b-blanco);
+}
+
+.accionAzul {
+  border: 2px solid var(--b-azul);
+  background: var(--b-blanco);
+  color: var(--b-azul);
+}
+
+.accionNeutra {
+  border: 2px solid var(--b-borde);
+  background: var(--b-blanco);
+  color: var(--b-tinta);
+}
+
+.accionRoja {
+  border: 2px solid var(--b-rojo-borde);
+  background: var(--b-blanco);
+  color: var(--b-rojo);
+}
+
+.accionVerde {
+  border: 2px solid var(--b-verde-borde);
+  background: var(--b-verde-fondo);
+  color: var(--b-verde);
+}
+
+/* --------------------------- Notas de continuidad ------------------------- */
+
+.notas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--h-card-gap, 14px);
+}
+
+.nota {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px;
+  border-radius: 14px;
+  background: var(--b-lienzo);
+  flex-wrap: wrap;
+}
+
+.notaTexto {
+  flex: 1;
+  min-width: 240px;
+  font-size: 16px;
+  font-weight: var(--b-peso-enfasis);
+  line-height: 1.4;
+}
+
+.notaMeta {
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.notaEstado {
+  flex: 0 0 auto;
+  padding: 8px 13px;
+  font-size: 13px;
+}

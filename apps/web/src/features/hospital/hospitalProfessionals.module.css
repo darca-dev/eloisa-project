@@ -1,0 +1,903 @@
+/*
+ * Vista «Profesionales»: cabecera de control, listado lineal y panel de detalle
+ * (TASK-003H-04, alcance A, con la corrección visual aprobada por el Product
+ * Owner).
+ *
+ * Fuente visual de origen: `prototype-claude/Eligeme-Hospital.dc.html`,
+ * vista `vProfesionales` (líneas 419–480). No se introduce ningún color, radio,
+ * tipografía ni sombra nuevos: todo procede del sistema aprobado
+ * (`src/styles/tokens.css`) y de los patrones compartidos en
+ * `hospitalViews.module.css`.
+ *
+ * HOSPITAL-VISUAL-RECOVERY-01-B devuelve la COMPOSICIÓN de la referencia: el
+ * directorio vuelve a ser una cuadrícula de tarjetas con avatar de iniciales,
+ * nombre destacado, profesión y estado del perfil, en lugar de la tabla de
+ * columnas que la había sustituido. Lo que NO vuelve son sus cifras: la tira de
+ * métricas por persona —pacientes, visitas de hoy, próxima cita, calificación—
+ * desaparece del listado y del panel, y con ella todo el estilo que la vestía.
+ *
+ * La densidad sigue siendo deliberada: la vista debe permitir reconocer a una
+ * persona en segundos dentro de una institución con cientos de profesionales,
+ * sin depender del color para leer un estado o una vinculación.
+ */
+
+/* ========================================================================== */
+/* Cabecera de control                                                        */
+/* ========================================================================== */
+
+.controles {
+  --h-radio-tarjeta: var(--b-radio-tarjeta);
+}
+
+.busqueda {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.busquedaEtiqueta {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+}
+
+.busquedaCampo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  background: var(--b-lienzo);
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+}
+
+.busquedaCampo:focus-within {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.busquedaIcono {
+  flex: 0 0 auto;
+  display: flex;
+  color: var(--b-gris);
+}
+
+.busquedaInput {
+  flex: 1;
+  min-width: 0;
+  padding: 13px 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+.busquedaInput:focus-visible {
+  outline: none;
+}
+
+.busquedaInput::placeholder {
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris-inactivo);
+}
+
+.busquedaAyuda {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* --------------------------------- Filtros -------------------------------- */
+
+.filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.filtro {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filtroEtiqueta {
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+}
+
+.filtroCampo {
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  background: var(--b-blanco);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+  cursor: pointer;
+}
+
+.filtroCampo:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+/* ------------------- Separación por tipo de vinculación ------------------- */
+
+/*
+ * Navegación de grupos. El grupo activo se distingue por texto (`aria-pressed`)
+ * y por peso tipográfico además del color de fondo.
+ */
+.grupos {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.grupo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-blanco);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+  cursor: pointer;
+}
+
+.grupo:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.grupoActivo {
+  border-color: var(--b-azul);
+  background: var(--b-celeste);
+  color: var(--b-azul);
+  font-weight: var(--b-peso-maximo);
+}
+
+.grupoConteo {
+  padding: 2px 9px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-lienzo);
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.grupoActivo .grupoConteo {
+  background: var(--b-blanco);
+}
+
+/* ========================================================================== */
+/* Disposición: listado y panel                                               */
+/* ========================================================================== */
+
+.disposicion,
+.disposicionConPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.columnaLista,
+.columnaPanel {
+  min-width: 0;
+}
+
+/*
+ * En pantallas anchas el panel acompaña al listado en una columna lateral, de
+ * modo que consultar a alguien no obliga a abandonar la lista. Por debajo de
+ * este ancho el panel se apila justo debajo del listado.
+ */
+@media (min-width: 1180px) {
+  .disposicionConPanel {
+    grid-template-columns: minmax(0, 1.3fr) minmax(380px, 0.95fr);
+  }
+
+  .panel {
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+  }
+}
+
+/* ========================================================================== */
+/* Listado lineal                                                             */
+/* ========================================================================== */
+
+.listaCard {
+  --h-radio-tarjeta: var(--b-radio-tarjeta);
+
+  padding: 18px 22px 8px;
+}
+
+.resumen {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.resumenTexto {
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.limpiar {
+  padding: 8px 13px;
+  font-size: 12px;
+  color: var(--b-gris);
+}
+
+.vacio {
+  margin: 0;
+  padding: 26px 0 22px;
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+/* ========================================================================== */
+/* Directorio de tarjetas                                                     */
+/* ========================================================================== */
+
+/*
+ * Cuadrícula de la referencia original: las columnas se acomodan solas a partir
+ * de un ancho mínimo, de modo que el directorio se lee igual con el panel de
+ * detalle abierto que sin él, y ninguna tarjeta obliga a desplazarse en
+ * horizontal.
+ */
+.tarjetas {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+  gap: 14px;
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  padding: 18px;
+  border: 1.5px solid var(--h-borde-topbar, var(--b-borde));
+  border-radius: var(--b-radio-tarjeta);
+  background: var(--b-blanco);
+  box-shadow: var(--b-sombra-tarjeta);
+}
+
+/*
+ * Tarjeta abierta en el panel. Acompaña al estado `aria-expanded` de su propio
+ * botón y se distingue por borde y barra lateral además de por el fondo: el
+ * color no es el único medio para saber cuál está abierta.
+ */
+.tarjetaActiva {
+  background: var(--b-celeste);
+  border-color: var(--b-azul);
+  box-shadow: inset 3px 0 0 0 var(--b-azul);
+}
+
+.tarjetaCabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tarjetaTextos {
+  flex: 1 1 150px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Jerarquía de la referencia: el nombre manda y la profesión lo acompaña. */
+.tarjetaNombre {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.25;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+  overflow-wrap: anywhere;
+}
+
+.tarjetaProfesion {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+  overflow-wrap: anywhere;
+}
+
+.tarjetaEstado {
+  flex: 0 0 auto;
+  gap: 0;
+  padding: 6px 11px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/*
+ * Avatar de iniciales. Es DECORATIVO —se marca `aria-hidden`— y acompaña al
+ * nombre, que siempre está escrito al lado. Lo comparten la tarjeta, la
+ * cabecera del panel y las personas a cargo.
+ */
+.iniciales {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--b-celeste);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-azul);
+}
+
+/* Medida que la referencia daba al avatar dentro de la tarjeta. */
+.inicialesTarjeta {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  font-size: 15px;
+}
+
+/*
+ * Vínculo DECLARADO, en el lugar que la referencia daba a las métricas. Cada
+ * valor viaja con su etiqueta y describe lo declarado: no acredita contrato,
+ * nómina, habilitación ni disponibilidad.
+ */
+.tarjetaCampos {
+  margin: 0;
+  padding: 13px 15px;
+  border-radius: var(--b-radio-campo);
+  background: var(--b-lienzo);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 118px), 1fr));
+  gap: 11px 14px;
+}
+
+.tarjetaCampo {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tarjetaEtiqueta {
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+}
+
+.tarjetaValor {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+  overflow-wrap: anywhere;
+}
+
+/*
+ * Acción de la tarjeta. Abre el detalle que ya existe en esta misma vista: no
+ * navega, no promete una agenda propia y no habilita ninguna capacidad nueva.
+ */
+.tarjetaAccion {
+  margin-top: auto;
+  justify-content: center;
+  padding: 12px;
+  font-size: 14px;
+  color: var(--b-azul);
+  border-color: var(--b-azul);
+}
+
+/* ========================================================================== */
+/* Panel de detalle                                                           */
+/* ========================================================================== */
+
+.panel {
+  --h-radio-tarjeta: var(--b-radio-tarjeta);
+}
+
+.panel:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 3px;
+}
+
+.panelCabecera {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.panelTextos {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.panelTitulo {
+  margin: 0;
+  font-size: 20px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.panelMeta {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.panelEtiquetas {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.panelCerrar {
+  padding: 9px 14px;
+  font-size: 13px;
+  color: var(--b-gris);
+}
+
+/* --------------------------------- Bloques -------------------------------- */
+
+.bloque {
+  padding: 16px;
+  background: var(--b-lienzo);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bloqueCabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bloqueTitulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.bloqueConteo {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+}
+
+.bloqueNota,
+.bloqueVacio {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* ---------------------------- Pacientes a cargo --------------------------- */
+
+.pacientes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pacienteFila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 11px 13px;
+  background: var(--b-blanco);
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+}
+
+.pacienteTextos {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pacienteNombre {
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.pacienteMeta {
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.pacienteEstados {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pacienteBadge {
+  gap: 0;
+  padding: 6px 11px;
+  font-size: 12px;
+}
+
+.pacienteAccion {
+  padding: 8px 13px;
+  font-size: 12px;
+  color: var(--b-azul);
+  border-color: var(--b-azul);
+}
+
+/* ------------------------- Agenda del profesional ------------------------- */
+
+.agendaSeccion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.agendaSubtitulo {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+}
+
+.atenciones {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.atencion {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 13px;
+  border-radius: var(--b-radio-campo);
+  background: var(--b-blanco);
+  flex-wrap: wrap;
+}
+
+.atencionHora {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.atencionDia {
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.atencionTextos {
+  flex: 1;
+  min-width: 130px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.atencionPaciente {
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.atencionMeta {
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.atencionEstado {
+  flex: 0 0 auto;
+  gap: 0;
+  padding: 6px 11px;
+  font-size: 12px;
+}
+
+/* ------------------------- Acciones de la agenda -------------------------- */
+
+.agendaAcciones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.agendaAccion {
+  padding: 11px 15px;
+  font-size: 13px;
+}
+
+.accionPrimaria {
+  border: none;
+  background: var(--b-azul);
+  color: var(--b-blanco);
+}
+
+.accionNeutra {
+  border: 2px solid var(--b-borde);
+  background: var(--b-blanco);
+  color: var(--b-tinta);
+}
+
+.accionRoja {
+  border: 2px solid var(--b-rojo-borde);
+  background: var(--b-blanco);
+  color: var(--b-rojo);
+}
+
+/* ==========================================================================
+ * «Vinculación y documentos» — adición aprobada por TASK-003H-04.
+ *
+ * Superficie estructural. No representa archivos, contratos, cifras, fechas ni
+ * obligaciones: cada valor sin fuente se marca de forma explícita y las salidas
+ * hacia «Gestión financiera» quedan deshabilitadas.
+ * ======================================================================== */
+
+.vinculacionModalidad {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.vinculacionModalidadBadge {
+  gap: 0;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/*
+ * Marca de procedencia. El texto es la información: el color solo la refuerza,
+ * de modo que la ausencia de fuente nunca se comunica únicamente con color.
+ */
+.vinculacionSinFuente {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--b-radio-pildora);
+  border: 1.5px dashed var(--b-borde);
+  background: var(--b-blanco);
+  font-size: 11px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.vinculacionGrupos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.vinculacionGrupo {
+  min-width: 0;
+  padding: 14px;
+  background: var(--b-blanco);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.vinculacionGrupoTitulo {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.vinculacionCampos {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.vinculacionCampo {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.vinculacionEtiqueta {
+  margin: 0;
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.vinculacionValor {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: var(--b-peso-enfasis);
+}
+
+.vinculacionDocumentos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vinculacionDocumento {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  background: var(--b-lienzo);
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+}
+
+.vinculacionDocumentoNombre {
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+}
+
+.vinculacionAclaracion {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.vinculacionFuturo {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/*
+ * Salida futura hacia «Gestión financiera»: siempre deshabilitada. El cursor y
+ * la opacidad reflejan el estado, que además se lee como texto `Próximamente`.
+ */
+.vinculacionFuturoBoton {
+  padding: 9px 13px;
+  font-size: 12px;
+  color: var(--b-gris);
+}
+
+.vinculacionFuturoBoton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.vinculacionFuturoEstado {
+  padding: 5px 11px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-celeste);
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+}
+
+.vinculacionLeyenda {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* =========================================================================== */
+/* Superficie CONECTADA (TASK-HOSPITAL-CORE-02 §3.1)                           */
+/* =========================================================================== */
+
+/*
+ * Solo se añaden los estados y la paginación que la fuente real obliga a
+ * representar: carga, vacío, sin resultados, fallo con reintento, rango
+ * servido y los valores que la plataforma no modela. La composición aprobada
+ * —listado lineal y panel lateral— no se rediseña.
+ */
+
+.estado {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.estadoTexto {
+  margin: 0;
+  padding: 0 18px;
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+/*
+ * Valor que la plataforma NO modela. Se distingue tipográficamente de un dato
+ * servido, pero se lee siempre como texto: nunca es un guion, un cero ni un
+ * espacio en blanco, que se interpretarían como una medición.
+ */
+.sinDato {
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  border-top: 1.5px solid var(--b-borde);
+}
+
+.paginacionTexto {
+  margin: 0;
+  flex: 1;
+  min-width: 220px;
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}

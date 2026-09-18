@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; font-family:Nunito, system-ui, sans-serif; background:#F7F9FA; color:#0F2E3D; -webkit-font-smoothing:antialiased; }
+  a { color:#0A6873; text-decoration:none; font-weight:800; }
+  a:hover { color:#D63384; }
+  input, select, textarea, button { font-family:Nunito, sans-serif; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;align-items:stretch">
+
+  <div style="flex:0 0 244px;background:#075985;padding:20px 16px;display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;flex-direction:column;gap:3px;padding:0 6px">
+      <div style="font-size:11px;font-weight:900;color:#B9DCE6;letter-spacing:.14em">ELÍGEME</div>
+      <div style="font-size:17px;font-weight:900;color:#fff;line-height:1.25">Alcaldía de Soacha</div>
+      <div style="font-size:12px;font-weight:700;color:#CFE6EE">Gestión territorial y evidencia</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3px">
+      <button onClick="{{ goInicio }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:11px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgInicio }};color:{{ fgInicio }};font-size:14px;font-weight:800">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/></svg>
+        Inicio
+      </button>
+      <button onClick="{{ goPoblacion }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:11px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgPoblacion }};color:{{ fgPoblacion }};font-size:14px;font-weight:800">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/></svg>
+        Población beneficiaria
+      </button>
+      <button onClick="{{ goMapa }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:11px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgMapa }};color:{{ fgMapa }};font-size:14px;font-weight:800">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Territorio
+      </button>
+      <button onClick="{{ goProgramas }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:11px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgProgramas }};color:{{ fgProgramas }};font-size:14px;font-weight:800">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v16M3 10h18"/></svg>
+        Programas
+      </button>
+      <button onClick="{{ goPresupuesto }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:11px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgPresupuesto }};color:{{ fgPresupuesto }};font-size:14px;font-weight:800">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h5M9.5 14.5h5"/></svg>
+        Presupuesto y ejecución
+      </button>
+      <button onClick="{{ goEvidencias }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:11px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgEvidencias }};color:{{ fgEvidencias }};font-size:14px;font-weight:800">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></svg>
+        Evidencias
+      </button>
+      <button onClick="{{ goFurag }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:11px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgFurag }};color:{{ fgFurag }};font-size:14px;font-weight:800">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 15 4-5 3 3 4-6"/></svg>
+        FURAG y MIPG
+      </button>
+      <button onClick="{{ goAdres }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:11px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgAdres }};color:{{ fgAdres }};font-size:14px;font-weight:800">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M8 15h4"/></svg>
+        ADRES
+      </button>
+      <button onClick="{{ goCuidado }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:11px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgCuidado }};color:{{ fgCuidado }};font-size:14px;font-weight:800">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.5-1.5 3-3.3 3-5.5A5.5 5.5 0 0 0 12 5.5 5.5 5.5 0 0 0 2 8.5C2 13 12 21 12 21"/></svg>
+        Derecho al cuidado
+      </button>
+      <button onClick="{{ goBrechas }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:11px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgBrechas }};color:{{ fgBrechas }};font-size:14px;font-weight:800">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+        Brechas
+      </button>
+      <button onClick="{{ goCuidadores }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:11px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgCuidadores }};color:{{ fgCuidadores }};font-size:14px;font-weight:800">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 9 12 5 2 9l10 4z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg>
+        Cuidadores y formación
+      </button>
+      <button onClick="{{ goIndicadores }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:11px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgIndicadores }};color:{{ fgIndicadores }};font-size:14px;font-weight:800">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="12" width="3" height="8"/><rect x="10.5" y="7" width="3" height="13"/><rect x="17" y="3" width="3" height="17"/></svg>
+        Indicadores y resultados
+      </button>
+      <button onClick="{{ goReportes }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:11px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgReportes }};color:{{ fgReportes }};font-size:14px;font-weight:800">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg>
+        Reportes ejecutivos
+      </button>
+    </div>
+  </div>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+
+    <div style="background:#fff;border-bottom:1px solid #E4EBEE;padding:14px 26px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:2px">
+        <div style="font-size:12px;font-weight:900;color:#5A6474;letter-spacing:.08em">PANEL DE GESTIÓN TERRITORIAL, RESULTADOS Y EVIDENCIA</div>
+        <div style="font-size:15px;font-weight:800;color:#0A6873">Datos agregados y anonimizados · sin acceso a historias clínicas individuales</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <sc-for list="{{ periodos }}" as="p" hint-placeholder-count="5">
+          <button onClick="{{ p.on }}" style="padding:10px 15px;border-radius:99px;font-size:13px;font-weight:900;cursor:pointer;border:{{ p.bd }};background:{{ p.bg }};color:{{ p.fg }}">{{ p.t }}</button>
+        </sc-for>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 14px 7px 7px;border-radius:99px;background:#F7F9FA;border:1.5px solid #DDE7EA">
+        <span style="width:34px;height:34px;border-radius:50%;background:#075985;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900">SS</span>
+        <span style="display:flex;flex-direction:column"><span style="font-size:13px;font-weight:900">Secretaría de Salud</span><span style="font-size:11px;font-weight:700;color:#5A6474">Perfil de consulta agregada</span></span>
+      </div>
+    </div>
+
+    <div style="flex:1;padding:24px 26px 60px;display:flex;flex-direction:column;gap:18px">
+
+      <sc-if value="{{ vInicio }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="background:#075985;border-radius:22px;padding:28px;display:flex;flex-direction:column;gap:20px">
+            <div style="font-size:13px;font-weight:900;color:#B9DCE6;letter-spacing:.1em">ASÍ ESTAMOS CUIDANDO NUESTRA POBLACIÓN</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px">
+              <sc-for list="{{ titulares }}" as="t" hint-placeholder-count="5">
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <span style="font-size:36px;font-weight:900;line-height:1;color:#fff">{{ t.v }}</span>
+                  <span style="font-size:15px;font-weight:900;color:#E4F4F8;line-height:1.35">{{ t.t }}</span>
+                  <span style="font-size:13px;font-weight:700;color:#B9DCE6;line-height:1.4">{{ t.sub }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:#fff;border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">De la persona a la evidencia</div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:stretch">
+              <sc-for list="{{ cadena }}" as="c" hint-placeholder-count="6">
+                <div style="flex:1;min-width:150px;padding:18px;background:#F7F9FA;border-radius:16px;display:flex;flex-direction:column;gap:5px;border-top:4px solid {{ c.color }}">
+                  <span style="font-size:12px;font-weight:900;color:#5A6474;letter-spacing:.06em">{{ c.k }}</span>
+                  <span style="font-size:23px;font-weight:900;line-height:1.1;color:{{ c.color }}">{{ c.v }}</span>
+                  <span style="font-size:13px;font-weight:700;color:#5A6474;line-height:1.4">{{ c.sub }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding:15px 17px;background:#E8F6F8;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#0A6873">Los totales deduplican por persona. Alguien puede aparecer en tres poblaciones y sigue siendo un beneficiario único.</div>
+          </div>
+
+          <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+            <div style="flex:1.4;min-width:380px;background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+              <div style="font-size:20px;font-weight:900">Alertas y pendientes de gestión</div>
+              <sc-for list="{{ pendientes }}" as="p" hint-placeholder-count="6">
+                <div style="display:flex;align-items:center;gap:13px;padding:14px;border-radius:14px;background:{{ p.bg }};border-left:4px solid {{ p.color }};flex-wrap:wrap">
+                  <span style="flex:1;min-width:220px;font-size:15px;font-weight:800;line-height:1.4">{{ p.t }}</span>
+                  <span style="flex:0 0 auto;padding:7px 12px;border-radius:99px;background:#fff;font-size:12px;font-weight:900;color:{{ p.color }}">{{ p.nivel }}</span>
+                </div>
+              </sc-for>
+              <div style="padding:14px 16px;background:#F7F9FA;border-radius:12px;font-size:13px;line-height:1.5;font-weight:700;color:#5A6474">Son pendientes administrativos. Las alertas clínicas individuales se gestionan en el hospital.</div>
+            </div>
+
+            <div style="flex:1;min-width:300px;display:flex;flex-direction:column;gap:16px">
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:12px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Accesos rápidos</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                  <sc-for list="{{ accesos }}" as="a" hint-placeholder-count="8">
+                    <button onClick="{{ a.on }}" style="text-align:left;padding:14px;border:1.5px solid #DDE7EA;border-radius:14px;background:#fff;cursor:pointer;font-size:14px;font-weight:900;line-height:1.3;color:#0F2E3D">{{ a.t }}</button>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:12px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Actividades recientes</div>
+                <sc-for list="{{ actividades }}" as="a" hint-placeholder-count="6">
+                  <div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid #E4EBEE">
+                    <span style="flex:0 0 9px;width:9px;height:9px;border-radius:50%;background:{{ a.color }};margin-top:6px"></span>
+                    <span style="flex:1;display:flex;flex-direction:column;gap:2px">
+                      <span style="font-size:14px;font-weight:800;line-height:1.4">{{ a.t }}</span>
+                      <span style="font-size:12px;font-weight:700;color:#5A6474">{{ a.cuando }}</span>
+                    </span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vPoblacion }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Población beneficiaria</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600;max-width:800px">3.050 personas identificadas y vinculadas a programas. Las categorías se cruzan: los totales no suman categorías, deduplican personas.</div>
+          </div>
+
+          <div style="background:#fff;border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Población objetivo identificada y cobertura</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+              <sc-for list="{{ objetivo }}" as="o" hint-placeholder-count="6">
+                <div style="padding:18px;background:#F7F9FA;border-radius:16px;display:flex;flex-direction:column;gap:3px;border-left:4px solid {{ o.color }}">
+                  <span style="font-size:25px;font-weight:900;line-height:1.1;color:{{ o.color }}">{{ o.v }}</span>
+                  <span style="font-size:14px;font-weight:800;line-height:1.35">{{ o.t }}</span>
+                  <span style="font-size:12px;font-weight:700;color:#5A6474">{{ o.fuente }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <span style="font-size:16px;font-weight:900">Cobertura ELÍGEME sobre población objetivo</span>
+                <span style="font-size:19px;font-weight:900;color:#0A6873">37,5 %</span>
+              </div>
+              <div style="height:16px;background:#E4EBEE;border-radius:99px;overflow:hidden"><div style="width:37.5%;height:100%;background:#32B4A8;border-radius:99px"></div></div>
+            </div>
+          </div>
+
+          <div style="background:#fff;border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Intersección de poblaciones</div>
+            <div style="display:flex;gap:26px;flex-wrap:wrap;align-items:center">
+              <div style="position:relative;flex:0 0 300px;width:300px;height:250px">
+                <div style="position:absolute;left:20px;top:10px;width:170px;height:170px;border-radius:50%;background:rgba(50,180,168,.42);border:2px solid #0A6873"></div>
+                <div style="position:absolute;left:110px;top:10px;width:170px;height:170px;border-radius:50%;background:rgba(7,89,133,.32);border:2px solid #075985"></div>
+                <div style="position:absolute;left:65px;top:80px;width:170px;height:170px;border-radius:50%;background:rgba(242,167,196,.42);border:2px solid #B23A72"></div>
+                <span style="position:absolute;left:34px;top:56px;font-size:15px;font-weight:900;color:#0F2E3D">1.284</span>
+                <span style="position:absolute;left:224px;top:56px;font-size:15px;font-weight:900;color:#0F2E3D">452</span>
+                <span style="position:absolute;left:136px;top:208px;font-size:15px;font-weight:900;color:#0F2E3D">268</span>
+                <span style="position:absolute;left:136px;top:112px;font-size:16px;font-weight:900;color:#0F2E3D">78</span>
+              </div>
+              <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:11px">
+                <sc-for list="{{ intersecciones }}" as="i" hint-placeholder-count="7">
+                  <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;background:#F7F9FA">
+                    <span style="flex:0 0 14px;width:14px;height:14px;border-radius:50%;background:{{ i.color }}"></span>
+                    <span style="flex:1;min-width:150px;font-size:15px;font-weight:800">{{ i.t }}</span>
+                    <span style="flex:0 0 auto;font-size:17px;font-weight:900;color:#0A6873">{{ i.v }}</span>
+                  </div>
+                </sc-for>
+                <div style="padding:14px 16px;background:#E8F6F8;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#0A6873">Una persona de 76 años con discapacidad y cuidados en casa aparece en las tres poblaciones y cuenta como un beneficiario único en el total municipal.</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Calidad de la información</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+              <sc-for list="{{ calidad }}" as="c" hint-placeholder-count="5">
+                <div style="padding:16px;background:#F7F9FA;border-radius:14px;display:flex;flex-direction:column;gap:3px;border-left:4px solid {{ c.color }}">
+                  <span style="font-size:22px;font-weight:900;line-height:1;color:{{ c.color }}">{{ c.v }}</span>
+                  <span style="font-size:13px;font-weight:800;line-height:1.35">{{ c.t }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vMapa }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">¿Dónde están nuestros beneficiarios?</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600;max-width:800px">Información agregada por zona. No se muestran direcciones individuales. Sirve para detectar concentración, baja cobertura y zonas sin servicio.</div>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="background:#F7F9FA;border-radius:14px;padding:6px 16px;display:flex;flex-direction:column">
+              <div style="padding:12px 0;border-bottom:1.5px solid #DDE7EA;display:flex;gap:12px;flex-wrap:wrap">
+                <span style="flex:1.6;min-width:150px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">ZONA</span>
+                <span style="flex:0 0 100px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PERSONAS</span>
+                <span style="flex:0 0 110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">VISITAS</span>
+                <span style="flex:0 0 100px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">ALERTAS</span>
+                <span style="flex:1.4;min-width:170px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">COBERTURA</span>
+              </div>
+              <sc-for list="{{ zonas }}" as="z" hint-placeholder-count="6">
+                <div style="padding:15px 0;border-bottom:1px solid #E4EBEE;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                  <span style="flex:1.6;min-width:150px;font-size:15px;font-weight:900">{{ z.t }}</span>
+                  <span style="flex:0 0 100px;font-size:15px;font-weight:800">{{ z.personas }}</span>
+                  <span style="flex:0 0 110px;font-size:15px;font-weight:800;color:#0A6873">{{ z.visitas }}</span>
+                  <span style="flex:0 0 100px;font-size:15px;font-weight:800;color:{{ z.alertaColor }}">{{ z.alertas }}</span>
+                  <span style="flex:1.4;min-width:170px;display:flex;align-items:center;gap:11px">
+                    <span style="flex:1;height:10px;background:#E4EBEE;border-radius:99px;overflow:hidden"><span style="display:block;width:{{ z.pct }};height:100%;background:{{ z.color }};border-radius:99px"></span></span>
+                    <span style="flex:0 0 52px;font-size:14px;font-weight:900;color:{{ z.color }}">{{ z.cobertura }}</span>
+                  </span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding:15px 17px;background:#FEF6E9;border-radius:12px;font-size:14px;line-height:1.55;font-weight:800;color:#96450A">Cazucá y la zona rural concentran la mayor necesidad con la menor cobertura. Son las dos zonas donde el municipio debería enfocar la vinculación.</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vProgramas }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Programas</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600">Beneficiarios, cobertura, ejecución y cumplimiento de meta por programa.</div>
+          </div>
+          <sc-for list="{{ programas }}" as="p" hint-placeholder-count="5">
+            <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06);border-left:5px solid {{ p.color }}">
+              <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+                <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:4px">
+                  <div style="font-size:20px;font-weight:900">{{ p.t }}</div>
+                  <div style="font-size:14px;line-height:1.45;font-weight:700;color:#5A6474">{{ p.objetivo }}</div>
+                  <div style="font-size:14px;font-weight:700;color:#5A6474">Ejecuta: {{ p.ejecutor }} · responsable: {{ p.responsable }}</div>
+                </div>
+                <span style="flex:0 0 auto;padding:9px 14px;border-radius:99px;background:{{ p.bg }};font-size:13px;font-weight:900;color:{{ p.color }}">{{ p.estado }}</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+                <sc-for list="{{ p.datos }}" as="d" hint-placeholder-count="6">
+                  <div style="padding:14px 16px;background:#F7F9FA;border-radius:12px;display:flex;flex-direction:column;gap:2px">
+                    <span style="font-size:12px;font-weight:900;color:#5A6474;letter-spacing:.05em">{{ d.k }}</span>
+                    <span style="font-size:17px;font-weight:900">{{ d.v }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:20px;flex-wrap:wrap">
+                <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:7px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                    <span style="font-size:14px;font-weight:800">Ejecución presupuestal</span>
+                    <span style="font-size:15px;font-weight:900;color:{{ p.color }}">{{ p.ejecucion }}</span>
+                  </div>
+                  <div style="height:10px;background:#E4EBEE;border-radius:99px;overflow:hidden"><div style="width:{{ p.pctEjec }};height:100%;background:{{ p.color }};border-radius:99px"></div></div>
+                </div>
+                <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:7px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                    <span style="font-size:14px;font-weight:800">Cumplimiento de meta</span>
+                    <span style="font-size:15px;font-weight:900;color:{{ p.metaColor }}">{{ p.meta }}</span>
+                  </div>
+                  <div style="height:10px;background:#E4EBEE;border-radius:99px;overflow:hidden"><div style="width:{{ p.pctMeta }};height:100%;background:{{ p.metaColor }};border-radius:99px"></div></div>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vPresupuesto }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Presupuesto y ejecución</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600">De la asignación al soporte documental, con costo promedio por beneficiario.</div>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+              <sc-for list="{{ presupuesto }}" as="p" hint-placeholder-count="5">
+                <div style="padding:18px;background:#F7F9FA;border-radius:16px;display:flex;flex-direction:column;gap:3px;border-top:4px solid {{ p.color }}">
+                  <span style="font-size:12px;font-weight:900;color:#5A6474;letter-spacing:.05em">{{ p.t }}</span>
+                  <span style="font-size:25px;font-weight:900;line-height:1.1;color:{{ p.color }}">{{ p.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <span style="font-size:16px;font-weight:900">Ejecución total del periodo</span>
+                <span style="font-size:19px;font-weight:900;color:#0A6873">55 %</span>
+              </div>
+              <div style="height:16px;background:#E4EBEE;border-radius:99px;overflow:hidden;display:flex">
+                <div style="width:55%;height:100%;background:#32B4A8"></div>
+                <div style="width:26%;height:100%;background:#F3DCA9"></div>
+              </div>
+              <div style="display:flex;gap:18px;flex-wrap:wrap">
+                <span style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:#5A6474"><span style="width:11px;height:11px;border-radius:3px;background:#32B4A8"></span>Ejecutado</span>
+                <span style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:#5A6474"><span style="width:11px;height:11px;border-radius:3px;background:#F3DCA9"></span>Comprometido</span>
+                <span style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:#5A6474"><span style="width:11px;height:11px;border-radius:3px;background:#E4EBEE"></span>Disponible</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Por población</div>
+            <div style="background:#F7F9FA;border-radius:14px;padding:6px 16px;display:flex;flex-direction:column">
+              <div style="padding:12px 0;border-bottom:1.5px solid #DDE7EA;display:flex;gap:12px;flex-wrap:wrap">
+                <span style="flex:1.6;min-width:140px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">POBLACIÓN</span>
+                <span style="flex:1;min-width:110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">ASIGNADO</span>
+                <span style="flex:1;min-width:110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">EJECUTADO</span>
+                <span style="flex:0 0 120px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">BENEFICIARIOS</span>
+                <span style="flex:0 0 140px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">COSTO PROMEDIO</span>
+              </div>
+              <sc-for list="{{ presuPoblacion }}" as="p" hint-placeholder-count="3">
+                <div style="padding:15px 0;border-bottom:1px solid #E4EBEE;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                  <span style="flex:1.6;min-width:140px;font-size:15px;font-weight:900">{{ p.t }}</span>
+                  <span style="flex:1;min-width:110px;font-size:15px;font-weight:800">{{ p.asignado }}</span>
+                  <span style="flex:1;min-width:110px;font-size:15px;font-weight:800;color:#0A6873">{{ p.ejecutado }}</span>
+                  <span style="flex:0 0 120px;font-size:15px;font-weight:800">{{ p.beneficiarios }}</span>
+                  <span style="flex:0 0 140px;font-size:15px;font-weight:800;color:#5A6474">{{ p.promedio }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding:15px 17px;background:#F7F9FA;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">Cuando una persona pertenece a varias poblaciones el gasto no se duplica: se distribuye según la metodología definida por el municipio.</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vEvidencias }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Evidencias de ejecución</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600;max-width:800px">Qué se hizo, para quién, cuándo, quién lo hizo, cuánto costó, de qué presupuesto salió, quién recibió el pago, cuál es el soporte y qué resultado produjo.</div>
+          </div>
+
+          <div style="background:#075985;border-radius:20px;padding:24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+            <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:12px;font-weight:900;color:#B9DCE6;letter-spacing:.09em">NIVEL DE EVIDENCIA</div>
+              <div style="font-size:34px;font-weight:900;line-height:1;color:#fff">92,8 %</div>
+              <div style="font-size:15px;font-weight:700;color:#E4F4F8">232 de 250 actividades ejecutadas tienen soporte cargado. 18 pendientes.</div>
+            </div>
+            <div style="flex:1;min-width:240px;height:16px;background:#0A6C9E;border-radius:99px;overflow:hidden"><div style="width:92.8%;height:100%;background:#32B4A8;border-radius:99px"></div></div>
+          </div>
+
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Facturas y soportes</div>
+            <div style="background:#F7F9FA;border-radius:14px;padding:6px 16px;display:flex;flex-direction:column">
+              <div style="padding:12px 0;border-bottom:1.5px solid #DDE7EA;display:flex;gap:12px;flex-wrap:wrap">
+                <span style="flex:0 0 130px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">FACTURA</span>
+                <span style="flex:1.3;min-width:150px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PROVEEDOR Y PROGRAMA</span>
+                <span style="flex:1;min-width:140px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">FUENTE</span>
+                <span style="flex:0 0 120px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">VALOR</span>
+                <span style="flex:0 0 130px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">SOPORTE</span>
+                <span style="flex:0 0 110px"></span>
+              </div>
+              <sc-for list="{{ facturas }}" as="fa" hint-placeholder-count="5">
+                <div style="padding:15px 0;border-bottom:1px solid #E4EBEE;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                  <span style="flex:0 0 130px;display:flex;flex-direction:column;gap:1px">
+                    <span style="font-size:14px;font-weight:900">{{ fa.num }}</span>
+                    <span style="font-size:12px;font-weight:700;color:#5A6474">{{ fa.fecha }}</span>
+                  </span>
+                  <span style="flex:1.3;min-width:150px;display:flex;flex-direction:column;gap:1px">
+                    <span style="font-size:15px;font-weight:900">{{ fa.proveedor }}</span>
+                    <span style="font-size:13px;font-weight:700;color:#5A6474">{{ fa.programa }} · {{ fa.actividad }}</span>
+                  </span>
+                  <span style="flex:1;min-width:140px;font-size:13px;font-weight:700;color:#5A6474">{{ fa.fuente }}<br/>{{ fa.responsable }}</span>
+                  <span style="flex:0 0 120px;font-size:15px;font-weight:900;color:#0A6873">{{ fa.valor }}</span>
+                  <span style="flex:0 0 130px;padding:7px 12px;border-radius:99px;background:{{ fa.bg }};font-size:12px;font-weight:900;color:{{ fa.color }};text-align:center">{{ fa.soporte }}</span>
+                  <button style="flex:0 0 110px;padding:10px 14px;border:2px solid #075985;border-radius:99px;background:#fff;color:#075985;font-size:13px;font-weight:900;cursor:pointer">Ver evidencia</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Presupuesto, actividad, beneficiario y resultado</div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <sc-for list="{{ trazabilidad }}" as="t" hint-placeholder-count="6">
+                <div style="flex:1;min-width:150px;padding:18px;background:#E8F6F8;border-radius:16px;display:flex;flex-direction:column;gap:4px">
+                  <span style="font-size:12px;font-weight:900;color:#0A6873;letter-spacing:.06em">{{ t.k }}</span>
+                  <span style="font-size:20px;font-weight:900;line-height:1.15">{{ t.v }}</span>
+                  <span style="font-size:13px;font-weight:700;color:#5A6474;line-height:1.4">{{ t.sub }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding:16px 18px;background:#F7F9FA;border-radius:14px;display:flex;flex-direction:column;gap:7px">
+              <div style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.06em">AL ABRIR UNA EVIDENCIA</div>
+              <div style="font-size:15px;line-height:1.55;font-weight:700;color:#5A6474">Factura, comprobante, fotografía, cuenta de cobro, contrato u orden; fecha de carga, usuario que la cargó, programa relacionado y actividad soportada.</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vFurag }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">FURAG y MIPG</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600;max-width:820px">ELÍGEME no calcula el puntaje FURAG ni declara cumplimiento. Organiza la evidencia, muestra qué información está disponible e identifica brechas para que el municipio documente su gestión.</div>
+          </div>
+
+          <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+            <div style="flex:1;min-width:320px;background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+              <div style="font-size:19px;font-weight:900">Último resultado oficial disponible</div>
+              <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
+                <span style="font-size:40px;font-weight:900;line-height:1;color:#075985">71,4</span>
+                <span style="font-size:15px;font-weight:800;color:#5A6474">Vigencia 2025 · Medición del Desempeño Institucional</span>
+              </div>
+              <div style="padding:14px 16px;background:#F7F9FA;border-radius:12px;font-size:13px;line-height:1.55;font-weight:700;color:#5A6474">Fuente: resultado oficial publicado por Función Pública, importado a ELÍGEME. Actualizado el 14 de julio de 2026. ELÍGEME no genera este puntaje.</div>
+              <div style="display:flex;align-items:flex-end;gap:12px;height:120px;padding-top:6px">
+                <sc-for list="{{ furagHistorico }}" as="h" hint-placeholder-count="3">
+                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px">
+                    <span style="font-size:14px;font-weight:900;color:#0A6873">{{ h.v }}</span>
+                    <span style="width:100%;height:{{ h.alto }};background:{{ h.color }};border-radius:8px 8px 0 0"></span>
+                    <span style="font-size:13px;font-weight:800;color:#5A6474">{{ h.anio }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="flex:1;min-width:320px;background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+              <div style="font-size:19px;font-weight:900">Evidencia disponible en ELÍGEME</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <sc-for list="{{ furagDisponible }}" as="d" hint-placeholder-count="6">
+                  <div style="padding:16px;background:#F7F9FA;border-radius:14px;display:flex;flex-direction:column;gap:2px">
+                    <span style="font-size:22px;font-weight:900;line-height:1;color:#0A6873">{{ d.v }}</span>
+                    <span style="font-size:13px;font-weight:800;line-height:1.35">{{ d.t }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Mapa de evidencias por política de MIPG</div>
+            <div style="background:#F7F9FA;border-radius:14px;padding:6px 16px;display:flex;flex-direction:column">
+              <div style="padding:12px 0;border-bottom:1.5px solid #DDE7EA;display:flex;gap:12px;flex-wrap:wrap">
+                <span style="flex:1.5;min-width:170px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">POLÍTICA O TEMA</span>
+                <span style="flex:1.6;min-width:200px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">EVIDENCIA DISPONIBLE</span>
+                <span style="flex:1;min-width:130px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">RESPONSABLE</span>
+                <span style="flex:0 0 110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PERIODO</span>
+                <span style="flex:0 0 110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">ESTADO</span>
+              </div>
+              <sc-for list="{{ furagMatriz }}" as="m" hint-placeholder-count="6">
+                <div style="padding:15px 0;border-bottom:1px solid #E4EBEE;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                  <span style="flex:1.5;min-width:170px;font-size:15px;font-weight:900">{{ m.politica }}</span>
+                  <span style="flex:1.6;min-width:200px;font-size:14px;line-height:1.45;font-weight:700;color:#5A6474">{{ m.evidencia }}</span>
+                  <span style="flex:1;min-width:130px;font-size:14px;font-weight:700;color:#5A6474">{{ m.responsable }}</span>
+                  <span style="flex:0 0 110px;font-size:14px;font-weight:800">{{ m.periodo }}</span>
+                  <span style="flex:0 0 110px;padding:7px 12px;border-radius:99px;background:{{ m.bg }};font-size:12px;font-weight:900;color:{{ m.color }};text-align:center">{{ m.estado }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding:15px 17px;background:#E8F6F8;border-radius:12px;font-size:14px;line-height:1.55;font-weight:800;color:#0A6873">El lenguaje del panel es «evidencia disponible para soporte de gestión», nunca «cumple FURAG». La medición la hace la autoridad competente.</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vAdres }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">ADRES</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600;max-width:820px">Información oficial importada o consultada sobre aseguramiento y financiación territorial. ELÍGEME no determina ni gestiona los recursos que gira ADRES, y no modifica la información oficial.</div>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Información oficial disponible</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+              <sc-for list="{{ adres }}" as="a" hint-placeholder-count="8">
+                <div style="padding:16px;background:#F7F9FA;border-radius:14px;display:flex;flex-direction:column;gap:3px;border-left:4px solid #075985">
+                  <span style="font-size:22px;font-weight:900;line-height:1.1;color:#075985">{{ a.v }}</span>
+                  <span style="font-size:13px;font-weight:800;line-height:1.35">{{ a.t }}</span>
+                  <span style="font-size:12px;font-weight:700;color:#5A6474">{{ a.fuente }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Población en ELÍGEME frente a la información oficial</div>
+            <div style="background:#F7F9FA;border-radius:14px;padding:6px 16px;display:flex;flex-direction:column">
+              <div style="padding:12px 0;border-bottom:1.5px solid #DDE7EA;display:flex;gap:12px;flex-wrap:wrap">
+                <span style="flex:1.6;min-width:170px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">CONCEPTO</span>
+                <span style="flex:1;min-width:120px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">EN ELÍGEME</span>
+                <span style="flex:1;min-width:120px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">OFICIAL</span>
+                <span style="flex:1;min-width:150px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">DIFERENCIA</span>
+              </div>
+              <sc-for list="{{ comparacion }}" as="c" hint-placeholder-count="5">
+                <div style="padding:15px 0;border-bottom:1px solid #E4EBEE;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                  <span style="flex:1.6;min-width:170px;font-size:15px;font-weight:900">{{ c.t }}</span>
+                  <span style="flex:1;min-width:120px;font-size:15px;font-weight:800">{{ c.eligeme }}</span>
+                  <span style="flex:1;min-width:120px;font-size:15px;font-weight:800">{{ c.oficial }}</span>
+                  <span style="flex:1;min-width:150px;font-size:14px;font-weight:900;color:{{ c.color }}">{{ c.dif }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding:15px 17px;background:#FEF6E9;border-radius:12px;font-size:14px;line-height:1.55;font-weight:800;color:#96450A">Las diferencias se muestran para revisión administrativa, no para corregir la fuente oficial.</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vCuidado }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Seguimiento al derecho al cuidado</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600;max-width:840px">Evidencia de las acciones municipales e institucionales en identificación, valoración, atención domiciliaria, seguimiento y corresponsabilidad. ELÍGEME documenta acciones; la autoridad competente determina el cumplimiento.</div>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Acciones registradas</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+              <sc-for list="{{ cuidadoIndicadores }}" as="c" hint-placeholder-count="12">
+                <div style="padding:16px;background:#F7F9FA;border-radius:14px;display:flex;flex-direction:column;gap:3px;border-left:4px solid {{ c.color }}">
+                  <span style="font-size:22px;font-weight:900;line-height:1.1;color:{{ c.color }}">{{ c.v }}</span>
+                  <span style="font-size:13px;font-weight:800;line-height:1.35">{{ c.t }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Matriz de seguimiento</div>
+            <div style="background:#F7F9FA;border-radius:14px;padding:6px 16px;display:flex;flex-direction:column">
+              <div style="padding:12px 0;border-bottom:1.5px solid #DDE7EA;display:flex;gap:12px;flex-wrap:wrap">
+                <span style="flex:1.6;min-width:160px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">COMPONENTE</span>
+                <span style="flex:1;min-width:120px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">IDENTIFICADA</span>
+                <span style="flex:1;min-width:110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">ATENDIDA</span>
+                <span style="flex:1;min-width:130px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">EN SEGUIMIENTO</span>
+                <span style="flex:1;min-width:110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PENDIENTE</span>
+              </div>
+              <sc-for list="{{ matrizCuidado }}" as="m" hint-placeholder-count="3">
+                <div style="padding:15px 0;border-bottom:1px solid #E4EBEE;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                  <span style="flex:1.6;min-width:160px;font-size:15px;font-weight:900">{{ m.t }}</span>
+                  <span style="flex:1;min-width:120px;font-size:15px;font-weight:800">{{ m.identificada }}</span>
+                  <span style="flex:1;min-width:110px;font-size:15px;font-weight:800;color:#0A6873">{{ m.atendida }}</span>
+                  <span style="flex:1;min-width:130px;font-size:15px;font-weight:800;color:#157F3B">{{ m.seguimiento }}</span>
+                  <span style="flex:1;min-width:110px;font-size:15px;font-weight:800;color:#96450A">{{ m.pendiente }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding:15px 17px;background:#E8F6F8;border-radius:12px;font-size:14px;line-height:1.55;font-weight:800;color:#0A6873">Lenguaje del panel: evidencias registradas, acciones implementadas, cobertura alcanzada, pendientes identificados y seguimiento documentado.</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vBrechas }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">¿Qué nos falta atender?</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600">Las brechas del periodo, ordenadas por urgencia de gestión.</div>
+          </div>
+          <sc-for list="{{ brechas }}" as="b" hint-placeholder-count="9">
+            <div style="background:#fff;border-radius:16px;padding:20px;display:flex;align-items:center;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06);border-left:5px solid {{ b.color }};flex-wrap:wrap">
+              <span style="flex:0 0 90px;font-size:26px;font-weight:900;line-height:1;color:{{ b.color }}">{{ b.v }}</span>
+              <span style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:3px">
+                <span style="font-size:17px;font-weight:900;line-height:1.35">{{ b.t }}</span>
+                <span style="font-size:14px;font-weight:700;color:#5A6474;line-height:1.45">{{ b.detalle }}</span>
+              </span>
+              <span style="flex:0 0 auto;padding:8px 14px;border-radius:99px;background:{{ b.bg }};font-size:13px;font-weight:900;color:{{ b.color }}">{{ b.nivel }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vCuidadores }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Cuidadores y formación</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600;max-width:800px">Desarrollo de capacidades en el territorio. La relación con el SENA opera hoy por enlace oficial y carga de certificados, sin integración técnica directa.</div>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Cuidadores identificados</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+              <sc-for list="{{ cuidadores }}" as="c" hint-placeholder-count="9">
+                <div style="padding:16px;background:#F7F9FA;border-radius:14px;display:flex;flex-direction:column;gap:3px;border-left:4px solid {{ c.color }}">
+                  <span style="font-size:22px;font-weight:900;line-height:1.1;color:{{ c.color }}">{{ c.v }}</span>
+                  <span style="font-size:13px;font-weight:800;line-height:1.35">{{ c.t }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Ruta de formación</div>
+            <sc-for list="{{ rutaFormacion }}" as="r" hint-placeholder-count="5">
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                  <span style="font-size:15px;font-weight:800">{{ r.t }}</span>
+                  <span style="font-size:16px;font-weight:900;color:{{ r.color }}">{{ r.v }}</span>
+                </div>
+                <div style="height:11px;background:#E4EBEE;border-radius:99px;overflow:hidden"><div style="width:{{ r.pct }};height:100%;background:{{ r.color }};border-radius:99px"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vIndicadores }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Indicadores y resultados</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600;max-width:820px">Variación observada durante el periodo de implementación. No se atribuye causalidad automática.</div>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Comparación de periodos</div>
+            <div style="background:#F7F9FA;border-radius:14px;padding:6px 16px;display:flex;flex-direction:column">
+              <div style="padding:12px 0;border-bottom:1.5px solid #DDE7EA;display:flex;gap:12px;flex-wrap:wrap">
+                <span style="flex:1.8;min-width:180px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">INDICADOR</span>
+                <span style="flex:1;min-width:120px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PERIODO ANTERIOR</span>
+                <span style="flex:1;min-width:120px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PERIODO ACTUAL</span>
+                <span style="flex:1;min-width:120px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">VARIACIÓN</span>
+              </div>
+              <sc-for list="{{ resultados }}" as="r" hint-placeholder-count="8">
+                <div style="padding:15px 0;border-bottom:1px solid #E4EBEE;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                  <span style="flex:1.8;min-width:180px;font-size:15px;font-weight:900">{{ r.t }}</span>
+                  <span style="flex:1;min-width:120px;font-size:15px;font-weight:800;color:#5A6474">{{ r.antes }}</span>
+                  <span style="flex:1;min-width:120px;font-size:15px;font-weight:900">{{ r.ahora }}</span>
+                  <span style="flex:1;min-width:120px;font-size:15px;font-weight:900;color:{{ r.color }}">{{ r.variacion }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Satisfacción agregada</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+              <sc-for list="{{ satisfaccion }}" as="sa" hint-placeholder-count="6">
+                <div style="padding:16px;background:#F7F9FA;border-radius:14px;display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:22px;font-weight:900;line-height:1;color:{{ sa.color }}">{{ sa.v }}</span>
+                  <span style="font-size:13px;font-weight:800">{{ sa.t }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding:15px 17px;background:#F7F9FA;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">El detalle por profesional y los comentarios individuales se quedan en el hospital.</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vReportes }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Reportes ejecutivos</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600">Listos para comités, rendición de cuentas y procesos de gestión.</div>
+          </div>
+          <div style="background:#075985;border-radius:20px;padding:26px;display:flex;flex-direction:column;gap:16px">
+            <div style="font-size:12px;font-weight:900;color:#B9DCE6;letter-spacing:.09em">PORTADA DEL INFORME</div>
+            <div style="font-size:24px;font-weight:900;color:#fff;line-height:1.3">Informe de gestión · atención y cuidado en Soacha · agosto 2026</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px">
+              <sc-for list="{{ portada }}" as="p" hint-placeholder-count="8">
+                <div style="display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:12px;font-weight:900;color:#B9DCE6;letter-spacing:.06em">{{ p.k }}</span>
+                  <span style="font-size:19px;font-weight:900;color:#fff">{{ p.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+            <sc-for list="{{ informes }}" as="i" hint-placeholder-count="9">
+              <div style="background:#fff;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:11px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:16px;font-weight:900;line-height:1.35">{{ i.t }}</div>
+                <div style="font-size:13px;font-weight:700;color:#5A6474;line-height:1.45">{{ i.sub }}</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <span style="padding:8px 13px;border-radius:99px;background:#F7F9FA;border:1.5px solid #DDE7EA;font-size:12px;font-weight:900;color:#5A6474">PDF</span>
+                  <span style="padding:8px 13px;border-radius:99px;background:#F7F9FA;border:1.5px solid #DDE7EA;font-size:12px;font-weight:900;color:#5A6474">Excel</span>
+                  <span style="padding:8px 13px;border-radius:99px;background:#F7F9FA;border:1.5px solid #DDE7EA;font-size:12px;font-weight:900;color:#5A6474">CSV</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="padding:16px 18px;background:#E8F6F8;border-radius:14px;font-size:14px;line-height:1.55;font-weight:800;color:#0A6873">Cada indicador de los informes indica fecha de actualización y fuente: ELÍGEME, hospital, ADRES importado o resultado oficial FURAG.</div>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1340,&quot;height&quot;:900}}">
+const V = { verde: '#157F3B', bgVerde: '#EFF9F1', amar: '#96450A', bgAmar: '#FEF6E9', rojo: '#B91C1C', bgRojo: '#FDEEEE', azul: '#075985', bgAzul: '#E8F6F8', teal: '#0A6873' };
+
+class Component extends DCLogic {
+  state = { view: 'inicio', periodo: 'Este mes' };
+
+  go(view) { this.setState({ view: view }); }
+
+  tab(id) {
+    const on = this.state.view === id;
+    return { bg: on ? '#0A6C9E' : 'transparent', fg: on ? '#ffffff' : '#CFE6EE' };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const t = id => this.tab(id);
+    return {
+      vInicio: s.view === 'inicio', vPoblacion: s.view === 'poblacion', vMapa: s.view === 'mapa',
+      vProgramas: s.view === 'programas', vPresupuesto: s.view === 'presupuesto',
+      vEvidencias: s.view === 'evidencias', vFurag: s.view === 'furag', vAdres: s.view === 'adres',
+      vCuidado: s.view === 'cuidado', vBrechas: s.view === 'brechas', vCuidadores: s.view === 'cuidadores',
+      vIndicadores: s.view === 'indicadores', vReportes: s.view === 'reportes',
+      goInicio: () => this.go('inicio'), goPoblacion: () => this.go('poblacion'), goMapa: () => this.go('mapa'),
+      goProgramas: () => this.go('programas'), goPresupuesto: () => this.go('presupuesto'),
+      goEvidencias: () => this.go('evidencias'), goFurag: () => this.go('furag'), goAdres: () => this.go('adres'),
+      goCuidado: () => this.go('cuidado'), goBrechas: () => this.go('brechas'),
+      goCuidadores: () => this.go('cuidadores'), goIndicadores: () => this.go('indicadores'),
+      goReportes: () => this.go('reportes'),
+      bgInicio: t('inicio').bg, fgInicio: t('inicio').fg,
+      bgPoblacion: t('poblacion').bg, fgPoblacion: t('poblacion').fg,
+      bgMapa: t('mapa').bg, fgMapa: t('mapa').fg,
+      bgProgramas: t('programas').bg, fgProgramas: t('programas').fg,
+      bgPresupuesto: t('presupuesto').bg, fgPresupuesto: t('presupuesto').fg,
+      bgEvidencias: t('evidencias').bg, fgEvidencias: t('evidencias').fg,
+      bgFurag: t('furag').bg, fgFurag: t('furag').fg,
+      bgAdres: t('adres').bg, fgAdres: t('adres').fg,
+      bgCuidado: t('cuidado').bg, fgCuidado: t('cuidado').fg,
+      bgBrechas: t('brechas').bg, fgBrechas: t('brechas').fg,
+      bgCuidadores: t('cuidadores').bg, fgCuidadores: t('cuidadores').fg,
+      bgIndicadores: t('indicadores').bg, fgIndicadores: t('indicadores').fg,
+      bgReportes: t('reportes').bg, fgReportes: t('reportes').fg,
+
+      periodos: ['Este mes', 'Trimestre', 'Semestre', 'Año', 'Personalizado'].map(p => {
+        const on = s.periodo === p;
+        return { t: p, on: () => this.setState({ periodo: p }),
+          bd: on ? 'none' : '1.5px solid #DDE7EA', bg: on ? '#075985' : '#fff', fg: on ? '#fff' : '#5A6474' };
+      }),
+
+      titulares: [
+        { v: '3.050', t: 'Personas beneficiadas', sub: 'Beneficiarios únicos, sin doble conteo' },
+        { v: '37,5 %', t: 'Cobertura de la población objetivo', sub: 'De 8.142 personas, unión deduplicada de las tres poblaciones' },
+        { v: '1.284', t: 'Visitas domiciliarias realizadas', sub: 'En lo corrido del año' },
+        { v: '92,8 %', t: 'Actividades con evidencia', sub: '232 de 250 con soporte cargado' },
+        { v: '55 %', t: 'Presupuesto ejecutado', sub: '$870 M de $1.580 M asignados' }
+      ],
+      cadena: [
+        { k: 'PERSONAS', v: '3.050', sub: 'Identificadas y vinculadas', color: V.azul },
+        { k: 'ATENCIÓN', v: '1.670', sub: 'Visitas y consultas realizadas', color: V.teal },
+        { k: 'DINERO', v: '$870 M', sub: 'Ejecutado en el periodo', color: V.teal },
+        { k: 'EVIDENCIA', v: '232', sub: 'Actividades con soporte', color: V.verde },
+        { k: 'RESULTADO', v: '94 %', sub: 'Alertas atendidas a tiempo', color: V.verde },
+        { k: 'PENDIENTE', v: '18', sub: 'Soportes por cargar', color: V.amar }
+      ],
+      pendientes: [
+        { t: '3 facturas pendientes de aprobación', nivel: 'Alta', color: V.rojo, bg: V.bgRojo },
+        { t: '5 evidencias pendientes de carga', nivel: 'Alta', color: V.rojo, bg: V.bgRojo },
+        { t: 'Programa de discapacidad con ejecución por debajo de la meta', nivel: 'Seguimiento', color: V.amar, bg: V.bgAmar },
+        { t: '27 personas identificadas sin seguimiento reciente', nivel: 'Seguimiento', color: V.amar, bg: V.bgAmar },
+        { t: '12 cuidadores requieren capacitación', nivel: 'Seguimiento', color: V.amar, bg: V.bgAmar },
+        { t: '4 pendientes operativos sin cierre', nivel: 'Seguimiento', color: V.amar, bg: V.bgAmar }
+      ],
+      accesos: [
+        { t: 'Ver beneficiarios', on: () => this.go('poblacion') },
+        { t: 'Ver programas', on: () => this.go('programas') },
+        { t: 'Registrar programa', on: () => this.go('programas') },
+        { t: 'Ver presupuesto', on: () => this.go('presupuesto') },
+        { t: 'Subir evidencia', on: () => this.go('evidencias') },
+        { t: 'Ver FURAG', on: () => this.go('furag') },
+        { t: 'Ver ADRES', on: () => this.go('adres') },
+        { t: 'Generar informe', on: () => this.go('reportes') }
+      ],
+      actividades: [
+        { t: 'Nuevo beneficiario registrado en Cazucá', cuando: 'Hoy 8:20 a. m. · fuente ELÍGEME', color: V.teal },
+        { t: 'Evidencia cargada para la factura FAC-2026-140', cuando: 'Ayer 4:10 p. m. · Secretaría de Salud', color: V.verde },
+        { t: 'Programa de cuidadores actualizó su meta anual', cuando: '15 ago 2026 · Secretaría de Salud', color: V.azul },
+        { t: 'Informe de ejecución presupuestal generado', cuando: '14 ago 2026 · Hacienda', color: V.azul },
+        { t: 'Resultado oficial FURAG 2025 importado', cuando: '14 jul 2026 · Función Pública', color: V.azul },
+        { t: '38 certificados de cuidadores cargados', cuando: '10 ago 2026 · fuente hospital', color: V.verde }
+      ],
+
+      objetivo: [
+        { t: 'Población total del municipio', v: '812.400', fuente: 'Proyección oficial', color: V.azul },
+        { t: 'Personas de 60 años o más', v: '6.117', fuente: 'Población objetivo priorizada', color: V.azul },
+        { t: 'Personas con discapacidad', v: '2.845', fuente: '1.912 en el RLCPD', color: V.azul },
+        { t: 'Requieren cuidado domiciliario', v: '1.640', fuente: 'Identificadas por el municipio y la red', color: V.teal },
+        { t: 'Población objetivo deduplicada', v: '8.142', fuente: 'Unión de las tres poblaciones, sin doble conteo', color: V.teal },
+        { t: 'Registradas en ELÍGEME', v: '3.050', fuente: 'Beneficiarios únicos', color: V.verde },
+        { t: 'Aún no vinculadas', v: '5.092', fuente: 'Brecha de vinculación', color: V.amar }
+      ],
+      intersecciones: [
+        { t: 'Solo persona mayor de 60', v: '1.284', color: '#32B4A8' },
+        { t: 'Solo discapacidad', v: '452', color: '#075985' },
+        { t: 'Solo cuidados en casa', v: '268', color: '#F2A7C4' },
+        { t: 'Mayor de 60 y discapacidad', v: '386', color: '#0A6873' },
+        { t: 'Mayor de 60 y cuidados en casa', v: '448', color: '#0A6873' },
+        { t: 'Discapacidad y cuidados en casa', v: '134', color: '#0A6873' },
+        { t: 'Las tres condiciones', v: '78', color: '#B23A72' },
+        { t: 'Total de beneficiarios únicos', v: '3.050', color: '#0F2E3D' }
+      ],
+      calidad: [
+        { t: 'Personas sin EPS identificada', v: '64', color: V.amar },
+        { t: 'Documentos pendientes', v: '112', color: V.amar },
+        { t: 'Afiliaciones por verificar', v: '87', color: V.amar },
+        { t: 'Duplicados potenciales', v: '19', color: V.rojo },
+        { t: 'Registros completos', v: '94,2 %', color: V.verde }
+      ],
+
+      zonas: [
+        { t: 'Comuna 1 · Compartir', personas: '742', visitas: '318', alertas: '12', cobertura: '82 %', pct: '82%', color: V.verde, alertaColor: V.amar },
+        { t: 'Comuna 2 · Soacha centro', personas: '688', visitas: '286', alertas: '9', cobertura: '76 %', pct: '76%', color: V.verde, alertaColor: V.amar },
+        { t: 'Comuna 3 · La Despensa', personas: '596', visitas: '241', alertas: '14', cobertura: '61 %', pct: '61%', color: V.teal, alertaColor: V.amar },
+        { t: 'Comuna 4 · Cazucá', personas: '604', visitas: '198', alertas: '31', cobertura: '44 %', pct: '44%', color: V.amar, alertaColor: V.rojo },
+        { t: 'Comuna 6 · San Humberto', personas: '284', visitas: '142', alertas: '7', cobertura: '58 %', pct: '58%', color: V.teal, alertaColor: V.amar },
+        { t: 'Zona rural · El Charquito', personas: '136', visitas: '99', alertas: '18', cobertura: '31 %', pct: '31%', color: V.amar, alertaColor: V.rojo }
+      ],
+
+      programas: [
+        { t: 'Atención domiciliaria', objetivo: 'Garantizar valoración, atención y seguimiento en el hogar de personas con dependencia.', ejecutor: 'Hospital San Rafael (ESE)', responsable: 'Secretaría de Salud', estado: 'En ejecución', color: V.verde, bg: V.bgVerde, ejecucion: '59 %', pctEjec: '59%', meta: '76 %', pctMeta: '76%', metaColor: V.verde,
+          datos: [{ k: 'BENEFICIARIOS', v: '412' }, { k: 'META ANUAL', v: '540' }, { k: 'ASIGNADO', v: '$680 M' }, { k: 'EJECUTADO', v: '$402 M' }, { k: 'DISPONIBLE', v: '$118 M' }, { k: 'ATENCIONES', v: '1.204' }] },
+        { t: 'Adulto mayor', objetivo: 'Envejecimiento saludable, identificación y acompañamiento de personas mayores de 60 años.', ejecutor: 'Hospital San Rafael (ESE)', responsable: 'Secretaría de Integración Social', estado: 'En ejecución', color: V.verde, bg: V.bgVerde, ejecucion: '59 %', pctEjec: '59%', meta: '62 %', pctMeta: '62%', metaColor: V.teal,
+          datos: [{ k: 'BENEFICIARIOS', v: '2.196' }, { k: 'META ANUAL', v: '3.560' }, { k: 'ASIGNADO', v: '$420 M' }, { k: 'EJECUTADO', v: '$248 M' }, { k: 'DISPONIBLE', v: '$72 M' }, { k: 'ATENCIONES', v: '3.140' }] },
+        { t: 'Discapacidad', objetivo: 'Caracterización, atención y apoyos para personas con discapacidad y sus familias.', ejecutor: 'Hospital San Rafael y operador social', responsable: 'Secretaría de Salud', estado: 'Requiere seguimiento', color: V.amar, bg: V.bgAmar, ejecucion: '52 %', pctEjec: '52%', meta: '41 %', pctMeta: '41%', metaColor: V.amar,
+          datos: [{ k: 'BENEFICIARIOS', v: '1.050' }, { k: 'META ANUAL', v: '2.580' }, { k: 'ASIGNADO', v: '$260 M' }, { k: 'EJECUTADO', v: '$134 M' }, { k: 'DISPONIBLE', v: '$66 M' }, { k: 'ATENCIONES', v: '1.688' }] },
+        { t: 'Cuidado en casa', objetivo: 'Apoyo a hogares que sostienen cuidados permanentes y alivio para el cuidador.', ejecutor: 'Hospital San Rafael (ESE)', responsable: 'Secretaría de Integración Social', estado: 'Requiere seguimiento', color: V.amar, bg: V.bgAmar, ejecucion: '45 %', pctEjec: '45%', meta: '48 %', pctMeta: '48%', metaColor: V.amar,
+          datos: [{ k: 'BENEFICIARIOS', v: '928' }, { k: 'META ANUAL', v: '1.940' }, { k: 'ASIGNADO', v: '$150 M' }, { k: 'EJECUTADO', v: '$68 M' }, { k: 'DISPONIBLE', v: '$32 M' }, { k: 'ATENCIONES', v: '968' }] },
+        { t: 'Formación de cuidadores', objetivo: 'Fortalecer capacidades de quienes cuidan, con formación y certificación.', ejecutor: 'SENA y operador de formación', responsable: 'Secretaría de Desarrollo Social', estado: 'Ejecución baja', color: V.rojo, bg: V.bgRojo, ejecucion: '26 %', pctEjec: '26%', meta: '29 %', pctMeta: '29%', metaColor: V.rojo,
+          datos: [{ k: 'CUIDADORES VINCULADOS', v: '1.164' }, { k: 'META ANUAL DE CERTIFICADOS', v: '1.500' }, { k: 'ASIGNADO', v: '$70 M' }, { k: 'EJECUTADO', v: '$18 M' }, { k: 'DISPONIBLE', v: '$12 M' }, { k: 'CERTIFICADOS', v: '442' }] }
+      ],
+
+      presupuesto: [
+        { t: 'ASIGNADO', v: '$1.580 M', color: V.azul },
+        { t: 'EJECUTADO', v: '$870 M', color: V.teal },
+        { t: 'COMPROMETIDO', v: '$410 M', color: V.amar },
+        { t: 'DISPONIBLE', v: '$300 M', color: V.verde },
+        { t: 'EJECUCIÓN', v: '55 %', color: V.teal }
+      ],
+      presuPoblacion: [
+        { t: 'Adulto mayor', asignado: '$420 M', ejecutado: '$248 M', beneficiarios: '2.196', promedio: '$112.900' },
+        { t: 'Discapacidad', asignado: '$260 M', ejecutado: '$134 M', beneficiarios: '1.050', promedio: '$127.600' },
+        { t: 'Cuidado en casa', asignado: '$150 M', ejecutado: '$68 M', beneficiarios: '928', promedio: '$73.300' }
+      ],
+
+      facturas: [
+        { num: 'FAC-2026-125', fecha: '11 ago 2026', proveedor: 'Fundación Bienestar', programa: 'Cuidado en casa', actividad: 'Entrega de insumos a 240 hogares', fuente: 'SGP salud pública', responsable: 'Pedro Ramírez', valor: '$12.500.000', soporte: 'Soporte cargado', color: V.verde, bg: V.bgVerde },
+        { num: 'FAC-2026-140', fecha: '7 ago 2026', proveedor: 'MedSupply SAS', programa: 'Adulto mayor', actividad: 'Dotación de equipos de medición', fuente: 'Recursos propios', responsable: 'Pedro Ramírez', valor: '$18.900.000', soporte: 'Soporte cargado', color: V.verde, bg: V.bgVerde },
+        { num: 'CC-2026-088', fecha: '10 ago 2026', proveedor: 'Ft. Diana Salas', programa: 'Atención domiciliaria', actividad: 'Fisioterapia domiciliaria', fuente: 'SGP salud pública', responsable: 'Claudia Vargas', valor: '$6.400.000', soporte: 'Soporte cargado', color: V.verde, bg: V.bgVerde },
+        { num: 'FAC-2026-131', fecha: '9 ago 2026', proveedor: 'Imprenta Andina', programa: 'Formación de cuidadores', actividad: 'Cartillas del cuidador', fuente: 'Recursos propios', responsable: 'Yohana Arenas', valor: '$3.200.000', soporte: 'Falta soporte', color: V.amar, bg: V.bgAmar },
+        { num: 'FAC-2026-118', fecha: '2 ago 2026', proveedor: 'Transportes del Sur', programa: 'Atención domiciliaria', actividad: 'Transporte a zona rural', fuente: 'SGP salud pública', responsable: 'Claudia Vargas', valor: '$4.100.000', soporte: 'Pendiente de aprobación', color: V.amar, bg: V.bgAmar }
+      ],
+      trazabilidad: [
+        { k: 'PRESUPUESTO', v: '$680 M', sub: 'Atención domiciliaria', color: V.azul },
+        { k: 'PROGRAMA', v: 'Domiciliaria', sub: 'Ejecuta Hospital San Rafael', color: V.azul },
+        { k: 'ACTIVIDADES', v: '420 visitas', sub: 'Realizadas en el periodo', color: V.teal },
+        { k: 'BENEFICIARIOS ÚNICOS', v: '180', sub: 'Deduplicados por persona', color: V.teal },
+        { k: 'EVIDENCIAS', v: '410', sub: 'Visitas con soporte', color: V.verde },
+        { k: 'RESULTADO', v: '97,6 %', sub: 'Cobertura documental', color: V.verde }
+      ],
+
+      furagHistorico: [
+        { anio: '2023', v: '64,1', alto: '58px', color: '#B9DCE6' },
+        { anio: '2024', v: '68,3', alto: '76px', color: '#32B4A8' },
+        { anio: '2025', v: '71,4', alto: '92px', color: '#075985' }
+      ],
+      furagDisponible: [
+        { t: 'Documentos de soporte', v: '486' },
+        { t: 'Indicadores estructurados', v: '38' },
+        { t: 'Programas documentados', v: '5' },
+        { t: 'Actividades con evidencia', v: '232' },
+        { t: 'Reportes generados', v: '14' },
+        { t: 'Brechas identificadas', v: '9' }
+      ],
+      furagMatriz: [
+        { politica: 'Gestión de la información', evidencia: 'Registros estructurados de población, atención y seguimiento', responsable: 'Secretaría de Salud', periodo: '2026', estado: 'Completa', color: V.verde, bg: V.bgVerde },
+        { politica: 'Servicio al ciudadano', evidencia: 'Evaluaciones de atención y comentarios agregados', responsable: 'Secretaría de Salud', periodo: '2026', estado: 'Completa', color: V.verde, bg: V.bgVerde },
+        { politica: 'Participación ciudadana', evidencia: 'Actas de comité de cuidadores pendientes de cargar', responsable: 'Desarrollo Social', periodo: '2026', estado: 'Parcial', color: V.amar, bg: V.bgAmar },
+        { politica: 'Seguimiento y evaluación', evidencia: 'Indicadores por programa con metas y variación', responsable: 'Planeación', periodo: '2026', estado: 'Completa', color: V.verde, bg: V.bgVerde },
+        { politica: 'Gestión presupuestal', evidencia: 'Facturas, soportes y fuente presupuestal por actividad', responsable: 'Hacienda', periodo: '2026', estado: 'Parcial', color: V.amar, bg: V.bgAmar },
+        { politica: 'Gestión del conocimiento', evidencia: 'Sin documentación cargada en el periodo', responsable: 'Planeación', periodo: '2026', estado: 'Pendiente', color: V.rojo, bg: V.bgRojo }
+      ],
+
+      adres: [
+        { t: 'Población afiliada del municipio', v: '778.412', fuente: 'BDUA importada' },
+        { t: 'Régimen subsidiado', v: '396.204', fuente: 'BDUA importada' },
+        { t: 'Régimen contributivo', v: '382.208', fuente: 'BDUA importada' },
+        { t: 'EPS con afiliados en el municipio', v: '11', fuente: 'BDUA importada' },
+        { t: 'Afiliados en la última LMA', v: '394.860', fuente: 'Liquidación mensual de afiliados' },
+        { t: 'UPC liquidada del periodo', v: '$41.284 M', fuente: 'Información oficial de financiación' },
+        { t: 'Fuentes de financiación reportadas', v: '4', fuente: 'Información oficial de financiación' },
+        { t: 'Última actualización de la importación', v: '31 jul 2026', fuente: 'Cargue manual' }
+      ],
+      comparacion: [
+        { t: 'Personas mayores de 60 registradas', eligeme: '2.196', oficial: '6.117', dif: '3.921 por vincular', color: V.amar },
+        { t: 'Personas con EPS identificada', eligeme: '2.986', oficial: '3.050', dif: '64 sin identificar', color: V.amar },
+        { t: 'Afiliados al régimen subsidiado', eligeme: '2.412', oficial: '2.468', dif: '56 por verificar', color: V.amar },
+        { t: 'Personas con discapacidad en el RLCPD', eligeme: '1.050', oficial: '1.912', dif: '862 por caracterizar', color: V.amar },
+        { t: 'Registros que coinciden plenamente', eligeme: '2.986', oficial: '2.986', dif: 'Sin diferencia', color: V.verde }
+      ],
+
+      cuidadoIndicadores: [
+        { t: 'Personas mayores registradas', v: '2.196', color: V.azul },
+        { t: 'Personas con necesidad de cuidado', v: '1.640', color: V.azul },
+        { t: 'Personas con cuidador registrado', v: '1.164', color: V.teal },
+        { t: 'Personas sin cuidador identificado', v: '476', color: V.amar },
+        { t: 'Con atención domiciliaria activa', v: '412', color: V.teal },
+        { t: 'Con valoración profesional registrada', v: '386', color: V.teal },
+        { t: 'Con seguimiento vigente', v: '358', color: V.verde },
+        { t: 'Visitas domiciliarias del año', v: '1.284', color: V.teal },
+        { t: 'Consultas virtuales del año', v: '386', color: V.teal },
+        { t: 'Valoraciones interdisciplinarias', v: '142', color: V.teal },
+        { t: 'Cuidadores con educación registrada', v: '744', color: V.verde },
+        { t: 'Alertas atendidas del total generado', v: '233 de 248', color: V.verde }
+      ],
+      matrizCuidado: [
+        { t: 'Personas mayores', identificada: '6.117', atendida: '2.196', seguimiento: '1.664', pendiente: '3.921' },
+        { t: 'Discapacidad', identificada: '2.845', atendida: '1.050', seguimiento: '762', pendiente: '1.795' },
+        { t: 'Cuidado en casa', identificada: '1.640', atendida: '928', seguimiento: '744', pendiente: '712' }
+      ],
+
+      brechas: [
+        { v: '5.092', t: 'Personas identificadas sin vincular a ELÍGEME', detalle: 'La mayor concentración está en Cazucá y la zona rural', nivel: 'Prioritario', color: V.rojo, bg: V.bgRojo },
+        { v: '476', t: 'Personas con necesidad de cuidado sin cuidador identificado', detalle: 'Requieren caracterización y ruta de apoyo', nivel: 'Prioritario', color: V.rojo, bg: V.bgRojo },
+        { v: '27', t: 'Personas sin seguimiento reciente', detalle: 'Sin registro en los últimos 45 días', nivel: 'Prioritario', color: V.rojo, bg: V.bgRojo },
+        { v: '15', t: 'Alertas abiertas sin cierre documentado', detalle: '4 rojas y 11 amarillas', nivel: 'Seguimiento', color: V.amar, bg: V.bgAmar },
+        { v: '2', t: 'Zonas con cobertura inferior al 50 %', detalle: 'Cazucá 44 % y zona rural 31 %', nivel: 'Seguimiento', color: V.amar, bg: V.bgAmar },
+        { v: '722', t: 'Cuidadores sin formación registrada', detalle: '12 ya requieren refuerzo según la bitácora', nivel: 'Seguimiento', color: V.amar, bg: V.bgAmar },
+        { v: '1', t: 'Programa con ejecución muy baja', detalle: 'Formación de cuidadores en 26 %', nivel: 'Seguimiento', color: V.amar, bg: V.bgAmar },
+        { v: '$300 M', t: 'Presupuesto sin ejecutar', detalle: 'Quedan cuatro meses del periodo', nivel: 'Seguimiento', color: V.amar, bg: V.bgAmar },
+        { v: '18', t: 'Actividades sin soporte documental', detalle: 'Afectan el nivel de evidencia del municipio', nivel: 'Seguimiento', color: V.amar, bg: V.bgAmar }
+      ],
+
+      cuidadores: [
+        { t: 'Cuidadores identificados', v: '1.164', color: V.azul },
+        { t: 'Cuidadores familiares', v: '886', color: V.azul },
+        { t: 'Cuidadores remunerados', v: '278', color: V.azul },
+        { t: 'Con formación registrada', v: '442', color: V.teal },
+        { t: 'Sin formación', v: '722', color: V.amar },
+        { t: 'En capacitación', v: '164', color: V.teal },
+        { t: 'Certificados', v: '442', color: V.verde },
+        { t: 'Certificados por el SENA', v: '318', color: V.verde },
+        { t: 'Certificados por otras instituciones', v: '124', color: V.verde }
+      ],
+      rutaFormacion: [
+        { t: 'Cuidadores orientados a formación', v: '612', pct: '53%', color: V.teal },
+        { t: 'Inscritos en un proceso', v: '386', pct: '33%', color: V.teal },
+        { t: 'En formación', v: '164', pct: '14%', color: V.teal },
+        { t: 'Certificación cargada', v: '442', pct: '38%', color: V.verde },
+        { t: 'Certificación verificada', v: '304', pct: '26%', color: V.verde }
+      ],
+
+      resultados: [
+        { t: 'Cobertura de población objetivo', antes: '19,8 %', ahora: '37,5 %', variacion: '+17,7 pp', color: V.verde },
+        { t: 'Visitas domiciliarias', antes: '742', ahora: '1.284', variacion: '+73 %', color: V.verde },
+        { t: 'Consultas virtuales', antes: '96', ahora: '386', variacion: '+302 %', color: V.verde },
+        { t: 'Personas con seguimiento vigente', antes: '188', ahora: '358', variacion: '+90 %', color: V.verde },
+        { t: 'Tiempo promedio de respuesta a alertas', antes: '6 h 20 min', ahora: '41 min', variacion: '−89 %', color: V.verde },
+        { t: 'Cuidadores identificados', antes: '404', ahora: '1.164', variacion: '+188 %', color: V.verde },
+        { t: 'Cuidadores certificados', antes: '96', ahora: '442', variacion: '+360 %', color: V.verde },
+        { t: 'Actividades con evidencia documental', antes: '61,4 %', ahora: '92,8 %', variacion: '+31,4 pp', color: V.verde }
+      ],
+      satisfaccion: [
+        { t: 'Calificación general', v: '4,4', color: V.verde },
+        { t: 'Evaluaciones recibidas', v: '628', color: V.azul },
+        { t: 'Puntualidad', v: '4,0', color: V.teal },
+        { t: 'Comunicación', v: '4,7', color: V.verde },
+        { t: 'Empatía', v: '4,8', color: V.verde },
+        { t: 'Orientación al cuidador', v: '4,1', color: V.teal }
+      ],
+
+      portada: [
+        { k: 'MUNICIPIO', v: 'Soacha' }, { k: 'PERIODO', v: 'Agosto 2026' },
+        { k: 'POBLACIÓN OBJETIVO', v: '8.142' }, { k: 'BENEFICIARIOS', v: '3.050' },
+        { k: 'PRESUPUESTO', v: '$1.580 M' }, { k: 'EJECUCIÓN', v: '55 %' },
+        { k: 'NIVEL DE EVIDENCIA', v: '92,8 %' }, { k: 'BRECHAS ABIERTAS', v: '9' }
+      ],
+      informes: [
+        { t: 'Informe de gestión', sub: 'Resumen ejecutivo del periodo con cobertura, atención y evidencia' },
+        { t: 'Informe de población beneficiada', sub: 'Poblaciones, intersecciones y distribución territorial' },
+        { t: 'Informe de ejecución presupuestal', sub: 'Asignado, ejecutado, comprometido y disponible por programa' },
+        { t: 'Informe de evidencias', sub: 'Actividades, soportes y cobertura documental' },
+        { t: 'Informe de atención domiciliaria', sub: 'Visitas, consultas virtuales y seguimiento' },
+        { t: 'Informe de cuidadores', sub: 'Identificación, formación y certificación' },
+        { t: 'Informe de indicadores', sub: 'Metas, cumplimiento y variación del periodo' },
+        { t: 'Carpeta de evidencias para FURAG y MIPG', sub: 'Documentos organizados por política, con estado y responsable' },
+        { t: 'Reporte de seguimiento al derecho al cuidado', sub: 'Acciones registradas, cobertura alcanzada y pendientes' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

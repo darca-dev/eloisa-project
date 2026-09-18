@@ -1,0 +1,1174 @@
+/*
+ * «Gestión financiera» del Hospital (TASK-003H-06).
+ *
+ * Conserva el lenguaje visual Hospital ya aprobado: mismo lienzo, mismos
+ * tokens de `src/styles/tokens.css`, mismo radio y misma sombra de tarjeta que
+ * las vistas de operación (`hospitalViews.module.css`), densidad administrativa
+ * y controles pequeños. No se crean tarjetas gigantes ni un lenguaje visual
+ * nuevo.
+ *
+ * Los dos valores que el sistema todavía no nombra —radio 20px y sombra de
+ * tarjeta— se declaran en `.modulo`, igual que en las vistas existentes, y no
+ * se propagan fuera de este módulo.
+ *
+ * Accesibilidad: ningún estado se comunica solo con color; el foco es siempre
+ * visible; las tablas refluyen a tarjetas de definición en pantallas estrechas
+ * sin producir desbordamiento horizontal global.
+ */
+
+.modulo {
+  --h-radio-tarjeta: 20px;
+  --h-sombra-tarjeta: 0 1px 6px rgba(15, 46, 61, 0.06);
+  --h-borde-suave: #e4ebee;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* ------------------------------- Breadcrumb ------------------------------- */
+
+.breadcrumb {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.breadcrumbSeparador {
+  color: var(--b-gris-inactivo);
+}
+
+.breadcrumbActual {
+  color: var(--b-tinta);
+}
+
+/* ------------------------------- Encabezado ------------------------------- */
+
+.encabezado {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.encabezadoIcono {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--b-radio-icono);
+  background: var(--b-celeste);
+  color: var(--b-azul);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.encabezadoTextos {
+  min-width: 0;
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.15;
+  font-weight: var(--b-peso-maximo);
+}
+
+.descripcion {
+  margin: 0;
+  max-width: 760px;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+.badgeDemo {
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 6px 12px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-amarillo-fondo);
+  border: 1.5px solid var(--b-amarillo-borde);
+  color: var(--b-amarillo);
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+}
+
+/* ---------------------------- Barra de contexto --------------------------- */
+
+.contexto {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  background: var(--b-blanco);
+  border-radius: var(--b-radio-tarjeta);
+  box-shadow: var(--h-sombra-tarjeta);
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 170px;
+}
+
+.campoAncho {
+  flex: 2 1 260px;
+}
+
+.campoEtiqueta {
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  letter-spacing: 0.06em;
+}
+
+.campoControl {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+  background: var(--b-blanco);
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  padding: 8px 10px;
+  min-width: 0;
+  width: 100%;
+}
+
+.campoControl:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 1px;
+}
+
+.campoAyuda {
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.contextoAcciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* --------------------------------- Botones -------------------------------- */
+
+.boton {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  padding: 9px 14px;
+  border-radius: var(--b-radio-campo);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.boton:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.botonNeutro {
+  border: 1.5px solid var(--b-borde);
+  background: var(--b-blanco);
+  color: var(--b-tinta);
+}
+
+.botonPrimario {
+  border: none;
+  background: var(--b-azul);
+  color: var(--b-blanco);
+}
+
+.boton:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+/*
+ * Estado escrito junto a toda acción no implementada: la indisponibilidad se
+ * lee como texto y nunca depende del color ni de la apariencia deshabilitada.
+ */
+.accionEnvoltura {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.accionEstado {
+  font-size: 11px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+/* --------------------------------- Cuerpo --------------------------------- */
+
+.cuerpo {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.menuBoton {
+  display: inline-flex;
+}
+
+/*
+ * Envoltorio del menú secundario.
+ *
+ * En escritorio y en tableta no aporta caja: `display: contents` deja que el
+ * `<nav>` siga siendo hijo directo de `.cuerpo`, de modo que el menú lateral de
+ * 224 px y el bloque colapsable conservan exactamente su comportamiento
+ * aprobado. Solo por debajo de 720 px se convierte en el panel modal inferior.
+ */
+.menuPanel,
+.menuPanelAbierto {
+  display: contents;
+}
+
+/* Backdrop del panel modal. Fuera del móvil no existe visualmente. */
+.menuFondo {
+  display: none;
+}
+
+/* Cierre del panel modal. Solo se muestra mientras el panel está abierto. */
+.menuCerrar {
+  align-self: flex-start;
+}
+
+.menu {
+  flex: 0 0 224px;
+  width: 224px;
+  background: var(--b-blanco);
+  border-radius: var(--b-radio-tarjeta);
+  box-shadow: var(--h-sombra-tarjeta);
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.menuOculto {
+  display: none;
+}
+
+.menuGrupo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.menuTitulo {
+  margin: 0;
+  padding: 0 8px;
+  font-size: 10px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--b-gris-inactivo);
+}
+
+.menuLista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menuItem {
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 9px;
+  border: none;
+  background: none;
+  border-radius: var(--b-radio-campo);
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+  cursor: pointer;
+  min-width: 0;
+}
+
+.menuItem:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: -1px;
+}
+
+.menuItemActivo {
+  background: var(--b-celeste);
+  color: var(--b-azul);
+  font-weight: var(--b-peso-maximo);
+  /* El activo también se marca con borde: no depende solo del color. */
+  box-shadow: inset 3px 0 0 var(--b-azul);
+}
+
+.menuIcono {
+  flex: 0 0 auto;
+  color: var(--b-petroleo-texto);
+}
+
+.menuItemActivo .menuIcono {
+  color: var(--b-azul);
+}
+
+.menuEtiqueta {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.panel {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* -------------------------------- Tarjetas -------------------------------- */
+
+.tarjeta {
+  min-width: 0;
+  background: var(--b-blanco);
+  border-radius: var(--b-radio-tarjeta);
+  box-shadow: var(--h-sombra-tarjeta);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tarjetaCabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tarjetaTitulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.tarjetaNota {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.nota {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--b-lienzo);
+  border-radius: var(--b-radio-campo);
+  font-size: 12.5px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.notaAtencion {
+  background: var(--b-amarillo-fondo);
+  border: 1.5px solid var(--b-amarillo-borde);
+  color: var(--b-amarillo);
+}
+
+.estadoDatos {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* --------------------------------- Badges --------------------------------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--b-radio-pildora);
+  font-size: 11.5px;
+  font-weight: var(--b-peso-maximo);
+  background: var(--h-tono-fondo);
+  color: var(--h-tono-texto);
+  border: 1.5px solid var(--h-tono-borde);
+  white-space: normal;
+}
+
+.badgeOrigen {
+  background: var(--b-lienzo);
+  border: 1.5px solid var(--b-borde);
+  color: var(--b-gris);
+}
+
+/* ---------------------------------- KPI ----------------------------------- */
+
+.kpis {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(196px, 1fr));
+  gap: 10px;
+}
+
+.kpiItem {
+  min-width: 0;
+}
+
+.kpiBoton {
+  font-family: inherit;
+  width: 100%;
+  height: 100%;
+  max-height: 104px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--b-blanco);
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-tarjeta);
+  box-shadow: var(--h-sombra-tarjeta);
+  cursor: pointer;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.kpiBoton:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.kpiCabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.kpiEtiqueta {
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.05em;
+  color: var(--b-gris);
+  text-transform: uppercase;
+}
+
+.kpiIcono {
+  flex: 0 0 auto;
+  color: var(--b-petroleo-texto);
+}
+
+.kpiValor {
+  font-size: 19px;
+  line-height: 1.15;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+  overflow-wrap: anywhere;
+}
+
+.kpiPie {
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+  overflow-wrap: anywhere;
+}
+
+/* ---------------------------- Barras de valor ----------------------------- */
+
+.barra {
+  display: block;
+  height: 8px;
+  background: var(--h-borde-suave);
+  border-radius: var(--b-radio-pildora);
+  overflow: hidden;
+}
+
+.barraRelleno {
+  display: block;
+  height: 100%;
+  width: var(--h-pct, 0%);
+  background: var(--h-color, var(--b-azul));
+  border-radius: var(--b-radio-pildora);
+}
+
+.programaLista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.programaFila {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.programaCabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.programaCifras {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 6px;
+  font-size: 12px;
+}
+
+.programaCifra {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.programaCifraEtiqueta {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.06em;
+  color: var(--b-gris);
+  text-transform: uppercase;
+}
+
+.programaCifraValor {
+  margin: 0;
+  font-weight: var(--b-peso-enfasis);
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------- Necesita atención ------------------------------ */
+
+.atencionLista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.atencionItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--h-borde-suave);
+}
+
+.atencionItem:last-child {
+  border-bottom: none;
+}
+
+.atencionTextos {
+  flex: 1 1 240px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.atencionCategoria {
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--b-petroleo-texto);
+}
+
+.atencionAsunto {
+  font-size: 13.5px;
+  font-weight: var(--b-peso-enfasis);
+}
+
+.atencionMeta {
+  font-size: 11.5px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* --------------------------------- Tablas --------------------------------- */
+
+.tablaContenedor {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.tablaContenedor:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.tablaLeyenda {
+  text-align: left;
+  padding-bottom: 8px;
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.tablaEncabezado {
+  position: sticky;
+  top: 0;
+  background: var(--b-blanco);
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--b-borde);
+  font-size: 10.5px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+  white-space: nowrap;
+}
+
+.celda {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--h-borde-suave);
+  vertical-align: top;
+  font-weight: var(--b-peso-medio);
+  overflow-wrap: anywhere;
+}
+
+.celdaNumerica {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--b-peso-enfasis);
+  white-space: nowrap;
+}
+
+.celdaAccion {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--h-borde-suave);
+  vertical-align: top;
+}
+
+.filaBoton {
+  font-family: inherit;
+  border: 1.5px solid var(--b-borde);
+  background: var(--b-blanco);
+  color: var(--b-azul);
+  border-radius: var(--b-radio-campo);
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  padding: 6px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.filaBoton:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.filaActiva {
+  background: var(--b-celeste);
+}
+
+.vacio {
+  margin: 0;
+  padding: 18px 10px;
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* --------------------------------- Chips ---------------------------------- */
+
+.chips {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px 5px 11px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-lienzo);
+  border: 1.5px solid var(--b-borde);
+  font-size: 11.5px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+.chipQuitar {
+  font-family: inherit;
+  border: none;
+  background: var(--b-blanco);
+  color: var(--b-azul);
+  border-radius: var(--b-radio-pildora);
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.chipQuitar:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+/* ------------------------------ Subpestañas ------------------------------- */
+
+.bandejas {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.bandeja {
+  font-family: inherit;
+  padding: 6px 13px;
+  border-radius: var(--b-radio-pildora);
+  border: 1.5px solid var(--b-borde);
+  background: var(--b-blanco);
+  color: var(--b-gris);
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+}
+
+.bandejaActiva {
+  border-color: var(--b-azul);
+  background: var(--b-azul);
+  color: var(--b-blanco);
+}
+
+.bandeja:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+/* ------------------------------- Panel lateral ---------------------------- */
+
+.detalle {
+  border: 1.5px solid var(--b-celeste-borde);
+  background: var(--b-blanco);
+  border-radius: var(--b-radio-tarjeta);
+  box-shadow: var(--h-sombra-tarjeta);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.detalleCabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.detalleTitulo {
+  margin: 0;
+  font-size: 17px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.detalleSubtitulo {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.detalleSeccion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detalleSubtitulo3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.campos {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.campoDato {
+  min-width: 0;
+  padding: 9px 11px;
+  background: var(--b-lienzo);
+  border-radius: var(--b-radio-campo);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.campoDatoEtiqueta {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+}
+
+.campoDatoValor {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: var(--b-peso-enfasis);
+  overflow-wrap: anywhere;
+}
+
+.linea {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.lineaItem {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--h-borde-suave);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  font-size: 12.5px;
+}
+
+.lineaItem:last-child {
+  border-bottom: none;
+}
+
+.lineaFecha {
+  flex: 0 0 auto;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+}
+
+.lineaTextos {
+  flex: 1 1 200px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lineaPrincipal {
+  font-weight: var(--b-peso-enfasis);
+}
+
+.lineaSecundaria {
+  font-size: 11.5px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* ------------------------- Formulario en panel ---------------------------- */
+
+.formulario {
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-tarjeta);
+  background: var(--b-blanco);
+  box-shadow: var(--h-sombra-tarjeta);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.formularioCampos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.ranura {
+  border: 2px dashed var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  padding: 14px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+  background: var(--b-lienzo);
+}
+
+/* --------------------------- Conexión y estados --------------------------- */
+
+.categorias {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.categoria {
+  min-width: 0;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  padding: 11px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--b-blanco);
+}
+
+.categoriaCabecera {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.categoriaEtiqueta {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.categoriaDatos {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 5px;
+  font-size: 11.5px;
+}
+
+.estadosLista {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px;
+}
+
+/* ------------------------------- Responsive ------------------------------- */
+
+/*
+ * Menú secundario colapsable. En escritorio ocupa 224 px dentro del contenido y
+ * está siempre presente; por debajo de 1024 px se abre con el botón
+ * «Secciones financieras» y en móvil se despliega como panel sobre el
+ * contenido.
+ */
+@media (min-width: 1024px) {
+  .menuBoton {
+    display: none;
+  }
+
+  .menuOculto {
+    display: flex;
+  }
+}
+
+@media (max-width: 1023px) {
+  .cuerpo {
+    flex-direction: column;
+  }
+
+  .menu {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+}
+
+/*
+ * Móvil: el mismo menú se abre como panel modal desde el borde inferior.
+ *
+ * Cerrado solo se ve el botón «Secciones financieras». Abierto, el panel sube
+ * desde abajo sobre un backdrop que cubre el contenido, mantiene las seis
+ * agrupaciones y los quince destinos sin cambiar etiquetas, iconos ni orden, y
+ * se desplaza verticalmente si no cabe. Queda fijado a los dos bordes de la
+ * ventana, de modo que no introduce desbordamiento horizontal.
+ */
+@media (max-width: 720px) {
+  .menuPanel {
+    display: none;
+  }
+
+  .menuPanelAbierto {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 61;
+    max-width: 100%;
+    max-height: 82vh;
+    overflow-y: auto;
+    padding: 12px;
+    background: var(--b-blanco);
+    border-radius: var(--h-radio-tarjeta) var(--h-radio-tarjeta) 0 0;
+    box-shadow: 0 -6px 22px rgba(15, 46, 61, 0.22);
+    animation: financieraPanelEntra 180ms ease-out;
+  }
+
+  .menuPanelAbierto .menu {
+    flex: 0 1 auto;
+    width: 100%;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .menuFondo {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgba(15, 46, 61, 0.45);
+  }
+
+  .menuCerrar {
+    align-self: stretch;
+    justify-content: center;
+  }
+}
+
+@keyframes financieraPanelEntra {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Ocultado progresivo de columnas secundarias. */
+@media (max-width: 900px) {
+  .colSecundaria {
+    display: none;
+  }
+}
+
+/*
+ * Reflujo de tabla a tarjeta de definición. Cada celda escribe su encabezado
+ * desde `data-etiqueta`, de modo que la relación encabezado/valor se conserva
+ * visualmente sin duplicar el marcado ni producir scroll horizontal.
+ */
+@media (max-width: 720px) {
+  .tabla,
+  .tabla tbody,
+  .tabla tr {
+    display: block;
+    width: 100%;
+  }
+
+  .tabla thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .tabla tr {
+    border: 1.5px solid var(--b-borde);
+    border-radius: var(--b-radio-campo);
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    background: var(--b-blanco);
+  }
+
+  .celda,
+  .celdaAccion {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 5px 0;
+    border-bottom: none;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .celda::before {
+    content: attr(data-etiqueta);
+    font-size: 10px;
+    font-weight: var(--b-peso-maximo);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--b-gris);
+  }
+
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 360px) {
+  .kpis {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modulo * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

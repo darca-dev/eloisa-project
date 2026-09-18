@@ -1,0 +1,23 @@
+/*
+ * Iconos semánticos (TASK-002A, FR-07).
+ *
+ * El tamaño sigue el contenedor aprobado de cada tarjeta; el color lo hereda
+ * del contenedor mediante `currentColor`. No hay color propio aquí.
+ */
+
+.icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+
+.iconSmall {
+  width: 18px;
+  height: 18px;
+}
+
+.iconLarge {
+  width: 26px;
+  height: 26px;
+}

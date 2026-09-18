@@ -1,0 +1,21 @@
+/*
+ * Logo aprobado de la marca (TASK-002A).
+ *
+ * Solo posiciona y contiene el símbolo: no lo recolorea, no lo recorta y no lo
+ * deforma. Los colores del chip provienen del sistema (`src/styles/tokens.css`).
+ */
+
+.mark {
+  display: block;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  background: var(--b-blanco);
+}

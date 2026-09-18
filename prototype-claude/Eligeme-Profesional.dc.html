@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; font-family:Nunito, system-ui, sans-serif; background:#F1F3F6; color:#14213D; -webkit-font-smoothing:antialiased; }
+  a { color:#1E5AA7; text-decoration:none; font-weight:800; }
+  a:hover { color:#E83CB6; }
+  input, select, textarea, button { font-family:Nunito, sans-serif; }
+  input:focus, select:focus, textarea:focus { outline:3px solid #BFD6F0; outline-offset:1px; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;padding:20px 16px 80px">
+  <div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+
+    <div style="background:#1E5AA7;border-radius:20px;padding:16px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:2px">
+        <div style="font-size:12px;font-weight:900;color:#BFD6F0;letter-spacing:.12em">ELÍGEME</div>
+        <div style="font-size:19px;font-weight:900;color:#fff">Profesional en Salud</div>
+      </div>
+      <button style="display:flex;align-items:center;gap:9px;padding:11px 16px;border:1.5px solid #5FA8E1;border-radius:99px;background:transparent;color:#fff;font-size:15px;font-weight:900;cursor:pointer">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        Novedades
+        <span style="padding:2px 9px;border-radius:99px;background:#E83CB6;font-size:13px;font-weight:900">{{ campana }}</span>
+      </button>
+      <div style="display:flex;align-items:center;gap:11px;padding:8px 14px 8px 8px;border-radius:99px;background:#17498A">
+        <span style="width:36px;height:36px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#1E5AA7">LG</span>
+        <span style="display:flex;flex-direction:column"><span style="font-size:14px;font-weight:900;color:#fff">Laura Gómez</span><span style="font-size:12px;font-weight:700;color:#BFD6F0">Medicina general</span></span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:9px;flex-wrap:wrap">
+      <sc-for list="{{ nav }}" as="t" hint-placeholder-count="4">
+        <button onClick="{{ t.on }}" style="display:flex;align-items:center;gap:9px;padding:12px 18px;border-radius:99px;font-size:15px;font-weight:900;cursor:pointer;border:{{ t.bd }};background:{{ t.bg }};color:{{ t.fg }}">{{ t.t }}</button>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{ enPaciente }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ goTurno }}" style="align-self:flex-start;display:flex;align-items:center;gap:10px;padding:13px 20px;border:2px solid #D8DFEA;border-radius:99px;background:#fff;font-size:16px;font-weight:900;color:#1E5AA7;cursor:pointer">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        Volver a mi turno
+      </button>
+    </sc-if>
+
+    <sc-if value="{{ vDash }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <span style="flex:0 0 64px;width:64px;height:64px;border-radius:20px;background:#EEF4FC;border:2px solid #D9E5F5;display:flex;align-items:center;justify-content:center;color:#1E5AA7">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2v2a4 4 0 0 1-8 0V2"/><path d="M7 8v4a6 6 0 0 0 12 0v-1"/><circle cx="20" cy="10" r="2"/></svg>
+            </span>
+            <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:5px">
+              <div style="font-size:28px;font-weight:900;line-height:1.15">Hola, Laura</div>
+              <div style="font-size:16px;font-weight:700;color:#5B6B85">Medicina general · Nueva EPS · Hospital San Rafael (ESE)</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <span style="display:flex;align-items:center;gap:8px;padding:11px 16px;border-radius:99px;background:#F1F3F6;font-size:15px;font-weight:800;color:#5B6B85">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Zona: Soacha · comunas 3 y 4
+            </span>
+            <span style="display:flex;align-items:center;gap:8px;padding:11px 16px;border-radius:99px;background:#F1F3F6;font-size:15px;font-weight:800;color:#5B6B85">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              Turno de hoy: 7:30 a. m. a 4:00 p. m.
+            </span>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px">
+          <button onClick="{{ goTurno }}" style="text-align:left;padding:20px;border:2px solid #D9E5F5;border-radius:20px;background:#EEF4FC;cursor:pointer;display:flex;flex-direction:column;gap:11px">
+            <span style="width:50px;height:50px;border-radius:15px;background:#fff;border:1.5px solid #D9E5F5;display:flex;align-items:center;justify-content:center;color:#1E5AA7"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg></span>
+            <span style="font-size:34px;font-weight:900;line-height:1;color:#1E5AA7">6</span>
+            <span style="font-size:17px;font-weight:900">Mis pacientes de hoy</span>
+            <span style="font-size:14px;font-weight:700;color:#5B6B85">4 en casa · 2 virtuales</span>
+          </button>
+          <button onClick="{{ goTurno }}" style="text-align:left;padding:20px;border:2.5px solid #F3DCA9;border-radius:20px;background:#FEF6E9;cursor:pointer;display:flex;flex-direction:column;gap:11px">
+            <span style="width:50px;height:50px;border-radius:15px;background:#fff;border:1.5px solid #F3DCA9;display:flex;align-items:center;justify-content:center;color:#B45309"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+            <span style="font-size:34px;font-weight:900;line-height:1;color:#B45309">3</span>
+            <span style="font-size:17px;font-weight:900">Alertas pendientes</span>
+            <span style="font-size:14px;font-weight:700;color:#5B6B85">2 amarillas · 1 roja</span>
+          </button>
+          <button onClick="{{ goTurno }}" style="text-align:left;padding:20px;border:2px solid #DEDBF6;border-radius:20px;background:#F1F0FC;cursor:pointer;display:flex;flex-direction:column;gap:11px">
+            <span style="width:50px;height:50px;border-radius:15px;background:#fff;border:1.5px solid #DEDBF6;display:flex;align-items:center;justify-content:center;color:#6D5BD0"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg></span>
+            <span style="font-size:34px;font-weight:900;line-height:1;color:#6D5BD0">4</span>
+            <span style="font-size:17px;font-weight:900">Notas del equipo</span>
+            <span style="font-size:14px;font-weight:700;color:#5B6B85">Dejadas para mis próximas visitas</span>
+          </button>
+          <button onClick="{{ goMetricas }}" style="text-align:left;padding:20px;border:2px solid #CFE9D6;border-radius:20px;background:#EFF9F1;cursor:pointer;display:flex;flex-direction:column;gap:11px">
+            <span style="width:50px;height:50px;border-radius:15px;background:#fff;border:1.5px solid #CFE9D6;display:flex;align-items:center;justify-content:center;color:#16A34A"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.7 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></span>
+            <span style="font-size:34px;font-weight:900;line-height:1;color:#16A34A">4.2</span>
+            <span style="font-size:17px;font-weight:900">Mi calificación</span>
+            <span style="font-size:14px;font-weight:700;color:#5B6B85">38 visitas evaluadas · sube 0.2</span>
+          </button>
+        </div>
+
+        <div style="background:#fff;border:2.5px solid #F3DCA9;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div style="font-size:12px;font-weight:900;color:#B45309;letter-spacing:.09em">PRÓXIMA ATENCIÓN</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:900;color:#B45309">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              En 25 minutos
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <span style="flex:0 0 60px;width:60px;height:60px;border-radius:50%;background:#EEF4FC;border:2px solid #D9E5F5;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:900;color:#1E5AA7">MG</span>
+            <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:24px;font-weight:900">10:00 a. m. · María Gómez</div>
+              <div style="font-size:16px;font-weight:700;color:#5B6B85">76 años · Nueva EPS · Soacha</div>
+            </div>
+            <span style="display:flex;align-items:center;gap:9px;padding:11px 16px;border-radius:99px;background:#EEF4FC;border:1.5px solid #D9E5F5;font-size:15px;font-weight:900;color:#1E5AA7">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+              Visita en casa
+            </span>
+            <span style="display:flex;align-items:center;gap:9px;padding:11px 16px;border-radius:99px;background:#FEF6E9;border:1.5px solid #F3DCA9;font-size:15px;font-weight:900;color:#B45309">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+              Amarillo
+            </span>
+          </div>
+          <div style="padding:18px;border-left:3px solid #6D5BD0;background:#F1F0FC;border-radius:0 16px 16px 0;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:9px;font-size:13px;font-weight:900;color:#6D5BD0;letter-spacing:.07em">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+              NOTA PENDIENTE DEL EQUIPO
+            </div>
+            <div style="font-size:18px;line-height:1.45;font-weight:800">Revisar nuevamente la toma de presión y enseñar la técnica a la cuidadora.</div>
+            <div style="font-size:14px;font-weight:700;color:#5B6B85">Enf. Carlos Ruiz · 12 ago 2026, 4:20 p. m.</div>
+          </div>
+          <button onClick="{{ verPaciente }}" style="width:100%;padding:20px;border:none;border-radius:16px;background:#1E5AA7;color:#fff;font-size:19px;font-weight:900;cursor:pointer">Ver paciente</button>
+        </div>
+
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:14px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.08em">NOVEDADES DE HOY</div>
+          <sc-for list="{{ novedades }}" as="v" hint-placeholder-count="4">
+            <div style="display:flex;gap:13px;align-items:flex-start;padding:14px 0;border-bottom:1px solid #E4E9F2">
+              <span style="flex:0 0 12px;width:12px;height:12px;border-radius:50%;background:{{ v.color }};margin-top:6px"></span>
+              <div style="flex:1;display:flex;flex-direction:column;gap:3px">
+                <div style="font-size:17px;font-weight:800;line-height:1.4">{{ v.t }}</div>
+                <div style="font-size:14px;font-weight:700;color:#5B6B85">{{ v.meta }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vTurno }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:7px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:27px;font-weight:900">Mi turno de hoy</div>
+          <div style="font-size:17px;line-height:1.5;color:#5B6B85;font-weight:600">Seis atenciones organizadas por hora: cuatro en casa y dos virtuales. Cada tarjeta muestra modalidad, semáforo y notas del equipo antes de abrir al paciente.</div>
+        </div>
+
+        <sc-for list="{{ turno }}" as="a" hint-placeholder-count="4">
+          <div style="background:#fff;border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 2px 10px rgba(20,33,61,.06);border-left:5px solid {{ a.color }}">
+            <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+              <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:3px;min-width:100px">
+                <div style="font-size:22px;font-weight:900">{{ a.hora }}</div>
+                <div style="font-size:14px;font-weight:800;color:#5B6B85">{{ a.duracion }}</div>
+              </div>
+              <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:4px">
+                <div style="font-size:23px;font-weight:900">{{ a.nombre }}</div>
+                <div style="font-size:16px;font-weight:700;color:#5B6B85">{{ a.datos }}</div>
+              </div>
+              <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+                <span style="display:flex;align-items:center;gap:9px;padding:10px 15px;border-radius:99px;background:{{ a.modBg }};border:1.5px solid {{ a.modBd }};font-size:15px;font-weight:900;color:{{ a.modColor }}">{{ a.modIcono }}{{ a.modalidad }}</span>
+                <span style="display:flex;align-items:center;gap:9px;padding:10px 15px;border-radius:99px;background:{{ a.bg }};border:1.5px solid {{ a.bd }};font-size:15px;font-weight:900;color:{{ a.color }}">{{ a.semIcono }}{{ a.semaforo }}</span>
+              </div>
+            </div>
+
+            <sc-if value="{{ a.esCasa }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:18px;background:#F7F9FC;border-radius:16px;display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;align-items:center;gap:9px;font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  DÓNDE ESTÁ EL PACIENTE
+                </div>
+                <div style="font-size:17px;font-weight:800;line-height:1.45">{{ a.direccion }}</div>
+                <div style="font-size:16px;line-height:1.5;font-weight:700;color:#5B6B85">{{ a.comoLlegar }}</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px">
+                  <sc-for list="{{ a.contactos }}" as="c" hint-placeholder-count="3">
+                    <div style="padding:13px 15px;background:#fff;border:1.5px solid #D8DFEA;border-radius:12px;display:flex;flex-direction:column;gap:2px">
+                      <div style="font-size:12px;font-weight:900;color:#5B6B85;letter-spacing:.06em">{{ c.rol }}</div>
+                      <div style="font-size:16px;font-weight:800">{{ c.nombre }}</div>
+                      <div style="font-size:15px;font-weight:700;color:#1E5AA7">{{ c.tel }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <button style="align-self:flex-start;display:flex;align-items:center;gap:9px;padding:14px 20px;border:2px solid #1E5AA7;border-radius:99px;background:#fff;color:#1E5AA7;font-size:16px;font-weight:900;cursor:pointer">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 19-9-9 19-2-8z"/></svg>
+                  Cómo llegar
+                </button>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ a.esVirtual }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:18px;background:#EEF4FC;border-radius:16px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <div style="font-size:13px;font-weight:900;color:#1E5AA7;letter-spacing:.07em">CONSULTA VIRTUAL</div>
+                  <div style="font-size:17px;font-weight:800">{{ a.conexion }}</div>
+                  <div style="font-size:14px;font-weight:700;color:#5B6B85">El proveedor de videollamada se conecta después. Aquí queda el punto de entrada.</div>
+                </div>
+                <button style="padding:16px 22px;border:none;border-radius:14px;background:#1E5AA7;color:#fff;font-size:17px;font-weight:900;cursor:pointer">Ingresar a consulta virtual</button>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ a.tieneNota }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;align-items:center;gap:11px;padding:14px 16px;background:#F1F0FC;border-radius:14px;flex-wrap:wrap">
+                <span style="display:flex;align-items:center;gap:8px;color:#6D5BD0;font-size:15px;font-weight:900">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                  Nota pendiente: {{ a.notas }}
+                </span>
+                <span style="flex:1;min-width:180px;font-size:15px;line-height:1.45;font-weight:700;color:#5B6B85">{{ a.notaTexto }}</span>
+              </div>
+            </sc-if>
+
+            <button onClick="{{ a.on }}" style="width:100%;padding:18px;border:none;border-radius:14px;background:{{ a.ctaBg }};color:#fff;font-size:18px;font-weight:900;cursor:pointer">{{ a.cta }}</button>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vFicha }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:12px;font-weight:900;color:#E83CB6;letter-spacing:.09em">FICHA DEL PACIENTE</div>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <span style="flex:0 0 74px;width:74px;height:74px;border-radius:50%;background:#EEF4FC;border:2.5px solid #D9E5F5;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:900;color:#1E5AA7">MG</span>
+            <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:5px">
+              <div style="font-size:28px;font-weight:900;line-height:1.15">María Gómez Osorio</div>
+              <div style="font-size:16px;font-weight:700;color:#5B6B85">76 años · CC 24.556.812 · Nueva EPS · Soacha</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:9px;flex-wrap:wrap">
+            <sc-for list="{{ condiciones }}" as="c" hint-placeholder-count="3">
+              <span style="display:flex;align-items:center;gap:8px;padding:11px 16px;border-radius:99px;background:#EEF4FC;border:1.5px solid #D9E5F5;font-size:15px;font-weight:900;color:#1E5AA7">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>
+                {{ c.t }}
+              </span>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
+            <sc-for list="{{ fichaContactos }}" as="c" hint-placeholder-count="4">
+              <div style="padding:14px 16px;background:#F7F9FC;border-radius:14px;display:flex;flex-direction:column;gap:2px">
+                <div style="font-size:12px;font-weight:900;color:#5B6B85;letter-spacing:.06em">{{ c.rol }}</div>
+                <div style="font-size:16px;font-weight:800;line-height:1.4">{{ c.nombre }}</div>
+                <div style="font-size:15px;font-weight:700;color:#1E5AA7">{{ c.tel }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:15px;padding:20px;border-radius:18px;background:#FEF6E9;border:2.5px solid #F3DCA9">
+            <span style="flex:0 0 40px;width:40px;height:40px;border-radius:50%;background:#fff;border:2px solid #F3DCA9;display:flex;align-items:center;justify-content:center;color:#B45309">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+            </span>
+            <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:5px">
+              <div style="font-size:12px;font-weight:900;letter-spacing:.08em;color:#B45309">SEMÁFORO DEL PACIENTE</div>
+              <div style="font-size:21px;font-weight:900;line-height:1.3">Amarillo: presión arterial fuera del rango configurado</div>
+              <div style="font-size:15px;font-weight:700;color:#5B6B85">Registrado por la cuidadora Ana López · hoy, 7:42 a. m.</div>
+              <button style="align-self:flex-start;margin-top:4px;padding:12px 18px;border:2px solid #B45309;border-radius:99px;background:#fff;color:#B45309;font-size:15px;font-weight:900;cursor:pointer">Abrir el dato original</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#F1F0FC;border:2.5px solid #DEDBF6;border-radius:20px;padding:22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:12px;font-weight:900;color:#6D5BD0;letter-spacing:.08em">ANTES DE COMENZAR</div>
+            <div style="font-size:21px;font-weight:900;line-height:1.3">Tienes 2 indicaciones dejadas por el equipo anterior.</div>
+          </div>
+          <button onClick="{{ tabNotasOn }}" style="padding:16px 22px;border:none;border-radius:14px;background:#6D5BD0;color:#fff;font-size:17px;font-weight:900;cursor:pointer">Revisar notas</button>
+        </div>
+
+        <div style="display:flex;gap:9px;flex-wrap:wrap">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+            <button onClick="{{ t.on }}" style="padding:13px 19px;border-radius:99px;font-size:15px;font-weight:900;cursor:pointer;border:{{ t.bd }};background:{{ t.bg }};color:{{ t.fg }}">{{ t.t }}</button>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ tabResumen }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+              <div style="font-size:24px;font-weight:900">Antes de atender a esta paciente</div>
+              <div style="font-size:16px;line-height:1.5;color:#5B6B85;font-weight:600">Lo esencial en pocos segundos. Cada tarjeta abre el registro completo.</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px">
+              <sc-for list="{{ resumen }}" as="r" hint-placeholder-count="8">
+                <div style="background:#fff;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 10px rgba(20,33,61,.06);border-top:4px solid {{ r.color }}">
+                  <div style="font-size:12px;font-weight:900;color:#5B6B85;letter-spacing:.07em">{{ r.k }}</div>
+                  <div style="font-size:19px;font-weight:900;line-height:1.35">{{ r.v }}</div>
+                  <div style="font-size:14px;line-height:1.5;font-weight:700;color:#5B6B85">{{ r.meta }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tabAlertas }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <sc-for list="{{ alertas }}" as="a" hint-placeholder-count="3">
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:12px;box-shadow:0 2px 10px rgba(20,33,61,.06);border-left:5px solid {{ a.color }}">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                  <span style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:99px;background:{{ a.bg }};border:1.5px solid {{ a.bd }};font-size:15px;font-weight:900;color:{{ a.color }}">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+                    {{ a.nivel }}
+                  </span>
+                  <span style="font-size:14px;font-weight:800;color:#5B6B85">{{ a.estado }}</span>
+                </div>
+                <div style="font-size:20px;font-weight:900;line-height:1.35">{{ a.motivo }}</div>
+                <div style="font-size:15px;font-weight:700;color:#5B6B85">{{ a.origen }}</div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                  <button style="padding:13px 18px;border:2px solid #1E5AA7;border-radius:99px;background:#fff;color:#1E5AA7;font-size:15px;font-weight:900;cursor:pointer">Ver dato original</button>
+                  <button style="padding:13px 18px;border:2px solid #16A34A;border-radius:99px;background:#EFF9F1;color:#16A34A;font-size:15px;font-weight:900;cursor:pointer">Marcar como atendida</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tabBitacora }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+              <div style="font-size:24px;font-weight:900">Bitácora de paciente y cuidador</div>
+              <div style="font-size:16px;line-height:1.5;color:#5B6B85;font-weight:600">Cada dato muestra quién lo registró. Si corriges un valor no se borra el original: queda el dato, la corrección, quién la hizo y por qué.</div>
+            </div>
+            <sc-for list="{{ bitacora }}" as="b" hint-placeholder-count="6">
+              <div style="background:#fff;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:10px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                  <div style="display:flex;flex-direction:column;gap:3px">
+                    <div style="font-size:12px;font-weight:900;color:#5B6B85;letter-spacing:.07em">{{ b.k }}</div>
+                    <div style="font-size:21px;font-weight:900">{{ b.v }}</div>
+                  </div>
+                  <span style="padding:9px 14px;border-radius:99px;background:{{ b.bg }};border:1.5px solid {{ b.bd }};font-size:14px;font-weight:900;color:{{ b.color }}">{{ b.nivel }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:9px;font-size:15px;font-weight:700;color:#5B6B85">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+                  Registrado por {{ b.quien }} · {{ b.cuando }}
+                </div>
+                <button style="align-self:flex-start;padding:11px 16px;border:1.5px solid #D8DFEA;border-radius:99px;background:#fff;color:#1E5AA7;font-size:14px;font-weight:900;cursor:pointer">Corregir con nota profesional</button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tabNotas }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="background:#fff;border:2.5px solid #DEDBF6;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:10px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+              <div style="display:flex;align-items:center;gap:12px">
+                <span style="flex:0 0 52px;width:52px;height:52px;border-radius:16px;background:#F1F0FC;border:1.5px solid #DEDBF6;display:flex;align-items:center;justify-content:center;color:#6D5BD0">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 9h8M8 13h5"/></svg>
+                </span>
+                <div style="font-size:25px;font-weight:900">Notas del equipo</div>
+              </div>
+              <div style="font-size:16px;line-height:1.5;color:#5B6B85;font-weight:600">Solo profesionales autorizados. No las ve el paciente ni el cuidador. No sustituyen la historia clínica: un cambio de tratamiento, diagnóstico u orden se registra además en el registro clínico. Nunca hay notas anónimas.</div>
+            </div>
+
+            <sc-for list="{{ notas }}" as="n" hint-placeholder-count="3">
+              <div style="background:#fff;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:10px;box-shadow:0 2px 10px rgba(20,33,61,.06);border-left:5px solid {{ n.color }}">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                  <span style="padding:9px 14px;border-radius:99px;background:{{ n.bg }};border:1.5px solid {{ n.bd }};font-size:14px;font-weight:900;color:{{ n.color }}">{{ n.estado }}</span>
+                  <span style="font-size:14px;font-weight:800;color:#5B6B85">Para: {{ n.destino }}</span>
+                </div>
+                <div style="font-size:19px;font-weight:800;line-height:1.45">{{ n.texto }}</div>
+                <div style="font-size:14px;font-weight:700;color:#5B6B85">{{ n.autor }} · {{ n.cuando }} · visita {{ n.visita }}</div>
+              </div>
+            </sc-for>
+
+            <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+              <div style="font-size:22px;font-weight:900">Dejar nota al siguiente profesional</div>
+              <div style="display:flex;flex-wrap:wrap;gap:9px">
+                <sc-for list="{{ notaTipos }}" as="o" hint-placeholder-count="8">
+                  <button onClick="{{ o.on }}" style="padding:12px 17px;border-radius:99px;font-size:15px;font-weight:900;cursor:pointer;border:{{ o.bd }};background:{{ o.bg }};color:{{ o.fg }}">{{ o.t }}</button>
+                </sc-for>
+              </div>
+              <input value="{{ notaTexto }}" onChange="{{ setNotaTexto }}" placeholder="cómo se sintió con el nuevo medicamento" style="width:100%;box-sizing:border-box;padding:16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:17px;font-weight:600;color:#14213D;background:#fff"/>
+              <button style="align-self:flex-start;display:flex;align-items:center;gap:9px;padding:13px 18px;border:2px solid #E83CB6;border-radius:99px;background:#fff;color:#E83CB6;font-size:15px;font-weight:900;cursor:pointer">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
+                Dictar por voz
+              </button>
+              <div style="padding:18px;background:#F1F0FC;border-radius:16px;display:flex;flex-direction:column;gap:6px">
+                <div style="font-size:12px;font-weight:900;color:#6D5BD0;letter-spacing:.07em">ASÍ QUEDA LA NOTA</div>
+                <div style="font-size:19px;font-weight:900;line-height:1.4">{{ notaPreview }}</div>
+              </div>
+              <div style="display:flex;gap:12px;flex-wrap:wrap">
+                <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+                  <label style="font-size:15px;font-weight:800">Destinatario</label>
+                  <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:700;color:#14213D;background:#fff">
+                    <option>Próximo profesional</option>
+                    <option>Medicina</option>
+                    <option>Enfermería</option>
+                    <option>Fisioterapia</option>
+                    <option>Trabajo social</option>
+                  </select>
+                </div>
+                <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+                  <label style="font-size:15px;font-weight:800">Prioridad</label>
+                  <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:700;color:#14213D;background:#fff">
+                    <option>Normal</option>
+                    <option>Alta</option>
+                  </select>
+                </div>
+              </div>
+              <button style="width:100%;padding:18px;border:none;border-radius:14px;background:#6D5BD0;color:#fff;font-size:18px;font-weight:900;cursor:pointer">Guardar nota</button>
+              <div style="font-size:14px;line-height:1.5;font-weight:700;color:#5B6B85">Se guarda paciente, profesional, profesión, fecha, hora, visita relacionada, contenido, prioridad, destinatario y estado.</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <button onClick="{{ goAtencion }}" style="width:100%;padding:22px;border:none;border-radius:18px;background:#16A34A;color:#fff;font-size:21px;font-weight:900;cursor:pointer">Iniciar atención</button>
+        <div style="font-size:14px;line-height:1.5;font-weight:700;color:#5B6B85;text-align:center">Al iniciar se registra paciente, profesional, fecha, hora de inicio, modalidad y visita.</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vAtencion }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:12px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:12px;font-weight:900;color:#16A34A;letter-spacing:.09em">ATENCIÓN EN CURSO</div>
+              <div style="font-size:26px;font-weight:900">María Gómez · visita en casa</div>
+            </div>
+            <span style="display:flex;align-items:center;gap:9px;padding:11px 16px;border-radius:99px;background:#EFF9F1;border:1.5px solid #CFE9D6;font-size:15px;font-weight:900;color:#16A34A">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              Inicio 10:06 a. m.
+            </span>
+          </div>
+        </div>
+
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:14px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:21px;font-weight:900">Motivo de atención</div>
+          <textarea rows="2" placeholder="Puede escribir o dictar" style="width:100%;box-sizing:border-box;padding:15px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff;resize:vertical;line-height:1.5"></textarea>
+          <button style="align-self:flex-start;display:flex;align-items:center;gap:9px;padding:12px 17px;border:2px solid #E83CB6;border-radius:99px;background:#fff;color:#E83CB6;font-size:15px;font-weight:900;cursor:pointer">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
+            Dictar
+          </button>
+        </div>
+
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:21px;font-weight:900">Signos vitales</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+            <sc-for list="{{ vitales }}" as="v" hint-placeholder-count="6">
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <label style="font-size:15px;font-weight:800">{{ v.label }}</label>
+                <input placeholder="{{ v.ph }}" style="width:100%;box-sizing:border-box;padding:15px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:20px;font-weight:900;color:#14213D;background:#fff;text-align:center"/>
+              </div>
+            </sc-for>
+          </div>
+          <div style="padding:20px;background:#FEF6E9;border:2px solid #F3DCA9;border-radius:16px;display:flex;flex-direction:column;gap:14px">
+            <div style="font-size:12px;font-weight:900;color:#B45309;letter-spacing:.08em">CASA FRENTE A PROFESIONAL</div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <div style="flex:1;min-width:170px;padding:16px;background:#fff;border-radius:14px;display:flex;flex-direction:column;gap:4px">
+                <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.06em">ÚLTIMO DATO EN CASA</div>
+                <div style="font-size:26px;font-weight:900">155 / 90</div>
+                <div style="font-size:14px;font-weight:700;color:#5B6B85">Cuidadora Ana López · hoy 7:42 a. m.</div>
+              </div>
+              <div style="flex:1;min-width:170px;padding:16px;background:#fff;border-radius:14px;display:flex;flex-direction:column;gap:4px">
+                <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.06em">TOMADO POR MÍ</div>
+                <div style="font-size:26px;font-weight:900">128 / 80</div>
+                <div style="font-size:14px;font-weight:700;color:#5B6B85">Hoy 10:12 a. m.</div>
+              </div>
+            </div>
+            <div style="font-size:17px;font-weight:900;line-height:1.4">Existe una diferencia entre ambos registros.</div>
+            <div style="font-size:15px;line-height:1.5;font-weight:700;color:#5B6B85">Puede indicar técnica, dispositivo, necesidad de educación o seguimiento. No se asume que alguno de los dos valores sea incorrecto.</div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <sc-for list="{{ secciones }}" as="s" hint-placeholder-count="8">
+            <div style="display:flex;flex-direction:column;gap:9px;padding-bottom:18px;border-bottom:1px solid #E4E9F2">
+              <div style="font-size:19px;font-weight:900">{{ s.t }}</div>
+              <div style="font-size:15px;line-height:1.5;font-weight:700;color:#5B6B85">{{ s.sub }}</div>
+              <textarea rows="2" placeholder="Escribir o dictar" style="width:100%;box-sizing:border-box;padding:14px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff;resize:vertical;line-height:1.5"></textarea>
+            </div>
+          </sc-for>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div style="font-size:19px;font-weight:900">Evaluación funcional</div>
+            <div style="display:flex;flex-wrap:wrap;gap:9px">
+              <sc-for list="{{ escalas }}" as="e" hint-placeholder-count="4">
+                <button onClick="{{ e.on }}" style="padding:13px 18px;border-radius:99px;font-size:15px;font-weight:900;cursor:pointer;border:{{ e.bd }};background:{{ e.bg }};color:{{ e.fg }}">{{ e.t }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="flex:0 0 50px;width:50px;height:50px;border-radius:15px;background:#EFF9F1;border:1.5px solid #CFE9D6;display:flex;align-items:center;justify-content:center;color:#16A34A">
+              <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 9 12 5 2 9l10 4z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg>
+            </span>
+            <div style="font-size:23px;font-weight:900">Orientación al cuidador</div>
+          </div>
+          <div style="font-size:16px;line-height:1.5;color:#5B6B85;font-weight:600">Marca qué enseñaste hoy.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:9px">
+            <sc-for list="{{ temasEdu }}" as="e" hint-placeholder-count="8">
+              <button onClick="{{ e.on }}" style="padding:12px 17px;border-radius:99px;font-size:15px;font-weight:800;cursor:pointer;border:{{ e.bd }};background:{{ e.bg }};color:{{ e.fg }}">{{ e.t }}</button>
+            </sc-for>
+          </div>
+          <div style="height:1px;background:#E4E9F2"></div>
+          <div style="font-size:19px;font-weight:900">¿Cómo quedó el cuidador?</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <sc-for list="{{ comprension }}" as="c" hint-placeholder-count="3">
+              <button onClick="{{ c.on }}" style="flex:1;min-width:180px;padding:17px 14px;border-radius:16px;font-size:16px;font-weight:900;cursor:pointer;border:{{ c.bd }};background:{{ c.bg }};color:{{ c.fg }}">{{ c.t }}</button>
+            </sc-for>
+          </div>
+          <sc-if value="{{ pedirRefuerzo }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:18px;border-left:3px solid #6D5BD0;background:#F1F0FC;border-radius:0 16px 16px 0;display:flex;flex-direction:column;gap:11px">
+              <div style="font-size:18px;font-weight:900;line-height:1.4">Necesita refuerzo. Deja una nota para quien continúe.</div>
+              <button onClick="{{ tabNotasDesdeAtencion }}" style="align-self:flex-start;padding:14px 20px;border:none;border-radius:14px;background:#6D5BD0;color:#fff;font-size:16px;font-weight:900;cursor:pointer">Crear nota para el siguiente profesional</button>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:23px;font-weight:900">Educación al paciente</div>
+          <div style="display:flex;flex-wrap:wrap;gap:9px">
+            <sc-for list="{{ temasPac }}" as="e" hint-placeholder-count="5">
+              <button onClick="{{ e.on }}" style="padding:12px 17px;border-radius:99px;font-size:15px;font-weight:800;cursor:pointer;border:{{ e.bd }};background:{{ e.bg }};color:{{ e.fg }}">{{ e.t }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Material entregado</label>
+            <input placeholder="Ej. plegable de control de presión" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+          </div>
+        </div>
+
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:21px;font-weight:900">Conducta</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ conductas }}" as="c" hint-placeholder-count="4">
+              <button onClick="{{ c.on }}" style="text-align:left;padding:17px 20px;border-radius:16px;font-size:17px;font-weight:800;cursor:pointer;border:{{ c.bd }};background:{{ c.bg }};color:{{ c.fg }}">{{ c.t }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Próxima atención</label>
+            <input type="date" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:700;color:#14213D;background:#fff"/>
+          </div>
+        </div>
+
+        <button onClick="{{ goCierre }}" style="width:100%;padding:22px;border:none;border-radius:18px;background:#1E5AA7;color:#fff;font-size:20px;font-weight:900;cursor:pointer">Ver resumen y cerrar la atención</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vCierre }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:27px;font-weight:900">Resumen de la visita</div>
+          <div style="font-size:17px;line-height:1.5;color:#5B6B85;font-weight:600">María Gómez · visita en casa · 12 ago 2026</div>
+        </div>
+        <div style="background:#fff;border-radius:20px;padding:8px 22px;display:flex;flex-direction:column;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <sc-for list="{{ cierre }}" as="c" hint-placeholder-count="10">
+            <div style="padding:16px 0;border-bottom:1px solid #E4E9F2;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap">
+              <span style="font-size:15px;font-weight:800;color:#5B6B85">{{ c.k }}</span>
+              <span style="flex:1;min-width:200px;text-align:right;font-size:17px;font-weight:900;line-height:1.4">{{ c.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ noFirmada }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <button onClick="{{ goAtencion }}" style="padding:19px 26px;border:2px solid #D8DFEA;border-radius:16px;background:#fff;font-size:18px;font-weight:900;cursor:pointer">Editar</button>
+            <button onClick="{{ firmar }}" style="flex:1;min-width:220px;padding:21px;border:none;border-radius:16px;background:#16A34A;color:#fff;font-size:20px;font-weight:900;cursor:pointer">Firmar y finalizar</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ firmada }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#EFF9F1;border:2.5px solid #CFE9D6;border-radius:22px;padding:26px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:center;gap:14px">
+              <span style="flex:0 0 46px;width:46px;height:46px;border-radius:50%;background:#fff;border:2px solid #CFE9D6;display:flex;align-items:center;justify-content:center;color:#16A34A">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>
+              </span>
+              <div style="font-size:23px;font-weight:900;line-height:1.3">Visita completada y firmada</div>
+            </div>
+            <div style="font-size:17px;line-height:1.55;font-weight:700">Se activó la calificación en las interfaces de María y de su cuidadora. Una sola evaluación por usuario autorizado y solo después de la firma. Tus métricas se actualizan cuando lleguen las respuestas.</div>
+            <button onClick="{{ goMetricas }}" style="align-self:flex-start;padding:16px 22px;border:2px solid #16A34A;border-radius:99px;background:#fff;color:#16A34A;font-size:17px;font-weight:900;cursor:pointer">Ver mis métricas</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vMetricas }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:27px;font-weight:900">Mis métricas</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+            <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="5">
+              <div style="padding:18px;background:#F7F9FC;border-radius:16px;display:flex;flex-direction:column;gap:5px">
+                <div style="font-size:30px;font-weight:900;line-height:1;color:{{ k.color }}">{{ k.v }}</div>
+                <div style="font-size:15px;font-weight:900">{{ k.t }}</div>
+                <div style="font-size:13px;font-weight:700;color:#5B6B85">{{ k.sub }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:22px;font-weight:900">Desglose de la calificación</div>
+          <sc-for list="{{ desglose }}" as="d" hint-placeholder-count="9">
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <span style="font-size:16px;font-weight:800">{{ d.t }}</span>
+                <span style="font-size:17px;font-weight:900;color:{{ d.color }}">{{ d.v }}</span>
+              </div>
+              <div style="height:12px;background:#E4E9F2;border-radius:99px;overflow:hidden"><div style="width:{{ d.pct }};height:100%;background:{{ d.color }};border-radius:99px"></div></div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="background:#fff;border:2px solid #D9E5F5;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:14px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:22px;font-weight:900">¿Qué está afectando mi calificación?</div>
+          <div style="font-size:17px;line-height:1.55;font-weight:700">Tu calificación general este mes es 4.1. Los factores con menor puntuación son puntualidad (3.4), tiempo dedicado (3.7) y orientación al cuidador (3.9).</div>
+          <div style="font-size:17px;line-height:1.55;font-weight:700">Tus fortalezas son empatía (4.9), comunicación (4.8) y profesionalismo (4.7).</div>
+          <div style="padding:16px;background:#F1F3F6;border-radius:14px;font-size:15px;line-height:1.5;font-weight:700;color:#5B6B85">Cuando un profesional tiene una o dos evaluaciones no se muestran conclusiones: solo aparece que todavía se necesitan más evaluaciones para identificar una tendencia.</div>
+        </div>
+
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="font-size:22px;font-weight:900">Indicadores clínicos</div>
+            <div style="font-size:16px;line-height:1.5;color:#5B6B85;font-weight:600">No dependen de las estrellas del paciente y no se mezclan con satisfacción. Aquí se mide lo que antes llamábamos acierto con el medicamento.</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+            <sc-for list="{{ clinicos }}" as="c" hint-placeholder-count="6">
+              <div style="padding:18px;background:#F7F9FC;border-radius:16px;display:flex;flex-direction:column;gap:5px;border-left:4px solid {{ c.color }}">
+                <div style="font-size:22px;font-weight:900">{{ c.v }}</div>
+                <div style="font-size:15px;font-weight:800;line-height:1.35">{{ c.t }}</div>
+                <div style="font-size:13px;font-weight:700;color:#5B6B85">{{ c.sub }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="padding:16px;background:#EEF4FC;border-radius:14px;font-size:15px;line-height:1.5;font-weight:700;color:#1E5AA7">Puntualidad, duración, citas completadas, alertas atendidas y notas de continuidad se calculan automáticamente, sin preguntar al paciente.</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vComentarios }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:27px;font-weight:900">Lo que dicen mis pacientes</div>
+          <div style="font-size:17px;line-height:1.5;color:#5B6B85;font-weight:600">Comentarios de las visitas que atendiste. No se muestra información de otros pacientes.</div>
+        </div>
+        <sc-for list="{{ comentarios }}" as="c" hint-placeholder-count="4">
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:11px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <span style="display:flex;align-items:center;gap:8px;color:{{ c.color }};font-size:17px;font-weight:900">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.7 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+                {{ c.estrellas }}
+              </span>
+              <span style="font-size:14px;font-weight:800;color:#5B6B85">{{ c.meta }}</span>
+            </div>
+            <div style="font-size:18px;line-height:1.5;font-weight:800">{{ c.texto }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1120,&quot;height&quot;:900}}">
+const ICON_CASA = React.createElement('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' },
+  React.createElement('path', { key: 'a', d: 'M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' }),
+  React.createElement('path', { key: 'b', d: 'M9 22V12h6v10' }));
+const ICON_VIDEO = React.createElement('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' },
+  React.createElement('rect', { key: 'a', x: 2, y: 6, width: 14, height: 12, rx: 2 }),
+  React.createElement('path', { key: 'b', d: 'M22 8l-6 4 6 4z' }));
+const ICON_ALERTA = React.createElement('svg', { width: 17, height: 17, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' },
+  React.createElement('path', { key: 'a', d: 'M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z' }),
+  React.createElement('path', { key: 'b', d: 'M12 9v4M12 17h.01' }));
+const ICON_OK = React.createElement('svg', { width: 17, height: 17, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2.4, strokeLinecap: 'round', strokeLinejoin: 'round' },
+  React.createElement('path', { key: 'a', d: 'm20 6-11 11-5-5' }));
+
+const SEM = {
+  verde: { t: 'Verde · estable', color: '#16A34A', bg: '#EFF9F1', bd: '#BFE5C9' },
+  amarillo: { t: 'Amarillo · seguimiento', color: '#B45309', bg: '#FEF6E9', bd: '#F3DCA9' },
+  rojo: { t: 'Rojo · atención', color: '#DC2626', bg: '#FDEEEE', bd: '#F5C2C2' }
+};
+
+const CONTACTOS = [
+  { rol: 'PACIENTE', nombre: 'María Gómez', tel: '310 445 8821' },
+  { rol: 'CUIDADORA', nombre: 'Ana López (hija)', tel: '312 887 4410' },
+  { rol: 'VECINO CERCANO', nombre: 'Rosa Marín', tel: '320 551 7788' }
+];
+
+class Component extends DCLogic {
+  state = {
+    view: 'dash', tab: 'resumen', notaTipo: 'Preguntar por', notaTexto: '',
+    escala: 'Barthel', edu: {}, eduPac: {}, comp: null, conducta: null, firmada: false
+  };
+
+  go(view) { this.setState({ view: view, tab: 'resumen' }); }
+
+  chips(list, field, color, bgOn) {
+    const s = this.state;
+    return list.map(t => {
+      const on = s[field] === t;
+      return { t: t, on: () => this.setState({ [field]: t }),
+        bd: on ? '2.5px solid ' + color : '1.5px solid #D8DFEA', bg: on ? bgOn : '#fff', fg: on ? color : '#5B6B85' };
+    });
+  }
+
+  multi(list, field, color, bgOn) {
+    const s = this.state;
+    return list.map(t => {
+      const on = !!s[field][t];
+      return { t: t, on: () => this.setState({ [field]: Object.assign({}, s[field], { [t]: !s[field][t] }) }),
+        bd: on ? '2.5px solid ' + color : '1.5px solid #D8DFEA', bg: on ? bgOn : '#fff', fg: on ? color : '#5B6B85' };
+    });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const nav = [
+      { id: 'dash', t: 'Panel' }, { id: 'turno', t: 'Mi turno' },
+      { id: 'metricas', t: 'Mis métricas' }, { id: 'comentarios', t: 'Comentarios' }
+    ].map(o => {
+      const on = s.view === o.id;
+      return { t: o.t, on: () => this.go(o.id),
+        bd: on ? 'none' : '2px solid #D8DFEA', bg: on ? '#1E5AA7' : '#fff', fg: on ? '#fff' : '#5B6B85' };
+    });
+
+    const tabs = [
+      { id: 'resumen', t: 'Antes de atender' }, { id: 'alertas', t: 'Alertas' },
+      { id: 'bitacora', t: 'Bitácora' }, { id: 'notas', t: 'Notas del equipo' }
+    ].map(o => {
+      const on = s.tab === o.id;
+      return { t: o.t, on: () => this.setState({ tab: o.id }),
+        bd: on ? 'none' : '2px solid #D8DFEA', bg: on ? '#6D5BD0' : '#fff', fg: on ? '#fff' : '#5B6B85' };
+    });
+
+    const turno = [
+      { hora: '8:00 a. m.', duracion: '45 min', nombre: 'Arturo Calle Osorio', datos: '81 años · Nueva EPS · requiere cuidados en casa', modalidad: 'Visita en casa', casa: true, sem: 'verde',
+        direccion: 'Cra 45 # 32-16, barrio La Esperanza, Soacha', comoLlegar: 'Casa de dos pisos, portón verde, tercera casa después de la tienda La Central.', notas: 0, notaTexto: '' },
+      { hora: '10:00 a. m.', duracion: '45 min', nombre: 'María Gómez Osorio', datos: '76 años · Nueva EPS · mayor de 60, discapacidad y cuidados en casa', modalidad: 'Visita en casa', casa: true, sem: 'amarillo',
+        direccion: 'Cra 45 # 32-16, barrio La Esperanza, Soacha', comoLlegar: 'Casa azul detrás de la iglesia, entrada por el andén del costado.', notas: 2, notaTexto: 'Revisar nuevamente la toma de presión y enseñar la técnica a la cuidadora.', abrir: true },
+      { hora: '11:30 a. m.', duracion: '20 min', nombre: 'Juan Pérez Mora', datos: '68 años · Nueva EPS · control de medicamentos', modalidad: 'Consulta virtual', casa: false, sem: 'verde',
+        conexion: 'Sala lista · el paciente se conecta desde su teléfono', notas: 0, notaTexto: '' },
+      { hora: '2:00 p. m.', duracion: '45 min', nombre: 'Sara Nieto Vargas', datos: '74 años · Nueva EPS · lesión de piel en seguimiento', modalidad: 'Visita en casa', casa: true, sem: 'rojo',
+        direccion: 'Calle 12 # 7-40, vereda El Charquito, Soacha', comoLlegar: 'Después del puente, casa con techo de teja naranja al lado de la escuela.', notas: 1, notaTexto: 'Confirmar si finalmente recibió el medicamento pendiente.' },
+      { hora: '3:15 p. m.', duracion: '20 min', nombre: 'Rosa Marín Cifuentes', datos: '71 años · Nueva EPS · control después de remisión', modalidad: 'Consulta virtual', casa: false, sem: 'verde',
+        conexion: 'Sala lista · la paciente se conecta acompañada de su hija', notas: 0, notaTexto: '' },
+      { hora: '4:00 p. m.', duracion: '45 min', nombre: 'Jorge Beltrán Ruiz', datos: '79 años · Nueva EPS · mayor de 60 y cuidados en casa', modalidad: 'Visita en casa', casa: true, sem: 'verde',
+        direccion: 'Cra 8 # 21-05, barrio San Mateo, Soacha', comoLlegar: 'Edificio de ladrillo frente al parque, apartamento 202, timbre 2.', notas: 1, notaTexto: 'Observar si la lesión de piel continúa igual.' }
+    ].map(a => {
+      const sm = SEM[a.sem];
+      return {
+        hora: a.hora, duracion: a.duracion, nombre: a.nombre, datos: a.datos, modalidad: a.modalidad,
+        esCasa: a.casa, esVirtual: !a.casa, direccion: a.direccion, comoLlegar: a.comoLlegar,
+        conexion: a.conexion, contactos: CONTACTOS,
+        modIcono: a.casa ? ICON_CASA : ICON_VIDEO,
+        modBg: a.casa ? '#EEF4FC' : '#F1F0FC', modBd: a.casa ? '#D9E5F5' : '#DEDBF6', modColor: a.casa ? '#1E5AA7' : '#6D5BD0',
+        semaforo: sm.t, semIcono: a.sem === 'verde' ? ICON_OK : ICON_ALERTA,
+        color: sm.color, bg: sm.bg, bd: sm.bd,
+        tieneNota: a.notas > 0, notas: a.notas, notaTexto: a.notaTexto,
+        cta: a.casa ? 'Ver paciente' : 'Abrir consulta',
+        ctaBg: a.casa ? '#1E5AA7' : '#6D5BD0',
+        on: () => this.setState({ view: 'ficha', tab: 'resumen' })
+      };
+    });
+
+    return {
+      campana: 5,
+      nav: nav, tabs: tabs, turno: turno,
+      vDash: s.view === 'dash', vTurno: s.view === 'turno', vFicha: s.view === 'ficha',
+      vAtencion: s.view === 'atencion', vCierre: s.view === 'cierre',
+      vMetricas: s.view === 'metricas', vComentarios: s.view === 'comentarios',
+      enPaciente: ['ficha', 'atencion', 'cierre'].indexOf(s.view) >= 0,
+      goTurno: () => this.go('turno'), goMetricas: () => this.go('metricas'),
+      verPaciente: () => this.setState({ view: 'ficha', tab: 'resumen' }),
+      goAtencion: () => this.setState({ view: 'atencion' }),
+      goCierre: () => this.setState({ view: 'cierre' }),
+      firmar: () => this.setState({ firmada: true }),
+      firmada: s.firmada, noFirmada: !s.firmada,
+      tabResumen: s.tab === 'resumen', tabAlertas: s.tab === 'alertas',
+      tabBitacora: s.tab === 'bitacora', tabNotas: s.tab === 'notas',
+      tabNotasOn: () => this.setState({ tab: 'notas' }),
+      tabNotasDesdeAtencion: () => this.setState({ view: 'ficha', tab: 'notas' }),
+
+      novedades: [
+        { t: 'Sara Nieto pasó a rojo: dificultad para respirar reportada por su cuidador', meta: 'Hoy 7:05 a. m. · alerta sin atender', color: '#DC2626' },
+        { t: 'María Gómez registró presión fuera del rango configurado', meta: 'Hoy 7:42 a. m. · registrado por cuidadora', color: '#B45309' },
+        { t: 'Enfermería dejó una nota de continuidad para tu visita de las 10:00', meta: 'Ayer 4:20 p. m. · Enf. Carlos Ruiz', color: '#6D5BD0' },
+        { t: 'Nueva evaluación de una visita del 10 de agosto', meta: 'Hoy 6:30 a. m. · 5 estrellas', color: '#16A34A' }
+      ],
+
+      condiciones: [{ t: 'Mayor de 60 años' }, { t: 'Persona con discapacidad' }, { t: 'Requiere cuidados en casa' }],
+      fichaContactos: [
+        { rol: 'DIRECCIÓN', nombre: 'Cra 45 # 32-16, La Esperanza, Soacha', tel: 'Casa azul detrás de la iglesia' },
+        { rol: 'TELÉFONO DE LA PACIENTE', nombre: 'María Gómez', tel: '310 445 8821' },
+        { rol: 'CUIDADORA', nombre: 'Ana López (hija)', tel: '312 887 4410' },
+        { rol: 'CONTACTO CERCANO', nombre: 'Rosa Marín (vecina)', tel: '320 551 7788' }
+      ],
+
+      resumen: [
+        { k: 'DIAGNÓSTICOS PRINCIPALES', v: 'Hipertensión · Diabetes tipo 2', meta: 'Registrados por el hospital', color: '#1E5AA7' },
+        { k: 'ALERGIAS', v: 'Penicilina', meta: 'Confirmada en 2024', color: '#DC2626' },
+        { k: 'MEDICAMENTOS ACTUALES', v: '3 activos', meta: 'Losartán, metformina, ácido acetilsalicílico', color: '#1E5AA7' },
+        { k: 'ÚLTIMA ATENCIÓN', v: '12 ago · enfermería', meta: 'Enf. Carlos Ruiz · visita en casa', color: '#6D5BD0' },
+        { k: 'ÚLTIMAS INDICACIONES', v: 'Cambio de postura cada 3 horas', meta: 'Vigente desde el 12 de agosto', color: '#1E5AA7' },
+        { k: 'ÚLTIMOS SIGNOS VITALES', v: '155 / 90', meta: 'Hoy 7:42 a. m. · registrado por la cuidadora', color: '#B45309' },
+        { k: 'ADHERENCIA A MEDICAMENTOS', v: '82 % en 14 días', meta: '2 dosis no tomadas por malestar', color: '#B45309' },
+        { k: 'CAÍDAS RECIENTES', v: '1 caída', meta: '14 de agosto · sin lesión reportada', color: '#DC2626' },
+        { k: 'ÓRDENES PENDIENTES', v: 'Laboratorio de glicemia', meta: 'Solicitada el 12 de agosto', color: '#6D5BD0' },
+        { k: 'PRÓXIMA CITA', v: '29 ago · control', meta: 'Hospital San Rafael', color: '#16A34A' }
+      ],
+
+      alertas: [
+        { nivel: 'Rojo · requiere atención', motivo: 'Dificultad para respirar reportada en la bitácora', origen: 'Registrado por la cuidadora Ana López · hoy 7:05 a. m.', estado: 'Sin atender', color: '#DC2626', bg: '#FDEEEE', bd: '#F5C2C2' },
+        { nivel: 'Amarillo · seguimiento', motivo: 'Presión arterial 155/90, fuera del rango configurado para esta paciente', origen: 'Registrado por la cuidadora Ana López · hoy 7:42 a. m.', estado: 'En revisión', color: '#B45309', bg: '#FEF6E9', bd: '#F3DCA9' },
+        { nivel: 'Amarillo · seguimiento', motivo: 'Dos dosis de losartán no tomadas por malestar', origen: 'Registrado por la cuidadora · 15 y 16 de agosto', estado: 'Atendida el 16 ago', color: '#B45309', bg: '#FEF6E9', bd: '#F3DCA9' }
+      ],
+
+      bitacora: [
+        { k: 'PRESIÓN ARTERIAL', v: '155 / 90', nivel: 'Amarillo', quien: 'la cuidadora Ana López', cuando: 'hoy 7:42 a. m.', color: '#B45309', bg: '#FEF6E9', bd: '#F3DCA9' },
+        { k: 'ESTADO GENERAL', v: 'Peor que ayer · más dormida de lo normal', nivel: 'Amarillo', quien: 'la cuidadora Ana López', cuando: 'hoy 7:40 a. m.', color: '#B45309', bg: '#FEF6E9', bd: '#F3DCA9' },
+        { k: 'MEDICAMENTOS', v: 'Losartán no tomado: le produjo malestar', nivel: 'Amarillo', quien: 'la cuidadora Ana López', cuando: 'hoy 8:10 a. m.', color: '#B45309', bg: '#FEF6E9', bd: '#F3DCA9' },
+        { k: 'ALIMENTACIÓN E HIDRATACIÓN', v: 'Comió poco · líquidos suficientes', nivel: 'Verde', quien: 'la cuidadora Ana López', cuando: 'hoy 12:30 p. m.', color: '#16A34A', bg: '#EFF9F1', bd: '#BFE5C9' },
+        { k: 'MOVILIDAD', v: 'Necesita ayuda · usó caminador', nivel: 'Verde', quien: 'la paciente', cuando: 'ayer 6:00 p. m.', color: '#16A34A', bg: '#EFF9F1', bd: '#BFE5C9' },
+        { k: 'EVENTOS', v: 'Caída sin lesión aparente', nivel: 'Rojo', quien: 'la cuidadora Ana López', cuando: '14 ago 9:15 p. m.', color: '#DC2626', bg: '#FDEEEE', bd: '#F5C2C2' }
+      ],
+
+      notas: [
+        { estado: 'Pendiente', destino: 'Próximo profesional', texto: 'Revisar nuevamente la toma de presión y enseñar la técnica a la cuidadora.', autor: 'Enf. Carlos Ruiz · enfermería', cuando: '12 ago 2026, 4:20 p. m.', visita: 'domiciliaria 12 ago', color: '#6D5BD0', bg: '#F1F0FC', bd: '#DEDBF6' },
+        { estado: 'Pendiente', destino: 'Medicina', texto: 'Preguntar a María cómo se sintió después del cambio de medicamento.', autor: 'Dr. Andrés Peña · medicina', cuando: '10 ago 2026, 11:05 a. m.', visita: 'domiciliaria 10 ago', color: '#6D5BD0', bg: '#F1F0FC', bd: '#DEDBF6' },
+        { estado: 'Atendida', destino: 'Fisioterapia', texto: 'Reforzar con la cuidadora el cambio de posición cada 3 horas según la indicación registrada.', autor: 'Ft. Diana Salas · fisioterapia', cuando: '5 ago 2026, 2:40 p. m.', visita: 'domiciliaria 5 ago', color: '#16A34A', bg: '#EFF9F1', bd: '#BFE5C9' }
+      ],
+
+      notaTipos: this.chips(['Preguntar por', 'Revisar', 'Enseñar', 'Confirmar', 'Dar seguimiento a', 'Reforzar educación en', 'Observar', 'Otro'], 'notaTipo', '#6D5BD0', '#F1F0FC'),
+      notaTexto: s.notaTexto,
+      setNotaTexto: e => this.setState({ notaTexto: e.target.value }),
+      notaPreview: s.notaTipo + ' María ' + (s.notaTexto ? s.notaTexto : 'cómo se sintió con el nuevo medicamento') + '.',
+
+      vitales: [
+        { label: 'Presión arterial', ph: '128/80' }, { label: 'Frecuencia cardiaca', ph: '76' },
+        { label: 'Frecuencia respiratoria', ph: '18' }, { label: 'Temperatura', ph: '36.6' },
+        { label: 'Saturación', ph: '96' }, { label: 'Peso', ph: '58' }
+      ],
+      secciones: [
+        { t: 'Revisión de la bitácora', sub: 'Qué cambió desde la última visita según paciente y cuidador.' },
+        { t: 'Enfermedad actual', sub: 'Evolución desde la última atención.' },
+        { t: 'Examen físico', sub: 'Hallazgos de hoy.' },
+        { t: 'Diagnóstico', sub: 'Diagnósticos de esta atención.' },
+        { t: 'Plan de manejo', sub: 'Qué se hará hasta la próxima atención.' },
+        { t: 'Medicamentos', sub: 'Ajustes, suspensiones e indicaciones nuevas.' },
+        { t: 'Órdenes', sub: 'Laboratorios, remisiones e insumos.' }
+      ],
+      escalas: this.chips(['Barthel', 'Glasgow', 'Norton', 'Otra'], 'escala', '#1E5AA7', '#EEF4FC'),
+      temasEdu: this.multi(['Toma de presión', 'Uso de dispositivos', 'Medicamentos', 'Movilización', 'Higiene', 'Cuidado de piel', 'Prevención de caídas', 'Alimentación', 'Hidratación', 'Cambios de postura'], 'edu', '#16A34A', '#EFF9F1'),
+      temasPac: this.multi(['Signos de alarma', 'Medicamentos', 'Alimentación', 'Actividad física', 'Próxima cita'], 'eduPac', '#1E5AA7', '#EEF4FC'),
+      comprension: this.chips(['Comprendió', 'Necesita refuerzo', 'Requiere capacitación'], 'comp', '#16A34A', '#EFF9F1'),
+      pedirRefuerzo: s.comp === 'Necesita refuerzo' || s.comp === 'Requiere capacitación',
+      conductas: this.chips(['Continúa manejo domiciliario', 'Ajuste del plan', 'Remisión', 'Alta'], 'conducta', '#1E5AA7', '#EEF4FC'),
+
+      cierre: [
+        { k: 'Hora de inicio', v: '10:06 a. m.' },
+        { k: 'Hora final', v: '10:52 a. m.' },
+        { k: 'Duración', v: '46 minutos' },
+        { k: 'Hallazgos', v: 'Presión controlada en consulta, somnolencia leve' },
+        { k: 'Signos vitales', v: '128/80 · FC 76 · T 36.6 · SatO₂ 96 %' },
+        { k: 'Diagnóstico', v: 'Hipertensión en seguimiento' },
+        { k: 'Plan', v: 'Continúa manejo domiciliario y control de presión dos veces al día' },
+        { k: 'Medicamentos', v: 'Se mantiene losartán; se revisa horario por malestar' },
+        { k: 'Órdenes', v: 'Laboratorio de glicemia' },
+        { k: 'Educación', v: 'Cuidadora: toma de presión (necesita refuerzo) · Paciente: signos de alarma' },
+        { k: 'Conducta', v: 'Continúa manejo domiciliario' },
+        { k: 'Próxima atención', v: '29 de agosto de 2026' },
+        { k: 'Notas dejadas al equipo', v: '1 nota para enfermería' }
+      ],
+
+      kpis: [
+        { v: '4.2', t: 'Calificación general', sub: 'de 5', color: '#16A34A' },
+        { v: '38', t: 'Visitas evaluadas', sub: 'de 46 atendidas', color: '#1E5AA7' },
+        { v: '22', t: 'Pacientes', sub: 'en mi zona asignada', color: '#1E5AA7' },
+        { v: '17', t: 'Comentarios', sub: 'de pacientes y cuidadores', color: '#6D5BD0' },
+        { v: '+0.2', t: 'Últimos 30 días', sub: 'estable en 3 meses', color: '#16A34A' }
+      ],
+      desglose: [
+        { t: 'Puntualidad', v: '3.4' }, { t: 'Comunicación', v: '4.8' },
+        { t: 'Orientación al paciente', v: '4.4' }, { t: 'Orientación al cuidador', v: '3.9' },
+        { t: 'Empatía', v: '4.9' }, { t: 'Claridad sobre medicamentos', v: '4.3' },
+        { t: 'Tiempo dedicado', v: '3.7' }, { t: 'Profesionalismo', v: '4.7' },
+        { t: 'Resolución de dudas', v: '4.5' }
+      ].map(d => {
+        const n = parseFloat(d.v);
+        return { t: d.t, v: d.v, pct: (n / 5 * 100) + '%', color: n >= 4.5 ? '#16A34A' : (n >= 4 ? '#1E5AA7' : '#B45309') };
+      }),
+      clinicos: [
+        { v: '94 %', t: 'Alertas atendidas en el tiempo definido', sub: 'Cálculo automático', color: '#16A34A' },
+        { v: '88 %', t: 'Órdenes completadas', sub: 'Laboratorios y remisiones', color: '#16A34A' },
+        { v: '100 %', t: 'Cambios terapéuticos documentados', sub: 'Con registro clínico asociado', color: '#16A34A' },
+        { v: '91 %', t: 'Notas de continuidad atendidas', sub: 'Cálculo automático', color: '#1E5AA7' },
+        { v: '2', t: 'Reingresos en 30 días', sub: 'Pendiente de revisión institucional', color: '#B45309' },
+        { v: '96 %', t: 'Seguimiento posterior realizado', sub: 'Visitas con control cumplido', color: '#16A34A' }
+      ],
+      comentarios: [
+        { estrellas: '5 de 5', texto: 'Me explicó muy bien cómo darle el medicamento.', meta: '10 ago 2026 · visita en casa', color: '#16A34A' },
+        { estrellas: '4 de 5', texto: 'Fue muy amable, pero llegó tarde.', meta: '8 ago 2026 · visita en casa', color: '#16A34A' },
+        { estrellas: '3 de 5', texto: 'Sentí que la revisión fue muy rápida.', meta: '5 ago 2026 · consulta virtual', color: '#B45309' },
+        { estrellas: '5 de 5', texto: 'Me enseñó cómo cuidar a mi mamá y respondió todas mis preguntas.', meta: '2 ago 2026 · visita en casa', color: '#16A34A' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

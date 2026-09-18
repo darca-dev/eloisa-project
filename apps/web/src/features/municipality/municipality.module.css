@@ -1,0 +1,2901 @@
+/*
+ * Experiencia Alcaldía (TASK-ALCALDIA-A-01).
+ *
+ * Fuente visual vinculante: `prototype-claude/Eligeme-Alcaldia.dc.html`,
+ * líneas 20–169. Cada medida, color, radio y espaciado reproduce el valor
+ * declarado allí. Donde el sistema aprobado (`src/styles/tokens.css`) ya define
+ * exactamente ese color se usa el token; los cuatro colores del prototipo que
+ * el sistema todavía no nombra se declaran localmente en `.shell` y no se
+ * propagan a otras experiencias.
+ *
+ * Los márgenes y viñetas por defecto de `h1`, `h2`, `p`, `ul`, `ol`, `dl` y
+ * `dd` se anulan porque la referencia compone solo con `div`/`span`: la
+ * semántica se añade sin alterar la apariencia aprobada.
+ */
+
+.shell {
+  /* Azul del elemento activo del menú (prototipo, línea 723). */
+  --m-azul-activo: #0a6c9e;
+  /* Azul claro de la marca, los titulares y el foco (líneas 25 y 106). */
+  --m-azul-suave: #b9dce6;
+  /* Borde inferior de la topbar y separador de actividades (líneas 86 y 157). */
+  --m-borde-topbar: #e4ebee;
+  /* Celeste del título de cada titular dentro de la tarjeta azul (línea 113). */
+  --m-celeste-titular: #e4f4f8;
+  /* Vino del segmento «las tres condiciones» y del tercer círculo (líneas 208 y 216). */
+  --m-vino-interseccion: #b23a72;
+  /* Rellenos translúcidos de los tres círculos del diagrama (líneas 204–206). */
+  --m-venn-mayor: rgba(50, 180, 168, 0.42);
+  --m-venn-discapacidad: rgba(7, 89, 133, 0.32);
+  --m-venn-cuidados: rgba(242, 167, 196, 0.42);
+
+  min-height: 100vh;
+  display: flex;
+  align-items: stretch;
+  background: var(--b-lienzo);
+}
+
+/* --------------------------------- Sidebar -------------------------------- */
+
+.sidebar {
+  flex: 0 0 244px;
+  background: var(--b-azul);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 6px;
+}
+
+.identityEyebrow {
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--m-azul-suave);
+  letter-spacing: 0.14em;
+}
+
+.identityName {
+  font-size: 17px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-blanco);
+  line-height: 1.25;
+}
+
+.identityMeta {
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-celeste-borde);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.navItem {
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 13px;
+  border: none;
+  border-radius: 11px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--b-celeste-borde);
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+}
+
+.navItemActive {
+  background: var(--m-azul-activo);
+  color: var(--b-blanco);
+}
+
+.navItem:focus-visible {
+  outline: 3px solid var(--m-azul-suave);
+  outline-offset: 1px;
+}
+
+/* ------------------------------ Columna principal ------------------------- */
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  background: var(--b-blanco);
+  border-bottom: 1px solid var(--m-borde-topbar);
+  padding: 14px 26px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.topbarHeadings {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.topbarEyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  letter-spacing: 0.08em;
+}
+
+.topbarPrivacy {
+  margin: 0;
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-petroleo-texto);
+}
+
+/* ---------------------------- Selector temporal --------------------------- */
+
+.periodBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.periods {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.period {
+  padding: 10px 15px;
+  border-radius: var(--b-radio-pildora);
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+  /*
+   * La referencia retira el borde del periodo activo. Aquí se conserva su
+   * grosor en transparente para que la selección no desplace a los demás
+   * botones: el resultado visible es el mismo.
+   */
+  border: 1.5px solid var(--b-borde);
+  background: var(--b-blanco);
+  color: var(--b-gris);
+}
+
+.periodActive {
+  border-color: transparent;
+  background: var(--b-azul);
+  color: var(--b-blanco);
+}
+
+.periodNote {
+  margin: 0;
+  max-width: 340px;
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* ---------------------------- Perfil institucional ------------------------ */
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px 7px 7px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-lienzo);
+  border: 1.5px solid var(--b-borde);
+}
+
+.profileAvatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 50%;
+  background: var(--b-azul);
+  color: var(--b-blanco);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.profileText {
+  display: flex;
+  flex-direction: column;
+}
+
+.profileName {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.profileRole {
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* ------------------------------ Área de contenido ------------------------- */
+
+.content {
+  flex: 1;
+  padding: 24px 26px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ------------------------------ Inicio: titulares ------------------------- */
+
+.hero {
+  background: var(--b-azul);
+  border-radius: 22px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.heroHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.heroTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--m-azul-suave);
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+}
+
+.heroTitle:focus-visible,
+.comingSoonTitle:focus-visible {
+  outline: 3px solid var(--m-azul-suave);
+  outline-offset: 4px;
+}
+
+.comingSoonTitle:focus-visible {
+  outline-color: var(--b-foco);
+}
+
+/* Etiqueta que identifica toda la pantalla como demostrativa y ficticia. */
+.demoTag {
+  margin: 0;
+  flex: 0 0 auto;
+  padding: 5px 12px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--m-azul-suave);
+  color: var(--b-azul);
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.06em;
+}
+
+.kpiGrid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+.kpi {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.kpiTitle {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.kpiValue {
+  font-size: 36px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1;
+  color: var(--b-blanco);
+}
+
+.kpiLabel {
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--m-celeste-titular);
+  line-height: 1.35;
+}
+
+.kpiNote {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--m-azul-suave);
+  line-height: 1.4;
+}
+
+.demoNote {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--m-azul-suave);
+  line-height: 1.5;
+}
+
+/* --------------------------------- Tarjetas ------------------------------- */
+
+.card {
+  background: var(--b-blanco);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  /* Sombra de tarjeta de la referencia (líneas 120, 135, 146 y 153). */
+  box-shadow: 0 1px 6px rgba(15, 46, 61, 0.06);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: var(--b-peso-maximo);
+}
+
+/* -------------------- Inicio: de la persona a la evidencia ---------------- */
+
+.chain {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.chainItem {
+  flex: 1;
+  min-width: 150px;
+  padding: 18px;
+  background: var(--b-lienzo);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-top: 4px solid var(--m-acento);
+}
+
+.chainStage {
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  letter-spacing: 0.06em;
+}
+
+.chainValue {
+  font-size: 23px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1.1;
+  color: var(--m-acento);
+}
+
+.chainNote {
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+  line-height: 1.4;
+}
+
+.chainCaption {
+  margin: 0;
+  padding: 15px 17px;
+  background: var(--b-celeste);
+  border-radius: var(--b-radio-campo);
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-petroleo-texto);
+}
+
+/* ------------------------- Inicio: columnas inferiores -------------------- */
+
+.homeColumns {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.pendingCard {
+  flex: 1.4;
+  min-width: 380px;
+  padding: 22px;
+  gap: 14px;
+}
+
+.homeAside {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.homeAside .card {
+  padding: 22px;
+  gap: 12px;
+}
+
+/* ---------------------- Inicio: alertas y pendientes ---------------------- */
+
+.pendingList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pending {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--m-acento-fondo);
+  border-left: 4px solid var(--m-acento);
+  flex-wrap: wrap;
+}
+
+.pendingText {
+  flex: 1;
+  min-width: 220px;
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+  line-height: 1.4;
+}
+
+/* El nivel se escribe siempre: el color acompaña, nunca sustituye al texto. */
+.pendingLevel {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-blanco);
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--m-acento);
+}
+
+.pendingCaption {
+  margin: 0;
+  padding: 14px 16px;
+  background: var(--b-lienzo);
+  border-radius: var(--b-radio-campo);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* --------------------------- Inicio: accesos rápidos ---------------------- */
+
+.shortcuts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.shortcut {
+  text-align: left;
+  padding: 14px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: 14px;
+  background: var(--b-blanco);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1.3;
+  color: var(--b-tinta);
+}
+
+/* ------------------------ Inicio: actividades recientes ------------------- */
+
+.activityList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.activity {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--m-borde-topbar);
+}
+
+.activityDot {
+  flex: 0 0 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--m-acento);
+  margin-top: 6px;
+}
+
+.activityText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.activityTitle {
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+  line-height: 1.4;
+}
+
+.activityMeta {
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* ------------------------------ Módulo próximo ---------------------------- */
+
+.comingSoon {
+  background: var(--b-blanco);
+  border-radius: 20px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 820px;
+  box-shadow: 0 1px 6px rgba(15, 46, 61, 0.06);
+}
+
+.comingSoonTitle {
+  margin: 0;
+  font-size: 30px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1.2;
+}
+
+.comingSoonText {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+.comingSoonNote {
+  margin: 0;
+  padding: 15px 17px;
+  background: var(--b-celeste);
+  border-radius: var(--b-radio-campo);
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-petroleo-texto);
+}
+
+/* ================== TASK-ALCALDIA-A-02: Población y Territorio ============ */
+
+/*
+ * Fuente visual vinculante: `prototype-claude/Eligeme-Alcaldia.dc.html`,
+ * líneas 172–268. Se reutilizan `.card`, `.cardTitle`, `.demoTag` y los tonos
+ * institucionales ya validados en A-01; solo se añade lo que estas dos
+ * pantallas necesitan.
+ */
+
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.viewHead {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.viewHeadRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.viewTitle {
+  margin: 0;
+  font-size: 30px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1.2;
+}
+
+.viewTitle:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 4px;
+}
+
+.viewDescription {
+  margin: 0;
+  max-width: 800px;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+/* Aclaración institucional sobre fondo claro: fixture, límites y alcance. */
+.viewNote {
+  margin: 0;
+  max-width: 800px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/*
+ * El texto disponible solo para tecnologías de asistencia usa la utilidad
+ * global `merdn-sr-only`, la misma que ya emplea la topbar de A-01.
+ */
+
+/* ------------------ Población: objetivo, cobertura y calidad -------------- */
+
+.statGrid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.statCard {
+  min-width: 0;
+  padding: 18px;
+  background: var(--b-lienzo);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-left: 4px solid var(--m-acento);
+}
+
+.statTerm {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.statValue {
+  font-size: 25px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1.1;
+  color: var(--m-acento);
+}
+
+.statLabel {
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+  line-height: 1.35;
+}
+
+.statNote {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+  line-height: 1.4;
+}
+
+.coverage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coverageHead {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.coverageLabel {
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.coverageValue {
+  font-size: 19px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+}
+
+/*
+ * Barra de cobertura. Es decorativa y está oculta a las tecnologías de
+ * asistencia: el porcentaje siempre está escrito junto a ella, de modo que el
+ * dato no depende del ancho ni del color.
+ */
+.bar {
+  display: block;
+  flex: 1;
+  height: 16px;
+  background: var(--m-borde-topbar);
+  border-radius: var(--b-radio-pildora);
+  overflow: hidden;
+}
+
+.barFill {
+  display: block;
+  height: 100%;
+  background: var(--b-aguamarina);
+  border-radius: var(--b-radio-pildora);
+}
+
+.qualityCard {
+  padding: 22px;
+  gap: 14px;
+}
+
+.qualityGrid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.qualityGrid .statCard {
+  padding: 16px;
+  border-radius: 14px;
+}
+
+.qualityTerm {
+  margin: 0;
+}
+
+.qualityValue {
+  font-size: 22px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1;
+  color: var(--m-acento);
+}
+
+.qualityLabel {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  line-height: 1.35;
+}
+
+/* ----------------------- Población: intersecciones ------------------------ */
+
+.venn {
+  display: flex;
+  gap: 26px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/*
+ * Diagrama decorativo de tres poblaciones que se cruzan. Las medidas del
+ * prototipo (300 × 250, círculos de 170) se expresan en porcentaje sobre una
+ * caja de proporción fija, de modo que el dibujo se reduzca con el ancho
+ * disponible sin deformarse ni desbordar.
+ */
+.vennChart {
+  position: relative;
+  flex: 0 1 300px;
+  width: 300px;
+  max-width: 100%;
+  aspect-ratio: 300 / 250;
+}
+
+.vennCircle {
+  position: absolute;
+  width: 56.667%;
+  height: 68%;
+  border-radius: 50%;
+}
+
+.vennMayor {
+  left: 6.667%;
+  top: 4%;
+  background: var(--m-venn-mayor);
+  border: 2px solid var(--b-petroleo-texto);
+}
+
+.vennDiscapacidad {
+  left: 36.667%;
+  top: 4%;
+  background: var(--m-venn-discapacidad);
+  border: 2px solid var(--b-azul);
+}
+
+.vennCuidados {
+  left: 21.667%;
+  top: 32%;
+  background: var(--m-venn-cuidados);
+  border: 2px solid var(--m-vino-interseccion);
+}
+
+.vennValue {
+  position: absolute;
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.vennValueMayor {
+  left: 11.333%;
+  top: 22.4%;
+}
+
+.vennValueDiscapacidad {
+  left: 74.667%;
+  top: 22.4%;
+}
+
+.vennValueCuidados {
+  left: 45.333%;
+  top: 83.2%;
+}
+
+.vennValueTodas {
+  left: 45.333%;
+  top: 44.8%;
+  font-size: 16px;
+}
+
+.vennList {
+  flex: 1;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.segmentList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.segment {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: var(--b-lienzo);
+  flex-wrap: wrap;
+}
+
+/* El total de únicos comparte la fila y se distingue por peso, no por color. */
+.segmentTotal {
+  background: var(--b-panel);
+  border: 1.5px solid var(--b-borde);
+}
+
+.segmentDot {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--m-segmento);
+}
+
+.segmentLabel {
+  flex: 1;
+  min-width: 150px;
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+}
+
+.segmentValue {
+  flex: 0 0 auto;
+  font-size: 17px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+}
+
+/* Aclaración destacada del ejemplo ficticio de deduplicación. */
+.highlight {
+  margin: 0;
+  padding: 14px 16px;
+  background: var(--b-celeste);
+  border-radius: var(--b-radio-campo);
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-petroleo-texto);
+}
+
+/* Acento del punto de cada segmento; el nombre y el valor siempre se leen. */
+.segAguamarina {
+  --m-segmento: var(--b-aguamarina);
+}
+
+.segAzul {
+  --m-segmento: var(--b-azul);
+}
+
+.segRosa {
+  --m-segmento: var(--b-rosa-eli);
+}
+
+.segPetroleo {
+  --m-segmento: var(--b-petroleo-texto);
+}
+
+.segFucsia {
+  --m-segmento: var(--m-vino-interseccion);
+}
+
+.segTinta {
+  --m-segmento: var(--b-tinta);
+}
+
+/* -------------------------- Territorio agregado --------------------------- */
+
+.territoryCard {
+  padding: 22px;
+  gap: 14px;
+}
+
+/*
+ * Cuando el ancho no alcanza, la distribución se desplaza dentro de su propia
+ * región enfocable: conserva las relaciones de encabezado y dato, no recorta
+ * ningún valor y no desborda la página.
+ */
+.tableScroll {
+  background: var(--b-lienzo);
+  border-radius: 14px;
+  padding: 6px 16px;
+  overflow-x: auto;
+}
+
+.tableScroll:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.tableHead {
+  padding: 12px 12px 12px 0;
+  border-bottom: 1.5px solid var(--b-borde);
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  letter-spacing: 0.05em;
+}
+
+.zoneName {
+  padding: 15px 12px 15px 0;
+  border-bottom: 1px solid var(--m-borde-topbar);
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+  text-align: left;
+}
+
+.cell {
+  padding: 15px 12px 15px 0;
+  border-bottom: 1px solid var(--m-borde-topbar);
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+  white-space: nowrap;
+}
+
+.cellVisitas {
+  color: var(--b-petroleo-texto);
+}
+
+.cellAlertas {
+  color: var(--m-acento);
+}
+
+/* Anchos de columna equivalentes a los del prototipo (líneas 249–253). */
+.tableHead:nth-child(2),
+.tableHead:nth-child(3),
+.tableHead:nth-child(4) {
+  width: 104px;
+}
+
+.tableHead:nth-child(5) {
+  width: 230px;
+}
+
+.coverageCell {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.coverageCell .bar {
+  height: 10px;
+}
+
+.coverageCell .barFill {
+  background: var(--m-acento);
+}
+
+.coverageCellValue {
+  flex: 0 0 52px;
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--m-acento);
+}
+
+/*
+ * Lectura territorial demostrativa. El rótulo impide leerla como conclusión
+ * oficial, como regla calculada o como valoración individual.
+ */
+.insight {
+  margin: 0;
+  padding: 15px 17px;
+  background: var(--b-amarillo-fondo);
+  border-radius: var(--b-radio-campo);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.insightTag {
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b-amarillo);
+}
+
+.insightText {
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-amarillo);
+}
+
+/* ------------------------- Tonos del semáforo institucional --------------- */
+
+/*
+ * El tono acompaña al texto: cada etapa, pendiente y actividad conserva su
+ * etiqueta y su nivel escritos, de modo que ningún estado se comunica solo con
+ * color.
+ */
+
+.tonoAzul {
+  --m-acento: var(--b-azul);
+  --m-acento-fondo: var(--b-celeste);
+}
+
+.tonoTeal {
+  --m-acento: var(--b-petroleo-texto);
+  --m-acento-fondo: var(--b-celeste);
+}
+
+.tonoVerde {
+  --m-acento: var(--b-verde);
+  --m-acento-fondo: var(--b-verde-fondo);
+}
+
+.tonoAmarillo {
+  --m-acento: var(--b-amarillo);
+  --m-acento-fondo: var(--b-amarillo-fondo);
+}
+
+.tonoRojo {
+  --m-acento: var(--b-rojo);
+  --m-acento-fondo: var(--b-rojo-fondo);
+}
+
+/* ===================== TASK-ALCALDIA-A-03: Programas ====================== */
+
+/*
+ * Fuente visual vinculante: `prototype-claude/Eligeme-Alcaldia.dc.html`,
+ * líneas 271–315. Se conservan la lista vertical de tarjetas blancas, el borde
+ * lateral de estado, el badge en píldora, la cuadrícula de datos y los dos
+ * progresos paralelos. Los estilos añadidos (etiquetas de población y
+ * ejecutores, resumen documental, cierre y diálogo) extienden ese sistema y no
+ * crean otro.
+ */
+
+/* Acción primaria del encabezado; convive con el título sin desplazarlo. */
+.primaryAction {
+  flex: 0 0 auto;
+  padding: 11px 18px;
+  border: 0;
+  border-radius: var(--b-radio-boton);
+  background: var(--b-azul);
+  color: var(--b-blanco);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+}
+
+.primaryAction:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 3px;
+}
+
+/* Mensaje del alta local. Se lee como texto, no solo como color. */
+.statusMessage {
+  margin: 0;
+  padding: 13px 16px;
+  border-radius: var(--b-radio-campo);
+  background: var(--b-verde-fondo);
+  border: 1px solid var(--b-verde-borde);
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-verde);
+}
+
+.programList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.programCard {
+  background: var(--b-blanco);
+  border-radius: 20px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 1px 6px rgba(15, 46, 61, 0.06);
+  /* Borde lateral de estado del prototipo; el estado también va escrito. */
+  border-left: 5px solid var(--m-acento);
+}
+
+.programTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.programIdentity {
+  flex: 1;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.programName {
+  margin: 0;
+  font-size: 20px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.programObjective {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.programMeta {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.programBadge {
+  flex: 0 0 auto;
+  padding: 9px 14px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--m-acento-fondo);
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--m-acento);
+}
+
+/* Poblaciones y ejecutores: relaciones múltiples, en forma compacta. */
+.tagGroups {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.tagGroup {
+  flex: 1 1 260px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tagGroupLabel {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+}
+
+.tagList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag {
+  padding: 6px 11px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-celeste);
+  border: 1px solid var(--b-celeste-borde);
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-petroleo-texto);
+}
+
+/* Cuadrícula de datos agregados del prototipo (línea 286). */
+.dataGrid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.dataCell {
+  padding: 14px 16px;
+  background: var(--b-lienzo);
+  border-radius: var(--b-radio-campo);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dataKey {
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  letter-spacing: 0.05em;
+}
+
+.dataValue {
+  margin: 0;
+  font-size: 17px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1.35;
+}
+
+/* Los dos progresos paralelos del prototipo (líneas 293–312). */
+.progressRow {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.progressBlock {
+  flex: 1 1 260px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.progressHead {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.progressLabel {
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+}
+
+.progressValue {
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--m-acento);
+}
+
+.progressBlock .bar {
+  height: 10px;
+}
+
+.progressBlock .barFill {
+  background: var(--m-acento);
+}
+
+.progressDetail {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* Resumen documental agregado: conteos, nunca documentos. */
+.evidenceBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 13px 16px;
+  border-radius: var(--b-radio-campo);
+  background: var(--m-acento-fondo);
+}
+
+.evidenceList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--m-acento);
+}
+
+/* Cierre preparado de un programa finalizado. */
+.closureBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--b-radio-campo);
+  border: 1px solid var(--b-borde);
+  background: var(--b-panel);
+}
+
+.closureGrid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.closureItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.closureKey {
+  font-size: 12px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.closureValue {
+  margin: 0;
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+}
+
+/* ------------------------ Diálogo «Nuevo programa» ------------------------ */
+
+/*
+ * El fondo cubre la página pero no cierra al pulsar: cerrar es siempre una
+ * acción explícita. El diálogo se desplaza dentro del viewport, de modo que en
+ * móvil y con zoom al 200 % ningún control quede fuera de alcance.
+ */
+.dialogBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 16px;
+  overflow-y: auto;
+  background: rgba(15, 46, 61, 0.55);
+}
+
+.dialog {
+  width: 100%;
+  max-width: 560px;
+  background: var(--b-blanco);
+  border-radius: var(--b-radio-contenedor);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--b-sombra-elevada);
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: 24px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.dialogTitle:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 4px;
+}
+
+.dialogDescription {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fieldRow .field {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fieldLabel {
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+.fieldRequired {
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.fieldControl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fieldSuffix {
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+}
+
+.fieldHelp {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+.input,
+.select {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  background: var(--b-blanco);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-tinta);
+}
+
+.input:focus-visible,
+.select:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.input[aria-invalid='true'],
+.select[aria-invalid='true'] {
+  border-color: var(--b-rojo);
+}
+
+.checkGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-medio);
+  /* Objetivo táctil cómodo también en móvil. */
+  min-height: 32px;
+}
+
+.checkItem input {
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  flex: 0 0 auto;
+}
+
+.checkItem input:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+/* El error se escribe; el borde rojo solo lo acompaña. */
+.fieldError {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-rojo);
+}
+
+.errorSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 13px 16px;
+  border-radius: var(--b-radio-campo);
+  border: 1px solid var(--b-rojo-borde);
+  background: var(--b-rojo-fondo);
+}
+
+.errorSummary:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.errorSummaryTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-rojo);
+}
+
+.errorSummaryList {
+  margin: 0;
+  padding: 0 0 0 18px;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-rojo);
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.buttonPrimary,
+.buttonGhost {
+  padding: 11px 18px;
+  border-radius: var(--b-radio-boton);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+}
+
+.buttonPrimary {
+  border: 0;
+  background: var(--b-azul);
+  color: var(--b-blanco);
+}
+
+.buttonGhost {
+  border: 1px solid var(--b-borde);
+  background: var(--b-blanco);
+  color: var(--b-tinta);
+}
+
+.buttonPrimary:focus-visible,
+.buttonGhost:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 3px;
+}
+
+/* --------------------------------- Responsive ----------------------------- */
+
+/*
+ * Adaptación estructural por reflow, con el patrón institucional ya validado:
+ * cuando el ancho no admite la composición lateral, el sidebar se apila sobre
+ * el contenido y el menú fluye en filas. No se elimina ningún elemento y no se
+ * introduce drawer, menú hamburguesa ni interacción ausente de la referencia.
+ */
+@media (max-width: 1100px) {
+  .pendingCard {
+    min-width: 320px;
+  }
+}
+
+@media (max-width: 900px) {
+  .shell {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    /* Si el menú no cabe, se desplaza dentro de su propia región. */
+    overflow-x: auto;
+  }
+
+  .navItem {
+    flex: 0 0 auto;
+  }
+
+  .topbar {
+    padding: 14px 16px;
+    align-items: flex-start;
+  }
+
+  .content {
+    padding: 24px 16px 60px;
+  }
+
+  .pendingCard,
+  .homeAside {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  /* El diagrama y la lista de intersecciones se apilan sin perder nada. */
+  .vennChart,
+  .vennList {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  /*
+   * Los dos progresos y los dos grupos de etiquetas se apilan: ningún dato se
+   * elimina y el dinero, el porcentaje y los valores absolutos siguen visibles.
+   */
+  .progressBlock,
+  .tagGroup {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .hero {
+    padding: 22px;
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  .homeAside .card,
+  .pendingCard {
+    padding: 20px;
+  }
+
+  .chainItem {
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+
+  .pendingText {
+    min-width: 150px;
+  }
+
+  .shortcuts {
+    grid-template-columns: 1fr;
+  }
+
+  .periodNote {
+    max-width: none;
+  }
+
+  .comingSoon {
+    padding: 22px;
+  }
+
+  .comingSoonTitle,
+  .viewTitle {
+    font-size: 26px;
+  }
+
+  .qualityCard,
+  .territoryCard {
+    padding: 20px;
+  }
+
+  .segmentLabel {
+    min-width: 120px;
+  }
+
+  .tableScroll {
+    padding: 6px 12px;
+  }
+
+  .programCard {
+    padding: 20px;
+  }
+
+  /* La cuadrícula pasa a una columna sin recortar ninguna clave ni valor. */
+  .dataGrid,
+  .closureGrid {
+    grid-template-columns: 1fr;
+  }
+
+  /* La acción primaria ocupa el ancho para conservar un objetivo táctil claro. */
+  .primaryAction {
+    flex: 1 1 100%;
+  }
+
+  .dialogBackdrop {
+    padding: 16px 12px;
+  }
+
+  .dialog {
+    padding: 20px;
+  }
+
+  .dialogActions .buttonPrimary,
+  .dialogActions .buttonGhost {
+    flex: 1 1 100%;
+  }
+}
+
+/* ========= TASK-ALCALDIA-A-04: Presupuesto, movimientos y evidencias ====== */
+
+/*
+ * Fuente visual vinculante: `prototype-claude/Eligeme-Alcaldia.dc.html`,
+ * líneas 316–435. Se conservan las cinco métricas del resumen, la barra de
+ * ejecución con sus tres tramos, la tabla «Por población», el panel azul de
+ * nivel de evidencia, la tabla «Facturas y soportes» con su acción en píldora y
+ * la cuadrícula de la cadena presupuesto–resultado. Todo lo añadido reutiliza
+ * `.card`, `.table`, `.tag`, `.chain` y los tonos institucionales de A-01 a
+ * A-03: no se crea otro sistema visual ni otra dependencia.
+ *
+ * Ningún estado ni ninguna cifra se comunican solo con color: las barras son
+ * decorativas y sus valores están escritos junto a ellas.
+ */
+
+/* --------------------- Barra de ejecución con tres tramos ----------------- */
+
+.splitBar {
+  height: 16px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-borde);
+  overflow: hidden;
+  display: flex;
+}
+
+.splitBarEjecutado {
+  height: 100%;
+  background: var(--b-aguamarina);
+}
+
+.splitBarComprometido {
+  height: 100%;
+  background: var(--b-amarillo-borde);
+}
+
+.legend {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.legendDot {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  background: var(--m-acento);
+}
+
+.legendLabel {
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.legendValue {
+  color: var(--b-gris);
+}
+
+/* ------------------- Semántica financiera y secuencia futura -------------- */
+
+.definitionList {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.definitionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.definition {
+  min-width: 0;
+  padding: 14px 16px;
+  background: var(--b-lienzo);
+  border-radius: var(--b-radio-campo);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.definitionTerm {
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.definitionText {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.sequenceBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sequenceTitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+}
+
+/*
+ * Los pasos se numeran con `counter` porque la lista es ordenada: el orden se
+ * lee tanto en el marcado como en pantalla, sin depender de la disposición.
+ */
+.sequence {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: municipality-secuencia;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sequenceStep {
+  counter-increment: municipality-secuencia;
+  padding: 7px 13px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-celeste);
+  border: 1px solid var(--b-celeste-borde);
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-petroleo-texto);
+}
+
+.sequenceStep::before {
+  content: counter(municipality-secuencia) ". ";
+  font-weight: var(--b-peso-maximo);
+}
+
+/* --------------------- Metodología declarada de una cifra ----------------- */
+
+.methodBlock {
+  padding: 14px 16px;
+  background: var(--b-lienzo);
+  border-radius: var(--b-radio-campo);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.methodValue {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.methodDetail {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* ------------------------- Celdas del historial --------------------------- */
+
+.cellEjecutado {
+  color: var(--b-petroleo-texto);
+  font-weight: var(--b-peso-maximo);
+}
+
+.cellStrong {
+  display: block;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.cellMuted {
+  display: block;
+  font-size: 12.5px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* El estado se escribe siempre; la píldora solo lo destaca. */
+.statusPill {
+  display: inline-block;
+  padding: 5px 11px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--m-acento-fondo);
+  border: 1px solid var(--m-acento);
+  font-size: 12.5px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--m-acento);
+}
+
+/* Acción de fila del prototipo (línea 411): píldora con borde azul. */
+.rowAction {
+  padding: 9px 14px;
+  border: 2px solid var(--b-azul);
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-blanco);
+  color: var(--b-azul);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.rowAction:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 3px;
+}
+
+/* ------------------------- Panel de nivel de evidencia -------------------- */
+
+.evidenceLevel {
+  background: var(--b-azul);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.evidenceLevelText {
+  flex: 1 1 240px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.evidenceLevelTitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.09em;
+  color: var(--m-azul-suave);
+}
+
+.evidenceLevelValue {
+  margin: 0;
+  font-size: 34px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1;
+  color: var(--b-blanco);
+}
+
+.evidenceLevelDetail {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-blanco);
+}
+
+.evidenceLevelBar {
+  flex: 1 1 240px;
+  min-width: 0;
+  height: 16px;
+  background: var(--m-azul-activo);
+  border-radius: var(--b-radio-pildora);
+  overflow: hidden;
+}
+
+.evidenceLevelFill {
+  display: block;
+  height: 100%;
+  background: var(--b-aguamarina);
+  border-radius: var(--b-radio-pildora);
+}
+
+/* ------------------------ Bloque «Al abrir una evidencia» ----------------- */
+
+.openEvidence {
+  padding: 16px 18px;
+  background: var(--b-lienzo);
+  border-radius: var(--b-radio-campo);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.openEvidenceTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.06em;
+  color: var(--b-gris);
+}
+
+.openEvidenceText {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* ---------------------- Detalle local «Ver evidencia» --------------------- */
+
+.detailList {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.detailRow {
+  min-width: 0;
+  padding: 11px 13px;
+  background: var(--b-lienzo);
+  border-radius: var(--b-radio-campo);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detailKey {
+  font-size: 11.5px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+}
+
+.detailValue {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+  overflow-wrap: anywhere;
+}
+
+.detailGroupTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.detailEvidenceList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detailEvidence {
+  padding: 14px;
+  background: var(--b-celeste);
+  border: 1px solid var(--b-celeste-borde);
+  border-radius: var(--b-radio-campo);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detailEvidenceTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+/* ------------------------------- Responsive ------------------------------- */
+
+@media (max-width: 900px) {
+  /* Definiciones, metadatos y leyenda se apilan sin perder ningún valor. */
+  .definitionList,
+  .detailList {
+    grid-template-columns: 1fr;
+  }
+
+  .evidenceLevelText,
+  .evidenceLevelBar {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .evidenceLevel {
+    padding: 20px;
+  }
+
+  .evidenceLevelValue {
+    font-size: 30px;
+  }
+
+  .legend {
+    gap: 10px;
+  }
+
+  .legendItem {
+    flex: 1 1 100%;
+  }
+}
+
+/* ========= TASK-ALCALDIA-DEMO-FINAL (A-05): siete módulos finales ========= */
+
+/*
+ * Fuente visual vinculante: `prototype-claude/Eligeme-Alcaldia.dc.html`,
+ * líneas 438–709. Se reutilizan sin duplicar `.view`, `.viewHead`,
+ * `.viewTitle`, `.viewDescription`, `.viewNote`, `.demoTag`, `.card`,
+ * `.cardTitle`, `.statGrid`, `.statCard`, `.tableScroll`, `.table`,
+ * `.tableHead`, `.cell`, `.zoneName`, `.statusPill`, `.bar`, `.barFill`,
+ * `.highlight`, `.insight`, `.tagList` y los cinco tonos institucionales. Solo
+ * se añade lo que estas siete pantallas necesitan y que el sistema todavía no
+ * tenía: el histórico en barras, la lista de brechas, la ruta de formación, la
+ * portada del informe y las tarjetas de informe con sus formatos inactivos.
+ */
+
+/* Límites institucionales de cada vista. Siempre visibles bajo el encabezado. */
+.limitList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 860px;
+}
+
+.limitItem {
+  font-size: 12.5px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* Aviso de estado no conectado o no habilitado; se lee siempre como texto. */
+.stateNote {
+  margin: 0;
+  padding: 14px 16px;
+  background: var(--b-amarillo-fondo);
+  border-radius: var(--b-radio-campo);
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-amarillo);
+}
+
+/* Píldora corta del estado de conexión, junto al dato que califica. */
+.connectionTag {
+  display: inline-block;
+  padding: 5px 11px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-amarillo-fondo);
+  border: 1px solid var(--b-amarillo-borde);
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-amarillo);
+}
+
+/* Dos tarjetas en paralelo que se apilan sin perder contenido. */
+.splitRow {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.splitCard {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+/* ------------------------------ FURAG y MIPG ------------------------------ */
+
+.metric {
+  margin: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.metricValue {
+  font-size: 40px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1;
+  color: var(--b-azul);
+}
+
+.metricContext {
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+/* Nota de origen del valor: fixture, no resultado oficial ni importación. */
+.sourceNote {
+  margin: 0;
+  padding: 14px 16px;
+  background: var(--b-lienzo);
+  border-radius: var(--b-radio-campo);
+  font-size: 13px;
+  line-height: 1.55;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/*
+ * Histórico demostrativo. La barra es decorativa: cada vigencia escribe su
+ * valor y su año, de modo que la serie se lee sin depender del alto ni del
+ * color.
+ */
+.historyChart {
+  margin: 0;
+  padding: 6px 0 0;
+  list-style: none;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  height: 130px;
+}
+
+.historyBar {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.historyValue {
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--m-acento);
+}
+
+.historyFill {
+  display: block;
+  width: 100%;
+  background: var(--m-acento);
+  border-radius: 8px 8px 0 0;
+}
+
+.historyYear {
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+/* ---------------------------------- ADRES --------------------------------- */
+
+/* La diferencia se escribe con su significado administrativo, nunca sola. */
+.cellDiferencia {
+  font-weight: var(--b-peso-maximo);
+  color: var(--m-acento);
+}
+
+/* --------------------------------- Brechas -------------------------------- */
+
+.gapList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gapItem {
+  background: var(--b-blanco);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-left: 5px solid var(--m-acento);
+  box-shadow: 0 1px 6px rgba(15, 46, 61, 0.06);
+}
+
+.gapValue {
+  flex: 0 0 100px;
+  font-size: 26px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1.1;
+  color: var(--m-acento);
+}
+
+.gapText {
+  flex: 1;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.gapTitle {
+  font-size: 17px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1.35;
+}
+
+.gapDetail {
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  line-height: 1.45;
+  color: var(--b-gris);
+}
+
+/* La prioridad se escribe siempre: el color solo la acompaña. */
+.gapState {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--m-acento-fondo);
+  border: 1px solid var(--m-acento);
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--m-acento);
+}
+
+/* --------------------------- Cuidadores y formación ----------------------- */
+
+.routeList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.routeStep {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.routeHead {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.routeLabel {
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+}
+
+.routeValue {
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--m-acento);
+}
+
+.routeStep .bar {
+  height: 11px;
+}
+
+.routeStep .barFill {
+  background: var(--m-acento);
+}
+
+/* --------------------------- Reportes ejecutivos -------------------------- */
+
+.reportCover {
+  background: var(--b-azul);
+  border-radius: 20px;
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reportCoverEyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.09em;
+  color: var(--m-azul-suave);
+}
+
+.reportCoverTitle {
+  margin: 0;
+  font-size: 24px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1.3;
+  color: var(--b-blanco);
+}
+
+.reportCoverGrid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+}
+
+.reportCoverItem {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reportCoverKey {
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.06em;
+  color: var(--m-azul-suave);
+}
+
+.reportCoverValue {
+  margin: 0;
+  font-size: 19px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-blanco);
+}
+
+.reportCoverNote {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--m-azul-suave);
+}
+
+.reportGrid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.reportCard {
+  min-width: 0;
+  background: var(--b-blanco);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  box-shadow: 0 1px 6px rgba(15, 46, 61, 0.06);
+}
+
+.reportTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1.35;
+}
+
+.reportText {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  line-height: 1.45;
+  color: var(--b-gris);
+}
+
+.reportFormats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/*
+ * Control de formato inactivo. Conserva la píldora del prototipo, pero es un
+ * botón genuinamente deshabilitado: no descarga, no abre nada y no confirma
+ * ninguna operación. El estado se escribe debajo, no solo con el color.
+ */
+.reportFormat {
+  padding: 8px 13px;
+  border: 1.5px solid var(--m-borde-topbar);
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-lienzo);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  /* La opacidad por defecto del navegador reduciría el contraste del texto. */
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.reportStatus {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-amarillo);
+}
+
+/* ------------------------------- Responsive ------------------------------- */
+
+@media (max-width: 900px) {
+  /* Las dos tarjetas superiores y la ruta se apilan sin perder ningún dato. */
+  .splitCard {
+    flex: 1 1 100%;
+  }
+
+  .gapValue {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .reportCover {
+    padding: 20px;
+  }
+
+  .reportCoverTitle {
+    font-size: 20px;
+  }
+
+  .metricValue {
+    font-size: 34px;
+  }
+
+  .historyChart {
+    height: 110px;
+  }
+
+  .gapItem,
+  .reportCard {
+    padding: 16px;
+  }
+
+  .gapText {
+    min-width: 0;
+  }
+}
+
+/* --------------------- Frontera de sesión institucional -------------------- */
+
+/*
+ * Superficies de sesión de Alcaldía (spec 022, FR-05).
+ *
+ * El marco NEUTRAL conserva la geometría de Alcaldía —barra lateral y área
+ * principal— sin nada que dependa de la sesión: sin menú, sin topbar, sin
+ * periodo y sin perfil. Que el marco se vea no concede nada.
+ *
+ * Ningún estado se comunica SOLO por color: cada uno tiene encabezado y texto
+ * propios, y los avisos viven en regiones vivas. El color acompaña, no informa.
+ */
+
+.sidebarNeutral {
+  flex: 0 0 244px;
+  background: var(--b-azul);
+  color: var(--b-blanco);
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sesionMarca {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--b-blanco);
+}
+
+.sesionMarcaBajada {
+  font-size: 12px;
+  color: var(--m-azul-suave);
+}
+
+.sesionArea {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 26px;
+  background: var(--b-lienzo);
+}
+
+.sesionPanel {
+  width: 100%;
+  max-width: 480px;
+  background: var(--b-blanco);
+  border: 1px solid var(--m-borde-topbar);
+  border-radius: 12px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sesionTitulo {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--m-azul-activo);
+}
+
+.sesionTexto {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--b-gris);
+}
+
+.sesionForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.sesionCampo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sesionEtiqueta {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--b-gris);
+}
+
+.sesionInput {
+  font: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--m-borde-topbar);
+  border-radius: 8px;
+  background: var(--b-blanco);
+  color: inherit;
+}
+
+.sesionInput:focus-visible {
+  outline: 2px solid var(--m-azul-activo);
+  outline-offset: 1px;
+}
+
+.sesionInput:disabled {
+  /* El estado deshabilitado no se comunica solo por color: el botón lo dice. */
+  cursor: not-allowed;
+}
+
+.sesionBoton {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  align-self: flex-start;
+  padding: 10px 20px;
+  border: 1px solid var(--m-azul-activo);
+  border-radius: 8px;
+  background: var(--m-azul-activo);
+  color: var(--b-blanco);
+  cursor: pointer;
+}
+
+.sesionBoton:focus-visible {
+  outline: 2px solid var(--m-azul-activo);
+  outline-offset: 2px;
+}
+
+.sesionBoton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/*
+ * Aviso PERMANENTE en el marcado: existe vacío desde el primer render para que
+ * un lector de pantalla lo anuncie al llenarse. Vacío no ocupa ni anuncia nada.
+ */
+.sesionAviso {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--m-vino-interseccion);
+}
+
+.sesionAviso:empty {
+  display: none;
+}
+
+/* ------------------------ Barra de sesión autorizada ----------------------- */
+
+.sesionBarra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 26px;
+  background: var(--b-panel);
+  border-bottom: 1px solid var(--m-borde-topbar);
+}
+
+.sesionBarraTexto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--b-gris);
+}
+
+.sesionBarraEntidad {
+  font-weight: 700;
+  color: var(--m-azul-activo);
+}
+
+.sesionBarraRol {
+  font-weight: 600;
+}
+
+.sesionBarraVigencia {
+  font-variant-numeric: tabular-nums;
+}
+
+.sesionBarraBoton {
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  margin-left: auto;
+  padding: 7px 14px;
+  border: 1px solid var(--m-azul-activo);
+  border-radius: 8px;
+  background: var(--b-blanco);
+  color: var(--m-azul-activo);
+  cursor: pointer;
+}
+
+.sesionBarraBoton:focus-visible {
+  outline: 2px solid var(--m-azul-activo);
+  outline-offset: 2px;
+}
+
+.sesionBarraBoton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.sesionBarraAviso {
+  flex-basis: 100%;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--m-vino-interseccion);
+}
+
+.sesionBarraAviso:empty {
+  display: none;
+}

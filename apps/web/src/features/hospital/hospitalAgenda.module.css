@@ -1,0 +1,510 @@
+/*
+ * Vista «Agenda y citas» (TASK-003H-03, FR-02; TASK-HOSPITAL-CORE-02 §3.2;
+ * HOSPITAL-VISUAL-RECOVERY-01-C).
+ *
+ * Fuente visual de origen: `prototype-claude/Eligeme-Hospital.dc.html`,
+ * bloque `vAgenda` (líneas 204–295). Cada medida, color, radio, peso y
+ * espaciado procede del sistema aprobado (`src/styles/tokens.css`) y de los
+ * patrones compartidos en `hospitalViews.module.css`: no se introduce ninguno
+ * nuevo.
+ *
+ * QUÉ RECUPERA ESTA HOJA. La composición reconocible del diseño original:
+ * la tarjeta ámbar de solicitudes con su contador, cada solicitud como fila
+ * densa con distintivo de modalidad, bloque de textos jerarquizado y pastilla a
+ * la derecha, las tres acciones agrupadas al final de la fila —con el contorno
+ * rojo que la referencia reserva a `Rechazar con motivo`— y las citas como
+ * filas compactas separadas por línea.
+ *
+ * QUÉ NO VUELVE. Nada de lo que la plataforma no modela: ni el calendario fijo
+ * de agosto de 2026 con sus días destacados, ni los totales del mes, ni los
+ * estados de pago, ni la tarjeta «Estados de la cita» con sus cuatro
+ * perspectivas nominales. Las reglas que vestían esos bloques se retiran en
+ * lugar de quedar como estilo muerto; la cuadrícula del calendario publica
+ * exactamente los días servidos.
+ */
+
+/* ========================================================================== */
+/* Controles de la ventana                                                    */
+/* ========================================================================== */
+
+.controlesCard {
+  --h-card-gap: 14px;
+}
+
+.controles {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.campoGrupo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.campoEtiqueta {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+}
+
+.campoAyuda {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.campo {
+  font-family: inherit;
+  padding: 13px 15px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  font-size: 15px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+  background: var(--b-blanco);
+}
+
+.campo:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.campoProfesional {
+  flex: 1;
+  min-width: 190px;
+}
+
+.campoFecha {
+  flex: 0 0 170px;
+}
+
+.campoHora {
+  flex: 0 0 130px;
+}
+
+.escalas {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  font-family: inherit;
+  padding: 9px 15px;
+  border-radius: var(--b-radio-pildora);
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+  border: 1.5px solid var(--b-borde);
+  background: var(--b-blanco);
+  color: var(--b-gris);
+}
+
+.pillActiva {
+  border: none;
+  background: var(--b-azul);
+  color: var(--b-blanco);
+}
+
+.ventana {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+/*
+ * Región viva del desenlace de la asignación. Conserva su espacio aunque esté
+ * vacía para que anunciar un conflicto no desplace el formulario que la
+ * persona está usando.
+ */
+.aviso {
+  margin: 0;
+  min-height: 22px;
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+.aviso:empty {
+  min-height: 0;
+}
+
+/* ========================================================================== */
+/* Estados de la consulta                                                     */
+/* ========================================================================== */
+
+.estado {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.estadoTexto {
+  margin: 0;
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+/* ========================================================================== */
+/* Solicitudes pendientes de asignación                                       */
+/* ========================================================================== */
+
+/* Tarjeta ámbar sin sombra de la referencia (línea 211). */
+.solicitudesCard {
+  border: 2.5px solid var(--b-amarillo-borde);
+  box-shadow: none;
+}
+
+.contador {
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
+.solicitudes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.solicitud {
+  min-width: 0;
+  padding: 18px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.solicitudResumen {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/*
+ * Distintivo de modalidad de la referencia (línea 217). Es DECORATIVO: la
+ * modalidad se lee siempre como texto en la pastilla de la derecha.
+ */
+.solicitudIcono {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--b-radio-campo);
+  background: var(--b-celeste);
+  color: var(--b-petroleo-texto);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.solicitudTextos {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.solicitudTitulo {
+  margin: 0;
+  font-size: 18px;
+  font-weight: var(--b-peso-maximo);
+  overflow-wrap: anywhere;
+}
+
+.solicitudLinea {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.solicitudEstado {
+  flex: 0 0 auto;
+  padding: 9px 14px;
+  font-size: 13px;
+}
+
+.solicitudControles {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+/* Las tres acciones de la referencia viajan juntas al final de la fila. */
+.acciones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.accionPrimaria {
+  padding: 13px 20px;
+  font-size: 15px;
+}
+
+.accionSecundaria {
+  padding: 13px 18px;
+  font-size: 15px;
+}
+
+/* Contorno rojo que la referencia reserva a «Rechazar con motivo» (línea 235). */
+.accionRechazar {
+  border: 2px solid var(--b-rojo-borde);
+  background: var(--b-blanco);
+  color: var(--b-rojo);
+}
+
+/*
+ * Acción visible pero sin operación. El atenuado ACOMPAÑA al atributo
+ * `disabled` y a la ayuda accesible que declara que todavía no opera: el estado
+ * nunca se comunica solo por color ni solo por opacidad.
+ */
+.accionInactiva {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.accionFutura {
+  display: inline-flex;
+}
+
+/* ========================================================================== */
+/* Fila calendario + citas                                                    */
+/* ========================================================================== */
+
+.columnas {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.calendarioCard {
+  flex: 1;
+  min-width: 360px;
+}
+
+.citasCard {
+  flex: 1;
+  min-width: 340px;
+}
+
+/* --------------------- Calendario de la ventana servida ------------------- */
+
+/*
+ * Guarda responsive (FR-06.3): la cuadrícula conserva su geometría y, cuando el
+ * ancho disponible es menor, se desplaza dentro de su propio contenedor. Así no
+ * hay overflow horizontal de página y no se recorta contenido.
+ */
+.calendarioScroll {
+  overflow-x: auto;
+}
+
+/*
+ * La cuadrícula publica exactamente los días que el servidor devolvió para la
+ * ventana consultada: no es un mes fijo de 42 celdas.
+ */
+.calendarioConteos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.dia {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  background: var(--b-lienzo);
+  border: 1px solid var(--h-borde-topbar);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--b-tinta);
+}
+
+.diaNumero {
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.diaCitas {
+  font-size: 11px;
+  font-weight: var(--b-peso-enfasis);
+}
+
+.totales {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+  margin: 0;
+  list-style: none;
+}
+
+.total {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Sin color por modalidad: el valor y su etiqueta se leen como texto. */
+.totalValor {
+  margin: 0;
+  font-size: 22px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-azul);
+}
+
+.totalEtiqueta {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+/* ---------------------------- Citas de la ventana ------------------------- */
+
+/*
+ * Filas densas separadas por línea, como las bandejas operativas de la
+ * referencia. La jerarquía de cada fila es fecha y hora, paciente, profesional
+ * y modalidad, y al final el estado con la acción que corresponda.
+ */
+.citas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.cita {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--h-borde-topbar);
+}
+
+.cita:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* Distintivo de modalidad. Decorativo: la modalidad va escrita al lado. */
+.citaIcono {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--b-celeste);
+  color: var(--b-petroleo-texto);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.citaTextos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 190px;
+  min-width: 0;
+}
+
+.citaHora {
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.04em;
+  color: var(--b-petroleo-texto);
+}
+
+.citaPaciente {
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+  overflow-wrap: anywhere;
+}
+
+.citaMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.citaProfesional {
+  overflow-wrap: anywhere;
+}
+
+.citaSeparador {
+  color: var(--b-gris);
+}
+
+.citaModalidad {
+  white-space: nowrap;
+}
+
+.citaAcciones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.citaEstado {
+  flex: none;
+  padding: 7px 12px;
+  font-size: 12px;
+}
+
+/* Acción de la fila: más compacta que la de una solicitud. */
+.accionCita {
+  padding: 9px 14px;
+  font-size: 13px;
+}
+
+/* ================================= Responsive ============================= */
+
+/*
+ * Mismo punto de corte que el Shell Hospital: cuando el ancho ya no admite las
+ * dos columnas, cada tarjeta ocupa la fila completa en lugar de forzar su ancho
+ * mínimo de escritorio. No se elimina, oculta ni reordena contenido.
+ */
+@media (max-width: 900px) {
+  .calendarioCard,
+  .citasCard {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .citaAcciones {
+    margin-left: 0;
+  }
+}

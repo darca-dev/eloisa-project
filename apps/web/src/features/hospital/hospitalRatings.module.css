@@ -1,0 +1,233 @@
+/*
+ * Vista «Calificaciones» (TASK-003H-04, alcance D).
+ *
+ * Fuente visual vinculante: `prototype-claude/Eligeme-Hospital.dc.html`,
+ * vista `vCalificaciones` (líneas 548–622). La barra de puntuación y las
+ * etiquetas de filtro reutilizan los patrones compartidos de
+ * `hospitalViews.module.css`.
+ *
+ * El color acompaña siempre a una cifra o a un texto: ni la puntuación, ni la
+ * tendencia, ni los indicadores se comunican solo por color.
+ */
+
+/* -------------------------- Experiencia por profesional ------------------- */
+
+.experiencia {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--h-card-gap, 14px);
+}
+
+.profesional {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px;
+  border-radius: 14px;
+  background: var(--b-lienzo);
+  flex-wrap: wrap;
+}
+
+.profesionalTextos {
+  flex: 1;
+  min-width: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.profesionalNombre {
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.profesionalMeta {
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.profesionalBarra {
+  flex: 0 0 210px;
+  min-width: 0;
+}
+
+.profesionalValor {
+  flex: 0 0 60px;
+  font-size: 18px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.profesionalTendencia {
+  flex: 0 0 110px;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+}
+
+/* ------------------------------ Dos columnas ------------------------------ */
+
+.columnas {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.columna {
+  flex: 1;
+  min-width: 340px;
+}
+
+.bloqueTitulo {
+  margin: 0;
+  font-size: 19px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.bloqueSubtitulo {
+  margin: 0;
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.bloqueDescripcion {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+/* --------------------------------- Factores ------------------------------- */
+
+.factores {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--h-card-gap, 16px);
+}
+
+.factor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.factorCabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.factorEtiqueta {
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+}
+
+.factorValor {
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+}
+
+/* ---------------------------- Indicadores clínicos ------------------------ */
+
+/*
+ * Bloque demostrativo. Reproduce la separación visual del prototipo sin validar
+ * fórmulas, fuentes, periodos ni resultados: no es un indicador oficial.
+ */
+.indicadores {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--h-card-gap, 14px);
+}
+
+.indicador {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 16px;
+  border-radius: var(--b-radio-campo);
+  background: var(--b-lienzo);
+  border-left: 4px solid var(--h-indicador-color);
+}
+
+.indicadorValor {
+  flex: 0 0 66px;
+  font-size: 20px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--h-indicador-color);
+}
+
+.indicadorEtiqueta {
+  flex: 1;
+  min-width: 140px;
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+  line-height: 1.35;
+}
+
+/* -------------------------------- Comentarios ----------------------------- */
+
+.comentarios {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--h-card-gap, 14px);
+}
+
+.comentario {
+  padding: 16px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comentarioCabecera {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.comentarioAutor {
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.comentarioCalificacion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.comentarioTexto {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-enfasis);
+}
+
+.comentarioMeta {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}

@@ -1,0 +1,226 @@
+/*
+ * Burbuja flotante de la IA (TASK-002A, FR-08).
+ *
+ * Patrón aprobado en `Eligeme-Inscripcion.dc.html`: activador blanco tipo
+ * píldora abajo a la derecha con sombra, y panel superpuesto con encabezado
+ * azul. Los valores de color, radio y sombra provienen del sistema de Línea
+ * Visual B (`src/styles/tokens.css`); aquí no se declara ningún color propio.
+ */
+
+.dock {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+/* Anclada al marco que la contiene (Inicio del Paciente). */
+.dockContained {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+}
+
+/* ------------------------------- Activador ------------------------------- */
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 66px;
+  padding: 6px 20px 6px 8px;
+  border: none;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-blanco);
+  box-shadow: var(--b-sombra-elevada);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.triggerImage {
+  width: 66px;
+  height: 66px;
+  object-fit: contain;
+  display: block;
+}
+
+.triggerLabel {
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-azul);
+}
+
+/* --------------------------------- Panel --------------------------------- */
+
+.panel {
+  width: 330px;
+  max-width: calc(100vw - 40px);
+  background: var(--b-blanco);
+  border-radius: 20px;
+  box-shadow: var(--b-sombra-elevada);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: min(70vh, 520px);
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.panelHeader {
+  background: var(--b-azul);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Contenedor de composición: el halo y el recorte los aporta `EliAvatar`. */
+.panelAvatar {
+  display: flex;
+  flex: 0 0 44px;
+}
+
+.panelNames {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.panelName {
+  margin: 0;
+  font-size: 17px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-blanco);
+}
+
+.panelRole {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-celeste);
+}
+
+.panelClose {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--b-blanco);
+  font-size: 26px;
+  line-height: 1;
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.panelBody {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.panelGreeting {
+  margin: 0;
+  background: var(--b-panel);
+  border-radius: 16px 16px 16px 4px;
+  padding: 13px 15px;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+}
+
+.panelStep {
+  background: var(--b-celeste);
+  border: 1.5px solid var(--b-celeste-borde);
+  border-radius: 16px;
+  padding: 13px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.panelStepLabel {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.07em;
+  color: var(--b-petroleo-texto);
+}
+
+.panelStepText {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-petroleo-texto);
+}
+
+.panelTopicsLabel {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.08em;
+  color: var(--b-gris);
+}
+
+.panelTopics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.panelTopic {
+  min-height: 44px;
+  padding: 11px 14px;
+  border: 1.5px solid var(--b-azul);
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-blanco);
+  color: var(--b-azul);
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.panelTopicActive {
+  background: var(--b-celeste);
+  border-width: 2px;
+}
+
+.panelAnswer {
+  margin: 0;
+  background: var(--b-panel);
+  border-radius: 16px;
+  padding: 13px 15px;
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+}
+
+/* En pantallas estrechas la burbuja se ajusta sin tapar la acción principal. */
+@media (max-width: 420px) {
+  .dock {
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .panel {
+    max-width: calc(100vw - 24px);
+  }
+}

@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; font-family:Nunito, system-ui, sans-serif; background:#F7F9FA; color:#0F2E3D; -webkit-font-smoothing:antialiased; }
+  a { color:#0A6873; text-decoration:none; font-weight:800; }
+  a:hover { color:#D63384; }
+  input, select, textarea, button { font-family:Nunito, sans-serif; }
+  input:focus, select:focus { outline:3px solid #B9DCE6; outline-offset:1px; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;align-items:stretch">
+
+  <div style="flex:0 0 236px;background:#075985;padding:20px 16px;display:flex;flex-direction:column;gap:22px">
+    <div style="display:flex;flex-direction:column;gap:3px;padding:0 6px">
+      <div style="font-size:11px;font-weight:900;color:#B9DCE6;letter-spacing:.14em">ELÍGEME</div>
+      <div style="font-size:17px;font-weight:900;color:#fff;line-height:1.25">Hospital San Rafael</div>
+      <div style="font-size:12px;font-weight:700;color:#CFE6EE">ESE · Soacha</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <button onClick="{{ goInicio }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:12px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgInicio }};color:{{ fgInicio }};font-size:14px;font-weight:800">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/></svg>
+        Inicio
+      </button>
+      <button onClick="{{ goAgenda }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:12px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgAgenda }};color:{{ fgAgenda }};font-size:14px;font-weight:800">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Agenda y citas
+      </button>
+      <button onClick="{{ goPacientes }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:12px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgPacientes }};color:{{ fgPacientes }};font-size:14px;font-weight:800">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg>
+        Pacientes
+      </button>
+      <button onClick="{{ goAlarmas }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:12px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgAlarmas }};color:{{ fgAlarmas }};font-size:14px;font-weight:800">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+        Semáforo de alarmas
+      </button>
+      <button onClick="{{ goProfesionales }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:12px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgProfesionales }};color:{{ fgProfesionales }};font-size:14px;font-weight:800">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2v2a4 4 0 0 1-8 0V2"/><path d="M7 8v4a6 6 0 0 0 12 0v-1"/><circle cx="20" cy="10" r="2"/></svg>
+        Profesionales
+      </button>
+      <button onClick="{{ goVisitas }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:12px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgVisitas }};color:{{ fgVisitas }};font-size:14px;font-weight:800">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+        Visitas domiciliarias
+      </button>
+      <button onClick="{{ goVirtuales }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:12px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgVirtuales }};color:{{ fgVirtuales }};font-size:14px;font-weight:800">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M22 8l-6 4 6 4z"/></svg>
+        Consultas virtuales
+      </button>
+      <button onClick="{{ goCalificaciones }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:12px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgCalificaciones }};color:{{ fgCalificaciones }};font-size:14px;font-weight:800">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.7 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        Calificaciones
+      </button>
+      <button onClick="{{ goNovedades }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:12px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgNovedades }};color:{{ fgNovedades }};font-size:14px;font-weight:800">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        Novedades
+        <span style="margin-left:auto;min-width:22px;height:20px;padding:0 6px;box-sizing:border-box;border-radius:99px;background:#D63384;color:#fff;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center">7</span>
+      </button>
+      <div style="height:1px;background:#0A6C9E;margin:8px 4px"></div>
+      <button onClick="{{ goMembresias }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:12px 13px;border:none;border-radius:11px;cursor:pointer;background:transparent;color:#CFE6EE;font-size:14px;font-weight:800">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg>
+        Membresías y servicios
+      </button>
+      <button onClick="{{ goReportes }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:12px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgReportes }};color:{{ fgReportes }};font-size:14px;font-weight:800">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>
+        Reportes
+      </button>
+      <button onClick="{{ goConfig }}" style="text-align:left;display:flex;align-items:center;gap:11px;padding:12px 13px;border:none;border-radius:11px;cursor:pointer;background:{{ bgConfig }};color:{{ fgConfig }};font-size:14px;font-weight:800">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 14H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 7a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 3V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21 10h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1z"/></svg>
+        Configuración
+      </button>
+    </div>
+  </div>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+
+    <div style="background:#fff;border-bottom:1px solid #E4EBEE;padding:14px 26px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="flex:1;min-width:240px;display:flex;align-items:center;gap:11px;padding:12px 16px;background:#F7F9FA;border:1.5px solid #DDE7EA;border-radius:12px;color:#5A6474">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.3-4.3"/></svg>
+        <span style="font-size:15px;font-weight:700">Buscar paciente, documento, profesional, cita, atención o municipio</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="position:relative;width:42px;height:42px;border-radius:12px;background:#E8F6F8;display:flex;align-items:center;justify-content:center;color:#0A6873">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <span style="position:absolute;top:-6px;right:-6px;min-width:21px;height:21px;padding:0 6px;box-sizing:border-box;border-radius:99px;background:#D63384;color:#fff;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center">7</span>
+        </span>
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 14px 7px 7px;border-radius:99px;background:#F7F9FA;border:1.5px solid #DDE7EA">
+          <span style="width:34px;height:34px;border-radius:50%;background:#075985;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900">CV</span>
+          <span style="display:flex;flex-direction:column"><span style="font-size:13px;font-weight:900">Claudia Vargas</span><span style="font-size:11px;font-weight:700;color:#5A6474">Coordinación domiciliaria</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex:1;padding:24px 26px 60px;display:flex;flex-direction:column;gap:18px">
+
+      <sc-if value="{{ vInicio }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:12px;font-weight:900;color:#0A6873;letter-spacing:.1em">CENTRO DE CONTROL OPERATIVO</div>
+              <div style="font-size:30px;font-weight:900">Atención domiciliaria de hoy</div>
+            </div>
+            <div style="font-size:15px;font-weight:800;color:#5A6474">Lunes 17 de agosto de 2026 · 9:05 a. m.</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px">
+            <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="7">
+              <div style="background:#fff;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 1px 6px rgba(15,46,61,.06);border-top:4px solid {{ k.color }}">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+                  <span style="font-size:12px;font-weight:900;color:#5A6474;letter-spacing:.07em;line-height:1.3">{{ k.t }}</span>
+                  <span style="flex:0 0 38px;width:38px;height:38px;border-radius:11px;background:{{ k.bg }};display:flex;align-items:center;justify-content:center;color:{{ k.color }}"><sc-if value="{{ k.icCal }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></sc-if><sc-if value="{{ k.icCasa }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></sc-if><sc-if value="{{ k.icVideo }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M22 8l-6 4 6 4z"/></svg></sc-if><sc-if value="{{ k.icAlerta }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></sc-if><sc-if value="{{ k.icUsers }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/></svg></sc-if><sc-if value="{{ k.icSteth }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2v2a4 4 0 0 1-8 0V2"/><path d="M7 8v4a6 6 0 0 0 12 0v-1"/><circle cx="20" cy="10" r="2"/></svg></sc-if><sc-if value="{{ k.icReloj }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></sc-if></span>
+                </div>
+                <div style="font-size:34px;font-weight:900;line-height:1;color:{{ k.color }}">{{ k.v }}</div>
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <sc-for list="{{ k.desglose }}" as="d" hint-placeholder-count="3">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                      <span style="font-size:13px;font-weight:700;color:#5A6474">{{ d.t }}</span>
+                      <span style="font-size:14px;font-weight:900">{{ d.v }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+            <div style="flex:2;min-width:420px;background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <div style="font-size:20px;font-weight:900">Agenda del día</div>
+                <button onClick="{{ goAgenda }}" style="padding:10px 16px;border:2px solid #075985;border-radius:99px;background:#fff;color:#075985;font-size:14px;font-weight:900;cursor:pointer">Ver agenda maestra</button>
+              </div>
+              <sc-for list="{{ agendaHoy }}" as="a" hint-placeholder-count="6">
+                <div style="display:flex;align-items:center;gap:14px;padding:14px;border-radius:14px;background:#F7F9FA;border-left:4px solid {{ a.color }};flex-wrap:wrap">
+                  <span style="flex:0 0 62px;font-size:16px;font-weight:900">{{ a.hora }}</span>
+                  <span style="flex:0 0 34px;width:34px;height:34px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;color:#0A6873"><sc-if value="{{ a.icCasa }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></sc-if><sc-if value="{{ a.icVideo }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M22 8l-6 4 6 4z"/></svg></sc-if></span>
+                  <span style="flex:1;min-width:150px;display:flex;flex-direction:column;gap:1px">
+                    <span style="font-size:16px;font-weight:900">{{ a.paciente }}</span>
+                    <span style="font-size:13px;font-weight:700;color:#5A6474">{{ a.tipo }} · {{ a.profesional }}</span>
+                  </span>
+                  <span style="flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:8px 13px;border-radius:99px;background:{{ a.bg }};font-size:13px;font-weight:900;color:{{ a.color }}">
+                    <span style="width:8px;height:8px;border-radius:50%;background:{{ a.color }}"></span>{{ a.estado }}
+                  </span>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="flex:1;min-width:300px;display:flex;flex-direction:column;gap:16px">
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Semáforo de alarmas</div>
+                <sc-for list="{{ semaforo }}" as="s" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:13px;padding:14px;border-radius:14px;background:{{ s.bg }}">
+                    <span style="flex:0 0 32px;width:32px;height:32px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:{{ s.color }}"><sc-if value="{{ s.icAlerta }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></sc-if><sc-if value="{{ s.icOk }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg></sc-if></span>
+                    <span style="flex:1;font-size:15px;font-weight:900;color:{{ s.color }}">{{ s.t }}</span>
+                    <span style="font-size:26px;font-weight:900;line-height:1;color:{{ s.color }}">{{ s.v }}</span>
+                  </div>
+                </sc-for>
+                <button onClick="{{ goAlarmas }}" style="padding:14px;border:none;border-radius:12px;background:#075985;color:#fff;font-size:15px;font-weight:900;cursor:pointer">Gestionar alarmas</button>
+              </div>
+
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:12px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Acciones rápidas</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                  <sc-for list="{{ acciones }}" as="a" hint-placeholder-count="6">
+                    <button onClick="{{ a.on }}" style="text-align:left;padding:14px;border:1.5px solid #DDE7EA;border-radius:14px;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:9px">
+                      <span style="width:36px;height:36px;border-radius:11px;background:#E8F6F8;display:flex;align-items:center;justify-content:center;color:#0A6873"><sc-if value="{{ a.icMas }}" hint-placeholder-val="{{ false }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></sc-if><sc-if value="{{ a.icVideo2 }}" hint-placeholder-val="{{ false }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M22 8l-6 4 6 4z"/></svg></sc-if><sc-if value="{{ a.icCasa2 }}" hint-placeholder-val="{{ false }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></sc-if><sc-if value="{{ a.icUsers }}" hint-placeholder-val="{{ false }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/></svg></sc-if><sc-if value="{{ a.icSteth }}" hint-placeholder-val="{{ false }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2v2a4 4 0 0 1-8 0V2"/><path d="M7 8v4a6 6 0 0 0 12 0v-1"/><circle cx="20" cy="10" r="2"/></svg></sc-if><sc-if value="{{ a.icAlerta }}" hint-placeholder-val="{{ false }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></sc-if></span>
+                      <span style="font-size:14px;font-weight:900;line-height:1.3">{{ a.t }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <div style="font-size:20px;font-weight:900">Alarmas recientes</div>
+              <span style="font-size:13px;font-weight:800;color:#5A6474">Llegan automáticamente desde bitácoras, registros del profesional y el motor de reglas</span>
+            </div>
+            <sc-for list="{{ alarmas }}" as="a" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:14px;padding:15px;border-radius:14px;background:{{ a.bg }};border-left:4px solid {{ a.color }};flex-wrap:wrap">
+                <span style="flex:0 0 32px;width:32px;height:32px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:{{ a.color }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+                <span style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:16px;font-weight:900">{{ a.paciente }}</span>
+                  <span style="font-size:14px;font-weight:700;color:#5A6474">{{ a.motivo }}</span>
+                </span>
+                <span style="flex:0 0 auto;padding:8px 13px;border-radius:99px;background:#fff;font-size:13px;font-weight:900;color:{{ a.color }}">{{ a.nivel }}</span>
+                <span style="flex:0 0 auto;font-size:13px;font-weight:800;color:#5A6474">{{ a.cuando }}</span>
+                <button onClick="{{ a.on }}" style="flex:0 0 auto;padding:10px 18px;border:2px solid {{ a.color }};border-radius:99px;background:#fff;color:{{ a.color }};font-size:14px;font-weight:900;cursor:pointer">Ver</button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vAgenda }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Agenda y citas</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600;max-width:760px">Esta es la agenda maestra. Paciente, cuidador y profesional no crean citas aparte: todos ven y modifican la misma cita según sus permisos.</div>
+          </div>
+
+          <div style="background:#fff;border:2.5px solid #F3DCA9;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <div style="font-size:20px;font-weight:900">Solicitudes pendientes de asignación</div>
+              <span style="padding:8px 14px;border-radius:99px;background:#FEF6E9;font-size:14px;font-weight:900;color:#96450A">4 solicitudes</span>
+            </div>
+            <sc-for list="{{ solicitudes }}" as="s" hint-placeholder-count="4">
+              <div style="padding:18px;border:1.5px solid #DDE7EA;border-radius:16px;display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+                  <span style="flex:0 0 40px;width:40px;height:40px;border-radius:12px;background:#E8F6F8;display:flex;align-items:center;justify-content:center;color:#0A6873"><sc-if value="{{ s.icCasa }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></sc-if><sc-if value="{{ s.icCal }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></sc-if><sc-if value="{{ s.icVideo }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M22 8l-6 4 6 4z"/></svg></sc-if></span>
+                  <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:3px">
+                    <div style="font-size:18px;font-weight:900">{{ s.paciente }} · {{ s.tipo }}</div>
+                    <div style="font-size:14px;font-weight:700;color:#5A6474">{{ s.detalle }}</div>
+                    <div style="font-size:14px;font-weight:700;color:#5A6474">Solicitado por {{ s.origen }} · {{ s.cuando }}</div>
+                  </div>
+                  <span style="flex:0 0 auto;padding:9px 14px;border-radius:99px;background:{{ s.bg }};font-size:13px;font-weight:900;color:{{ s.color }}">{{ s.estado }}</span>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                  <select style="flex:1;min-width:190px;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff">
+                    <option>Asignar profesional…</option>
+                    <option>Dra. Laura Gómez · medicina</option>
+                    <option>Enf. Carlos Ruiz · enfermería</option>
+                    <option>Ft. Diana Salas · fisioterapia</option>
+                  </select>
+                  <input type="date" style="flex:0 0 170px;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"/>
+                  <input type="time" style="flex:0 0 130px;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"/>
+                  <button style="padding:13px 20px;border:none;border-radius:12px;background:#075985;color:#fff;font-size:15px;font-weight:900;cursor:pointer">Asignar</button>
+                  <button style="padding:13px 18px;border:2px solid #DDE7EA;border-radius:12px;background:#fff;font-size:15px;font-weight:900;cursor:pointer">Reprogramar</button>
+                  <button style="padding:13px 18px;border:2px solid #F5C2C2;border-radius:12px;background:#fff;color:#B91C1C;font-size:15px;font-weight:900;cursor:pointer">Rechazar con motivo</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+            <div style="flex:1;min-width:360px;background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                <div style="font-size:20px;font-weight:900">Agosto 2026</div>
+                <div style="display:flex;gap:7px">
+                  <sc-for list="{{ vistasCal }}" as="v" hint-placeholder-count="3">
+                    <button onClick="{{ v.on }}" style="padding:9px 15px;border-radius:99px;font-size:13px;font-weight:900;cursor:pointer;border:{{ v.bd }};background:{{ v.bg }};color:{{ v.fg }}">{{ v.t }}</button>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+                <sc-for list="{{ diasSemana }}" as="d" hint-placeholder-count="7">
+                  <div style="text-align:center;font-size:12px;font-weight:900;color:#5A6474;padding-bottom:4px">{{ d.t }}</div>
+                </sc-for>
+                <sc-for list="{{ dias }}" as="d" hint-placeholder-count="35">
+                  <div style="aspect-ratio:1;border-radius:10px;background:{{ d.bg }};border:{{ d.bd }};padding:6px;display:flex;flex-direction:column;gap:3px">
+                    <span style="font-size:12px;font-weight:900;color:{{ d.fg }}">{{ d.n }}</span>
+                    <span style="font-size:11px;font-weight:800;color:{{ d.fg }}">{{ d.citas }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;padding-top:6px">
+                <sc-for list="{{ totalesCal }}" as="t" hint-placeholder-count="4">
+                  <div style="display:flex;flex-direction:column;gap:2px">
+                    <span style="font-size:22px;font-weight:900;color:{{ t.color }}">{{ t.v }}</span>
+                    <span style="font-size:13px;font-weight:800;color:#5A6474">{{ t.t }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="flex:1;min-width:340px;background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+              <div style="font-size:20px;font-weight:900">Estados de la cita</div>
+              <div style="font-size:15px;line-height:1.5;color:#5A6474;font-weight:600">Se guardan estructurados, no como texto libre. Cambiarlos actualiza las cuatro vistas y dispara novedades y WhatsApp.</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <sc-for list="{{ estadosCita }}" as="e" hint-placeholder-count="12">
+                  <span style="padding:9px 14px;border-radius:99px;background:{{ e.bg }};border:1.5px solid {{ e.bd }};font-size:13px;font-weight:900;color:{{ e.color }}">{{ e.t }}</span>
+                </sc-for>
+              </div>
+              <div style="height:1px;background:#E4EBEE"></div>
+              <div style="font-size:17px;font-weight:900">Una cita, cuatro vistas</div>
+              <sc-for list="{{ vistasCita }}" as="v" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;background:#F7F9FA">
+                  <span style="flex:0 0 30px;width:30px;height:30px;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;color:#0A6873"><sc-if value="{{ v.icFile }}" hint-placeholder-val="{{ false }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg></sc-if><sc-if value="{{ v.icSteth }}" hint-placeholder-val="{{ false }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2v2a4 4 0 0 1-8 0V2"/><path d="M7 8v4a6 6 0 0 0 12 0v-1"/><circle cx="20" cy="10" r="2"/></svg></sc-if><sc-if value="{{ v.icUsers }}" hint-placeholder-val="{{ false }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/></svg></sc-if></span>
+                  <span style="flex:0 0 105px;font-size:13px;font-weight:900;color:#0A6873">{{ v.rol }}</span>
+                  <span style="flex:1;min-width:140px;font-size:14px;font-weight:700;color:#5A6474">{{ v.texto }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vPacientes }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Pacientes</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600;max-width:760px">Un solo expediente por persona. Cada interfaz muestra una parte del mismo expediente según permisos: no existen historias paralelas.</div>
+          </div>
+
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:18px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+              <span style="flex:0 0 66px;width:66px;height:66px;border-radius:50%;background:#E8F6F8;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:900;color:#075985">MG</span>
+              <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:4px">
+                <div style="font-size:26px;font-weight:900">María Gómez Osorio</div>
+                <div style="font-size:15px;font-weight:700;color:#5A6474">76 años · CC 24.556.812 · Nueva EPS · Soacha</div>
+              </div>
+              <span style="display:flex;align-items:center;gap:9px;padding:11px 16px;border-radius:99px;background:#FEF6E9;border:1.5px solid #F3DCA9;font-size:14px;font-weight:900;color:#96450A">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+                Amarillo · requiere seguimiento
+              </span>
+            </div>
+            <div style="display:flex;gap:9px;flex-wrap:wrap">
+              <sc-for list="{{ condiciones }}" as="c" hint-placeholder-count="3">
+                <span style="display:flex;align-items:center;gap:8px;padding:10px 15px;border-radius:99px;background:#E8F6F8;font-size:14px;font-weight:900;color:#0A6873">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>
+                  {{ c.t }}
+                </span>
+              </sc-for>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px">
+              <sc-for list="{{ datosPaciente }}" as="d" hint-placeholder-count="6">
+                <div style="padding:14px 16px;background:#F7F9FA;border-radius:12px;display:flex;flex-direction:column;gap:2px">
+                  <div style="font-size:11px;font-weight:900;color:#5A6474;letter-spacing:.07em">{{ d.k }}</div>
+                  <div style="font-size:15px;font-weight:800;line-height:1.4">{{ d.v }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:18px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <div style="font-size:20px;font-weight:900">Historial clínico</div>
+              <span style="font-size:13px;font-weight:800;color:#5A6474">Línea de tiempo única. Nada se borra al actualizar: queda la trazabilidad</span>
+            </div>
+            <sc-for list="{{ historial }}" as="h" hint-placeholder-count="3">
+              <div style="display:flex;flex-direction:column;gap:11px">
+                <div style="display:flex;align-items:center;gap:11px">
+                  <span style="width:11px;height:11px;border-radius:50%;background:#075985"></span>
+                  <span style="font-size:17px;font-weight:900">{{ h.fecha }}</span>
+                </div>
+                <sc-for list="{{ h.eventos }}" as="e" hint-placeholder-count="4">
+                  <div style="margin-left:5px;padding:14px 16px;border-left:2px solid #DDE7EA;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+                    <span style="flex:0 0 54px;font-size:13px;font-weight:900;color:#5A6474">{{ e.hora }}</span>
+                    <span style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:3px">
+                      <span style="font-size:16px;font-weight:800;line-height:1.4">{{ e.t }}</span>
+                      <span style="font-size:13px;font-weight:700;color:#5A6474">{{ e.origen }}</span>
+                    </span>
+                    <span style="flex:0 0 auto;padding:7px 13px;border-radius:99px;background:{{ e.bg }};font-size:12px;font-weight:900;color:{{ e.color }}">{{ e.estado }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vAlarmas }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Semáforo de alarmas</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600;max-width:760px">Las alarmas llegan solas desde la bitácora del paciente, la del cuidador, el registro del profesional o el motor de reglas. El hospital no las busca.</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
+            <sc-for list="{{ semaforo }}" as="s" hint-placeholder-count="3">
+              <div style="background:#fff;border-radius:18px;padding:20px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06);border-left:5px solid {{ s.color }}">
+                <span style="flex:0 0 42px;width:42px;height:42px;border-radius:50%;background:{{ s.bg }};display:flex;align-items:center;justify-content:center;color:{{ s.color }}"><sc-if value="{{ s.icAlerta }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></sc-if><sc-if value="{{ s.icOk }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg></sc-if></span>
+                <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+                  <div style="font-size:30px;font-weight:900;line-height:1;color:{{ s.color }}">{{ s.v }}</div>
+                  <div style="font-size:14px;font-weight:900;color:{{ s.color }}">{{ s.t }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="background:#fff;border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 1px 6px rgba(15,46,61,.06);border-left:5px solid #B91C1C">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <div style="font-size:12px;font-weight:900;color:#B91C1C;letter-spacing:.09em">DETALLE DE LA ALERTA</div>
+              <span style="padding:9px 14px;border-radius:99px;background:#FDEEEE;font-size:13px;font-weight:900;color:#B91C1C">Roja · sin atender</span>
+            </div>
+            <div style="font-size:23px;font-weight:900;line-height:1.3">Sara Nieto Vargas · dificultad para respirar reportada en la bitácora</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px">
+              <sc-for list="{{ detalleAlerta }}" as="d" hint-placeholder-count="8">
+                <div style="padding:14px 16px;background:#F7F9FA;border-radius:12px;display:flex;flex-direction:column;gap:2px">
+                  <div style="font-size:11px;font-weight:900;color:#5A6474;letter-spacing:.07em">{{ d.k }}</div>
+                  <div style="font-size:15px;font-weight:800;line-height:1.4">{{ d.v }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button style="padding:14px 20px;border:none;border-radius:12px;background:#075985;color:#fff;font-size:15px;font-weight:900;cursor:pointer">Asignar a profesional</button>
+              <button style="padding:14px 20px;border:2px solid #075985;border-radius:12px;background:#fff;color:#075985;font-size:15px;font-weight:900;cursor:pointer">Marcar en revisión</button>
+              <button style="padding:14px 20px;border:2px solid #DDE7EA;border-radius:12px;background:#fff;font-size:15px;font-weight:900;cursor:pointer">Solicitar visita</button>
+              <button style="padding:14px 20px;border:2px solid #DDE7EA;border-radius:12px;background:#fff;font-size:15px;font-weight:900;cursor:pointer">Solicitar consulta virtual</button>
+              <button style="padding:14px 20px;border:2px solid #F5C2C2;border-radius:12px;background:#fff;color:#B91C1C;font-size:15px;font-weight:900;cursor:pointer">Escalar</button>
+              <button style="padding:14px 20px;border:2px solid #BFE5C9;border-radius:12px;background:#EFF9F1;color:#157F3B;font-size:15px;font-weight:900;cursor:pointer">Registrar acción y cerrar</button>
+            </div>
+            <div style="padding:15px 17px;background:#F7F9FA;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">Cada acción guarda usuario, fecha, hora, comentario, estado anterior y estado nuevo.</div>
+          </div>
+
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Notas de continuidad pendientes</div>
+            <sc-for list="{{ notasContinuidad }}" as="n" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:14px;padding:15px;border-radius:14px;background:#F7F9FA;flex-wrap:wrap">
+                <span style="flex:1;min-width:240px;font-size:16px;font-weight:800;line-height:1.4">{{ n.texto }}</span>
+                <span style="flex:0 0 auto;font-size:13px;font-weight:700;color:#5A6474">{{ n.meta }}</span>
+                <span style="flex:0 0 auto;padding:8px 13px;border-radius:99px;background:{{ n.bg }};font-size:13px;font-weight:900;color:{{ n.color }}">{{ n.estado }}</span>
+              </div>
+            </sc-for>
+            <div style="padding:15px 17px;background:#F7F9FA;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">El hospital ve cuántas hay, quién las creó, quién debe atenderlas y su estado. No edita el contenido clínico original.</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vProfesionales }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Profesionales en salud</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600">Disponibilidad, carga y desempeño antes de asignar.</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px">
+            <sc-for list="{{ profesionales }}" as="p" hint-placeholder-count="4">
+              <div style="background:#fff;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="display:flex;align-items:center;gap:13px">
+                  <span style="flex:0 0 48px;width:48px;height:48px;border-radius:50%;background:#E8F6F8;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#075985">{{ p.ini }}</span>
+                  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                    <div style="font-size:17px;font-weight:900">{{ p.nombre }}</div>
+                    <div style="font-size:13px;font-weight:700;color:#5A6474">{{ p.profesion }} · {{ p.zona }}</div>
+                  </div>
+                  <span style="flex:0 0 auto;padding:7px 12px;border-radius:99px;background:{{ p.bg }};font-size:12px;font-weight:900;color:{{ p.color }}">{{ p.estado }}</span>
+                </div>
+                <div style="display:flex;gap:14px;flex-wrap:wrap">
+                  <div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:19px;font-weight:900">{{ p.pacientes }}</span><span style="font-size:12px;font-weight:800;color:#5A6474">Pacientes</span></div>
+                  <div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:19px;font-weight:900">{{ p.hoy }}</span><span style="font-size:12px;font-weight:800;color:#5A6474">Visitas hoy</span></div>
+                  <div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:19px;font-weight:900;color:{{ p.calColor }}">{{ p.cal }}</span><span style="font-size:12px;font-weight:800;color:#5A6474">Calificación</span></div>
+                </div>
+                <div style="padding:13px 15px;background:#F7F9FA;border-radius:12px;font-size:14px;font-weight:800">Próxima: {{ p.proxima }}</div>
+                <button onClick="{{ p.on }}" style="padding:13px;border:2px solid #075985;border-radius:12px;background:#fff;color:#075985;font-size:15px;font-weight:900;cursor:pointer">Ver agenda del profesional</button>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <div style="font-size:20px;font-weight:900">Agenda de la Dra. Laura Gómez</div>
+              <div style="display:flex;gap:7px">
+                <sc-for list="{{ vistasCal }}" as="v" hint-placeholder-count="3">
+                  <button onClick="{{ v.on }}" style="padding:9px 15px;border-radius:99px;font-size:13px;font-weight:900;cursor:pointer;border:{{ v.bd }};background:{{ v.bg }};color:{{ v.fg }}">{{ v.t }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <sc-for list="{{ agendaProfesional }}" as="a" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:14px;padding:14px;border-radius:14px;background:#F7F9FA;flex-wrap:wrap">
+                <span style="flex:0 0 62px;font-size:16px;font-weight:900">{{ a.hora }}</span>
+                <span style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:1px">
+                  <span style="font-size:16px;font-weight:900">{{ a.paciente }}</span>
+                  <span style="font-size:13px;font-weight:700;color:#5A6474">{{ a.tipo }} · {{ a.zona }}</span>
+                </span>
+                <span style="flex:0 0 auto;padding:8px 13px;border-radius:99px;background:{{ a.bg }};font-size:13px;font-weight:900;color:{{ a.color }}">{{ a.estado }}</span>
+              </div>
+            </sc-for>
+            <div style="padding:16px 18px;background:#FEF6E9;border:1.5px solid #F3DCA9;border-radius:14px;display:flex;align-items:center;gap:13px;flex-wrap:wrap">
+              <span style="flex:0 0 30px;width:30px;height:30px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:#96450A">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+              </span>
+              <span style="flex:1;min-width:240px;font-size:15px;line-height:1.5;font-weight:800;color:#96450A">Conflicto: ya tiene una visita a las 2:00 p. m. en El Charquito. Asignar otra en Compartir deja 20 minutos de desplazamiento.</span>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button style="padding:14px 20px;border:none;border-radius:12px;background:#075985;color:#fff;font-size:15px;font-weight:900;cursor:pointer">Asignar nueva visita</button>
+              <button style="padding:14px 20px;border:2px solid #DDE7EA;border-radius:12px;background:#fff;font-size:15px;font-weight:900;cursor:pointer">Reprogramar</button>
+              <button style="padding:14px 20px;border:2px solid #DDE7EA;border-radius:12px;background:#fff;font-size:15px;font-weight:900;cursor:pointer">Cambiar modalidad</button>
+              <button style="padding:14px 20px;border:2px solid #F5C2C2;border-radius:12px;background:#fff;color:#B91C1C;font-size:15px;font-weight:900;cursor:pointer">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vVisitas }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Visitas domiciliarias</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600">Filtrables por fecha, profesional, paciente, municipio, zona, estado y semáforo.</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <sc-for list="{{ filtrosVisitas }}" as="f" hint-placeholder-count="6">
+              <span style="padding:11px 16px;border-radius:99px;background:#fff;border:1.5px solid #DDE7EA;font-size:14px;font-weight:800;color:#5A6474">{{ f.t }}</span>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+            <sc-for list="{{ estadosVisitas }}" as="e" hint-placeholder-count="5">
+              <div style="background:#fff;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:4px;box-shadow:0 1px 6px rgba(15,46,61,.06);border-top:4px solid {{ e.color }}">
+                <span style="font-size:28px;font-weight:900;line-height:1;color:{{ e.color }}">{{ e.v }}</span>
+                <span style="font-size:14px;font-weight:900">{{ e.t }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:8px 22px;display:flex;flex-direction:column;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <sc-for list="{{ listaVisitas }}" as="v" hint-placeholder-count="5">
+              <div style="padding:16px 0;border-bottom:1px solid #E4EBEE;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+                <span style="flex:0 0 110px;font-size:14px;font-weight:900">{{ v.fecha }}</span>
+                <span style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:1px">
+                  <span style="font-size:16px;font-weight:900">{{ v.paciente }}</span>
+                  <span style="font-size:13px;font-weight:700;color:#5A6474">{{ v.zona }}</span>
+                </span>
+                <span style="flex:0 0 190px;font-size:14px;font-weight:800;color:#5A6474">{{ v.profesional }}</span>
+                <span style="flex:0 0 auto;padding:8px 13px;border-radius:99px;background:{{ v.bg }};font-size:13px;font-weight:900;color:{{ v.color }}">{{ v.estado }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vVirtuales }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Consultas virtuales</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600;max-width:740px">Integradas a la agenda maestra. La estructura queda lista para conectar el proveedor de videollamada cuando se defina.</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+            <sc-for list="{{ estadosVirtuales }}" as="e" hint-placeholder-count="6">
+              <div style="background:#fff;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:4px;box-shadow:0 1px 6px rgba(15,46,61,.06);border-top:4px solid {{ e.color }}">
+                <span style="font-size:28px;font-weight:900;line-height:1;color:{{ e.color }}">{{ e.v }}</span>
+                <span style="font-size:14px;font-weight:900">{{ e.t }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">En curso y en espera</div>
+            <sc-for list="{{ listaVirtuales }}" as="v" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:14px;padding:15px;border-radius:14px;background:#F7F9FA;border-left:4px solid {{ v.color }};flex-wrap:wrap">
+                <span style="flex:0 0 62px;font-size:16px;font-weight:900">{{ v.hora }}</span>
+                <span style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:1px">
+                  <span style="font-size:16px;font-weight:900">{{ v.paciente }}</span>
+                  <span style="font-size:13px;font-weight:700;color:#5A6474">{{ v.profesional }}</span>
+                </span>
+                <span style="flex:0 0 auto;padding:8px 13px;border-radius:99px;background:{{ v.bg }};font-size:13px;font-weight:900;color:{{ v.color }}">{{ v.estado }}</span>
+              </div>
+            </sc-for>
+            <div style="padding:15px 17px;background:#E8F6F8;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#0A6873">WhatsApp queda preparado con plantillas, estados, eventos y registro de envíos. No se envían mensajes reales hasta configurar proveedor y API.</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vCalificaciones }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Calidad y experiencia</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600;max-width:780px">Experiencia del paciente e indicadores clínicos se miden por separado. Una calificación de estrellas nunca determina si un diagnóstico o un medicamento fue correcto.</div>
+          </div>
+
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="font-size:20px;font-weight:900">Experiencia por profesional</div>
+            <sc-for list="{{ calProfesionales }}" as="p" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:14px;padding:15px;border-radius:14px;background:#F7F9FA;flex-wrap:wrap">
+                <span style="flex:1;min-width:190px;display:flex;flex-direction:column;gap:1px">
+                  <span style="font-size:16px;font-weight:900">{{ p.nombre }}</span>
+                  <span style="font-size:13px;font-weight:700;color:#5A6474">{{ p.profesion }} · {{ p.n }} evaluaciones</span>
+                </span>
+                <span style="flex:0 0 210px;height:10px;background:#E4EBEE;border-radius:99px;overflow:hidden"><span style="display:block;width:{{ p.pct }};height:100%;background:{{ p.color }};border-radius:99px"></span></span>
+                <span style="flex:0 0 60px;font-size:18px;font-weight:900;color:{{ p.color }}">{{ p.cal }}</span>
+                <span style="flex:0 0 110px;font-size:13px;font-weight:800;color:{{ p.tendColor }}">{{ p.tendencia }}</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+            <div style="flex:1;min-width:340px;background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+              <div style="font-size:19px;font-weight:900">Factores que están afectando la experiencia</div>
+              <div style="font-size:15px;font-weight:800;color:#5A6474">Dra. Laura Gómez · 4.1 de 5</div>
+              <sc-for list="{{ factores }}" as="f" hint-placeholder-count="9">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                    <span style="font-size:14px;font-weight:800">{{ f.t }}</span>
+                    <span style="font-size:15px;font-weight:900;color:{{ f.color }}">{{ f.v }}</span>
+                  </div>
+                  <div style="height:9px;background:#E4EBEE;border-radius:99px;overflow:hidden"><div style="width:{{ f.pct }};height:100%;background:{{ f.color }};border-radius:99px"></div></div>
+                </div>
+              </sc-for>
+              <div style="padding:15px 17px;background:#F7F9FA;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">Estas métricas miden experiencia, no calidad clínica.</div>
+            </div>
+
+            <div style="flex:1;min-width:340px;background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+              <div style="font-size:19px;font-weight:900">Indicadores clínicos</div>
+              <div style="font-size:15px;line-height:1.5;color:#5A6474;font-weight:600">Provienen de revisión profesional, alertas, órdenes, seguimiento, adherencia y auditoría.</div>
+              <sc-for list="{{ clinicos }}" as="c" hint-placeholder-count="6">
+                <div style="display:flex;align-items:center;gap:13px;padding:14px 16px;border-radius:12px;background:#F7F9FA;border-left:4px solid {{ c.color }}">
+                  <span style="flex:0 0 66px;font-size:20px;font-weight:900;color:{{ c.color }}">{{ c.v }}</span>
+                  <span style="flex:1;min-width:140px;font-size:14px;font-weight:800;line-height:1.35">{{ c.t }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <div style="font-size:20px;font-weight:900">Comentarios de pacientes y cuidadores</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <sc-for list="{{ filtrosComentarios }}" as="f" hint-placeholder-count="5">
+                  <span style="padding:9px 14px;border-radius:99px;background:#F7F9FA;border:1.5px solid #DDE7EA;font-size:13px;font-weight:800;color:#5A6474">{{ f.t }}</span>
+                </sc-for>
+              </div>
+            </div>
+            <sc-for list="{{ comentarios }}" as="c" hint-placeholder-count="4">
+              <div style="padding:16px;border:1.5px solid #DDE7EA;border-radius:14px;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                  <span style="font-size:15px;font-weight:900">{{ c.paciente }} · {{ c.profesional }}</span>
+                  <span style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:900;color:{{ c.color }}">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.7 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+                    {{ c.cal }}
+                  </span>
+                </div>
+                <div style="font-size:16px;line-height:1.5;font-weight:800">{{ c.texto }}</div>
+                <div style="font-size:13px;font-weight:700;color:#5A6474">{{ c.meta }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vNovedades }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Novedades</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600;max-width:760px">El fucsia solo significa «hay algo nuevo». Al abrir la novedad desaparece y queda su color por naturaleza: azul información, turquesa recordatorio, amarillo seguimiento, rojo alerta.</div>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:8px 22px;display:flex;flex-direction:column;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+            <sc-for list="{{ novedades }}" as="n" hint-placeholder-count="7">
+              <div style="padding:17px 0;border-bottom:1px solid #E4EBEE;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+                <span style="flex:0 0 10px;width:10px;height:10px;border-radius:50%;background:{{ n.punto }}"></span>
+                <span style="flex:0 0 34px;width:34px;height:34px;border-radius:10px;background:{{ n.bg }};display:flex;align-items:center;justify-content:center;color:{{ n.color }}"><sc-if value="{{ n.icCasa }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></sc-if><sc-if value="{{ n.icAlerta }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></sc-if><sc-if value="{{ n.icStar }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.7 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></sc-if><sc-if value="{{ n.icFile }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg></sc-if><sc-if value="{{ n.icPill }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a5 5 0 0 0-7-7l-10 10a5 5 0 0 0 7 7z"/><path d="m8.5 8.5 7 7"/></svg></sc-if><sc-if value="{{ n.icCal }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></sc-if><sc-if value="{{ n.icBell }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></sc-if></span>
+                <span style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:16px;font-weight:900;line-height:1.4">{{ n.t }}</span>
+                  <span style="font-size:13px;font-weight:700;color:#5A6474">{{ n.meta }}</span>
+                </span>
+                <span style="flex:0 0 auto;padding:8px 13px;border-radius:99px;background:{{ n.bg }};font-size:13px;font-weight:900;color:{{ n.color }}">{{ n.tipo }}</span>
+                <span style="flex:0 0 90px;font-size:13px;font-weight:800;color:#5A6474">{{ n.cuando }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+
+      <sc-if value="{{ vConfig }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Configuración</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600;max-width:780px">Aquí el hospital parametriza ELÍGEME sin tocar el código: planes, reglas, personal, comunicaciones y rangos del semáforo. Nada financiero entra en la historia clínica.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ cfgTabs }}" as="t" hint-placeholder-count="9">
+              <button onClick="{{ t.on }}" style="padding:11px 16px;border-radius:99px;font-size:14px;font-weight:900;cursor:pointer;border:{{ t.bd }};background:{{ t.bg }};color:{{ t.fg }}">{{ t.t }}</button>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ cfgMembresias }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                  <div style="font-size:20px;font-weight:900">Planes de membresía</div>
+                  <span style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">Precios y beneficios viven aquí, no en el código</span>
+                </div>
+                <sc-for list="{{ planes }}" as="p" hint-placeholder-count="3">
+                  <div style="padding:18px;border:1.5px solid #DDE7EA;border-radius:16px;display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+                    <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:4px">
+                      <div style="font-size:18px;font-weight:900">{{ p.nombre }}</div>
+                      <div style="font-size:14px;font-weight:700;color:#5A6474">{{ p.desc }}</div>
+                      <div style="font-size:14px;font-weight:700;color:#5A6474">{{ p.incluye }}</div>
+                    </div>
+                    <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:2px">
+                      <div style="font-size:20px;font-weight:900;color:#0A6873">{{ p.precio }}</div>
+                      <div style="font-size:13px;font-weight:700;color:#5A6474">{{ p.periodo }}</div>
+                    </div>
+                    <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+                      <span style="padding:8px 13px;border-radius:99px;background:{{ p.bg }};font-size:13px;font-weight:900;color:{{ p.color }}">{{ p.estado }}</span>
+                      <span style="font-size:12px;font-weight:800;color:#5A6474">{{ p.version }}</span>
+                    </div>
+                    <button style="flex:0 0 auto;padding:11px 17px;border:2px solid #075985;border-radius:99px;background:#fff;color:#075985;font-size:14px;font-weight:900;cursor:pointer">Editar plan</button>
+                  </div>
+                </sc-for>
+                <div style="padding:15px 17px;background:#F7F9FA;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">Modificar un plan no cambia retroactivamente lo ya pagado: la versión anterior queda vigente hasta terminar el periodo y se guarda el historial de versiones.</div>
+              </div>
+
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Crear membresía</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+                  <div style="display:flex;flex-direction:column;gap:7px"><label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">NOMBRE DEL PLAN</label><input placeholder="Plan Bienestar" style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"/></div>
+                  <div style="display:flex;flex-direction:column;gap:7px"><label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PRECIO</label><input placeholder="$68.000" style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"/></div>
+                  <div style="display:flex;flex-direction:column;gap:7px"><label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PERIODO</label><select style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"><option>Mensual</option><option>Trimestral</option><option>Anual</option><option>Otro</option></select></div>
+                  <div style="display:flex;flex-direction:column;gap:7px"><label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">VISITAS DOMICILIARIAS INCLUIDAS</label><input placeholder="2" style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"/></div>
+                  <div style="display:flex;flex-direction:column;gap:7px"><label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">CONSULTAS VIRTUALES INCLUIDAS</label><input placeholder="4" style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"/></div>
+                  <div style="display:flex;flex-direction:column;gap:7px"><label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">TARIFA PREFERENCIAL ADICIONAL</label><input placeholder="15 % de descuento" style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"/></div>
+                  <div style="display:flex;flex-direction:column;gap:7px"><label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">INICIO DE VIGENCIA</label><input type="date" style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"/></div>
+                  <div style="display:flex;flex-direction:column;gap:7px"><label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">FIN DE VIGENCIA</label><input type="date" style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"/></div>
+                  <div style="display:flex;flex-direction:column;gap:7px"><label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">RENOVACIÓN</label><select style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"><option>Automática</option><option>Manual</option></select></div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:7px"><label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">CONDICIONES</label><textarea rows="2" placeholder="Condiciones del plan" style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff;resize:vertical;line-height:1.5"></textarea></div>
+                <button style="align-self:flex-start;padding:15px 24px;border:none;border-radius:12px;background:#075985;color:#fff;font-size:16px;font-weight:900;cursor:pointer">Guardar plan</button>
+              </div>
+
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Servicios configurables</div>
+                <div style="background:#F7F9FA;border-radius:14px;padding:6px 16px;display:flex;flex-direction:column">
+                  <div style="padding:12px 0;border-bottom:1.5px solid #DDE7EA;display:flex;gap:12px;flex-wrap:wrap">
+                    <span style="flex:2;min-width:150px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">SERVICIO</span>
+                    <span style="flex:1;min-width:90px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PRECIO</span>
+                    <span style="flex:1;min-width:80px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">DURACIÓN</span>
+                    <span style="flex:1.4;min-width:120px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PROFESIONAL</span>
+                    <span style="flex:1.2;min-width:110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">EN MEMBRESÍA</span>
+                  </div>
+                  <sc-for list="{{ servicios }}" as="v" hint-placeholder-count="6">
+                    <div style="padding:14px 0;border-bottom:1px solid #E4EBEE;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                      <span style="flex:2;min-width:150px;font-size:15px;font-weight:900">{{ v.t }}</span>
+                      <span style="flex:1;min-width:90px;font-size:15px;font-weight:800;color:#0A6873">{{ v.precio }}</span>
+                      <span style="flex:1;min-width:80px;font-size:14px;font-weight:700;color:#5A6474">{{ v.duracion }}</span>
+                      <span style="flex:1.4;min-width:120px;font-size:14px;font-weight:700;color:#5A6474">{{ v.prof }}</span>
+                      <span style="flex:1.2;min-width:110px;font-size:13px;font-weight:900;color:{{ v.color }}">{{ v.cobertura }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ cfgHistoria }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Importar historia clínica</div>
+                <div style="font-size:15px;line-height:1.5;color:#5A6474;font-weight:600">Para hospitales que llegan a ELÍGEME con pacientes ya registrados en otro sistema. Los datos estructurados y los documentos históricos se tratan por separado.</div>
+                <div style="display:flex;gap:14px;flex-wrap:wrap">
+                  <div style="flex:1;min-width:260px;padding:18px;border:1.5px solid #DDE7EA;border-radius:16px;display:flex;flex-direction:column;gap:9px">
+                    <div style="font-size:16px;font-weight:900">Datos estructurados</div>
+                    <div style="font-size:14px;line-height:1.5;font-weight:700;color:#5A6474">Pacientes, diagnósticos, medicamentos, alergias, atenciones, profesionales y fechas.</div>
+                    <div style="font-size:13px;font-weight:900;color:#0A6873">CSV · Excel · JSON · API</div>
+                  </div>
+                  <div style="flex:1;min-width:260px;padding:18px;border:1.5px solid #DDE7EA;border-radius:16px;display:flex;flex-direction:column;gap:9px">
+                    <div style="font-size:16px;font-weight:900">Documentos históricos</div>
+                    <div style="font-size:14px;line-height:1.5;font-weight:700;color:#5A6474">Epicrisis, resultados, soportes e imágenes que se conservan como archivo.</div>
+                    <div style="font-size:13px;font-weight:900;color:#0A6873">PDF · JPG · PNG</div>
+                  </div>
+                </div>
+                <div style="padding:20px;border:2px dashed #B9DCE6;border-radius:16px;background:#E8F6F8;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+                  <div style="display:flex;flex-direction:column;gap:3px">
+                    <div style="font-size:16px;font-weight:900">pacientes_hsr_2019_2026.csv</div>
+                    <div style="font-size:14px;font-weight:700;color:#0A6873">Seleccionado · 2,4 MB</div>
+                  </div>
+                  <button style="padding:13px 20px;border:2px solid #075985;border-radius:12px;background:#fff;color:#075985;font-size:15px;font-weight:900;cursor:pointer">Cambiar archivo</button>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+                  <sc-for list="{{ importResumen }}" as="r" hint-placeholder-count="6">
+                    <div style="padding:16px;background:#F7F9FA;border-radius:14px;display:flex;flex-direction:column;gap:3px;border-left:4px solid {{ r.color }}">
+                      <span style="font-size:24px;font-weight:900;line-height:1;color:{{ r.color }}">{{ r.v }}</span>
+                      <span style="font-size:13px;font-weight:800">{{ r.t }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="padding:18px;border-left:3px solid #96450A;background:#FEF6E9;border-radius:0 14px 14px 0;display:flex;flex-direction:column;gap:11px">
+                  <div style="font-size:16px;font-weight:900;color:#96450A">Paciente posiblemente existente</div>
+                  <div style="font-size:15px;line-height:1.5;font-weight:700">CC 24.556.812 · María Gómez Osorio · 1950-03-14 coincide con un paciente ya registrado.</div>
+                  <div style="display:flex;gap:9px;flex-wrap:wrap">
+                    <button style="padding:11px 16px;border:2px solid #075985;border-radius:99px;background:#fff;color:#075985;font-size:14px;font-weight:900;cursor:pointer">Relacionar con el existente</button>
+                    <button style="padding:11px 16px;border:2px solid #DDE7EA;border-radius:99px;background:#fff;font-size:14px;font-weight:900;cursor:pointer">Crear nuevo</button>
+                    <button style="padding:11px 16px;border:2px solid #DDE7EA;border-radius:99px;background:#fff;font-size:14px;font-weight:900;cursor:pointer">Omitir</button>
+                    <button style="padding:11px 16px;border:2px solid #DDE7EA;border-radius:99px;background:#fff;font-size:14px;font-weight:900;cursor:pointer">Solicitar revisión</button>
+                  </div>
+                </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap">
+                  <button style="padding:15px 22px;border:2px solid #075985;border-radius:12px;background:#fff;color:#075985;font-size:16px;font-weight:900;cursor:pointer">Revisar importación</button>
+                  <button style="padding:15px 22px;border:none;border-radius:12px;background:#075985;color:#fff;font-size:16px;font-weight:900;cursor:pointer">Confirmar importación</button>
+                </div>
+                <div style="padding:15px 17px;background:#F7F9FA;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">Cada registro importado guarda origen, hospital, archivo, fecha de importación, usuario que la ejecutó y la fecha original del registro. Así se distingue la información importada de la generada en ELÍGEME.</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ cfgPersonal }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                  <div style="font-size:20px;font-weight:900">Personal y accesos</div>
+                  <button style="padding:13px 20px;border:none;border-radius:12px;background:#075985;color:#fff;font-size:15px;font-weight:900;cursor:pointer">Crear usuario</button>
+                </div>
+                <div style="background:#F7F9FA;border-radius:14px;padding:6px 16px;display:flex;flex-direction:column">
+                  <div style="padding:12px 0;border-bottom:1.5px solid #DDE7EA;display:flex;gap:12px;flex-wrap:wrap">
+                    <span style="flex:0 0 110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">CÓDIGO</span>
+                    <span style="flex:2;min-width:160px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PERSONA</span>
+                    <span style="flex:1.4;min-width:130px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">ROL</span>
+                    <span style="flex:1.2;min-width:110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">ZONA</span>
+                    <span style="flex:0 0 120px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">ESTADO</span>
+                  </div>
+                  <sc-for list="{{ personal }}" as="p" hint-placeholder-count="6">
+                    <div style="padding:14px 0;border-bottom:1px solid #E4EBEE;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                      <span style="flex:0 0 110px;font-size:14px;font-weight:900;color:#0A6873">{{ p.codigo }}</span>
+                      <span style="flex:2;min-width:160px;display:flex;flex-direction:column;gap:1px">
+                        <span style="font-size:15px;font-weight:900">{{ p.nombre }}</span>
+                        <span style="font-size:13px;font-weight:700;color:#5A6474">{{ p.cargo }}</span>
+                      </span>
+                      <span style="flex:1.4;min-width:130px;font-size:14px;font-weight:800">{{ p.rol }}</span>
+                      <span style="flex:1.2;min-width:110px;font-size:14px;font-weight:700;color:#5A6474">{{ p.zona }}</span>
+                      <span style="flex:0 0 120px;padding:7px 12px;border-radius:99px;background:{{ p.bg }};font-size:13px;font-weight:900;color:{{ p.color }};text-align:center">{{ p.estado }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="padding:15px 17px;background:#F7F9FA;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">Cada trabajador tiene un código individual. Nunca se comparte un código entre personas: es lo que permite saber quién hizo cada cambio. Si alguien deja la institución pasa a inactivo y su historial se conserva para auditoría.</div>
+              </div>
+
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Roles y permisos</div>
+                <div style="background:#F7F9FA;border-radius:14px;padding:6px 16px;display:flex;flex-direction:column">
+                  <sc-for list="{{ roles }}" as="r" hint-placeholder-count="8">
+                    <div style="padding:14px 0;border-bottom:1px solid #E4EBEE;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+                      <span style="flex:0 0 190px;font-size:15px;font-weight:900">{{ r.t }}</span>
+                      <span style="flex:1;min-width:240px;font-size:14px;line-height:1.5;font-weight:700;color:#5A6474">{{ r.permisos }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="padding:15px 17px;background:#F7F9FA;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">Conocer un código no otorga acceso total. El rol define exactamente qué puede ver y modificar cada persona.</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ cfgNovedades }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Crear novedad</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+                  <div style="display:flex;flex-direction:column;gap:7px"><label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">DESTINATARIO</label><select style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"><option>Paciente específico</option><option>Cuidador específico</option><option>Profesional específico</option><option>Pacientes de un programa</option><option>Cuidadores de una población</option><option>Profesionales de una zona</option><option>Todos los usuarios autorizados</option></select></div>
+                  <div style="display:flex;flex-direction:column;gap:7px"><label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">TIPO</label><select style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"><option>Información</option><option>Recordatorio</option><option>Actualización</option><option>Cita</option><option>Cambio de horario</option><option>Nueva indicación</option><option>Campaña</option><option>Capacitación</option></select></div>
+                  <div style="display:flex;flex-direction:column;gap:7px"><label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PRIORIDAD</label><select style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"><option>Normal</option><option>Alta</option></select></div>
+                  <div style="display:flex;flex-direction:column;gap:7px"><label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">FECHA Y HORA DE ENVÍO</label><input type="datetime-local" style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"/></div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:7px"><label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">TÍTULO</label><input placeholder="Su cita del jueves cambió de hora" style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"/></div>
+                <div style="display:flex;flex-direction:column;gap:7px"><label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">MENSAJE</label><textarea rows="3" placeholder="Su cita del jueves cambió a las 10:30 a. m." style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff;resize:vertical;line-height:1.5"></textarea></div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                  <button style="padding:13px 18px;border:2px solid #DDE7EA;border-radius:12px;background:#fff;font-size:15px;font-weight:900;cursor:pointer">Adjuntar documento</button>
+                  <span style="display:flex;align-items:center;gap:10px;padding:13px 18px;border:2px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:900;color:#5A6474">
+                    <span style="width:18px;height:18px;border-radius:5px;border:2px solid #B9DCE6"></span>Enviar también por WhatsApp
+                  </span>
+                  <button style="padding:15px 24px;border:none;border-radius:12px;background:#075985;color:#fff;font-size:16px;font-weight:900;cursor:pointer">Enviar novedad</button>
+                </div>
+                <div style="padding:18px;background:#E8F6F8;border-radius:14px;display:flex;flex-direction:column;gap:8px">
+                  <div style="font-size:13px;font-weight:900;color:#0A6873;letter-spacing:.06em">CÓMO LLEGA</div>
+                  <div style="font-size:15px;line-height:1.55;font-weight:700;color:#0A6873">Aparece en la campana de cada interfaz con el punto fucsia de «hay algo nuevo». Al abrirla el fucsia desaparece y la novedad conserva el color de su naturaleza. Esto no reemplaza las alertas clínicas: esas siguen por el semáforo.</div>
+                </div>
+              </div>
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Estados de entrega</div>
+                <div style="display:flex;flex-wrap:wrap;gap:9px">
+                  <sc-for list="{{ estadosNovedad }}" as="e" hint-placeholder-count="6">
+                    <span style="padding:10px 15px;border-radius:99px;background:{{ e.bg }};font-size:14px;font-weight:900;color:{{ e.color }}">{{ e.t }}</span>
+                  </sc-for>
+                </div>
+                <div style="padding:15px 17px;background:#F7F9FA;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">Guardar fecha de lectura permite saber si la comunicación realmente llegó. WhatsApp queda preparado con plantilla, destinatario, fecha, estado, respuesta del proveedor y error, sin envíos reales hasta configurar el proveedor.</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ cfgAgenda }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+              <div style="font-size:20px;font-weight:900">Agenda y servicios</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+                <sc-for list="{{ cfgAgendaCampos }}" as="c" hint-placeholder-count="11">
+                  <div style="display:flex;flex-direction:column;gap:7px">
+                    <label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">{{ c.k }}</label>
+                    <input value="{{ c.v }}" onChange="{{ c.set }}" style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"/>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="padding:15px 17px;background:#F7F9FA;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">Todo esto se parametriza sin tocar el código. Cambiar la duración estándar o el tiempo entre citas se refleja de inmediato en la agenda maestra.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ cfgSemaforo }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+              <div style="font-size:20px;font-weight:900">Semáforo y alertas</div>
+              <div style="font-size:15px;line-height:1.5;color:#5A6474;font-weight:600">Los rangos se asocian a paciente, programa, condición y variable. El frontend no lleva valores clínicos fijos.</div>
+              <div style="background:#F7F9FA;border-radius:14px;padding:6px 16px;display:flex;flex-direction:column">
+                <div style="padding:12px 0;border-bottom:1.5px solid #DDE7EA;display:flex;gap:12px;flex-wrap:wrap">
+                  <span style="flex:1.4;min-width:130px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">VARIABLE</span>
+                  <span style="flex:1;min-width:100px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">VERDE</span>
+                  <span style="flex:1;min-width:100px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">AMARILLO</span>
+                  <span style="flex:1;min-width:100px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">ROJO</span>
+                  <span style="flex:1.6;min-width:170px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">ACCIÓN Y DESTINATARIO</span>
+                  <span style="flex:1;min-width:110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">RESPUESTA</span>
+                </div>
+                <sc-for list="{{ reglas }}" as="r" hint-placeholder-count="5">
+                  <div style="padding:14px 0;border-bottom:1px solid #E4EBEE;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                    <span style="flex:1.4;min-width:130px;font-size:15px;font-weight:900">{{ r.v }}</span>
+                    <span style="flex:1;min-width:100px;font-size:14px;font-weight:800;color:#157F3B">{{ r.verde }}</span>
+                    <span style="flex:1;min-width:100px;font-size:14px;font-weight:800;color:#96450A">{{ r.amarillo }}</span>
+                    <span style="flex:1;min-width:100px;font-size:14px;font-weight:800;color:#B91C1C">{{ r.rojo }}</span>
+                    <span style="flex:1.6;min-width:170px;font-size:14px;font-weight:700;color:#5A6474">{{ r.accion }}</span>
+                    <span style="flex:1;min-width:110px;font-size:14px;font-weight:800">{{ r.tiempo }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="padding:15px 17px;background:#F7F9FA;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">Los valores del ejemplo son parámetros del hospital, no reglas universales. El profesional responsable puede ajustarlos por paciente.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ cfgInstitucion }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Datos de la institución</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+                  <sc-for list="{{ institucion }}" as="c" hint-placeholder-count="9">
+                    <div style="display:flex;flex-direction:column;gap:7px">
+                      <label style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">{{ c.k }}</label>
+                      <input value="{{ c.v }}" onChange="{{ c.set }}" style="width:100%;box-sizing:border-box;padding:13px 15px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:700;color:#0F2E3D;background:#fff"/>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="padding:18px;border:2px dashed #B9DCE6;border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                  <span style="font-size:15px;font-weight:900">Logo de la institución</span>
+                  <button style="padding:11px 18px;border:2px solid #075985;border-radius:99px;background:#fff;color:#075985;font-size:14px;font-weight:900;cursor:pointer">Cargar</button>
+                </div>
+              </div>
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Integraciones</div>
+                <sc-for list="{{ integraciones }}" as="i" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:14px;padding:15px;border-radius:14px;background:#F7F9FA;flex-wrap:wrap">
+                    <span style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:2px">
+                      <span style="font-size:16px;font-weight:900">{{ i.t }}</span>
+                      <span style="font-size:14px;font-weight:700;color:#5A6474">{{ i.detalle }}</span>
+                    </span>
+                    <span style="flex:0 0 auto;padding:8px 13px;border-radius:99px;background:{{ i.bg }};font-size:13px;font-weight:900;color:{{ i.color }}">{{ i.estado }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ cfgAuditoria }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+              <div style="font-size:20px;font-weight:900">Auditoría del sistema</div>
+              <div style="font-size:15px;line-height:1.5;color:#5A6474;font-weight:600">Toda acción administrativa crítica deja evidencia con usuario, rol, fecha, hora, valor anterior y valor nuevo.</div>
+              <sc-for list="{{ auditoria }}" as="a" hint-placeholder-count="5">
+                <div style="padding:16px;border:1.5px solid #DDE7EA;border-radius:14px;display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                    <span style="font-size:16px;font-weight:900">{{ a.usuario }}</span>
+                    <span style="font-size:13px;font-weight:800;color:#5A6474">{{ a.cuando }}</span>
+                  </div>
+                  <div style="font-size:15px;line-height:1.45;font-weight:800">{{ a.accion }}</div>
+                  <div style="display:flex;gap:12px;flex-wrap:wrap">
+                    <span style="padding:8px 13px;border-radius:10px;background:#FDEEEE;font-size:13px;font-weight:800;color:#B91C1C">Antes: {{ a.antes }}</span>
+                    <span style="padding:8px 13px;border-radius:10px;background:#EFF9F1;font-size:13px;font-weight:800;color:#157F3B">Después: {{ a.despues }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ vReportes }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:30px;font-weight:900">Reportes</div>
+            <div style="font-size:16px;line-height:1.5;color:#5A6474;font-weight:600;max-width:820px">Aquí ELÍGEME responde en qué se gastó el dinero, quién lo recibió, a qué programa pertenece, qué población se benefició y dónde está el soporte.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ repTabs }}" as="t" hint-placeholder-count="7">
+              <button onClick="{{ t.on }}" style="padding:11px 16px;border-radius:99px;font-size:14px;font-weight:900;cursor:pointer;border:{{ t.bd }};background:{{ t.bg }};color:{{ t.fg }}">{{ t.t }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:9px;flex-wrap:wrap">
+            <sc-for list="{{ filtrosReportes }}" as="f" hint-placeholder-count="8">
+              <span style="padding:10px 15px;border-radius:99px;background:#fff;border:1.5px solid #DDE7EA;font-size:13px;font-weight:800;color:#5A6474">{{ f.t }}</span>
+            </sc-for>
+            <button style="padding:10px 16px;border:2px solid #075985;border-radius:99px;background:#fff;color:#075985;font-size:13px;font-weight:900;cursor:pointer">Exportar PDF, Excel o CSV</button>
+          </div>
+
+          <sc-if value="{{ repPresupuesto }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Presupuesto para la atención de esta población</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px">
+                  <sc-for list="{{ presupuesto }}" as="p" hint-placeholder-count="5">
+                    <div style="padding:18px;background:#F7F9FA;border-radius:16px;display:flex;flex-direction:column;gap:4px;border-top:4px solid {{ p.color }}">
+                      <span style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">{{ p.t }}</span>
+                      <span style="font-size:26px;font-weight:900;line-height:1.1;color:{{ p.color }}">{{ p.v }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                    <span style="font-size:15px;font-weight:900">Ejecución total</span>
+                    <span style="font-size:17px;font-weight:900;color:#0A6873">55 %</span>
+                  </div>
+                  <div style="height:14px;background:#E4EBEE;border-radius:99px;overflow:hidden"><div style="width:55%;height:100%;background:#32B4A8;border-radius:99px"></div></div>
+                </div>
+              </div>
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Presupuesto por programa y población</div>
+                <div style="background:#F7F9FA;border-radius:14px;padding:6px 16px;display:flex;flex-direction:column">
+                  <div style="padding:12px 0;border-bottom:1.5px solid #DDE7EA;display:flex;gap:12px;flex-wrap:wrap">
+                    <span style="flex:1.6;min-width:150px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PROGRAMA</span>
+                    <span style="flex:1;min-width:110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">ASIGNADO</span>
+                    <span style="flex:1;min-width:110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">EJECUTADO</span>
+                    <span style="flex:1;min-width:110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">DISPONIBLE</span>
+                    <span style="flex:0 0 110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">BENEFICIARIOS</span>
+                    <span style="flex:0 0 130px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">COSTO PROMEDIO</span>
+                  </div>
+                  <sc-for list="{{ programas }}" as="p" hint-placeholder-count="5">
+                    <div style="padding:14px 0;border-bottom:1px solid #E4EBEE;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                      <span style="flex:1.6;min-width:150px;font-size:15px;font-weight:900">{{ p.t }}</span>
+                      <span style="flex:1;min-width:110px;font-size:15px;font-weight:800">{{ p.asignado }}</span>
+                      <span style="flex:1;min-width:110px;font-size:15px;font-weight:800;color:#0A6873">{{ p.ejecutado }}</span>
+                      <span style="flex:1;min-width:110px;font-size:15px;font-weight:800;color:{{ p.color }}">{{ p.disponible }}</span>
+                      <span style="flex:0 0 110px;font-size:15px;font-weight:800">{{ p.beneficiarios }}</span>
+                      <span style="flex:0 0 130px;font-size:15px;font-weight:800;color:#5A6474">{{ p.promedio }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ repGastos }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Gastos y soportes</div>
+                <sc-for list="{{ gastos }}" as="g" hint-placeholder-count="4">
+                  <div style="padding:18px;border:1.5px solid #DDE7EA;border-radius:16px;display:flex;flex-direction:column;gap:12px">
+                    <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+                      <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:3px">
+                        <div style="font-size:17px;font-weight:900">{{ g.concepto }}</div>
+                        <div style="font-size:14px;font-weight:700;color:#5A6474">{{ g.proveedor }} · {{ g.programa }}</div>
+                        <div style="font-size:14px;font-weight:700;color:#5A6474">{{ g.doc }} · {{ g.fecha }} · {{ g.pago }}</div>
+                      </div>
+                      <div style="flex:0 0 auto;font-size:20px;font-weight:900;color:#0A6873">{{ g.valor }}</div>
+                      <span style="flex:0 0 auto;padding:9px 14px;border-radius:99px;background:{{ g.bg }};font-size:13px;font-weight:900;color:{{ g.color }}">{{ g.soporte }}</span>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap">
+                      <button style="padding:11px 17px;border:2px solid #075985;border-radius:99px;background:#fff;color:#075985;font-size:14px;font-weight:900;cursor:pointer">Adjuntar soporte</button>
+                      <button style="padding:11px 17px;border:2px solid #DDE7EA;border-radius:99px;background:#fff;font-size:14px;font-weight:900;cursor:pointer">Ver evidencia</button>
+                      <span style="padding:11px 17px;border-radius:99px;background:#F7F9FA;font-size:14px;font-weight:800;color:#5A6474">Responsable: {{ g.responsable }}</span>
+                    </div>
+                  </div>
+                </sc-for>
+                <div style="padding:15px 17px;background:#F7F9FA;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">Un gasto no se marca como soportado si falta documentación requerida. Se aceptan PDF, JPG y PNG.</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ repEvidencias }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+              <div style="font-size:20px;font-weight:900">Evidencias</div>
+              <div style="font-size:15px;line-height:1.5;color:#5A6474;font-weight:600">La cadena completa: presupuesto, programa, beneficiarios, actividad, gasto, proveedor, soporte y resultado.</div>
+              <sc-for list="{{ evidencias }}" as="e" hint-placeholder-count="3">
+                <div style="padding:18px;border:1.5px solid #DDE7EA;border-radius:16px;display:flex;flex-direction:column;gap:12px">
+                  <div style="font-size:17px;font-weight:900">{{ e.titulo }}</div>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <sc-for list="{{ e.cadena }}" as="c" hint-placeholder-count="6">
+                      <span style="padding:10px 14px;border-radius:12px;background:#E8F6F8;font-size:13px;font-weight:800;color:#0A6873">{{ c.k }}: {{ c.v }}</span>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                    <span style="padding:9px 14px;border-radius:99px;background:{{ e.bg }};font-size:13px;font-weight:900;color:{{ e.color }}">{{ e.soporte }}</span>
+                    <button style="padding:11px 17px;border:2px solid #075985;border-radius:99px;background:#fff;color:#075985;font-size:14px;font-weight:900;cursor:pointer">Abrir soporte</button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ repNomina }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Nómina del personal asignado</div>
+                <div style="background:#F7F9FA;border-radius:14px;padding:6px 16px;display:flex;flex-direction:column">
+                  <div style="padding:12px 0;border-bottom:1.5px solid #DDE7EA;display:flex;gap:12px;flex-wrap:wrap">
+                    <span style="flex:0 0 110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">CÓDIGO</span>
+                    <span style="flex:1.6;min-width:150px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PERSONA Y CARGO</span>
+                    <span style="flex:1.2;min-width:120px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PROGRAMA</span>
+                    <span style="flex:1;min-width:110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">CONTRATACIÓN</span>
+                    <span style="flex:0 0 120px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">VALOR</span>
+                    <span style="flex:0 0 120px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">SOPORTE</span>
+                  </div>
+                  <sc-for list="{{ nomina }}" as="n" hint-placeholder-count="4">
+                    <div style="padding:14px 0;border-bottom:1px solid #E4EBEE;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                      <span style="flex:0 0 110px;font-size:14px;font-weight:900;color:#0A6873">{{ n.codigo }}</span>
+                      <span style="flex:1.6;min-width:150px;display:flex;flex-direction:column;gap:1px">
+                        <span style="font-size:15px;font-weight:900">{{ n.nombre }}</span>
+                        <span style="font-size:13px;font-weight:700;color:#5A6474">{{ n.cargo }}</span>
+                      </span>
+                      <span style="flex:1.2;min-width:120px;font-size:14px;font-weight:700;color:#5A6474">{{ n.programa }}</span>
+                      <span style="flex:1;min-width:110px;font-size:14px;font-weight:700;color:#5A6474">{{ n.contrato }}</span>
+                      <span style="flex:0 0 120px;font-size:15px;font-weight:900">{{ n.valor }}</span>
+                      <span style="flex:0 0 120px;padding:7px 12px;border-radius:99px;background:{{ n.bg }};font-size:13px;font-weight:900;color:{{ n.color }};text-align:center">{{ n.soporte }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="padding:15px 17px;background:#F7F9FA;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">La nómina no se mezcla con el expediente clínico.</div>
+              </div>
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Costo de personal</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px">
+                  <sc-for list="{{ costos }}" as="c" hint-placeholder-count="6">
+                    <div style="padding:18px;background:#F7F9FA;border-radius:16px;display:flex;flex-direction:column;gap:3px">
+                      <span style="font-size:22px;font-weight:900;line-height:1.1;color:#0A6873">{{ c.v }}</span>
+                      <span style="font-size:13px;font-weight:800">{{ c.t }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ repProveedores }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+                <div style="font-size:20px;font-weight:900">Proveedores</div>
+                <sc-for list="{{ proveedores }}" as="p" hint-placeholder-count="3">
+                  <div style="padding:18px;border:1.5px solid #DDE7EA;border-radius:16px;display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+                    <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:3px">
+                      <div style="font-size:17px;font-weight:900">{{ p.nombre }}</div>
+                      <div style="font-size:14px;font-weight:700;color:#5A6474">NIT {{ p.nit }} · {{ p.tipo }}</div>
+                      <div style="font-size:14px;font-weight:700;color:#5A6474">{{ p.contacto }} · {{ p.tel }}</div>
+                      <div style="font-size:14px;font-weight:700;color:#5A6474">{{ p.suministra }}</div>
+                    </div>
+                    <span style="flex:0 0 auto;padding:9px 14px;border-radius:99px;background:{{ p.bg }};font-size:13px;font-weight:900;color:{{ p.color }}">{{ p.estado }}</span>
+                    <span style="flex:0 0 auto;padding:9px 14px;border-radius:99px;background:#F7F9FA;font-size:13px;font-weight:800;color:#5A6474">{{ p.contrato }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ repInsumos }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+              <div style="font-size:20px;font-weight:900">Insumos</div>
+              <div style="background:#F7F9FA;border-radius:14px;padding:6px 16px;display:flex;flex-direction:column">
+                <div style="padding:12px 0;border-bottom:1.5px solid #DDE7EA;display:flex;gap:12px;flex-wrap:wrap">
+                  <span style="flex:1.6;min-width:150px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PRODUCTO</span>
+                  <span style="flex:1.2;min-width:130px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PROVEEDOR</span>
+                  <span style="flex:0 0 80px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">CANT.</span>
+                  <span style="flex:0 0 110px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">UNITARIO</span>
+                  <span style="flex:0 0 120px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">TOTAL</span>
+                  <span style="flex:1;min-width:120px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">PROGRAMA</span>
+                  <span style="flex:0 0 120px;font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.05em">SOPORTE</span>
+                </div>
+                <sc-for list="{{ insumos }}" as="i" hint-placeholder-count="5">
+                  <div style="padding:14px 0;border-bottom:1px solid #E4EBEE;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                    <span style="flex:1.6;min-width:150px;font-size:15px;font-weight:900">{{ i.t }}</span>
+                    <span style="flex:1.2;min-width:130px;font-size:14px;font-weight:700;color:#5A6474">{{ i.proveedor }}</span>
+                    <span style="flex:0 0 80px;font-size:15px;font-weight:800">{{ i.cant }}</span>
+                    <span style="flex:0 0 110px;font-size:14px;font-weight:700;color:#5A6474">{{ i.unitario }}</span>
+                    <span style="flex:0 0 120px;font-size:15px;font-weight:900;color:#0A6873">{{ i.total }}</span>
+                    <span style="flex:1;min-width:120px;font-size:14px;font-weight:700;color:#5A6474">{{ i.programa }}</span>
+                    <span style="flex:0 0 120px;padding:7px 12px;border-radius:99px;background:{{ i.bg }};font-size:13px;font-weight:900;color:{{ i.color }};text-align:center">{{ i.soporte }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ repIndicadores }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#fff;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 6px rgba(15,46,61,.06)">
+              <div style="font-size:20px;font-weight:900">Indicadores de gestión</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+                <sc-for list="{{ indicadores }}" as="i" hint-placeholder-count="16">
+                  <div style="padding:18px;background:#F7F9FA;border-radius:16px;display:flex;flex-direction:column;gap:3px;border-left:4px solid {{ i.color }}">
+                    <span style="font-size:24px;font-weight:900;line-height:1.1;color:{{ i.color }}">{{ i.v }}</span>
+                    <span style="font-size:13px;font-weight:800;line-height:1.35">{{ i.t }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="padding:15px 17px;background:#F7F9FA;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">Estos indicadores se alimentan de lo que registran paciente, cuidador, profesional y hospital. La alcaldía recibe la versión agregada y anonimizada.</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1320,&quot;height&quot;:900}}">
+const CITAS_AGOSTO = [3, 0, 11, 14, 9, 16, 12, 5, 0, 13, 15, 8, 17, 10, 4, 0, 24, 19, 13, 16, 21, 7, 0, 12, 14, 11, 18, 9, 6, 0, 10];
+
+const V = { verde: '#157F3B', bgVerde: '#EFF9F1', amar: '#96450A', bgAmar: '#FEF6E9', rojo: '#B91C1C', bgRojo: '#FDEEEE', azul: '#075985', bgAzul: '#E8F6F8', teal: '#0A6873' };
+
+class Component extends DCLogic {
+  state = { view: 'inicio', cal: 'Día', cfg: 'Membresías', rep: 'Presupuesto', campos: {} };
+
+  campo(k, def) {
+    const v = this.state.campos[k];
+    return { k: k, v: v === undefined ? def : v,
+      set: e => this.setState({ campos: Object.assign({}, this.state.campos, { [k]: e.target.value }) }) };
+  }
+
+  go(view) { this.setState({ view: view }); }
+
+  tab(id) {
+    const on = this.state.view === id;
+    return { bg: on ? '#0A6C9E' : 'transparent', fg: on ? '#ffffff' : '#CFE6EE' };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const t = id => this.tab(id);
+    return {
+      vInicio: s.view === 'inicio', vAgenda: s.view === 'agenda', vPacientes: s.view === 'pacientes',
+      vAlarmas: s.view === 'alarmas', vProfesionales: s.view === 'profesionales',
+      vVisitas: s.view === 'visitas', vVirtuales: s.view === 'virtuales',
+      vCalificaciones: s.view === 'calificaciones', vNovedades: s.view === 'novedades',
+      goInicio: () => this.go('inicio'), goAgenda: () => this.go('agenda'),
+      goPacientes: () => this.go('pacientes'), goAlarmas: () => this.go('alarmas'),
+      goProfesionales: () => this.go('profesionales'), goVisitas: () => this.go('visitas'),
+      goVirtuales: () => this.go('virtuales'), goCalificaciones: () => this.go('calificaciones'),
+      goNovedades: () => this.go('novedades'),
+      vConfig: s.view === 'config', vReportes: s.view === 'reportes',
+      goConfig: () => this.go('config'), goReportes: () => this.go('reportes'),
+      goMembresias: () => this.setState({ view: 'config', cfg: 'Membresías' }),
+      bgConfig: t('config').bg, fgConfig: t('config').fg,
+      bgReportes: t('reportes').bg, fgReportes: t('reportes').fg,
+      cfgTabs: ['Membresías', 'Historia clínica', 'Personal y accesos', 'Novedades', 'Agenda y servicios', 'Semáforo y alertas', 'Institución e integraciones', 'Auditoría'].map(x => {
+        const on = s.cfg === x;
+        return { t: x, on: () => this.setState({ cfg: x }),
+          bd: on ? 'none' : '1.5px solid #DDE7EA', bg: on ? '#075985' : '#fff', fg: on ? '#fff' : '#5A6474' };
+      }),
+      cfgMembresias: s.cfg === 'Membresías', cfgHistoria: s.cfg === 'Historia clínica',
+      cfgPersonal: s.cfg === 'Personal y accesos', cfgNovedades: s.cfg === 'Novedades',
+      cfgAgenda: s.cfg === 'Agenda y servicios', cfgSemaforo: s.cfg === 'Semáforo y alertas',
+      cfgInstitucion: s.cfg === 'Institución e integraciones', cfgAuditoria: s.cfg === 'Auditoría',
+      repTabs: ['Presupuesto', 'Gastos y soportes', 'Evidencias', 'Nómina', 'Proveedores', 'Insumos', 'Indicadores'].map(x => {
+        const on = s.rep === x;
+        return { t: x, on: () => this.setState({ rep: x }),
+          bd: on ? 'none' : '1.5px solid #DDE7EA', bg: on ? '#075985' : '#fff', fg: on ? '#fff' : '#5A6474' };
+      }),
+      repPresupuesto: s.rep === 'Presupuesto', repGastos: s.rep === 'Gastos y soportes',
+      repEvidencias: s.rep === 'Evidencias', repNomina: s.rep === 'Nómina',
+      repProveedores: s.rep === 'Proveedores', repInsumos: s.rep === 'Insumos',
+      repIndicadores: s.rep === 'Indicadores',
+
+      planes: [
+        { nombre: 'Plan Básico', desc: 'Seguimiento domiciliario con bitácora y semáforo', incluye: '1 visita domiciliaria · 2 consultas virtuales', precio: '$48.000', periodo: 'Mensual · renovación automática', estado: 'Activo', color: V.verde, bg: V.bgVerde, version: 'Versión 3 · vigente desde 1 ago 2026' },
+        { nombre: 'Plan Bienestar', desc: 'Incluye fisioterapia y acompañamiento al cuidador', incluye: '2 visitas domiciliarias · 4 consultas virtuales · 15 % en servicios adicionales', precio: '$68.000', periodo: 'Mensual · renovación automática', estado: 'Activo', color: V.verde, bg: V.bgVerde, version: 'Versión 2 · vigente desde 1 jul 2026' },
+        { nombre: 'Plan Integral', desc: 'Cobertura ampliada para cuidados permanentes', incluye: '4 visitas domiciliarias · consultas virtuales ilimitadas', precio: '$132.000', periodo: 'Trimestral', estado: 'Inactivo', color: V.amar, bg: V.bgAmar, version: 'Versión 1 · cerrado a nuevas ventas' }
+      ],
+      servicios: [
+        { t: 'Cita prioritaria en el hospital', precio: 'Sin cobro', duracion: '30 min', prof: 'Medicina', cobertura: 'Incluida', color: V.verde },
+        { t: 'Visita domiciliaria', precio: '$68.000', duracion: '45 min', prof: 'Medicina o enfermería', cobertura: 'Según plan', color: V.teal },
+        { t: 'Consulta virtual', precio: '$32.000', duracion: '20 min', prof: 'Medicina', cobertura: 'Según plan', color: V.teal },
+        { t: 'Enfermería domiciliaria', precio: '$54.000', duracion: '40 min', prof: 'Enfermería', cobertura: 'No incluida', color: V.amar },
+        { t: 'Fisioterapia', precio: '$60.000', duracion: '45 min', prof: 'Fisioterapia', cobertura: 'Plan Bienestar', color: V.teal },
+        { t: 'Trabajo social', precio: '$45.000', duracion: '60 min', prof: 'Trabajo social', cobertura: 'No incluida', color: V.amar }
+      ],
+      importResumen: [
+        { t: 'Pacientes encontrados', v: '150', color: V.azul },
+        { t: 'Registros clínicos', v: '1.284', color: V.azul },
+        { t: 'Campos reconocidos', v: '22', color: V.verde },
+        { t: 'Campos sin coincidencia', v: '3', color: V.amar },
+        { t: 'Errores de formato', v: '7', color: V.rojo },
+        { t: 'Duplicados potenciales', v: '4', color: V.amar }
+      ],
+      personal: [
+        { codigo: 'PROF-00125', nombre: 'Dra. Laura Gómez', cargo: 'Medicina general', rol: 'Profesional en salud', zona: 'Comunas 3 y 4', estado: 'Activo', color: V.verde, bg: V.bgVerde },
+        { codigo: 'PROF-00131', nombre: 'Enf. Carlos Ruiz', cargo: 'Enfermería', rol: 'Profesional en salud', zona: 'Comuna 1', estado: 'Activo', color: V.verde, bg: V.bgVerde },
+        { codigo: 'COORD-0018', nombre: 'Claudia Vargas', cargo: 'Coordinación domiciliaria', rol: 'Coordinador clínico', zona: 'Todas', estado: 'Activo', color: V.verde, bg: V.bgVerde },
+        { codigo: 'ADM-00314', nombre: 'Yohana Arenas', cargo: 'Administración', rol: 'Administrador hospital', zona: 'Todas', estado: 'Activo', color: V.verde, bg: V.bgVerde },
+        { codigo: 'FIN-00042', nombre: 'Pedro Ramírez', cargo: 'Finanzas', rol: 'Finanzas', zona: 'Todas', estado: 'Activo', color: V.verde, bg: V.bgVerde },
+        { codigo: 'PROF-00098', nombre: 'Dr. Andrés Peña', cargo: 'Medicina general', rol: 'Profesional en salud', zona: 'Comuna 2', estado: 'Inactivo', color: V.amar, bg: V.bgAmar }
+      ],
+      roles: [
+        { t: 'Profesional en salud', permisos: 'Ve sus pacientes asignados, registra atenciones, órdenes, educación y notas de continuidad.' },
+        { t: 'Coordinador clínico', permisos: 'Asigna profesionales, gestiona alertas y agenda, ve todas las fichas de su institución.' },
+        { t: 'Administrador hospital', permisos: 'Crea usuarios, configura membresías, servicios, reglas del semáforo e institución.' },
+        { t: 'Facturación', permisos: 'Registra pagos, membresías y estados de cobro. No accede a diagnósticos.' },
+        { t: 'Finanzas', permisos: 'Ve presupuesto, gastos, nómina, proveedores y soportes. No modifica información clínica.' },
+        { t: 'Auditor', permisos: 'Consulta trazabilidad, evidencias y registro de cambios. Solo lectura.' },
+        { t: 'Agenda', permisos: 'Programa, reprograma y confirma citas. No accede al registro clínico.' },
+        { t: 'Supervisor', permisos: 'Ve indicadores, calidad y desempeño agregado de la operación.' }
+      ],
+      estadosNovedad: [
+        { t: 'Creada', color: V.azul, bg: V.bgAzul }, { t: 'Enviada', color: V.azul, bg: V.bgAzul },
+        { t: 'Entregada', color: V.teal, bg: V.bgAzul }, { t: 'Vista', color: V.verde, bg: V.bgVerde },
+        { t: 'Atendida', color: V.verde, bg: V.bgVerde }, { t: 'Fallida', color: V.rojo, bg: V.bgRojo }
+      ],
+      cfgAgendaCampos: [
+        ['HORARIO DE OPERACIÓN', '7:00 a. m. a 6:00 p. m.'],
+        ['DÍAS DISPONIBLES', 'Lunes a sábado'],
+        ['DURACIÓN ESTÁNDAR DE CONSULTA', '20 minutos'],
+        ['DURACIÓN DE VISITA DOMICILIARIA', '45 minutos'],
+        ['TIEMPO ENTRE CITAS', '15 minutos'],
+        ['TIEMPO DE DESPLAZAMIENTO EN ZONA RURAL', '40 minutos'],
+        ['CAPACIDAD MÁXIMA POR PROFESIONAL', '6 atenciones al día'],
+        ['ANTICIPACIÓN MÍNIMA PARA AGENDAR', '4 horas'],
+        ['REGLA DE CANCELACIÓN', 'Hasta 12 horas antes sin costo'],
+        ['ZONAS DE COBERTURA', 'Comunas 1 a 4 y zona rural'],
+        ['MODALIDADES HABILITADAS', 'Presencial, domiciliaria y virtual']
+      ].map(p => this.campo(p[0], p[1])),
+      reglas: [
+        { v: 'Presión sistólica', verde: '110 a 139', amarillo: '140 a 159', rojo: '160 o más', accion: 'Alerta al profesional asignado y a coordinación', tiempo: '2 horas' },
+        { v: 'Saturación de oxígeno', verde: '95 % o más', amarillo: '91 a 94 %', rojo: '90 % o menos', accion: 'Alerta al profesional y protocolo respiratorio', tiempo: '30 minutos' },
+        { v: 'Glucosa en ayunas', verde: '70 a 130', amarillo: '131 a 180', rojo: 'Más de 180', accion: 'Alerta al profesional asignado', tiempo: '4 horas' },
+        { v: 'Caída reportada', verde: 'Sin caídas', amarillo: 'Sin lesión', rojo: 'Con lesión o dolor', accion: 'Alerta a coordinación y visita prioritaria', tiempo: '1 hora' },
+        { v: 'Dificultad para respirar', verde: 'Ausente', amarillo: 'Leve', rojo: 'Presente', accion: 'Alerta roja inmediata a coordinación', tiempo: '15 minutos' }
+      ],
+      institucion: [
+        ['NOMBRE', 'Hospital San Rafael'], ['TIPO', 'ESE'],
+        ['NIT', '890.123.456-7'], ['MUNICIPIO', 'Soacha, Cundinamarca'],
+        ['DIRECCIÓN', 'Cra 7 # 12-40'], ['TELÉFONO', '(601) 720 4400'],
+        ['CORREO', 'domiciliaria@hsanrafael.gov.co'], ['REPRESENTANTE', 'Dr. Gustavo Herrera'],
+        ['ZONAS DE COBERTURA', 'Comunas 1 a 4 y zona rural']
+      ].map(p => this.campo(p[0], p[1])),
+      integraciones: [
+        { t: 'WhatsApp Business API', detalle: 'Plantillas, destinatarios, estados y registro de envíos preparados', estado: 'Sin conectar', color: V.amar, bg: V.bgAmar },
+        { t: 'Proveedor de videollamada', detalle: 'Punto de entrada listo en consultas virtuales', estado: 'Sin definir', color: V.amar, bg: V.bgAmar },
+        { t: 'Pasarela de pagos Nequi y PSE', detalle: 'Estados de pago independientes del estado de la cita', estado: 'Sin conectar', color: V.amar, bg: V.bgAmar },
+        { t: 'Historia clínica institucional', detalle: 'Importación por archivo disponible; API pendiente de convenio', estado: 'Parcial', color: V.teal, bg: V.bgAzul }
+      ],
+      auditoria: [
+        { usuario: 'Yohana Arenas · administrador hospital', accion: 'Modificó el precio del Plan Bienestar', cuando: '16 ago 2026, 3:12 p. m.', antes: '$62.000', despues: '$68.000' },
+        { usuario: 'Yohana Arenas · administrador hospital', accion: 'Importó 150 historias clínicas desde archivo CSV', cuando: '14 ago 2026, 9:40 a. m.', antes: '0 registros importados', despues: '1.284 registros' },
+        { usuario: 'Claudia Vargas · coordinador clínico', accion: 'Asignó profesional a María Rodríguez', cuando: '17 ago 2026, 7:55 a. m.', antes: 'Sin asignar', despues: 'Dra. Laura Gómez' },
+        { usuario: 'Claudia Vargas · coordinador clínico', accion: 'Cambió el rango amarillo de presión sistólica', cuando: '12 ago 2026, 11:20 a. m.', antes: '140 a 155', despues: '140 a 159' },
+        { usuario: 'Pedro Ramírez · finanzas', accion: 'Cargó soporte de la factura FAC-2026-125', cuando: '11 ago 2026, 4:05 p. m.', antes: 'Falta soporte', despues: 'Soporte cargado' }
+      ],
+
+      filtrosReportes: ['Periodo: agosto 2026', 'Municipio: Soacha', 'Programa: todos', 'Población: todas', 'Profesional: todos', 'Proveedor: todos', 'Servicio: todos', 'Estado: todos'].map(x => ({ t: x })),
+      presupuesto: [
+        { t: 'ASIGNADO', v: '$1.580 M', color: V.azul },
+        { t: 'EJECUTADO', v: '$870 M', color: V.teal },
+        { t: 'COMPROMETIDO', v: '$410 M', color: V.amar },
+        { t: 'DISPONIBLE', v: '$300 M', color: V.verde },
+        { t: 'EJECUCIÓN', v: '55 %', color: V.teal }
+      ],
+      programas: [
+        { t: 'Atención domiciliaria', asignado: '$680 M', ejecutado: '$402 M', disponible: '$118 M', beneficiarios: '412', promedio: '$975.000', color: V.verde },
+        { t: 'Adulto mayor', asignado: '$420 M', ejecutado: '$248 M', disponible: '$72 M', beneficiarios: '6.117', promedio: '$40.500', color: V.verde },
+        { t: 'Personas con discapacidad', asignado: '$260 M', ejecutado: '$134 M', disponible: '$66 M', beneficiarios: '2.845', promedio: '$47.100', color: V.verde },
+        { t: 'Cuidado en casa', asignado: '$150 M', ejecutado: '$68 M', disponible: '$32 M', beneficiarios: '1.640', promedio: '$41.400', color: V.amar },
+        { t: 'Formación de cuidadores', asignado: '$70 M', ejecutado: '$18 M', disponible: '$12 M', beneficiarios: '1.164', promedio: '$15.400', color: V.amar }
+      ],
+      gastos: [
+        { concepto: 'Insumos de cuidado domiciliario', proveedor: 'Fundación Bienestar', programa: 'Cuidado en casa', doc: 'FAC-2026-125', fecha: '11 ago 2026', pago: 'Transferencia', valor: '$12.500.000', soporte: 'Soporte cargado', color: V.verde, bg: V.bgVerde, responsable: 'Pedro Ramírez' },
+        { concepto: 'Honorarios de fisioterapia domiciliaria', proveedor: 'Ft. Diana Salas', programa: 'Atención domiciliaria', doc: 'CC-2026-088', fecha: '10 ago 2026', pago: 'Transferencia', valor: '$6.400.000', soporte: 'Soporte cargado', color: V.verde, bg: V.bgVerde, responsable: 'Pedro Ramírez' },
+        { concepto: 'Material educativo para cuidadores', proveedor: 'Imprenta Andina', programa: 'Formación de cuidadores', doc: 'FAC-2026-131', fecha: '9 ago 2026', pago: 'Cuenta de cobro', valor: '$3.200.000', soporte: 'Falta soporte', color: V.amar, bg: V.bgAmar, responsable: 'Yohana Arenas' },
+        { concepto: 'Tensiómetros y oxímetros', proveedor: 'MedSupply SAS', programa: 'Adulto mayor', doc: 'FAC-2026-140', fecha: '7 ago 2026', pago: 'Orden de compra', valor: '$18.900.000', soporte: 'Soporte cargado', color: V.verde, bg: V.bgVerde, responsable: 'Pedro Ramírez' }
+      ],
+      evidencias: [
+        { titulo: 'Insumos de cuidado para 240 hogares', soporte: 'PDF cargado', color: V.verde, bg: V.bgVerde, cadena: [
+          { k: 'Programa', v: 'Cuidado en casa' }, { k: 'Proveedor', v: 'Fundación Bienestar' },
+          { k: 'Valor', v: '$12.500.000' }, { k: 'Factura', v: 'FAC-2026-125' },
+          { k: 'Beneficiarios', v: '240 hogares' }, { k: 'Resultado', v: '96 % de entregas verificadas' }
+        ] },
+        { titulo: 'Dotación de equipos de medición domiciliaria', soporte: 'PDF cargado', color: V.verde, bg: V.bgVerde, cadena: [
+          { k: 'Programa', v: 'Adulto mayor' }, { k: 'Proveedor', v: 'MedSupply SAS' },
+          { k: 'Valor', v: '$18.900.000' }, { k: 'Factura', v: 'FAC-2026-140' },
+          { k: 'Beneficiarios', v: '318 pacientes' }, { k: 'Resultado', v: 'Bitácora con signos en 87 % de los casos' }
+        ] },
+        { titulo: 'Material educativo para formación de cuidadores', soporte: 'Falta soporte', color: V.amar, bg: V.bgAmar, cadena: [
+          { k: 'Programa', v: 'Formación de cuidadores' }, { k: 'Proveedor', v: 'Imprenta Andina' },
+          { k: 'Valor', v: '$3.200.000' }, { k: 'Documento', v: 'FAC-2026-131' },
+          { k: 'Beneficiarios', v: '1.164 cuidadores' }, { k: 'Resultado', v: 'Pendiente de verificación' }
+        ] }
+      ],
+      nomina: [
+        { codigo: 'PROF-00125', nombre: 'Dra. Laura Gómez', cargo: 'Medicina general', programa: 'Atención domiciliaria', contrato: 'Prestación de servicios', valor: '$7.800.000', soporte: 'Cargado', color: V.verde, bg: V.bgVerde },
+        { codigo: 'PROF-00131', nombre: 'Enf. Carlos Ruiz', cargo: 'Enfermería', programa: 'Atención domiciliaria', contrato: 'Término fijo', valor: '$4.200.000', soporte: 'Cargado', color: V.verde, bg: V.bgVerde },
+        { codigo: 'PROF-00144', nombre: 'Ft. Diana Salas', cargo: 'Fisioterapia', programa: 'Cuidado en casa', contrato: 'Por atención', valor: '$6.400.000', soporte: 'Cargado', color: V.verde, bg: V.bgVerde },
+        { codigo: 'COORD-0018', nombre: 'Claudia Vargas', cargo: 'Coordinación domiciliaria', programa: 'Todos', contrato: 'Término indefinido', valor: '$5.600.000', soporte: 'Falta', color: V.amar, bg: V.bgAmar }
+      ],
+      costos: [
+        { t: 'Costo mensual del personal', v: '$96,4 M' },
+        { t: 'Costo por programa (domiciliaria)', v: '$52,1 M' },
+        { t: 'Costo por zona (comunas 3 y 4)', v: '$28,7 M' },
+        { t: 'Costo por población (adulto mayor)', v: '$41,3 M' },
+        { t: 'Costo promedio por profesional', v: '$5,8 M' },
+        { t: 'Costo promedio por atención', v: '$78.400' }
+      ],
+      proveedores: [
+        { nombre: 'Fundación Bienestar', nit: '900.445.112-3', tipo: 'Insumos y acompañamiento', contacto: 'Marta Ocampo', tel: '311 220 4488', suministra: 'Insumos de cuidado domiciliario y material de apoyo', estado: 'Activo', color: V.verde, bg: V.bgVerde, contrato: 'Contrato 2026-014' },
+        { nombre: 'MedSupply SAS', nit: '830.112.998-1', tipo: 'Equipos médicos', contacto: 'Julián Restrepo', tel: '320 887 1120', suministra: 'Tensiómetros, oxímetros y glucómetros', estado: 'Activo', color: V.verde, bg: V.bgVerde, contrato: 'Contrato 2026-021' },
+        { nombre: 'Imprenta Andina', nit: '901.554.320-8', tipo: 'Material educativo', contacto: 'Sandra Peña', tel: '315 442 7790', suministra: 'Plegables y cartillas para cuidadores', estado: 'En revisión', color: V.amar, bg: V.bgAmar, contrato: 'Orden 2026-088' }
+      ],
+      insumos: [
+        { t: 'Tensiómetro digital', proveedor: 'MedSupply SAS', cant: '120', unitario: '$98.000', total: '$11.760.000', programa: 'Adulto mayor', soporte: 'Cargado', color: V.verde, bg: V.bgVerde },
+        { t: 'Oxímetro de pulso', proveedor: 'MedSupply SAS', cant: '90', unitario: '$52.000', total: '$4.680.000', programa: 'Adulto mayor', soporte: 'Cargado', color: V.verde, bg: V.bgVerde },
+        { t: 'Kit de curación', proveedor: 'Fundación Bienestar', cant: '240', unitario: '$34.500', total: '$8.280.000', programa: 'Cuidado en casa', soporte: 'Cargado', color: V.verde, bg: V.bgVerde },
+        { t: 'Elementos de protección', proveedor: 'Fundación Bienestar', cant: '600', unitario: '$7.000', total: '$4.200.000', programa: 'Atención domiciliaria', soporte: 'Cargado', color: V.verde, bg: V.bgVerde },
+        { t: 'Cartilla del cuidador', proveedor: 'Imprenta Andina', cant: '1.200', unitario: '$2.650', total: '$3.180.000', programa: 'Formación de cuidadores', soporte: 'Falta', color: V.amar, bg: V.bgAmar }
+      ],
+      indicadores: [
+        { t: 'Pacientes atendidos en el mes', v: '412', color: V.azul },
+        { t: 'Adultos mayores atendidos', v: '286', color: V.azul },
+        { t: 'Personas con discapacidad', v: '134', color: V.azul },
+        { t: 'Pacientes con cuidados en casa', v: '178', color: V.azul },
+        { t: 'Visitas domiciliarias', v: '1.204', color: V.teal },
+        { t: 'Consultas virtuales', v: '386', color: V.teal },
+        { t: 'Alertas generadas', v: '248', color: V.amar },
+        { t: 'Alertas atendidas', v: '233', color: V.verde },
+        { t: 'Tiempo promedio de respuesta', v: '41 min', color: V.verde },
+        { t: 'Cuidadores registrados', v: '1.164', color: V.teal },
+        { t: 'Cuidadores certificados', v: '442', color: V.teal },
+        { t: 'Profesionales activos', v: '14', color: V.azul },
+        { t: 'Calificación promedio', v: '4.4', color: V.verde },
+        { t: 'Membresías activas', v: '318', color: V.teal },
+        { t: 'Presupuesto ejecutado', v: '55 %', color: V.teal },
+        { t: 'Costo promedio por paciente', v: '$975.000', color: V.azul }
+      ],
+
+      bgInicio: t('inicio').bg, fgInicio: t('inicio').fg,
+      bgAgenda: t('agenda').bg, fgAgenda: t('agenda').fg,
+      bgPacientes: t('pacientes').bg, fgPacientes: t('pacientes').fg,
+      bgAlarmas: t('alarmas').bg, fgAlarmas: t('alarmas').fg,
+      bgProfesionales: t('profesionales').bg, fgProfesionales: t('profesionales').fg,
+      bgVisitas: t('visitas').bg, fgVisitas: t('visitas').fg,
+      bgVirtuales: t('virtuales').bg, fgVirtuales: t('virtuales').fg,
+      bgCalificaciones: t('calificaciones').bg, fgCalificaciones: t('calificaciones').fg,
+      bgNovedades: t('novedades').bg, fgNovedades: t('novedades').fg,
+
+      kpis: [
+        { t: 'CITAS DE HOY', v: '24', color: V.azul, bg: V.bgAzul, icCal: true, desglose: [{ t: 'Presenciales', v: '6' }, { t: 'Virtuales', v: '7' }, { t: 'Domiciliarias', v: '11' }] },
+        { t: 'VISITAS EN CASA HOY', v: '11', color: V.teal, bg: V.bgAzul, icCasa: true, desglose: [{ t: 'Programadas', v: '4' }, { t: 'En camino', v: '2' }, { t: 'En atención', v: '2' }, { t: 'Finalizadas', v: '3' }] },
+        { t: 'CONSULTAS VIRTUALES HOY', v: '7', color: V.teal, bg: V.bgAzul, icVideo: true, desglose: [{ t: 'En espera', v: '1' }, { t: 'En curso', v: '2' }, { t: 'Finalizadas', v: '4' }] },
+        { t: 'ALARMAS ACTIVAS', v: '7', color: V.rojo, bg: V.bgRojo, icAlerta: true, desglose: [{ t: 'Rojas', v: '3' }, { t: 'Amarillas', v: '4' }] },
+        { t: 'PACIENTES ACTIVOS', v: '412', color: V.azul, bg: V.bgAzul, icUsers: true, desglose: [{ t: 'Con cuidador', v: '298' }, { t: 'Nuevos del mes', v: '38' }] },
+        { t: 'PROFESIONALES EN TURNO', v: '9', color: V.verde, bg: V.bgVerde, icSteth: true, desglose: [{ t: 'Disponibles', v: '4' }, { t: 'En visita', v: '3' }, { t: 'En consulta', v: '2' }] },
+        { t: 'CITAS PENDIENTES DE ASIGNACIÓN', v: '4', color: V.amar, bg: V.bgAmar, icReloj: true, desglose: [{ t: 'Prioritaria hospital', v: '1' }, { t: 'Visita en casa', v: '2' }, { t: 'Virtual', v: '1' }] }
+      ],
+
+      agendaHoy: [
+        { hora: '08:00', paciente: 'María Rodríguez', tipo: 'Consulta virtual', profesional: 'Dr. Juan Pérez', estado: 'Confirmada', icVideo: true, color: V.verde, bg: V.bgVerde },
+        { hora: '09:00', paciente: 'Arturo Calle', tipo: 'Visita en casa', profesional: 'Dra. Laura Gómez', estado: 'En atención', icCasa: true, color: V.teal, bg: V.bgAzul },
+        { hora: '10:00', paciente: 'María Gómez', tipo: 'Visita en casa', profesional: 'Dra. Laura Gómez', estado: 'Profesional en camino', icCasa: true, color: V.teal, bg: V.bgAzul },
+        { hora: '11:00', paciente: 'Carmen López', tipo: 'Visita en casa', profesional: 'Enf. Carlos Ruiz', estado: 'En camino', icCasa: true, color: V.teal, bg: V.bgAzul },
+        { hora: '11:30', paciente: 'Juan Pérez Mora', tipo: 'Consulta virtual', profesional: 'Dra. Laura Gómez', estado: 'Paciente en espera', icVideo: true, color: V.amar, bg: V.bgAmar },
+        { hora: '14:00', paciente: 'Sara Nieto', tipo: 'Visita en casa', profesional: 'Sin asignar', estado: 'Pendiente de asignación', icCasa: true, color: V.amar, bg: V.bgAmar }
+      ],
+
+      semaforo: [
+        { t: 'Rojas · requieren atención', v: '3', color: V.rojo, bg: V.bgRojo, icAlerta: true },
+        { t: 'Amarillas · requieren seguimiento', v: '4', color: V.amar, bg: V.bgAmar, icAlerta: true },
+        { t: 'Estables o revisadas', v: '15', color: V.verde, bg: V.bgVerde, icOk: true }
+      ],
+
+      acciones: [
+        { t: 'Nueva cita', icMas: true, on: () => this.go('agenda') },
+        { t: 'Consulta virtual', icVideo2: true, on: () => this.go('virtuales') },
+        { t: 'Visita domiciliaria', icCasa2: true, on: () => this.go('visitas') },
+        { t: 'Ver pacientes', icUsers: true, on: () => this.go('pacientes') },
+        { t: 'Asignar profesional', icSteth: true, on: () => this.go('profesionales') },
+        { t: 'Ver alertas', icAlerta: true, on: () => this.go('alarmas') }
+      ],
+
+      alarmas: [
+        { paciente: 'Sara Nieto Vargas', motivo: 'Dificultad para respirar reportada en la bitácora', nivel: 'ROJA', cuando: 'Hace 12 minutos', color: V.rojo, bg: V.bgRojo, on: () => this.go('alarmas') },
+        { paciente: 'María Rodríguez', motivo: 'Presión arterial fuera del rango configurado', nivel: 'ROJA', cuando: 'Hace 15 minutos', color: V.rojo, bg: V.bgRojo, on: () => this.go('alarmas') },
+        { paciente: 'María Gómez Osorio', motivo: 'Presión 155/90, fuera del rango de la paciente', nivel: 'AMARILLA', cuando: 'Hace 1 hora', color: V.amar, bg: V.bgAmar, on: () => this.go('alarmas') },
+        { paciente: 'Jorge Beltrán Ruiz', motivo: 'Dos dosis de losartán no tomadas por malestar', nivel: 'AMARILLA', cuando: 'Ayer 8:10 p. m.', color: V.amar, bg: V.bgAmar, on: () => this.go('alarmas') }
+      ],
+
+      solicitudes: [
+        { paciente: 'Sara Nieto Vargas', tipo: 'Visita médica en casa', detalle: 'Calle 12 # 7-40, vereda El Charquito · alerta roja abierta', origen: 'la cuidadora Ana López', cuando: 'hoy 7:20 a. m.', estado: 'Pago confirmado', icCasa: true, color: V.verde, bg: V.bgVerde },
+        { paciente: 'Carmen López Díaz', tipo: 'Cita prioritaria en el hospital', detalle: 'Sin cobro para la paciente · requiere horario de la ESE', origen: 'la paciente', cuando: 'hoy 6:48 a. m.', estado: 'Solicitud pendiente', icCal: true, color: V.amar, bg: V.bgAmar },
+        { paciente: 'Rosa Marín Cifuentes', tipo: 'Consulta virtual', detalle: 'Control después de remisión · se conecta con su hija', origen: 'el cuidador', cuando: 'ayer 5:10 p. m.', estado: 'Pago confirmado', icVideo: true, color: V.verde, bg: V.bgVerde },
+        { paciente: 'Jorge Beltrán Ruiz', tipo: 'Visita médica en casa', detalle: 'Cra 8 # 21-05, San Mateo · seguimiento de lesión de piel', origen: 'el profesional en salud', cuando: 'ayer 4:35 p. m.', estado: 'Pago pendiente', icCasa: true, color: V.amar, bg: V.bgAmar }
+      ],
+
+      vistasCal: ['Día', 'Semana', 'Mes'].map(v => {
+        const on = s.cal === v;
+        return { t: v, on: () => this.setState({ cal: v }),
+          bd: on ? 'none' : '1.5px solid #DDE7EA', bg: on ? '#075985' : '#fff', fg: on ? '#fff' : '#5A6474' };
+      }),
+      diasSemana: ['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(d => ({ t: d })),
+      dias: Array.from({ length: 42 }, (_, i) => {
+        const n = i - 4;
+        const dentro = n >= 1 && n <= 31;
+        const hoy = n === 17;
+        const citas = dentro ? CITAS_AGOSTO[n - 1] : 0;
+        return {
+          n: dentro ? String(n) : '',
+          citas: dentro && citas ? citas + ' citas' : '',
+          bg: hoy ? '#075985' : (dentro && citas > 12 ? '#E8F6F8' : '#F7F9FA'),
+          bd: hoy ? 'none' : '1px solid #E4EBEE',
+          fg: hoy ? '#ffffff' : (dentro ? '#0F2E3D' : '#B6C4CB')
+        };
+      }),
+      totalesCal: [
+        { v: '318', t: 'Citas del mes', color: V.azul },
+        { v: '74', t: 'Presenciales', color: V.teal },
+        { v: '96', t: 'Virtuales', color: V.teal },
+        { v: '148', t: 'Domiciliarias', color: V.teal }
+      ],
+      estadosCita: [
+        { t: 'Solicitada', color: V.amar, bg: V.bgAmar, bd: '#F3DCA9' },
+        { t: 'Pago pendiente', color: V.amar, bg: V.bgAmar, bd: '#F3DCA9' },
+        { t: 'Pago confirmado', color: V.verde, bg: V.bgVerde, bd: '#BFE5C9' },
+        { t: 'Pago rechazado', color: V.rojo, bg: V.bgRojo, bd: '#F5C2C2' },
+        { t: 'Pendiente de asignación', color: V.amar, bg: V.bgAmar, bd: '#F3DCA9' },
+        { t: 'Asignada', color: V.azul, bg: V.bgAzul, bd: '#B9DCE6' },
+        { t: 'Confirmada', color: V.verde, bg: V.bgVerde, bd: '#BFE5C9' },
+        { t: 'Profesional en camino', color: V.teal, bg: V.bgAzul, bd: '#B9DCE6' },
+        { t: 'Paciente en espera', color: V.teal, bg: V.bgAzul, bd: '#B9DCE6' },
+        { t: 'En atención', color: V.teal, bg: V.bgAzul, bd: '#B9DCE6' },
+        { t: 'Finalizada', color: V.verde, bg: V.bgVerde, bd: '#BFE5C9' },
+        { t: 'Cancelada', color: V.rojo, bg: V.bgRojo, bd: '#F5C2C2' },
+        { t: 'Reprogramada', color: V.amar, bg: V.bgAmar, bd: '#F3DCA9' }
+      ],
+      vistasCita: [
+        { rol: 'Hospital', texto: 'Confirmada · Dra. Laura Gómez asignada', icFile: true },
+        { rol: 'Profesional', texto: 'María Gómez · 10:00 a. m. · visita domiciliaria', icSteth: true },
+        { rol: 'Paciente', texto: 'Próxima cita: 21 de agosto, 10:00 a. m.', icUsers: true },
+        { rol: 'Cuidador', texto: 'Próxima cita de María: 21 de agosto, 10:00 a. m.', icUsers: true }
+      ],
+
+      condiciones: [{ t: 'Mayor de 60 años' }, { t: 'Persona con discapacidad' }, { t: 'Requiere cuidados en casa' }],
+      datosPaciente: [
+        { k: 'DIRECCIÓN', v: 'Cra 45 # 32-16, La Esperanza, Soacha' },
+        { k: 'CÓMO LLEGAR', v: 'Casa azul detrás de la iglesia, entrada por el andén del costado' },
+        { k: 'TELÉFONO', v: '310 445 8821' },
+        { k: 'CUIDADORA', v: 'Ana López (hija) · 312 887 4410' },
+        { k: 'CONTACTO CERCANO', v: 'Rosa Marín (vecina) · 320 551 7788' },
+        { k: 'PROFESIONAL ASIGNADO', v: 'Dra. Laura Gómez · medicina' }
+      ],
+      historial: [
+        { fecha: '15 de agosto', eventos: [
+          { hora: '7:42 a', t: 'Bitácora registrada con presión 155/90', origen: 'Cuidadora Ana López · origen CUIDADOR', estado: 'Amarillo', color: V.amar, bg: V.bgAmar },
+          { hora: '7:43 a', t: 'Alerta amarilla generada por el motor de reglas', origen: 'Sistema · rango configurado por el visitador', estado: 'Alerta', color: V.amar, bg: V.bgAmar }
+        ] },
+        { fecha: '16 de agosto', eventos: [
+          { hora: '9:10 a', t: 'Profesional revisa la alerta y solicita visita', origen: 'Dra. Laura Gómez · origen PROFESIONAL', estado: 'En revisión', color: V.azul, bg: V.bgAzul },
+          { hora: '10:06 a', t: 'Visita domiciliaria realizada · presión 128/80', origen: 'Dra. Laura Gómez · visita firmada', estado: 'Finalizada', color: V.verde, bg: V.bgVerde },
+          { hora: '10:48 a', t: 'Medicamento ajustado y nueva indicación registrada', origen: 'Dra. Laura Gómez · queda en el registro clínico', estado: 'Vigente', color: V.azul, bg: V.bgAzul },
+          { hora: '10:52 a', t: 'Se activó la calificación en paciente y cuidador', origen: 'Sistema · una evaluación por usuario autorizado', estado: 'Activada', color: V.teal, bg: V.bgAzul }
+        ] },
+        { fecha: '17 de agosto', eventos: [
+          { hora: '7:30 a', t: 'Bitácora registrada por la paciente · valor dentro de rango', origen: 'María Gómez · origen PACIENTE', estado: 'Verde', color: V.verde, bg: V.bgVerde },
+          { hora: '7:31 a', t: 'Seguimiento de la alerta cerrado', origen: 'Sistema · trazabilidad conservada', estado: 'Cerrada', color: V.verde, bg: V.bgVerde }
+        ] }
+      ],
+
+      detalleAlerta: [
+        { k: 'PACIENTE', v: 'Sara Nieto Vargas · 74 años' },
+        { k: 'DATO REPORTADO', v: 'Dificultad para respirar' },
+        { k: 'QUIÉN LO REGISTRÓ', v: 'Cuidador Andrés Nieto (hijo)' },
+        { k: 'FECHA Y HORA', v: 'Hoy, 7:05 a. m.' },
+        { k: 'RANGO CONFIGURADO', v: 'Evento de riesgo alto definido por el hospital' },
+        { k: 'PROFESIONAL ASIGNADO', v: 'Sin asignar' },
+        { k: 'ÚLTIMA ATENCIÓN', v: '12 de agosto · visita domiciliaria' },
+        { k: 'ACCIONES REALIZADAS', v: 'Ninguna todavía' }
+      ],
+      notasContinuidad: [
+        { texto: 'Revisar nuevamente la toma de presión y enseñar la técnica a la cuidadora.', meta: 'Enf. Carlos Ruiz → medicina · María Gómez', estado: 'Pendiente', color: V.amar, bg: V.bgAmar },
+        { texto: 'Preguntar a María cómo se sintió después del cambio de medicamento.', meta: 'Dr. Andrés Peña → próximo profesional · María Gómez', estado: 'Pendiente', color: V.amar, bg: V.bgAmar },
+        { texto: 'Reforzar con la cuidadora el cambio de posición cada 3 horas.', meta: 'Ft. Diana Salas → enfermería · Sara Nieto', estado: 'Atendida', color: V.verde, bg: V.bgVerde }
+      ],
+
+      profesionales: [
+        { ini: 'LG', nombre: 'Dra. Laura Gómez', profesion: 'Medicina general', zona: 'Comunas 3 y 4', estado: 'En visita', color: V.teal, bg: V.bgAzul, pacientes: '22', hoy: '4', cal: '4.1', calColor: V.amar, proxima: 'María Gómez · 10:00 a. m.', on: () => this.go('profesionales') },
+        { ini: 'CR', nombre: 'Enf. Carlos Ruiz', profesion: 'Enfermería', zona: 'Comuna 1', estado: 'Disponible', color: V.verde, bg: V.bgVerde, pacientes: '31', hoy: '5', cal: '4.7', calColor: V.verde, proxima: 'Carmen López · 11:00 a. m.', on: () => this.go('profesionales') },
+        { ini: 'DS', nombre: 'Ft. Diana Salas', profesion: 'Fisioterapia', zona: 'Zona rural', estado: 'Fuera de turno', color: V.amar, bg: V.bgAmar, pacientes: '17', hoy: '0', cal: '4.6', calColor: V.verde, proxima: 'Mañana 8:00 a. m.', on: () => this.go('profesionales') },
+        { ini: 'JP', nombre: 'Dr. Juan Pérez', profesion: 'Medicina general', zona: 'Comuna 2', estado: 'En consulta virtual', color: V.teal, bg: V.bgAzul, pacientes: '26', hoy: '3', cal: '4.4', calColor: V.verde, proxima: 'Rosa Marín · 3:15 p. m.', on: () => this.go('profesionales') }
+      ],
+      agendaProfesional: [
+        { hora: '08:00', paciente: 'Arturo Calle Osorio', tipo: 'Visita en casa', zona: 'La Esperanza', estado: 'Finalizada', color: V.verde, bg: V.bgVerde },
+        { hora: '10:00', paciente: 'María Gómez Osorio', tipo: 'Visita en casa', zona: 'La Esperanza', estado: 'En camino', color: V.teal, bg: V.bgAzul },
+        { hora: '11:30', paciente: 'Juan Pérez Mora', tipo: 'Consulta virtual', zona: 'Remota', estado: 'Confirmada', color: V.verde, bg: V.bgVerde },
+        { hora: '14:00', paciente: 'Sara Nieto Vargas', tipo: 'Visita en casa', zona: 'El Charquito', estado: 'Confirmada', color: V.verde, bg: V.bgVerde },
+        { hora: '16:00', paciente: 'Jorge Beltrán Ruiz', tipo: 'Visita en casa', zona: 'San Mateo', estado: 'Asignada', color: V.azul, bg: V.bgAzul }
+      ],
+
+      filtrosVisitas: ['Fecha: hoy', 'Profesional: todos', 'Paciente: todos', 'Municipio: Soacha', 'Estado: todos', 'Semáforo: todos'].map(t => ({ t: t })),
+      estadosVisitas: [
+        { t: 'Programadas', v: '4', color: V.azul },
+        { t: 'En camino', v: '2', color: V.teal },
+        { t: 'Iniciadas', v: '2', color: V.teal },
+        { t: 'Finalizadas', v: '3', color: V.verde },
+        { t: 'Canceladas', v: '1', color: V.rojo }
+      ],
+      listaVisitas: [
+        { fecha: '17 ago · 08:00', paciente: 'Arturo Calle Osorio', zona: 'La Esperanza, Soacha', profesional: 'Dra. Laura Gómez', estado: 'Finalizada', color: V.verde, bg: V.bgVerde },
+        { fecha: '17 ago · 10:00', paciente: 'María Gómez Osorio', zona: 'La Esperanza, Soacha', profesional: 'Dra. Laura Gómez', estado: 'En camino', color: V.teal, bg: V.bgAzul },
+        { fecha: '17 ago · 11:00', paciente: 'Carmen López Díaz', zona: 'Compartir, Soacha', profesional: 'Enf. Carlos Ruiz', estado: 'En camino', color: V.teal, bg: V.bgAzul },
+        { fecha: '17 ago · 14:00', paciente: 'Sara Nieto Vargas', zona: 'El Charquito', profesional: 'Sin asignar', estado: 'Pendiente de asignación', color: V.amar, bg: V.bgAmar },
+        { fecha: '16 ago · 09:30', paciente: 'Jorge Beltrán Ruiz', zona: 'San Mateo, Soacha', profesional: 'Ft. Diana Salas', estado: 'Cancelada', color: V.rojo, bg: V.bgRojo }
+      ],
+
+      estadosVirtuales: [
+        { t: 'Programadas', v: '7', color: V.azul },
+        { t: 'Paciente esperando', v: '1', color: V.amar },
+        { t: 'Profesional conectado', v: '2', color: V.teal },
+        { t: 'En curso', v: '2', color: V.teal },
+        { t: 'Finalizadas', v: '4', color: V.verde },
+        { t: 'Canceladas', v: '0', color: V.rojo }
+      ],
+      listaVirtuales: [
+        { hora: '11:30', paciente: 'Juan Pérez Mora', profesional: 'Dra. Laura Gómez', estado: 'Paciente en espera', color: V.amar, bg: V.bgAmar },
+        { hora: '11:00', paciente: 'Beatriz Sanín', profesional: 'Dr. Juan Pérez', estado: 'En curso', color: V.teal, bg: V.bgAzul },
+        { hora: '10:30', paciente: 'Álvaro Mesa', profesional: 'Dr. Juan Pérez', estado: 'En curso', color: V.teal, bg: V.bgAzul },
+        { hora: '3:15 p', paciente: 'Rosa Marín Cifuentes', profesional: 'Dr. Juan Pérez', estado: 'Confirmada', color: V.verde, bg: V.bgVerde }
+      ],
+
+      calProfesionales: [
+        { nombre: 'Enf. Carlos Ruiz', profesion: 'Enfermería', n: '52', cal: '4.7', pct: '94%', color: V.verde, tendencia: 'Sube 0.1', tendColor: V.verde },
+        { nombre: 'Ft. Diana Salas', profesion: 'Fisioterapia', n: '28', cal: '4.6', pct: '92%', color: V.verde, tendencia: 'Estable', tendColor: '#5A6474' },
+        { nombre: 'Dr. Juan Pérez', profesion: 'Medicina general', n: '41', cal: '4.4', pct: '88%', color: V.verde, tendencia: 'Sube 0.2', tendColor: V.verde },
+        { nombre: 'Dra. Laura Gómez', profesion: 'Medicina general', n: '38', cal: '4.1', pct: '82%', color: V.amar, tendencia: 'Baja 0.2', tendColor: V.amar }
+      ],
+      factores: [
+        { t: 'Puntualidad', v: '3.4' }, { t: 'Tiempo dedicado', v: '3.7' },
+        { t: 'Orientación al cuidador', v: '3.9' }, { t: 'Claridad sobre medicamentos', v: '4.3' },
+        { t: 'Orientación al paciente', v: '4.4' }, { t: 'Resolución de dudas', v: '4.5' },
+        { t: 'Profesionalismo', v: '4.7' }, { t: 'Comunicación', v: '4.8' }, { t: 'Empatía', v: '4.9' }
+      ].map(f => {
+        const n = parseFloat(f.v);
+        return { t: f.t, v: f.v, pct: (n / 5 * 100) + '%', color: n >= 4.5 ? V.verde : (n >= 4 ? V.teal : V.amar) };
+      }),
+      clinicos: [
+        { v: '94 %', t: 'Alertas atendidas en el tiempo definido', color: V.verde },
+        { v: '88 %', t: 'Órdenes completadas', color: V.verde },
+        { v: '100 %', t: 'Cambios terapéuticos documentados', color: V.verde },
+        { v: '91 %', t: 'Notas de continuidad atendidas', color: V.teal },
+        { v: '87 %', t: 'Adherencia a medicamentos registrada', color: V.teal },
+        { v: '2', t: 'Reingresos en 30 días pendientes de auditoría', color: V.amar }
+      ],
+      filtrosComentarios: ['Profesional', 'Fecha', 'Tipo de visita', 'Puntuación', 'Categoría'].map(t => ({ t: t })),
+      comentarios: [
+        { paciente: 'María Rodríguez', profesional: 'Dra. Ana Torres', cal: '5 de 5', texto: 'Me explicó claramente cómo debía tomar el medicamento.', meta: '16 de agosto · visita domiciliaria', color: V.verde },
+        { paciente: 'Ana López (cuidadora)', profesional: 'Dra. Laura Gómez', cal: '4 de 5', texto: 'Fue muy amable, pero llegó tarde.', meta: '14 de agosto · visita domiciliaria', color: V.verde },
+        { paciente: 'Álvaro Mesa', profesional: 'Dr. Juan Pérez', cal: '3 de 5', texto: 'Sentí que la revisión fue muy rápida.', meta: '10 de agosto · consulta virtual', color: V.amar },
+        { paciente: 'Andrés Nieto (cuidador)', profesional: 'Enf. Carlos Ruiz', cal: '5 de 5', texto: 'Me enseñó cómo movilizar a mi mamá y respondió todas mis preguntas.', meta: '8 de agosto · visita domiciliaria', color: V.verde }
+      ],
+
+      novedades: [
+        { t: 'Nueva solicitud de visita en casa · Sara Nieto Vargas', meta: 'Pago confirmado · requiere asignación', tipo: 'Solicitud', cuando: 'Hace 8 min', punto: '#D63384', icCasa: true, color: V.amar, bg: V.bgAmar },
+        { t: 'Alerta roja · dificultad para respirar', meta: 'Sara Nieto Vargas · reportada por el cuidador', tipo: 'Alerta', cuando: 'Hace 12 min', punto: '#D63384', icAlerta: true, color: V.rojo, bg: V.bgRojo },
+        { t: 'Nueva calificación recibida · 5 estrellas', meta: 'Enf. Carlos Ruiz · visita del 8 de agosto', tipo: 'Calificación', cuando: 'Hace 40 min', punto: '#D63384', icStar: true, color: V.verde, bg: V.bgVerde },
+        { t: 'Nota de continuidad pendiente para medicina', meta: 'Enf. Carlos Ruiz · María Gómez', tipo: 'Nota', cuando: 'Hace 2 h', punto: '#D63384', icFile: true, color: V.teal, bg: V.bgAzul },
+        { t: 'Bitácora relevante · dos dosis no tomadas', meta: 'Jorge Beltrán Ruiz · reportado por el cuidador', tipo: 'Seguimiento', cuando: 'Ayer', punto: 'transparent', icPill: true, color: V.amar, bg: V.bgAmar },
+        { t: 'Profesional canceló una atención', meta: 'Ft. Diana Salas · visita del 16 de agosto', tipo: 'Agenda', cuando: 'Ayer', punto: 'transparent', icCal: true, color: V.rojo, bg: V.bgRojo },
+        { t: 'Recordatorio enviado por WhatsApp', meta: 'María Gómez · cita del 21 de agosto', tipo: 'Recordatorio', cuando: 'Ayer', punto: 'transparent', icBell: true, color: V.teal, bg: V.bgAzul }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

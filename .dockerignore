@@ -1,0 +1,67 @@
+# ---------------------------------------------------------------------------
+# MERDN — contexto de build Docker mínimo y sin secretos (TASK-001)
+# ---------------------------------------------------------------------------
+
+# Control de versiones y gobernanza
+.git/
+.gitignore
+.gitattributes
+AGENTS.md
+CLAUDE.md
+README.md
+docs/
+tasks/
+reviews/
+prototype-claude/
+
+# Dependencias y artefactos (se instalan/compilan dentro de la imagen)
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.next/
+**/.next/
+out/
+**/out/
+build/
+**/build/
+*.tsbuildinfo
+
+# Entorno y secretos
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+.secrets/
+
+# Pruebas, cobertura, logs y temporales
+coverage/
+**/coverage/
+test-results/
+playwright-report/
+logs/
+*.log
+npm-debug.log*
+.cache/
+.tmp/
+tmp/
+
+# Datos locales de PostgreSQL
+.data/
+pgdata/
+postgres-data/
+
+# Docker y editores
+Dockerfile
+**/Dockerfile
+compose.yml
+.dockerignore
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

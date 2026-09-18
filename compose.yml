@@ -1,0 +1,209 @@
+# ---------------------------------------------------------------------------
+# MERDN — Docker Compose de DESARROLLO LOCAL (TASK-001, FR-12/FR-14/FR-20)
+#
+# Alcance: levantar PostgreSQL, la API y el frontend para verificar la
+# fundación técnica. NO es una topología de producción:
+#   - no incluye reverse proxy, TLS, backups, monitoreo ni hardening;
+#   - publica puertos únicamente en loopback (127.0.0.1);
+#   - usa credenciales locales ficticias definidas en `.env`.
+#
+# Portabilidad: solo usa imágenes oficiales y funcionalidades estándar de
+# Docker Compose v2, por lo que es trasladable a un VPS Linux (Hostinger
+# KVM 4) mediante configuración posterior. No depende de Azure, Kubernetes ni
+# de ningún servicio administrado.
+# ---------------------------------------------------------------------------
+
+name: merdn
+
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-merdn_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-merdn_dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD en .env (valor local ficticio)}
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    ports:
+      # Publicación restringida a loopback: nunca expuesta a la red.
+      - '127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432'
+    volumes:
+      - merdn-postgres-data:/var/lib/postgresql/data
+    networks:
+      - merdn-internal
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'pg_isready -U "${POSTGRES_USER:-merdn_dev}" -d "${POSTGRES_DB:-merdn_dev}"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      MERDN_ENVIRONMENT: ${MERDN_ENVIRONMENT:-development}
+      API_PORT: '3001'
+      API_OPENAPI_PATH: ${API_OPENAPI_PATH:-docs}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-merdn_dev}:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD en .env}@postgres:5432/${POSTGRES_DB:-merdn_dev}?schema=public
+      RUNTIME_DATABASE_URL: postgresql://merdn_runtime:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD en .env}@postgres:5432/${POSTGRES_DB:-merdn_dev}?schema=public
+      MERDN_RUNTIME_ROLE: ${MERDN_RUNTIME_ROLE:-enforce}
+      # ---------------------------------------------------------------------
+      # Acceso HUMANO por OIDC (IDENTITY-RELATIONSHIPS-CORE-01 §12).
+      #
+      # Las cuatro variables se pasan SIN valor por defecto y con expansion a
+      # cadena vacia: si `.env` no las define, la API arranca con el modulo
+      # humano DESHABILITADO y su superficie responde como no disponible. No se
+      # inventa aqui ningun issuer, cliente ni clave, y ninguna es un secreto
+      # versionado: todas viven en `.env`, ignorado por Git.
+      #
+      # El issuer canonico local es `http://host.docker.internal:8081/realms/merdn-local`
+      # y es el MISMO que ve el navegador: dentro de este contenedor `127.0.0.1`
+      # apunta a la propia API, de modo que un issuer de bucle local seria
+      # inalcanzable y el `iss` verificado no coincidiria entre las dos partes.
+      # ---------------------------------------------------------------------
+      # ---------------------------------------------------------------------
+      # Tenant institucional activo (Spec 024). Se propaga la pareja completa
+      # id + codigo desde `.env`; no se inventa ningun valor aqui. El UUID lo
+      # genera la carga de datos de referencia y es distinto en cada base, de
+      # modo que solo puede vivir en `.env`, ignorado por Git.
+      # ---------------------------------------------------------------------
+      MERDN_ACTIVE_TENANT_CODE: ${MERDN_ACTIVE_TENANT_CODE:-}
+      MERDN_ACTIVE_TENANT_ID: ${MERDN_ACTIVE_TENANT_ID:-}
+      MERDN_HUMAN_AUTH_ISSUER: ${MERDN_HUMAN_AUTH_ISSUER:-}
+      MERDN_HUMAN_AUTH_CLIENT_ID: ${MERDN_HUMAN_AUTH_CLIENT_ID:-}
+      MERDN_HUMAN_AUTH_CALLBACK_URI: ${MERDN_HUMAN_AUTH_CALLBACK_URI:-}
+      MERDN_HUMAN_AUTH_ATTEMPT_KEY: ${MERDN_HUMAN_AUTH_ATTEMPT_KEY:-}
+    ports:
+      - '127.0.0.1:${API_PORT:-3001}:3001'
+    # `host.docker.internal` es el host canonico del proveedor OIDC local.
+    # Docker Desktop ya lo resuelve; se declara de forma explicita para los
+    # motores que NO lo proveen por si mismos, de modo que la topologia sea la
+    # misma en todos. Apunta a la maquina anfitriona, nunca a una red externa.
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - merdn-internal
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3001/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      MERDN_ENVIRONMENT: ${MERDN_ENVIRONMENT:-development}
+      PORT: '3000'
+      HOSTNAME: '0.0.0.0'
+      # URL interna de la API para tareas posteriores. No es un secreto.
+      MERDN_API_BASE_URL: http://api:3001
+    ports:
+      - '127.0.0.1:${WEB_PORT:-3000}:3000'
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - merdn-internal
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  # -------------------------------------------------------------------------
+  # Proveedor OIDC LOCAL de desarrollo (IDENTITY-RELATIONSHIPS-CORE-01 §4.1).
+  #
+  # OPT-IN: vive tras el perfil `oidc-local` y NO se levanta con un
+  # `docker compose up` normal. Se arranca con:
+  #
+  #   docker compose --profile oidc-local up -d oidc-local
+  #
+  # Es un contenedor DESECHABLE de desarrollo:
+  #   - publica únicamente en 127.0.0.1, consola administrativa incluida;
+  #   - usa `start-dev`, que NO es un modo de producción;
+  #   - importa un realm con personas exclusivamente FICTICIAS;
+  #   - no versiona ningún secreto: el cliente es público y la única contraseña
+  #     se sustituye en el arranque desde `.env`, ignorado por Git;
+  #   - fija un emisor canónico, de modo que navegador y API vean el mismo.
+  #
+  # EMISOR CANÓNICO: `http://host.docker.internal:8081/realms/merdn-local`. Es
+  # el ÚNICO, y lo alcanzan por igual el navegador del anfitrión y la API que
+  # corre dentro de Compose. El puerto se sigue publicando SOLO en 127.0.0.1.
+  #
+  # La API RECHAZA AL ARRANCAR este emisor fuera de `development` y `test`.
+  # Ver `infra/local-oidc/README.md`.
+  # -------------------------------------------------------------------------
+  oidc-local:
+    profiles: ['oidc-local']
+    image: quay.io/keycloak/keycloak:26.7.1
+    restart: unless-stopped
+    command: ['start-dev', '--import-realm', '--http-port=8081']
+    environment:
+      # Credenciales de arranque LOCALES y FICTICIAS. Sin valor por defecto a
+      # propósito: sin ellas el servicio no levanta y nadie hereda una clave
+      # incorporada en un archivo versionado.
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${MERDN_OIDC_LOCAL_ADMIN_USER:-merdn-local-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${MERDN_OIDC_LOCAL_ADMIN_PASSWORD:?defina MERDN_OIDC_LOCAL_ADMIN_PASSWORD en .env (valor local ficticio)}
+      # Contraseña de las personas ficticias del realm. La sustituye el import.
+      MERDN_OIDC_LOCAL_TEST_PASSWORD: ${MERDN_OIDC_LOCAL_TEST_PASSWORD:?defina MERDN_OIDC_LOCAL_TEST_PASSWORD en .env (valor local ficticio)}
+      # Emisor CANÓNICO: Keycloak lo anuncia igual venga de donde venga la
+      # petición, para que navegador y API comparen el mismo `iss`.
+      KC_HOSTNAME: http://host.docker.internal:${OIDC_LOCAL_PORT:-8081}
+      KC_HOSTNAME_STRICT: 'false'
+      KC_HTTP_ENABLED: 'true'
+      KC_HEALTH_ENABLED: 'true'
+    ports:
+      # Publicación restringida a loopback: nunca expuesta a la red.
+      - '127.0.0.1:${OIDC_LOCAL_PORT:-8081}:8081'
+    volumes:
+      - ./infra/local-oidc/realm-merdn-local.json:/opt/keycloak/data/import/realm-merdn-local.json:ro
+    networks:
+      - merdn-internal
+    healthcheck:
+      # La imagen no trae `curl`: se usa el redirector de red de bash, que es la
+      # vía documentada por Keycloak para sus imágenes reducidas.
+      test:
+        [
+          'CMD-SHELL',
+          'exec 3<>/dev/tcp/127.0.0.1/9000; printf "GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3; grep -q "UP" <&3',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+networks:
+  merdn-internal:
+    driver: bridge
+
+volumes:
+  # Volumen nombrado y específico del proyecto `merdn`.
+  # Se elimina únicamente con `npm run docker:clean` (docker compose down -v).
+  merdn-postgres-data:
+    name: merdn-postgres-data

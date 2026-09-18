@@ -1,0 +1,272 @@
+/*
+ * Marco móvil aprobado y cromo de pantalla (TASK-002).
+ *
+ * First Run 1a se compara a 390 × 844. En viewports mayores el recorrido se
+ * centra conservando la composición móvil: no existe un layout de escritorio
+ * distinto. En viewports menores el marco se vuelve fluido y la altura pasa a
+ * ser dinámica, sin overflow horizontal ni recorte de contenido.
+ */
+
+.frame {
+  position: relative;
+  width: var(--b-ancho-movil);
+  max-width: 100%;
+  /* Altura fija del diseño aprobado: la comparación se hace a 390 × 844. */
+  height: var(--b-alto-movil);
+  border-radius: var(--b-radio-marco);
+  overflow: hidden;
+  background: var(--b-blanco);
+  box-shadow: var(--b-sombra-elevada);
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * Por debajo del ancho móvil aprobado el marco se vuelve fluido: se conserva
+ * el orden, la jerarquía y todos los controles, sin overflow horizontal y sin
+ * inventar una composición distinta.
+ */
+@media (max-width: 419px) {
+  .frame {
+    width: 100%;
+    border-radius: 20px;
+  }
+}
+
+.screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--b-blanco);
+}
+
+.screenBrand {
+  background: var(--b-azul);
+}
+
+.screenSuccess {
+  background: var(--b-verde-fondo);
+}
+
+.screenCanvas {
+  background: var(--b-lienzo);
+}
+
+/* --------------------------- Barra de estado ----------------------------- */
+
+.statusBar {
+  flex: 0 0 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.statusBarBrand {
+  background: var(--b-azul);
+}
+
+.statusTime {
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+.statusIcons {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+
+.statusBars {
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+}
+
+.statusBars span {
+  width: 3px;
+  border-radius: 1px;
+  background: var(--b-tinta);
+}
+
+.statusBars span:nth-child(1) {
+  height: 5px;
+}
+.statusBars span:nth-child(2) {
+  height: 8px;
+}
+.statusBars span:nth-child(3) {
+  height: 11px;
+}
+
+.statusBattery {
+  width: 17px;
+  height: 9px;
+  border: 1.5px solid var(--b-tinta);
+  border-radius: 2px;
+}
+
+.statusBarOnBrand .statusTime,
+.statusBarBrand .statusTime {
+  color: var(--b-blanco);
+}
+
+.statusBarOnBrand .statusBars span,
+.statusBarBrand .statusBars span {
+  background: var(--b-blanco);
+}
+
+.statusBarOnBrand .statusBattery,
+.statusBarBrand .statusBattery {
+  border-color: var(--b-blanco);
+}
+
+/* ------------------------------ Cabecera --------------------------------- */
+
+.stepHeader {
+  flex: 0 0 auto;
+  padding: 6px 26px 18px;
+}
+
+.stepHeaderTight {
+  padding-bottom: 14px;
+}
+
+.scrollArea {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  padding: 0 26px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.scrollAreaCentered {
+  align-items: center;
+  text-align: center;
+}
+
+.footer {
+  flex: 0 0 auto;
+  padding: 18px 26px 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footerTight {
+  padding-top: 14px;
+  padding-bottom: 30px;
+}
+
+/* --------------------------- Cabecera de marca --------------------------- */
+
+.brandHeader {
+  flex: 0 0 auto;
+  background: var(--b-azul);
+  padding: 8px 18px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brandMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brandMenu span {
+  width: 22px;
+  height: 2.5px;
+  background: var(--b-blanco);
+}
+
+.brandNames {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.brandWordmark {
+  margin: 0;
+  font-size: 23px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-blanco);
+  letter-spacing: 0.02em;
+}
+
+.brandTagline {
+  font-size: 10px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-celeste-borde);
+  letter-spacing: 0.1em;
+}
+
+.brandActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brandBell {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px 6px 3px 3px;
+  background: var(--b-blanco);
+}
+
+.brandInitials {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--b-blanco);
+  color: var(--b-azul);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+}
+
+/* -------------------- Marca centrada de la bienvenida -------------------- */
+
+.welcomeBrand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.welcomeWordmark {
+  margin: 0;
+  font-size: 36px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-blanco);
+  letter-spacing: 0.02em;
+}
+
+.welcomeTagline {
+  font-size: 15px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-celeste-borde);
+  letter-spacing: 0.14em;
+}
+
+/* Botón que solo contiene un glifo del diseño aprobado. */
+.iconButton {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

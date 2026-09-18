@@ -1,0 +1,606 @@
+/*
+ * Inscripción oficial (TASK-002A).
+ *
+ * Composición de `prototype-claude/Eligeme-Inscripcion.dc.html`: contenedor
+ * centrado de 600 px como máximo, scroll vertical y tarjetas blancas de esquinas
+ * redondeadas sobre el lienzo. Se compara a 680 × 900 CSS px.
+ *
+ * Los colores provienen del sistema aprobado en TASK-002
+ * (`src/styles/tokens.css`, Línea Visual B); aquí no se declara ninguno propio.
+ */
+
+.page {
+  min-height: 100vh;
+  padding: 28px 16px 120px;
+  background: var(--b-lienzo);
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* -------------------------------- Encabezado ----------------------------- */
+
+.brandBar {
+  background: var(--b-azul);
+  border-radius: 20px;
+  padding: 20px 22px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brandNames {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/*
+ * El logo corazón-check acompaña a la marca en la misma línea: conserva el
+ * tamaño, el peso y el color del nombre, que sigue siendo el elemento dominante.
+ */
+.brandWordmark {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.02em;
+  color: var(--b-blanco);
+}
+
+.brandTagline {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-celeste);
+}
+
+/* Ancla enfocable de un error de grupo: no ocupa espacio ni altera el diseño. */
+.groupAnchor {
+  display: block;
+  height: 0;
+  overflow: hidden;
+}
+
+/* --------------------------------- Tarjetas ------------------------------ */
+
+.card {
+  background: var(--b-blanco);
+  border-radius: 22px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  box-shadow: var(--b-sombra-tarjeta);
+}
+
+.cardTight {
+  gap: 16px;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.lead {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+.note {
+  margin: 0;
+  padding: 16px 18px;
+  background: var(--b-celeste);
+  border-radius: 14px;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-azul);
+}
+
+.demoNote {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1.5px dashed var(--b-borde);
+  border-radius: 14px;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+  background: var(--b-panel);
+}
+
+/* --------------------------- Selección de perfil ------------------------- */
+
+.profileList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.profileCard {
+  width: 100%;
+  min-height: 44px;
+  text-align: left;
+  padding: 20px;
+  border: 2px solid var(--b-borde);
+  border-radius: 18px;
+  background: var(--b-blanco);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: inherit;
+}
+
+.profileCard:hover {
+  border-color: var(--b-azul);
+  background: var(--b-celeste);
+}
+
+.profileTitle {
+  font-size: 21px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-azul);
+}
+
+.profileBody {
+  font-size: 16px;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+/* ------------------------------- Progreso -------------------------------- */
+
+.stepCard {
+  background: var(--b-blanco);
+  border-radius: 18px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--b-sombra-tarjeta);
+}
+
+.stepHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stepBranch {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.07em;
+  color: var(--b-gris);
+}
+
+.stepTitle {
+  margin: 0;
+  font-size: 19px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.stepCounter {
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-fucsia-novedades);
+  white-space: nowrap;
+}
+
+.stepTrack {
+  height: 8px;
+  background: var(--b-borde);
+  border-radius: var(--b-radio-pildora);
+  overflow: hidden;
+}
+
+.stepFill {
+  height: 100%;
+  background: var(--b-fucsia-novedades);
+  border-radius: var(--b-radio-pildora);
+}
+
+.stepDots {
+  display: flex;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stepDots > li {
+  flex: 1;
+}
+
+.stepDot {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 4px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: var(--b-peso-enfasis);
+  cursor: pointer;
+  border: 1.5px solid var(--b-borde);
+  background: var(--b-blanco);
+  color: var(--b-gris);
+  font-family: inherit;
+}
+
+.stepDotActive {
+  border-color: var(--b-azul);
+  background: var(--b-azul);
+  color: var(--b-blanco);
+}
+
+/* --------------------------------- Bloques ------------------------------- */
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.blockTight {
+  gap: 9px;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.07em;
+  color: var(--b-gris);
+}
+
+.eyebrowAccent {
+  color: var(--b-fucsia-novedades);
+}
+
+.blockTitle {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.3;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.blockBody {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+.divider {
+  height: 1px;
+  background: var(--b-borde);
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rowItem {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.ageBadge {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  padding: 14px 18px;
+  border-radius: var(--b-radio-campo);
+  background: var(--b-celeste);
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-azul);
+}
+
+/* Panel dependiente de una casilla marcada. */
+.subPanel {
+  margin-left: 8px;
+  padding: 18px;
+  border-left: 3px solid var(--b-rosa-eli);
+  background: var(--b-rosa-eli-fondo);
+  border-radius: 0 16px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Bloque destacado: sección marcada como obligatoria en el diseño. */
+.requiredPanel {
+  padding: 20px;
+  border: 2px solid var(--b-rosa-eli);
+  border-radius: 18px;
+  background: var(--b-rosa-eli-fondo);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* --------------------------- Clasificación (paso 2) ---------------------- */
+
+.classificationList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ------------------------------ Otros diagnósticos ----------------------- */
+
+.otherList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.otherRow {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.otherField {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+/* -------------------------------- Revisión ------------------------------- */
+
+.review {
+  border: 1.5px solid var(--b-borde);
+  border-radius: 16px;
+  overflow: hidden;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.reviewRow {
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--b-borde);
+}
+
+.reviewRow:last-child {
+  border-bottom: none;
+}
+
+.reviewTexts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.reviewLabel {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.06em;
+  color: var(--b-gris);
+}
+
+.reviewValue {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.35;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+/* ------------------------------ Documentación ---------------------------- */
+
+.uploadList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.uploadRow {
+  padding: 16px;
+  border: 1.5px dashed var(--b-borde);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.uploadName {
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+/* ---------------------------- Aviso de estado ---------------------------- */
+
+.warning {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  background: var(--b-amarillo-fondo);
+  border: 1.5px solid var(--b-amarillo-borde);
+  border-radius: 16px;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-amarillo);
+}
+
+/* --------------------------------- Acciones ------------------------------ */
+
+.actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.actionBack {
+  min-height: 44px;
+  padding: 16px 24px;
+  border: 2px solid var(--b-borde);
+  border-radius: 14px;
+  background: var(--b-blanco);
+  color: var(--b-tinta);
+  font-size: 17px;
+  font-weight: var(--b-peso-enfasis);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.actionNext {
+  flex: 1;
+  min-width: 200px;
+  min-height: 44px;
+  padding: 18px 24px;
+  border: none;
+  border-radius: 14px;
+  background: var(--b-verde);
+  color: var(--b-blanco);
+  font-size: 19px;
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.actionSwitch {
+  align-self: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: var(--b-gris);
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: inherit;
+}
+
+/* ---------------------------------- Final -------------------------------- */
+
+.doneCard {
+  background: var(--b-blanco);
+  border-radius: 22px;
+  padding: 32px 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+  box-shadow: var(--b-sombra-tarjeta);
+}
+
+.doneAvatar {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--b-verde);
+}
+
+.doneTitle {
+  margin: 0;
+  font-size: 28px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.doneBody {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+.doneBadge {
+  align-self: center;
+  padding: 12px 20px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-verde-fondo);
+  border: 1.5px solid var(--b-verde-borde);
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-verde);
+}
+
+.doneBadgePending {
+  background: var(--b-amarillo-fondo);
+  border-color: var(--b-amarillo-borde);
+  color: var(--b-amarillo);
+}
+
+.doneActions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (max-width: 420px) {
+  .page {
+    padding: 18px 12px 110px;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  .stepDot {
+    font-size: 11px;
+  }
+}

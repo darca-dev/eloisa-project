@@ -1,0 +1,1209 @@
+/*
+ * Administración institucional (TASK-003H-05).
+ *
+ * Fuente visual vinculante: `prototype-claude/Eligeme-Hospital.dc.html`,
+ * contenedor `vConfig` (648–658) y sus bloques `Membresías` (660–727),
+ * `Historia clínica` (729–778), `Personal y accesos` (780–824),
+ * `Agenda y servicios` (862–875), `Institución e integraciones` (905–935) y
+ * `Auditoría` (937–955). Cada medida, color, radio, peso y espaciado reproduce
+ * el valor declarado allí.
+ *
+ * Solo se declaran aquí los patrones que `hospitalViews.module.css` todavía no
+ * cubre: tarjeta, encabezado, badge, nota, pastilla y botón se reutilizan de
+ * ese módulo compartido. Las tablas administrativas repiten el patrón accesible
+ * ya aprobado en TASK-003H-04 sin importar la hoja de otra vista.
+ *
+ * Los márgenes y viñetas por defecto de `p`, `ul`, `ol`, `dl` y `dd` se anulan
+ * porque la referencia compone solo con `div`/`span`: la semántica se añade sin
+ * alterar la apariencia aprobada.
+ */
+
+/* --------------------------- Pestañas del contenedor ---------------------- */
+
+/*
+ * Pastillas locales (prototipo, líneas 655–657). Cambiar de pastilla solo
+ * cambia el bloque montado dentro del contenedor: no filtra, no consulta, no
+ * guarda y no cambia la URL. El estado se anuncia con `aria-pressed`, de modo
+ * que no depende del color.
+ */
+.pestana {
+  padding: 11px 16px;
+  font-size: 14px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Agrupación interna de una tarjeta: título propio y su contenido. */
+.subBloque {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ------------------------------ Avisos de alcance ------------------------- */
+
+/*
+ * Aviso permanente de demostración. Es texto dentro del flujo, disponible para
+ * tecnologías de asistencia: nunca comunica su significado solo con color.
+ */
+.aviso {
+  margin: 0;
+  padding: 15px 17px;
+  border-left: 3px solid var(--b-azul);
+  border-radius: 0 var(--b-radio-campo) var(--b-radio-campo) 0;
+  background: var(--b-celeste);
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-petroleo-texto);
+}
+
+/* Párrafo interno del aviso: la caja ya aporta el margen. */
+.avisoTexto {
+  margin: 0;
+}
+
+/* Variante ámbar del prototipo (línea 767). */
+.avisoAtencion {
+  border-left-color: var(--b-amarillo);
+  background: var(--b-amarillo-fondo);
+  color: var(--b-tinta);
+}
+
+.avisoTitulo {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-amarillo);
+}
+
+/* ------------------------------ Acciones inertes -------------------------- */
+
+/*
+ * Toda acción de esta vista es exclusivamente visual y se renderiza
+ * deshabilitada: no guarda, no cobra, no abre archivos, no muta el fixture, no
+ * navega y no llama a ningún servicio. El rótulo de estado acompaña siempre al
+ * botón para que la indisponibilidad se lea como texto.
+ */
+.acciones {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.accion {
+  padding: 13px 20px;
+  font-size: 15px;
+}
+
+.accionPildora {
+  padding: 11px 16px;
+  border-radius: var(--b-radio-pildora);
+  font-size: 14px;
+}
+
+.accionGrande {
+  padding: 15px 22px;
+  font-size: 16px;
+}
+
+.accion:disabled,
+.accionPildora:disabled,
+.accionGrande:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.accionEstado {
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+}
+
+.accionEnvoltura {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ------------------------------- Formularios ------------------------------ */
+
+/*
+ * Cuadrícula de campos (prototipo, líneas 686, 864 y 908). Cada campo lleva su
+ * `label` asociada por `for`/`id`.
+ */
+.formulario {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.campo {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.campoAncho {
+  grid-column: 1 / -1;
+}
+
+.campoEtiqueta {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  letter-spacing: 0.05em;
+}
+
+.campoControl {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 15px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+  background: var(--b-blanco);
+}
+
+.campoControl:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.campoControl::placeholder {
+  color: var(--b-gris-inactivo);
+}
+
+.campoParrafo {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* --------------------------------- Planes --------------------------------- */
+
+/*
+ * Tarjetas de plan (corrección aprobada, apartado G).
+ *
+ * La cuadrícula coloca varias tarjetas por fila en escritorio y las apila sola
+ * en tableta y móvil, sin ancho fijo y sin desbordamiento horizontal. Cada
+ * tarjeta es compacta: los datos se leen de un vistazo y los planes se comparan
+ * en paralelo.
+ */
+.planes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.plan {
+  min-width: 0;
+  padding: 18px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/*
+ * Plan cuyo formulario de edición está abierto. El estado también se anuncia
+ * con `aria-expanded`: el borde no es el único medio de lectura.
+ */
+.planActivo {
+  border-color: var(--b-azul);
+}
+
+.planCabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.planNombre {
+  margin: 0;
+  font-size: 17px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.planBadge {
+  gap: 0;
+  padding: 6px 11px;
+  font-size: 12px;
+}
+
+.planPrecio {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.planValor {
+  font-size: 22px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1.1;
+  color: var(--b-petroleo-texto);
+}
+
+.planPeriodo {
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.planDatos {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.planDato {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.planDatoEtiqueta {
+  margin: 0;
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.06em;
+  color: var(--b-gris);
+}
+
+.planDatoValor {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+}
+
+.planBeneficios {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* --------------------------- Tablas administrativas ----------------------- */
+
+/*
+ * Tabla real dentro de un contenedor con desplazamiento horizontal propio: el
+ * ancho de la vista nunca desborda y no se pierde información. El contenedor es
+ * enfocable para que ese desplazamiento también exista con teclado.
+ */
+.tablaContenedor {
+  background: var(--b-lienzo);
+  border-radius: 14px;
+  padding: 6px 16px;
+  overflow-x: auto;
+}
+
+.tablaContenedor:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.tabla {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.tablaEncabezado {
+  padding: 12px 0;
+  border-bottom: 1.5px solid var(--b-borde);
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.05em;
+  color: var(--b-gris);
+  white-space: nowrap;
+}
+
+.tablaFila {
+  border-bottom: 1px solid var(--h-borde-topbar, var(--b-borde));
+}
+
+.tablaCelda {
+  padding: 14px 12px 14px 0;
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+  vertical-align: middle;
+}
+
+.celdaFuerte {
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.celdaCodigo {
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+  white-space: nowrap;
+}
+
+.celdaValor {
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-petroleo-texto);
+}
+
+.celdaRol {
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+/*
+ * Cobertura de un servicio (prototipo, línea 722). El tono aporta el color y el
+ * valor siempre se lee como texto: el color nunca es el único medio.
+ */
+.celdaCobertura {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--h-tono-texto);
+}
+
+.persona {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.personaNombre {
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.personaCargo {
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.badgeTabla {
+  gap: 0;
+  padding: 7px 12px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* ------------------------- Información clínica importada ------------------ */
+
+.bloques {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.bloque {
+  flex: 1;
+  min-width: 260px;
+  padding: 18px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.bloqueTitulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.bloqueTexto {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.bloqueFormatos {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+}
+
+/* Marco punteado del archivo de ejemplo y del logo (líneas 748 y 918). */
+.marcoPunteado {
+  padding: 20px;
+  border: 2px dashed var(--h-azul-suave, var(--b-celeste-borde));
+  border-radius: 16px;
+  background: var(--b-celeste);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.marcoNeutro {
+  padding: 18px;
+  border-radius: 14px;
+  background: transparent;
+}
+
+.marcoTextos {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.marcoTitulo {
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.marcoDetalle {
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-petroleo-texto);
+}
+
+.marcoEtiqueta {
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+}
+
+/* Conteos del resultado de ejemplo (líneas 753–759). */
+.conteos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.conteo {
+  min-width: 0;
+  padding: 16px;
+  background: var(--b-lienzo);
+  border-radius: 14px;
+  border-left: 4px solid var(--h-tono-texto);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.conteoValor {
+  font-size: 24px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1;
+  color: var(--h-tono-texto);
+}
+
+.conteoEtiqueta {
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+}
+
+/* --------------------------- Bloques estructurales ------------------------ */
+
+/*
+ * Campos previstos para una fase aprobada. Cada uno nombra la dimensión y
+ * declara expresamente que todavía no tiene valor: ninguno se inventa.
+ */
+.futuros {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+.futuro {
+  min-width: 0;
+  padding: 14px 16px;
+  background: var(--b-lienzo);
+  border-radius: var(--b-radio-campo);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.futuroEtiqueta {
+  margin: 0;
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.futuroEstado {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris-inactivo);
+}
+
+/* Catálogo conceptual de tipos de personal. Es texto, no un control. */
+.catalogo {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.catalogoItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-lienzo);
+  border: 1.5px solid var(--b-borde);
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+.catalogoEstado {
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris-inactivo);
+}
+
+/* Relaciones institucionales y roles descriptivos. */
+.definiciones {
+  margin: 0;
+  background: var(--b-lienzo);
+  border-radius: 14px;
+  padding: 6px 16px;
+}
+
+.definicion {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--h-borde-topbar, var(--b-borde));
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+.definicion:last-child {
+  border-bottom: none;
+}
+
+.definicionTermino {
+  margin: 0;
+  flex: 0 0 190px;
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.definicionTexto {
+  margin: 0;
+  flex: 1;
+  min-width: 240px;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* -------------------------------- Integraciones --------------------------- */
+
+.integraciones {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.integracion {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px;
+  border-radius: 14px;
+  background: var(--b-lienzo);
+  flex-wrap: wrap;
+}
+
+.integracionTextos {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.integracionNombre {
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.integracionDetalle {
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.integracionEstado {
+  flex: 0 0 auto;
+  gap: 0;
+  padding: 8px 13px;
+  font-size: 13px;
+}
+
+/* --------------------------------- Auditoría ------------------------------ */
+
+.eventos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.evento {
+  padding: 16px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eventoCabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.eventoUsuario {
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.eventoCuando {
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.eventoAccion {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-enfasis);
+}
+
+.eventoValores {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.eventoValor {
+  padding: 8px 13px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+}
+
+.eventoAntes {
+  background: var(--b-rojo-fondo);
+  color: var(--b-rojo);
+}
+
+.eventoDespues {
+  background: var(--b-verde-fondo);
+  color: var(--b-verde);
+}
+
+/* ------------------------- Personal y accesos: cabecera ------------------- */
+
+/*
+ * Indicadores compactos (corrección aprobada, apartado A). Son cifras
+ * demostrativas contadas sobre las personas ficticias de la pantalla; la nota
+ * que los acompaña lo dice como texto.
+ */
+.indicadores {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.indicador {
+  min-width: 0;
+  padding: 12px 14px;
+  background: var(--b-lienzo);
+  border-radius: var(--b-radio-campo);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.indicadorValor {
+  font-size: 22px;
+  line-height: 1;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+}
+
+.indicadorEtiqueta {
+  font-size: 12px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+/* --------------------- Personal y accesos: buscar y filtrar --------------- */
+
+.busqueda {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.busquedaEtiqueta {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.05em;
+  color: var(--b-gris);
+}
+
+.busquedaCampo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  background: var(--b-blanco);
+}
+
+.busquedaCampo:focus-within {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.busquedaIcono {
+  display: inline-flex;
+  color: var(--b-gris);
+}
+
+.busquedaInput {
+  flex: 1;
+  min-width: 0;
+  padding: 13px 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+}
+
+.busquedaInput:focus-visible {
+  outline: none;
+}
+
+.busquedaInput::placeholder {
+  color: var(--b-gris-inactivo);
+}
+
+.busquedaAyuda {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.filtro {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filtroEtiqueta {
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.05em;
+  color: var(--b-gris);
+}
+
+.filtroCampo {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 13px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+  background: var(--b-blanco);
+}
+
+.filtroCampo:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.resumen {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.resumenTexto {
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.vacio {
+  margin: 0;
+  padding: 22px;
+  background: var(--b-lienzo);
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* ------------------ Personal y accesos: listado y panel ------------------- */
+
+/*
+ * En pantallas anchas el panel de detalle acompaña al listado en una columna
+ * lateral; por debajo de ese ancho se apila justo debajo, sin solaparse y sin
+ * ocultar el listado.
+ */
+.disposicion,
+.disposicionConPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.columnaLista {
+  min-width: 0;
+}
+
+@media (min-width: 1180px) {
+  .disposicionConPanel {
+    grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
+  }
+}
+
+.detallePanel {
+  min-width: 0;
+}
+
+.detallePanel:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.detalleCabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.detalleTextos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.detalleTitulo {
+  margin: 0;
+  font-size: 18px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.detalleMeta {
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.detalleValor {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+/* Fila abierta en el panel; acompaña al estado `aria-expanded` del botón. */
+.tablaFilaActiva {
+  box-shadow: inset 3px 0 0 var(--b-azul);
+}
+
+/* -------------------- Personal y accesos: Código y alta ------------------- */
+
+.reglas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.regla {
+  padding-left: 16px;
+  position: relative;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.regla::before {
+  content: "\00b7";
+  position: absolute;
+  left: 4px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+}
+
+.flujos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.flujo {
+  min-width: 0;
+  padding: 16px;
+  background: var(--b-lienzo);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flujoTitulo {
+  margin: 0;
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.pasos {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.paso {
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.subTitulo {
+  margin: 0;
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+}
+
+/* ----------------------------- Roles y permisos --------------------------- */
+
+/*
+ * Cada rol se lee como qué puede y qué no puede hacer (corrección aprobada,
+ * apartado E). Los dos rótulos son texto y los signos son decorativos: el
+ * significado nunca depende del color ni del símbolo.
+ */
+.roles {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.rol {
+  min-width: 0;
+}
+
+.rolCuerpo {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 18px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rolTitulo {
+  margin: 0;
+  font-size: 17px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.rolListas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rolLista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rolEtiquetaPuede,
+.rolEtiquetaNoPuede {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.rolEtiquetaPuede {
+  color: var(--b-verde);
+}
+
+.rolEtiquetaNoPuede {
+  color: var(--b-rojo);
+}
+
+.rolItems {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.rolItemPuede,
+.rolItemNoPuede {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+}
+
+.rolItemNoPuede {
+  color: var(--b-gris);
+}
+
+.rolMarca {
+  flex: 0 0 auto;
+  font-weight: var(--b-peso-maximo);
+}
+
+.rolItemPuede .rolMarca {
+  color: var(--b-verde);
+}
+
+.rolItemNoPuede .rolMarca {
+  color: var(--b-rojo);
+}
+
+/* ----------------------------- Acciones sensibles ------------------------- */
+
+.sensibles {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sensible {
+  padding: 14px 16px;
+  background: var(--b-lienzo);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sensibleEtiqueta {
+  flex: 0 0 auto;
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.sensibleDetalle {
+  flex: 1;
+  min-width: 220px;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.sensibleBadge {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-amarillo-fondo);
+  border: 1.5px solid var(--b-amarillo-borde);
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-amarillo);
+}

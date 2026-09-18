@@ -1,0 +1,482 @@
+{
+  "nodes": [
+    {
+      "id": "capa-0",
+      "type": "text",
+      "text": "Capa 0 · Fundación\n\n1 spec",
+      "x": 0,
+      "y": 30,
+      "width": 250,
+      "height": 120,
+      "color": "6"
+    },
+    {
+      "id": "001-fundacion-tecnica-monorepo",
+      "type": "file",
+      "file": "specs/001-fundacion-tecnica-monorepo/spec.md",
+      "x": 370,
+      "y": 0,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "id": "capa-1",
+      "type": "text",
+      "text": "Capa 1 · Interfaz sin backend\n\n4 specs",
+      "x": 0,
+      "y": 360,
+      "width": 250,
+      "height": 120,
+      "color": "6"
+    },
+    {
+      "id": "002-experiencia-inscripcion-visual",
+      "type": "file",
+      "file": "specs/002-experiencia-inscripcion-visual/spec.md",
+      "x": 370,
+      "y": 330,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "id": "003-experiencia-visual-hospital",
+      "type": "file",
+      "file": "specs/003-experiencia-visual-hospital/spec.md",
+      "x": 730,
+      "y": 330,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "id": "005-experiencia-visual-alcaldia",
+      "type": "file",
+      "file": "specs/005-experiencia-visual-alcaldia/spec.md",
+      "x": 1090,
+      "y": 330,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "id": "006-marca-eloisa-isa",
+      "type": "file",
+      "file": "specs/006-marca-eloisa-isa/spec.md",
+      "x": 1450,
+      "y": 330,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "id": "capa-2",
+      "type": "text",
+      "text": "Capa 2 · Persistencia núcleo\n\n1 spec",
+      "x": 0,
+      "y": 690,
+      "width": 250,
+      "height": 120,
+      "color": "6"
+    },
+    {
+      "id": "007-inscripcion-paciente-persistente",
+      "type": "file",
+      "file": "specs/007-inscripcion-paciente-persistente/spec.md",
+      "x": 370,
+      "y": 660,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "id": "capa-3",
+      "type": "text",
+      "text": "Capa 3 · Identidad y dominios protegidos\n\n2 specs",
+      "x": 0,
+      "y": 1020,
+      "width": 250,
+      "height": 120,
+      "color": "6"
+    },
+    {
+      "id": "008-agregados-municipales-protegidos",
+      "type": "file",
+      "file": "specs/008-agregados-municipales-protegidos/spec.md",
+      "x": 370,
+      "y": 990,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "id": "011-identidad-humana-y-relaciones",
+      "type": "file",
+      "file": "specs/011-identidad-humana-y-relaciones/spec.md",
+      "x": 730,
+      "y": 990,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "id": "capa-4",
+      "type": "text",
+      "text": "Capa 4 · Superficies hospitalarias\n\n2 specs",
+      "x": 0,
+      "y": 1350,
+      "width": 250,
+      "height": 120,
+      "color": "6"
+    },
+    {
+      "id": "009-hospital-pacientes-api",
+      "type": "file",
+      "file": "specs/009-hospital-pacientes-api/spec.md",
+      "x": 370,
+      "y": 1320,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "id": "010-hospital-profesionales-agenda-api",
+      "type": "file",
+      "file": "specs/010-hospital-profesionales-agenda-api/spec.md",
+      "x": 730,
+      "y": 1320,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "id": "capa-5",
+      "type": "text",
+      "text": "Capa 5 · Visitas\n\n1 spec",
+      "x": 0,
+      "y": 1680,
+      "width": 250,
+      "height": 120,
+      "color": "6"
+    },
+    {
+      "id": "012-visitas-domiciliarias",
+      "type": "file",
+      "file": "specs/012-visitas-domiciliarias/spec.md",
+      "x": 370,
+      "y": 1650,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "id": "capa-6",
+      "type": "text",
+      "text": "Capa 6 · Integración visible\n\n3 specs",
+      "x": 0,
+      "y": 2010,
+      "width": 250,
+      "height": 120,
+      "color": "6"
+    },
+    {
+      "id": "013-visitas-visibles-en-hospital",
+      "type": "file",
+      "file": "specs/013-visitas-visibles-en-hospital/spec.md",
+      "x": 370,
+      "y": 1980,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "id": "014-sesion-profesional-en-shell",
+      "type": "file",
+      "file": "specs/014-sesion-profesional-en-shell/spec.md",
+      "x": 730,
+      "y": 1980,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "id": "015-fidelidad-visual-hospital",
+      "type": "file",
+      "file": "specs/015-fidelidad-visual-hospital/spec.md",
+      "x": 1090,
+      "y": 1980,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "id": "capa-7",
+      "type": "text",
+      "text": "Capa 7 · En curso (MP02 pendiente)\n\n2 specs",
+      "x": 0,
+      "y": 2340,
+      "width": 250,
+      "height": 120,
+      "color": "6"
+    },
+    {
+      "id": "016-acceso-de-soporte-administrativo",
+      "type": "file",
+      "file": "specs/016-acceso-de-soporte-administrativo/spec.md",
+      "x": 370,
+      "y": 2310,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "id": "017-worklist-del-visitador",
+      "type": "file",
+      "file": "specs/017-worklist-del-visitador/spec.md",
+      "x": 730,
+      "y": 2310,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "id": "capa-8",
+      "type": "text",
+      "text": "Herramientas internas · no bloquea a nadie\n\n1 spec",
+      "x": 0,
+      "y": 2670,
+      "width": 250,
+      "height": 120,
+      "color": "6"
+    },
+    {
+      "id": "004-orquestador-merdn",
+      "type": "file",
+      "file": "specs/004-orquestador-merdn/spec.md",
+      "x": 370,
+      "y": 2640,
+      "width": 300,
+      "height": 180
+    }
+  ],
+  "edges": [
+    {
+      "id": "e01-001-002",
+      "fromNode": "001-fundacion-tecnica-monorepo",
+      "toNode": "002-experiencia-inscripcion-visual",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e02-002-003",
+      "fromNode": "002-experiencia-inscripcion-visual",
+      "toNode": "003-experiencia-visual-hospital",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e03-001-004",
+      "fromNode": "001-fundacion-tecnica-monorepo",
+      "toNode": "004-orquestador-merdn",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e04-002-005",
+      "fromNode": "002-experiencia-inscripcion-visual",
+      "toNode": "005-experiencia-visual-alcaldia",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e05-002-006",
+      "fromNode": "002-experiencia-inscripcion-visual",
+      "toNode": "006-marca-eloisa-isa",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e06-002-007",
+      "fromNode": "002-experiencia-inscripcion-visual",
+      "toNode": "007-inscripcion-paciente-persistente",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e07-005-008",
+      "fromNode": "005-experiencia-visual-alcaldia",
+      "toNode": "008-agregados-municipales-protegidos",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "conecta"
+    },
+    {
+      "id": "e08-006-008",
+      "fromNode": "006-marca-eloisa-isa",
+      "toNode": "008-agregados-municipales-protegidos",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e09-007-008",
+      "fromNode": "007-inscripcion-paciente-persistente",
+      "toNode": "008-agregados-municipales-protegidos",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e10-003-009",
+      "fromNode": "003-experiencia-visual-hospital",
+      "toNode": "009-hospital-pacientes-api",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "conecta"
+    },
+    {
+      "id": "e11-008-009",
+      "fromNode": "008-agregados-municipales-protegidos",
+      "toNode": "009-hospital-pacientes-api",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e12-009-010",
+      "fromNode": "009-hospital-pacientes-api",
+      "toNode": "010-hospital-profesionales-agenda-api",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e13-008-011",
+      "fromNode": "008-agregados-municipales-protegidos",
+      "toNode": "011-identidad-humana-y-relaciones",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e14-010-012",
+      "fromNode": "010-hospital-profesionales-agenda-api",
+      "toNode": "012-visitas-domiciliarias",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e15-011-012",
+      "fromNode": "011-identidad-humana-y-relaciones",
+      "toNode": "012-visitas-domiciliarias",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e16-012-013",
+      "fromNode": "012-visitas-domiciliarias",
+      "toNode": "013-visitas-visibles-en-hospital",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "conecta"
+    },
+    {
+      "id": "e17-013-014",
+      "fromNode": "013-visitas-visibles-en-hospital",
+      "toNode": "014-sesion-profesional-en-shell",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e18-014-015",
+      "fromNode": "014-sesion-profesional-en-shell",
+      "toNode": "015-fidelidad-visual-hospital",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e19-012-016",
+      "fromNode": "012-visitas-domiciliarias",
+      "toNode": "016-acceso-de-soporte-administrativo",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e20-014-017",
+      "fromNode": "014-sesion-profesional-en-shell",
+      "toNode": "017-worklist-del-visitador",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de",
+      "color": "3"
+    },
+    {
+      "id": "e21-009-011",
+      "fromNode": "009-hospital-pacientes-api",
+      "toNode": "011-identidad-humana-y-relaciones",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de (posterior)"
+    },
+    {
+      "id": "e22-010-011",
+      "fromNode": "010-hospital-profesionales-agenda-api",
+      "toNode": "011-identidad-humana-y-relaciones",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de (posterior)"
+    },
+    {
+      "id": "e23-014-012",
+      "fromNode": "014-sesion-profesional-en-shell",
+      "toNode": "012-visitas-domiciliarias",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de (posterior)"
+    },
+    {
+      "id": "e24-014-013",
+      "fromNode": "014-sesion-profesional-en-shell",
+      "toNode": "013-visitas-visibles-en-hospital",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "depende de (posterior)"
+    },
+    {
+      "id": "e25-009-015",
+      "fromNode": "009-hospital-pacientes-api",
+      "toNode": "015-fidelidad-visual-hospital",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "corrige"
+    },
+    {
+      "id": "e26-010-015",
+      "fromNode": "010-hospital-profesionales-agenda-api",
+      "toNode": "015-fidelidad-visual-hospital",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "corrige"
+    },
+    {
+      "id": "e27-013-015",
+      "fromNode": "013-visitas-visibles-en-hospital",
+      "toNode": "015-fidelidad-visual-hospital",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "corrige"
+    }
+  ]
+}

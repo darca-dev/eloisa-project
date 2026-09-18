@@ -1,0 +1,1125 @@
+/*
+ * Shell Hospital (TASK-003H-01).
+ *
+ * Fuente visual vinculante: `prototype-claude/Eligeme-Hospital.dc.html`,
+ * líneas 20–103. Cada medida, color, radio y espaciado reproduce el valor
+ * declarado allí. Donde el sistema aprobado (`src/styles/tokens.css`) ya define
+ * exactamente ese color, se usa el token; los tres colores del prototipo que el
+ * sistema todavía no nombra se declaran localmente en `.shell` y no se
+ * propagan a otras experiencias.
+ */
+
+.shell {
+  /* Azul de estado activo y separador del sidebar (prototipo, líneas 23 y 81). */
+  --h-azul-activo: #0a6c9e;
+  /* Azul claro de la etiqueta institucional y del foco (prototipo, líneas 17 y 25). */
+  --h-azul-suave: #b9dce6;
+  /* Borde inferior de la topbar (prototipo, línea 86). */
+  --h-borde-topbar: #e4ebee;
+
+  min-height: 100vh;
+  display: flex;
+  align-items: stretch;
+  background: var(--b-lienzo);
+}
+
+/* --------------------------------- Sidebar -------------------------------- */
+
+.sidebar {
+  flex: 0 0 236px;
+  background: var(--b-azul);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 6px;
+}
+
+/*
+ * Marca de plataforma (H-FID-B, §4.1): el corazón canónico y el nombre Eloisa
+ * comparten una sola línea, de modo que la identidad ocupa la misma altura que
+ * ocupaba la etiqueta sola y la densidad, la jerarquía y el ancho del sidebar
+ * aprobado no cambian.
+ */
+.identityMarca {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.identityMarcaLogo {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  object-fit: contain;
+  background: var(--b-blanco);
+  border-radius: 50%;
+  padding: 4px;
+}
+
+/*
+ * Ranura del logo INSTITUCIONAL, distinta de la marca de plataforma. Solo se
+ * dibuja cuando la institución aporta uno; nunca la ocupa el logo de Eloisa.
+ */
+.identityLogo {
+  max-width: 100%;
+  height: 32px;
+  width: auto;
+  margin: 2px 0 1px;
+  object-fit: contain;
+}
+
+.identityEyebrow {
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--h-azul-suave);
+  letter-spacing: 0.14em;
+}
+
+.identityName {
+  font-size: 17px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-blanco);
+  line-height: 1.25;
+}
+
+.identityMeta {
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-celeste-borde);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navItem {
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 13px;
+  border: none;
+  border-radius: 11px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--b-celeste-borde);
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+}
+
+.navItemActive {
+  background: var(--h-azul-activo);
+  color: var(--b-blanco);
+}
+
+.navItem:focus-visible {
+  outline: 3px solid var(--h-azul-suave);
+  outline-offset: 1px;
+}
+
+.navSeparator {
+  height: 1px;
+  background: var(--h-azul-activo);
+  margin: 8px 4px;
+}
+
+/*
+ * Menú neutral (H-FID-A): mismas etiquetas, mismo orden y misma densidad que
+ * el menú del shell autenticado, pero SIN control alguno. Los elementos son
+ * texto: no reciben `cursor: pointer` ni estado activo, porque no navegan y
+ * dar apariencia de control sugeriría un permiso que no existe.
+ */
+.navNeutralLista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navItemBloqueado {
+  cursor: default;
+  /* El bloqueo se anuncia con texto; el color solo lo acompaña. */
+  color: var(--b-celeste-borde);
+  opacity: 0.72;
+}
+
+/* ------------------------------ Columna principal ------------------------- */
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * Compactación de H-FID-B (§4.3.1): se recuperan equilibrio y densidad
+ * reduciendo únicamente relleno, separación y tamaño del avatar. Ningún
+ * handler, contrato, permiso ni fuente de datos cambia por esto.
+ */
+.topbar {
+  background: var(--b-blanco);
+  border-bottom: 1px solid var(--h-borde-topbar);
+  padding: 10px 22px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.search {
+  flex: 1;
+  min-width: 240px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 16px;
+  background: var(--b-lienzo);
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  color: var(--b-gris);
+}
+
+.searchText {
+  font-size: 15px;
+  font-weight: var(--b-peso-fuerte);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 12px 4px 4px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-lienzo);
+  border: 1.5px solid var(--b-borde);
+}
+
+.profileAvatar {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 50%;
+  background: var(--b-azul);
+  color: var(--b-blanco);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.profileText {
+  display: flex;
+  flex-direction: column;
+}
+
+.profileName {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.profileRole {
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* ------------------------------ Área de contenido ------------------------- */
+
+.content {
+  flex: 1;
+  padding: 24px 26px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* --------------------------------- Responsive ----------------------------- */
+
+/*
+ * Adaptación estructural mínima (FR-06.4): cuando el ancho ya no permite la
+ * composición de escritorio, el sidebar se apila sobre el contenido y el menú
+ * fluye en filas. No se elimina ningún elemento, no se introduce drawer, menú
+ * hamburguesa ni interacción ausente del prototipo.
+ */
+@media (max-width: 900px) {
+  .shell {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .navItem {
+    flex: 0 0 auto;
+  }
+
+  .navSeparator {
+    width: 100%;
+    margin: 8px 4px 0;
+  }
+
+  .topbar {
+    padding: 10px 16px;
+  }
+
+  .content {
+    padding: 24px 16px 60px;
+  }
+}
+
+/* ------------------- Dashboard: encabezado y KPIs (TASK-003H-02) ----------- */
+
+/*
+ * Fuente visual vinculante: `prototype-claude/Eligeme-Hospital.dc.html`,
+ * vista `Dashboard / Inicio`, líneas 105–131. Cada medida reproduce el valor
+ * declarado allí; los colores usan el token del sistema cuando su valor
+ * coincide exactamente. Los márgenes y viñetas por defecto de `h1`, `p`, `ul`,
+ * `dl` y `dd` se anulan porque la referencia compone solo con `div`/`span`: la
+ * semántica se añade sin alterar la apariencia aprobada.
+ */
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dashboardHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.dashboardHeadings {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboardEyebrow {
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+  letter-spacing: 0.1em;
+}
+
+.dashboardTitle {
+  margin: 0;
+  font-size: 25px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.dashboardDate {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.kpiGrid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(172px, 1fr));
+  gap: 10px;
+}
+
+.kpiCard {
+  min-width: 0;
+  display: flex;
+}
+
+/*
+ * La tarjeta completa es un único control (TASK-003H-02B, FR-02): un `button`
+ * sin controles anidados, cuyo nombre accesible es su propio texto visible.
+ */
+.kpiBoton {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  background: var(--b-blanco);
+  border: none;
+  border-top: 3px solid var(--h-kpi-acento);
+  border-radius: var(--b-radio-campo);
+  padding: 11px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* Sombra propia de la tarjeta KPI del prototipo (línea 117). */
+  box-shadow: 0 1px 6px rgba(15, 46, 61, 0.06);
+}
+
+.kpiBoton:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.kpiHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kpiLabel {
+  font-size: 10.5px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+}
+
+.kpiIcon {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: var(--h-kpi-fondo-icono);
+  color: var(--h-kpi-acento);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kpiValue {
+  font-size: 25px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1;
+  color: var(--h-kpi-acento);
+}
+
+/* El desglose fluye en línea: dice lo mismo ocupando mucho menos alto. */
+.kpiBreakdown {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 9px;
+  row-gap: 2px;
+}
+
+.kpiBreakdownRow {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.kpiBreakdownLabel {
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.kpiBreakdownValue {
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+}
+
+/* Pie de la tarjeta: dice a dónde lleva y con qué intención, siempre en texto. */
+.kpiPie {
+  margin-top: auto;
+  padding-top: 2px;
+  font-size: 10.5px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--h-kpi-acento);
+  line-height: 1.3;
+}
+
+/* ---------- Centro de control operativo de Inicio (TASK-003H-02B) --------- */
+
+/*
+ * Composición densa, ordenada y responsive de las secciones que Inicio añade
+ * bajo los KPI. Conserva el lenguaje Hospital ya aprobado —tarjeta blanca,
+ * radios, sombra suave, tipografía y tokens de tono— y solo reduce escala y
+ * espaciado para que KPI, atención prioritaria y acciones rápidas quepan en la
+ * primera pantalla de 1320 × 900.
+ *
+ * Ningún estado se comunica solo con color: los tonos acompañan a un texto que
+ * siempre está presente en el marcado.
+ */
+
+/*
+ * Aviso de intención de navegación (FR-09.3). Enuncia el contexto con el que se
+ * abrió la vista y aclara, en el propio texto, que no hay filtro aplicado.
+ */
+.intencion {
+  margin: 0;
+  padding: 9px 14px;
+  border-radius: var(--b-radio-campo);
+  background: var(--b-celeste);
+  border: 1.5px solid var(--h-azul-suave);
+  color: var(--b-petroleo-texto);
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+}
+
+.kpiSeccion {
+  display: block;
+}
+
+.inicioColumnas {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.inicioColumnaLateral {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.inicioResumenes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+/* ------------------------------- Panel común ------------------------------ */
+
+.panel {
+  min-width: 0;
+  background: var(--b-blanco);
+  border-radius: var(--b-radio-tarjeta);
+  padding: 13px 15px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  box-shadow: 0 1px 6px rgba(15, 46, 61, 0.06);
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.panelCount {
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.panelNota {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+  line-height: 1.4;
+}
+
+/* Acceso al módulo completo: botón local, nunca enlace ni ruta. */
+.panelAcceso {
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-azul);
+  background: var(--b-celeste);
+  border: 1.5px solid var(--h-azul-suave);
+  border-radius: var(--b-radio-pildora);
+  padding: 5px 12px;
+  min-height: 30px;
+}
+
+.panelAcceso:focus-visible,
+.accionFila:focus-visible,
+.accionRapida:focus-visible,
+.acceso:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+/* Acción única de una fila: Ver, Revisar, Asignar o Abrir cola. */
+.accionFila {
+  flex: 0 0 auto;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-blanco);
+  background: var(--b-azul);
+  border: none;
+  border-radius: var(--b-radio-pildora);
+  padding: 6px 13px;
+  min-height: 30px;
+}
+
+/* --------------------------- Necesita atención ahora ---------------------- */
+
+.atencionLista,
+.resumenLista,
+.accionesLista,
+.accesosLista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.atencionLista,
+.resumenLista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.atencionFila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 7px 10px;
+  border-radius: var(--b-radio-campo);
+  background: var(--h-tono-fondo);
+  border: 1.5px solid var(--h-tono-borde);
+}
+
+.atencionSeveridad {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--h-tono-texto);
+  background: var(--b-blanco);
+  border-radius: var(--b-radio-pildora);
+  padding: 3px 9px;
+}
+
+.atencionTexto {
+  flex: 1 1 190px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.atencionTitulo {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.atencionContexto {
+  font-size: 11.5px;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+  line-height: 1.35;
+}
+
+.atencionPrioridad {
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--h-tono-texto);
+}
+
+/* -------------------------------- Acciones rápidas ------------------------ */
+
+.accionesLista {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 7px;
+}
+
+.accionRapida {
+  width: 100%;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: var(--b-panel);
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+}
+
+.accionRapidaIcono {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--b-celeste);
+  color: var(--b-petroleo-texto);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.accionRapidaTexto {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.accionRapidaEtiqueta {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.accionRapidaDetalle {
+  font-size: 10.5px;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+  line-height: 1.3;
+}
+
+/* -------------------------------- Agenda próxima -------------------------- */
+
+.agendaFila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  border-radius: var(--b-radio-campo);
+  background: var(--b-panel);
+  border: 1.5px solid var(--b-borde);
+}
+
+.agendaHora {
+  flex: 0 0 62px;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-azul);
+}
+
+.agendaTexto {
+  flex: 1 1 150px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.agendaPaciente {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.agendaModalidad {
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.agendaProfesional {
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-petroleo-texto);
+}
+
+/* El texto Sin asignar siempre se lee; el tono solo lo acompaña. */
+.agendaSinAsignar {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--h-tono-texto);
+  background: var(--h-tono-fondo);
+  border: 1.5px solid var(--h-tono-borde);
+  border-radius: var(--b-radio-pildora);
+  padding: 3px 9px;
+}
+
+/* ------------------------------ Alarmas recientes ------------------------- */
+
+.alarmaFila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  border-radius: var(--b-radio-campo);
+  background: var(--h-tono-fondo);
+  border: 1.5px solid var(--h-tono-borde);
+}
+
+.alarmaSeveridad {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.05em;
+  color: var(--h-tono-texto);
+  background: var(--b-blanco);
+  border-radius: var(--b-radio-pildora);
+  padding: 3px 9px;
+}
+
+.alarmaTexto {
+  flex: 1 1 160px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.alarmaPaciente {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.alarmaMeta {
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* --------------------------- Resumen de profesionales --------------------- */
+
+.profesionalesLista {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 7px;
+}
+
+.profesionalConteo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 10px;
+  border-radius: var(--b-radio-campo);
+  background: var(--b-verde-fondo);
+  border: 1.5px solid var(--b-verde-borde);
+}
+
+.profesionalEtiqueta {
+  margin: 0;
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.profesionalValor {
+  margin: 0;
+  font-size: 21px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1;
+  color: var(--b-verde);
+}
+
+/* ------------------------------------ Ir a -------------------------------- */
+
+.accesosLista {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 7px;
+}
+
+.acceso,
+.accesoInerte {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  border-radius: var(--b-radio-campo);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+}
+
+.acceso {
+  cursor: pointer;
+  color: inherit;
+  background: var(--b-celeste);
+  border: 1.5px solid var(--b-celeste-borde);
+}
+
+/*
+ * Módulo sin vista implementada: visible, explícito y no interactivo. Al estar
+ * deshabilitado no recibe foco ni activación, de modo que no promete nada.
+ */
+.accesoInerte {
+  cursor: not-allowed;
+  color: var(--b-gris);
+  background: var(--b-panel);
+  border: 1.5px dashed var(--b-borde);
+}
+
+.accesoIcono {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--b-blanco);
+  color: var(--b-petroleo-texto);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.accesoInerte .accesoIcono {
+  color: var(--b-gris-inactivo);
+  background: var(--b-blanco);
+}
+
+.accesoEtiqueta {
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: var(--b-peso-enfasis);
+  line-height: 1.25;
+}
+
+.accesoEstado {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+  background: var(--b-blanco);
+  border: 1px solid var(--b-borde);
+  border-radius: var(--b-radio-pildora);
+  padding: 2px 7px;
+}
+
+/* --------------------------- Responsive de Inicio ------------------------- */
+
+/*
+ * Por debajo del ancho de dos columnas todo se apila en una sola: no se oculta
+ * ningún KPI, acción, estado ni nombre de sección, y ninguna fila se trunca.
+ */
+@media (max-width: 1060px) {
+  .inicioColumnas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .kpiGrid {
+    grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  }
+
+  .atencionPrioridad,
+  .agendaProfesional,
+  .agendaSinAsignar {
+    flex: 1 1 100%;
+  }
+
+  .accionFila {
+    margin-left: auto;
+  }
+}
+
+/* ------------------------- Acceso institucional --------------------------- */
+
+/*
+ * Superficie de acceso (MP-TODAY-02).
+ *
+ * Desde H-FID-A `.ingreso` es el ÁREA PRINCIPAL del marco neutral, no una
+ * pantalla completa: el acceso vive dentro de la geometría de Hospital y no
+ * como una aplicación aparte. No reutiliza `.acceso`, que en este módulo es un
+ * acceso rápido del Centro de control: son cosas distintas y comparten prefijo
+ * por casualidad del idioma.
+ */
+
+.ingreso {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 24px 26px 60px;
+  background: var(--b-lienzo);
+}
+
+.ingresoPanel {
+  width: 100%;
+  max-width: 460px;
+  background: var(--b-blanco);
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-contenedor);
+  padding: 24px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ingresoTitulo {
+  margin: 0;
+  font-size: 22px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-azul);
+}
+
+.ingresoTexto {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+  line-height: 1.45;
+}
+
+.ingresoForm {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ingresoCampo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ingresoEtiqueta {
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+}
+
+.ingresoInput {
+  font: inherit;
+  font-size: 14px;
+  color: var(--b-tinta);
+  background: var(--b-blanco);
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  padding: 10px 12px;
+  min-height: 42px;
+}
+
+.ingresoInput:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.ingresoInput:disabled {
+  background: var(--b-panel);
+  color: var(--b-gris);
+}
+
+.ingresoBoton {
+  font: inherit;
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-blanco);
+  background: var(--b-azul);
+  border: 1.5px solid var(--b-azul);
+  border-radius: var(--b-radio-boton);
+  padding: 11px 18px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.ingresoBoton:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.ingresoBoton:disabled {
+  cursor: progress;
+  background: var(--b-gris-inactivo);
+  border-color: var(--b-gris-inactivo);
+}
+
+/*
+ * Región viva permanente. Vacía no ocupa ni anuncia nada; con texto se dibuja
+ * como aviso. El estado NO se comunica solo con color: el aviso siempre es
+ * texto explícito.
+ */
+.ingresoAviso {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-rojo);
+  line-height: 1.4;
+}
+
+.ingresoAviso:empty {
+  display: none;
+}
+
+/* --------------------- Acciones sobre la propia sesión -------------------- */
+
+.sesionAcciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sesionBoton {
+  font: inherit;
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-azul);
+  background: var(--b-blanco);
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-pildora);
+  padding: 6px 12px;
+  min-height: 34px;
+  cursor: pointer;
+}
+
+.sesionBoton:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.sesionBoton:disabled {
+  cursor: progress;
+  color: var(--b-gris);
+  border-color: var(--b-borde);
+}
+
+@media (max-width: 640px) {
+  .ingreso {
+    padding: 20px 14px;
+  }
+
+  .sesionAcciones {
+    flex-wrap: wrap;
+  }
+}

@@ -1,0 +1,365 @@
+/*
+ * Estilos del Portal de Profesionales de la Salud (Línea Visual B)
+ */
+
+.profContainer {
+  min-height: 100vh;
+  background: var(--b-lienzo);
+  color: var(--b-tinta);
+  display: flex;
+  flex-direction: column;
+}
+
+.topBar {
+  background: var(--b-azul);
+  color: var(--b-blanco);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(7, 89, 133, 0.12);
+}
+
+.profHeaderBrand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profLogo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 50%;
+  padding: 4px;
+}
+
+.profTitleBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.profPlatformName {
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.12em;
+  color: var(--b-celeste-borde);
+  text-transform: uppercase;
+}
+
+.profAppTitle {
+  font-size: 18px;
+  font-weight: var(--b-peso-maximo);
+  color: #fff;
+  line-height: 1.2;
+}
+
+.profProfileBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 6px 14px;
+  border-radius: 99px;
+}
+
+.profAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--b-blanco);
+  color: var(--b-azul);
+  font-weight: var(--b-peso-maximo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.profNameBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.profName {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: #fff;
+}
+
+.profRole {
+  font-size: 11px;
+  color: var(--b-celeste-borde);
+  font-weight: var(--b-peso-fuerte);
+}
+
+.mainContent {
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 28px 20px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Breadcrumb y conexión con Hospital */
+.connectionBanner {
+  background: #ecfdf5;
+  border: 1.5px solid #a7f3d0;
+  border-radius: var(--b-radio-campo);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 14px;
+  color: #065f46;
+}
+
+.connectionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.linkBackHospital {
+  color: var(--b-azul);
+  text-decoration: none;
+  font-weight: var(--b-peso-enfasis);
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.linkBackHospital:hover {
+  text-decoration: underline;
+}
+
+/* Pestañas de turno */
+.tabNav {
+  display: flex;
+  gap: 10px;
+  border-bottom: 2px solid var(--b-borde);
+  padding-bottom: 8px;
+  overflow-x: auto;
+}
+
+.tabButton {
+  background: transparent;
+  border: none;
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+  padding: 8px 16px;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tabButtonActive {
+  background: var(--b-azul);
+  color: #fff;
+}
+
+/* Resumen del Turno */
+.turnoCard {
+  background: #fff;
+  border: 2px solid var(--b-borde);
+  border-radius: var(--b-radio-contenedor);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(15, 46, 61, 0.04);
+}
+
+.turnoHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.turnoTitle {
+  font-size: 20px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-azul);
+  margin: 0;
+}
+
+.turnoZoneBadge {
+  background: var(--b-celeste);
+  color: var(--b-petroleo-texto);
+  font-weight: var(--b-peso-fuerte);
+  font-size: 13px;
+  padding: 5px 12px;
+  border-radius: 99px;
+}
+
+/* Lista de visitas */
+.visitsList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.visitItem {
+  background: #fff;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-tarjeta);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.visitItem:hover {
+  border-color: var(--b-aguamarina);
+  box-shadow: 0 4px 14px rgba(7, 89, 133, 0.08);
+}
+
+.visitActive {
+  border-color: var(--b-azul);
+  background: #f8fbff;
+}
+
+.visitPatientMeta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.visitAvatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--b-celeste);
+  color: var(--b-azul);
+  font-weight: var(--b-peso-maximo);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.visitDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.visitPatientName {
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.visitAddress {
+  font-size: 13px;
+  color: var(--b-gris);
+}
+
+.visitBadgeStatus {
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+}
+
+.statusPending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.statusDone {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.btnBitacora {
+  background: var(--b-azul);
+  color: #fff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: var(--b-radio-boton);
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btnBitacora:hover {
+  background: #09476b;
+}
+
+/* Panel de Bitácora Activa */
+.bitacoraPanel {
+  background: #fff;
+  border: 2px solid var(--b-celeste-borde-fuerte);
+  border-radius: var(--b-radio-contenedor);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.bitacoraHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--b-borde);
+  padding-bottom: 12px;
+}
+
+.bitacoraTitle {
+  font-size: 18px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-azul);
+  margin: 0;
+}
+
+.bitacoraForm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formLabel {
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+}
+
+.formInput,
+.formTextarea {
+  padding: 10px 14px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.formInput:focus,
+.formTextarea:focus {
+  border-color: var(--b-azul);
+  outline: none;
+}

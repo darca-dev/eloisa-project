@@ -1,0 +1,81 @@
+{
+  "realm": "merdn-local",
+  "enabled": true,
+  "displayName": "MERDN local (desarrollo)",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "verifyEmail": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 28800,
+
+  "clients": [
+    {
+      "clientId": "merdn-human-web",
+      "name": "MERDN - acceso humano (local)",
+      "description": "Cliente publico con PKCE S256 obligatorio. Sin secreto. Sin comodines en redirect ni en web origin. Direct Access Grants DESACTIVADO: el unico camino es Authorization Code.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "bearerOnly": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "redirectUris": ["http://127.0.0.1:3001/api/v1/human-auth/callback"],
+      "webOrigins": ["http://127.0.0.1:3000"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://127.0.0.1:3000/",
+        "access.token.signed.response.alg": "RS256",
+        "id.token.signed.response.alg": "RS256"
+      }
+    }
+  ],
+
+  "users": [
+    {
+      "id": "00000000-0000-4000-8000-00000000f1c7",
+      "username": "persona.ficticia",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Persona",
+      "lastName": "Ficticia",
+      "email": "persona.ficticia@ejemplo.invalid",
+      "credentials": [
+        {
+          "type": "password",
+          "temporary": false,
+          "value": "${MERDN_OIDC_LOCAL_TEST_PASSWORD}"
+        }
+      ],
+      "realmRoles": [],
+      "clientRoles": {}
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000f1c8",
+      "username": "persona.sin.vinculo",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Persona",
+      "lastName": "SinVinculo",
+      "email": "persona.sin.vinculo@ejemplo.invalid",
+      "credentials": [
+        {
+          "type": "password",
+          "temporary": false,
+          "value": "${MERDN_OIDC_LOCAL_TEST_PASSWORD}"
+        }
+      ],
+      "realmRoles": [],
+      "clientRoles": {}
+    }
+  ]
+}

@@ -1,0 +1,723 @@
+/*
+ * Experiencia posterior del paciente (TASK-002A): Inicio y bitácora completa.
+ *
+ * Inicio conserva la composición aprobada en TASK-002 y se compara a 390 × 844.
+ * Los cuadrados de color de las tarjetas se sustituyen por iconos semánticos
+ * dentro del mismo contenedor, tamaño y color (FR-07).
+ *
+ * Los colores provienen del sistema aprobado (`src/styles/tokens.css`).
+ */
+
+.stage {
+  min-height: 100vh;
+  padding: 24px 16px 40px;
+  display: flex;
+  justify-content: center;
+  background: var(--b-lienzo);
+}
+
+/* ---------------------------------- Inicio -------------------------------- */
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 14px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.greeting {
+  margin-top: -2px;
+  background: var(--b-blanco);
+  border-radius: var(--b-radio-tarjeta);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--b-sombra-tarjeta);
+}
+
+.greetingTitle {
+  margin: 0;
+  font-size: 22px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.greetingBody {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+/* Acceso destacado a la bitácora, tal como lo prioriza la referencia. */
+.diaryAccess {
+  width: 100%;
+  border: 2px solid var(--b-celeste-borde-fuerte);
+  border-radius: var(--b-radio-tarjeta);
+  background: var(--b-celeste);
+  color: var(--b-petroleo-texto);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.diaryIcon {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.diaryTexts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.diaryEyebrow {
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.06em;
+}
+
+.diaryTitle {
+  font-size: 18px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.diaryBody {
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tile {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  border: 1px solid var(--b-borde);
+  background: var(--b-panel);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Contenedor del icono: conserva tamaño, radio y color de la referencia. */
+.tileIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tileIconRound {
+  border-radius: 50%;
+}
+
+.tileIconInner {
+  display: flex;
+  color: var(--b-blanco);
+}
+
+.tileTitle {
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.03em;
+}
+
+.tileBody {
+  font-size: 13px;
+  line-height: 1.3;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+.tileAzul {
+  background: var(--b-celeste);
+  border-color: var(--b-celeste-borde);
+  color: var(--b-azul);
+}
+.tileRojo {
+  background: var(--b-rojo-fondo);
+  border-color: var(--b-rojo-borde);
+  color: var(--b-rojo);
+}
+.tileVerde {
+  background: var(--b-verde-fondo);
+  border-color: var(--b-verde-borde);
+  color: var(--b-verde);
+}
+.tilePetroleo {
+  background: var(--b-celeste);
+  border-color: var(--b-celeste-borde-fuerte);
+  color: var(--b-petroleo-texto);
+}
+.tileNeutro {
+  background: var(--b-panel);
+  border-color: var(--b-borde);
+  color: var(--b-tinta);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.quickList {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+  list-style: none;
+  margin: 0;
+}
+
+.quick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 68px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.quickIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--b-celeste-borde);
+  background: var(--b-celeste);
+  color: var(--b-azul);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quickIconVerde {
+  background: var(--b-verde-fondo);
+  border-color: var(--b-verde-borde);
+  color: var(--b-verde);
+}
+.quickIconRojo {
+  background: var(--b-rojo-fondo);
+  border-color: var(--b-rojo-borde);
+  color: var(--b-rojo);
+}
+.quickIconPetroleo {
+  background: var(--b-celeste);
+  border-color: var(--b-celeste-borde-fuerte);
+  color: var(--b-petroleo-texto);
+}
+
+.quickLabel {
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.tabNav {
+  flex: 0 0 auto;
+}
+
+.tabBar {
+  background: var(--b-blanco);
+  border-top: 1px solid var(--b-borde);
+  padding: 10px 12px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  list-style: none;
+  margin: 0;
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 64px;
+  min-height: 44px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--b-gris-inactivo);
+}
+
+.tabActive {
+  color: var(--b-azul);
+}
+
+.tabAction {
+  color: var(--b-petroleo-texto);
+}
+
+.tabIconAction {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--b-aguamarina);
+  color: var(--b-blanco);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: -4px;
+}
+
+.tabLabel {
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.tabLabelActive {
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-azul);
+}
+
+.tabLabelAction {
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+}
+
+/* --------------------------------- Bitácora ------------------------------- */
+
+.diaryScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 14px 14px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.diaryHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--b-blanco);
+  border-radius: var(--b-radio-tarjeta);
+  padding: 14px 16px;
+  box-shadow: var(--b-sombra-tarjeta);
+}
+
+.diaryHeaderTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.diaryStepTitle {
+  margin: 0;
+  font-size: 19px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.diaryCounter {
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-fucsia-novedades);
+  white-space: nowrap;
+}
+
+.diaryTrack {
+  height: 8px;
+  background: var(--b-borde);
+  border-radius: var(--b-radio-pildora);
+  overflow: hidden;
+}
+
+.diaryFill {
+  height: 100%;
+  background: var(--b-fucsia-novedades);
+  border-radius: var(--b-radio-pildora);
+}
+
+.diaryCard {
+  background: var(--b-blanco);
+  border-radius: var(--b-radio-contenedor);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--b-sombra-tarjeta);
+}
+
+.diaryQuestion {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.35;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.diaryHint {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+.diaryNote {
+  margin: 0;
+  padding: 14px 16px;
+  background: var(--b-panel);
+  border: 1px solid var(--b-borde);
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.diaryStack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.diaryRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.diaryRowItem {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.diaryTripleRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: 16px;
+}
+
+.diaryTripleLabel {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+.diarySummary {
+  border: 1.5px solid var(--b-borde);
+  border-radius: 16px;
+  overflow: hidden;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.diarySummaryRow {
+  padding: 12px 14px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--b-borde);
+}
+
+.diarySummaryRow:last-child {
+  border-bottom: none;
+}
+
+.diarySummaryLabel {
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.diarySummaryValue {
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+  text-align: right;
+}
+
+.diaryActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.diaryActionsItem {
+  flex: 1;
+  min-width: 140px;
+}
+
+.doneBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 8px 0;
+}
+
+.doneTitle {
+  margin: 0;
+  font-size: 24px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.doneBody {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+/* --------------------- Portal operativo del Paciente ---------------------- */
+
+/*
+ * Superficie AUTENTICADA (spec 021, micro-paquete 5). Reutiliza los tokens y
+ * la caja del diseño ELOISA ya aprobado: no es un rediseño, es la misma
+ * pantalla sin las tarjetas demostrativas.
+ *
+ * Ningún estado se comunica solo por color: el error y el cierre no confirmado
+ * llevan además símbolo y texto, y el borde solo refuerza lo que ya se lee.
+ */
+
+.portalHeader {
+  padding: 14px 18px 6px;
+  background: var(--b-blanco);
+}
+
+.portalTitulo {
+  margin: 0;
+  font-size: 22px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.portalScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px 14px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.portalAviso {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--b-radio-tarjeta);
+  border: 1px solid var(--b-celeste-borde-fuerte);
+  background: var(--b-blanco);
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-tinta);
+}
+
+/* Aviso fuerte: cierre NO confirmado. Símbolo + texto, no solo el borde. */
+.portalAvisoFuerte {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--b-radio-tarjeta);
+  border: 2px solid var(--b-rojo);
+  background: var(--b-blanco);
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.portalCard {
+  background: var(--b-blanco);
+  border-radius: var(--b-radio-tarjeta);
+  box-shadow: var(--b-sombra-tarjeta);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.portalCardTitulo {
+  margin: 0;
+  font-size: 17px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.portalResumen {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.portalIniciales {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--b-celeste);
+  color: var(--b-tinta);
+  font-size: 18px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.portalNombre {
+  margin: 0;
+  font-size: 20px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.portalInicialesTexto,
+.portalNota,
+.portalVacio {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+.portalRol {
+  margin: 4px 0 0;
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--b-lienzo);
+  border: 1px solid var(--b-celeste-borde-fuerte);
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.portalError {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.portalLista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.portalItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  padding: 10px 12px;
+  border-radius: var(--b-radio-tarjeta);
+  border: 1px solid var(--b-celeste-borde-fuerte);
+  background: var(--b-lienzo);
+}
+
+.portalCuando {
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.portalEtiqueta {
+  font-size: 14px;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+.portalAcciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+/* El acceso es un enlace real, con la apariencia del botón secundario. */
+.portalEnlace {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 2px solid var(--b-azul);
+  background: var(--b-blanco);
+  color: var(--b-azul);
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+  text-decoration: none;
+}
+
+.portalEnlace:focus-visible,
+.portalItem:focus-visible {
+  outline: 3px solid var(--b-azul);
+  outline-offset: 2px;
+}

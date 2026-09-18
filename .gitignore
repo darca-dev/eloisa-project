@@ -1,0 +1,77 @@
+# ---------------------------------------------------------------------------
+# MERDN — exclusiones de control de versiones (TASK-001)
+# ---------------------------------------------------------------------------
+
+# Dependencias
+node_modules/
+.npm/
+.pnp.*
+
+# Entorno y secretos (solo .env.example se versiona)
+.env
+.env.*
+!.env.example
+!.env.staging.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+.secrets/
+
+# Artefactos de build
+dist/
+build/
+out/
+.next/
+next-env.d.ts
+*.tsbuildinfo
+
+# Cliente Prisma generado (no se versiona; se regenera)
+apps/api/src/generated/
+
+# Pruebas y cobertura
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+
+# Logs y temporales
+logs/
+*.log
+npm-debug.log*
+.cache/
+.tmp/
+tmp/
+
+# Datos locales de PostgreSQL y volúmenes locales
+.data/
+data/postgres/
+pgdata/
+postgres-data/
+
+# Sistema operativo y editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Caches de herramientas
+.eslintcache
+.vite/
+.turbo/
+
+# Estado local del MERDN Orchestrator (TASK-MERDN-ORCHESTRATOR-V1, AD-09)
+.merdn/
+
+# --- Spec-Driven Development workspace ---
+spec/.sdd/*
+!spec/.sdd/user-consent.log
+!spec/.sdd/TEMPLATE_VERSION
+spec/specs/.lock/
+
+# Índice local de CodeGraph (por máquina, no compartido)
+.codegraph/

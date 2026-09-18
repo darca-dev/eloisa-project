@@ -1,0 +1,83 @@
+/*
+ * Fundación visual MERDN — tokens de Línea Visual B (TASK-002, FR-03, AD-09).
+ *
+ * Fuente vinculante: `prototype-claude/Eligeme-Linea-Visual-B.dc.html`.
+ * Línea Visual B prevalece sobre la paleta anterior del archivo funcional
+ * `Eligeme-First-Run.dc.html`: aquí no se conserva ningún color de la línea
+ * base ni se mezclan tokens de las dos líneas.
+ *
+ * Estos valores son el sistema: ninguna pantalla define color propio.
+ */
+
+:root {
+  /* ---- Paleta institucional (Línea Visual B) ---- */
+  --b-aguamarina: #32b4a8; /* relleno y acción; nunca color de texto */
+  --b-azul: #075985; /* Azul ELÍGEME: encabezados y primario institucional */
+  --b-petroleo: #087f8c; /* iconos, gráficos y estados informativos */
+  --b-petroleo-texto: #0a6873; /* variante de texto del petróleo sobre blanco */
+  --b-celeste: #e8f6f8; /* fondo de tarjeta en interfaces cálidas */
+  --b-celeste-borde: #cfe6ee;
+  --b-celeste-borde-fuerte: #b6e3dc;
+  --b-lienzo: #f7f9fa; /* lienzo de todas las pantallas */
+  --b-panel: #f7fafc; /* panel neutro dentro de tarjetas */
+  --b-tinta: #0f2e3d; /* texto principal */
+  --b-gris: #5a6474; /* descripciones, metadatos y etiquetas */
+  --b-gris-inactivo: #9fb2bc;
+  --b-borde: #dde7ea;
+  --b-blanco: #ffffff;
+
+  /* ---- Elí ---- */
+  --b-rosa-eli: #f2a7c4; /* solo Elí: halo de su burbuja y sus mensajes */
+  --b-rosa-eli-fondo: #fceff5;
+  --b-rosa-eli-borde: #f6c9dc;
+  --b-fucsia-novedades: #d63384; /* solo «hay algo nuevo» y ayuda de Elí */
+
+  /* ---- Semáforo universal: no se adapta a la marca ---- */
+  --b-verde: #157f3b;
+  --b-verde-fondo: #eff9f1;
+  --b-verde-borde: #bfe5c9;
+  --b-amarillo: #96450a;
+  --b-amarillo-fondo: #fef6e9;
+  --b-amarillo-borde: #f3dca9;
+  --b-rojo: #b91c1c;
+  --b-rojo-fondo: #fdeeee;
+  --b-rojo-borde: #f5c2c2;
+
+  /* ---- Tipografía ---- */
+  --b-font: var(--font-nunito), 'Nunito', system-ui, sans-serif;
+  --b-peso-regular: 400;
+  --b-peso-medio: 600;
+  --b-peso-fuerte: 700;
+  --b-peso-enfasis: 800;
+  --b-peso-maximo: 900;
+
+  /* ---- Radios ---- */
+  --b-radio-campo: 12px;
+  --b-radio-boton: 14px;
+  --b-radio-icono: 15px;
+  --b-radio-tarjeta: 18px;
+  --b-radio-contenedor: 24px;
+  --b-radio-marco: 28px;
+  --b-radio-pildora: 99px;
+
+  /* ---- Sombras ---- */
+  --b-sombra-tarjeta: 0 2px 14px rgba(15, 46, 61, 0.07);
+  --b-sombra-elevada: 0 8px 30px rgba(15, 46, 61, 0.12);
+
+  /* ---- Espaciado ---- */
+  --b-esp-1: 4px;
+  --b-esp-2: 8px;
+  --b-esp-3: 12px;
+  --b-esp-4: 14px;
+  --b-esp-5: 18px;
+  --b-esp-6: 22px;
+  --b-esp-7: 26px;
+  --b-esp-8: 34px;
+
+  /* ---- Marco del dispositivo aprobado (390 × 844) ---- */
+  --b-ancho-movil: 390px;
+  --b-alto-movil: 844px;
+
+  /* ---- Foco visible ---- */
+  --b-foco: #075985;
+}

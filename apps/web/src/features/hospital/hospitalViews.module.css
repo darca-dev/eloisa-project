@@ -1,0 +1,363 @@
+/*
+ * Patrones compartidos por las vistas de operación Hospital (TASK-003H-03).
+ *
+ * Fuente visual vinculante: `prototype-claude/Eligeme-Hospital.dc.html`,
+ * vistas `vAgenda` (204–295), `vPacientes` (297–359) y `vAlarmas` (361–417),
+ * más la bandeja `Alarmas recientes` (183–200). Cada medida, color, radio y
+ * espaciado reproduce el valor declarado allí.
+ *
+ * Donde el sistema aprobado (`src/styles/tokens.css`) ya nombra exactamente el
+ * color del prototipo, se usa el token. Los dos valores que el sistema todavía
+ * no nombra (radio 20px y sombra de tarjeta) se declaran en `.view` y no se
+ * propagan fuera de estas vistas.
+ *
+ * Los márgenes y viñetas por defecto de `h1`, `h2`, `h3`, `p`, `ul`, `ol`, `dl`
+ * y `dd` se anulan porque la referencia compone solo con `div`/`span`: la
+ * semántica se añade sin alterar la apariencia aprobada.
+ */
+
+.view {
+  /* Radio de tarjeta de estas vistas (prototipo, líneas 211, 241, 305 y 380). */
+  --h-radio-tarjeta: 20px;
+  /* Sombra de tarjeta del prototipo (líneas 183, 241, 305 y 380). */
+  --h-sombra-tarjeta: 0 1px 6px rgba(15, 46, 61, 0.06);
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ------------------------------ Encabezado -------------------------------- */
+
+.viewHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.viewTitle {
+  margin: 0;
+  font-size: 30px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.viewIntro {
+  margin: 0;
+  max-width: 760px;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}
+
+/* -------------------------------- Tarjetas -------------------------------- */
+
+.card {
+  min-width: 0;
+  background: var(--b-blanco);
+  border-radius: var(--h-radio-tarjeta);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--h-card-gap, 14px);
+  box-shadow: var(--h-sombra-tarjeta);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.cardNote {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+/* --------------------------------- Badges --------------------------------- */
+
+/*
+ * Pastilla de estado. El color llega por propiedades personalizadas y siempre
+ * acompaña a un texto legible: el color nunca es el único medio para conocer el
+ * estado. Cada vista aporta su clase de tamaño con las medidas exactas de la
+ * referencia.
+ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: var(--b-radio-pildora);
+  font-weight: var(--b-peso-maximo);
+  background: var(--h-tono-fondo);
+  color: var(--h-tono-texto);
+}
+
+.badgeBordeado {
+  border: 1.5px solid var(--h-tono-borde);
+}
+
+/* ------------------------ Campo de detalle (clave/valor) ------------------- */
+
+.dataGrid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--h-dato-min, 230px), 1fr));
+  gap: 12px;
+}
+
+.dataField {
+  min-width: 0;
+  padding: 14px 16px;
+  background: var(--b-lienzo);
+  border-radius: var(--b-radio-campo);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dataLabel {
+  margin: 0;
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  letter-spacing: 0.07em;
+}
+
+.dataValue {
+  margin: 0;
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+  line-height: 1.4;
+}
+
+/* ---------------------------- Nota explicativa ---------------------------- */
+
+.note {
+  margin: 0;
+  padding: 15px 17px;
+  background: var(--b-lienzo);
+  border-radius: var(--b-radio-campo);
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* ------------------------------- Separador -------------------------------- */
+
+.divider {
+  height: 1px;
+  background: var(--h-borde-topbar);
+}
+
+/* --------------------------------- Botones -------------------------------- */
+
+/*
+ * Botones exclusivamente visuales: no envían formularios, no mutan datos, no
+ * navegan y no llaman servicios. Son `button type="button"` reales para que el
+ * teclado y los lectores de pantalla los anuncien correctamente.
+ */
+.button {
+  font-family: inherit;
+  border-radius: var(--b-radio-campo);
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+}
+
+.button:focus-visible,
+.pill:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.buttonPrimario {
+  border: none;
+  background: var(--b-azul);
+  color: var(--b-blanco);
+}
+
+.buttonNeutro {
+  border: 2px solid var(--b-borde);
+  background: var(--b-blanco);
+  color: var(--b-tinta);
+}
+
+/* ==========================================================================
+ * Patrones añadidos por TASK-003H-04 (FR-02.5).
+ *
+ * Fuente visual vinculante: `prototype-claude/Eligeme-Hospital.dc.html`,
+ * vistas `vProfesionales` (419–480), `vVisitas` (482–515), `vVirtuales`
+ * (517–546), `vCalificaciones` (548–622) y `vNovedades` (624–645). Cada medida,
+ * color, radio, peso y espaciado reproduce el valor declarado allí.
+ * ======================================================================== */
+
+/* ------------------------------- Pastillas -------------------------------- */
+
+/*
+ * Selector local `Día / Semana / Mes` (prototipo, líneas 451–453). Solo cambia
+ * la pastilla activa: no filtra, no recalcula y no consulta nada.
+ */
+.pills {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  font-family: inherit;
+  padding: 9px 15px;
+  border-radius: var(--b-radio-pildora);
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+  border: 1.5px solid var(--b-borde);
+  background: var(--b-blanco);
+  color: var(--b-gris);
+}
+
+.pillActiva {
+  border: none;
+  background: var(--b-azul);
+  color: var(--b-blanco);
+}
+
+/* --------------------------- Etiquetas de filtro -------------------------- */
+
+/*
+ * Los filtros del prototipo son etiquetas, no controles: no hay `button`, no
+ * hay `select` y no filtran ningún dato (líneas 489–491 y 604–606). Se
+ * reproducen como texto dentro de una lista para que se anuncien como lo que
+ * son.
+ */
+.chips {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-block;
+  padding: 11px 16px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-blanco);
+  border: 1.5px solid var(--b-borde);
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+/* Variante de los filtros de comentarios (prototipo, línea 605). */
+.chipsCompactos {
+  gap: 8px;
+}
+
+.chipCompacto {
+  padding: 9px 14px;
+  background: var(--b-lienzo);
+  font-size: 13px;
+}
+
+/* ----------------------- Resumen por estado (tarjetas) -------------------- */
+
+/*
+ * Cuadrícula de conteos por estado, compartida por «Visitas domiciliarias»
+ * (493–501) y «Consultas virtuales» (523–531). El color es énfasis visual: el
+ * estado siempre se lee como texto.
+ */
+.estadoGrid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.estadoCard {
+  min-width: 0;
+  background: var(--b-blanco);
+  /* Radio propio de estas tarjetas de conteo (prototipo, líneas 495 y 525). */
+  border-radius: 16px;
+  border-top: 4px solid var(--h-estado-color);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: var(--h-sombra-tarjeta);
+}
+
+.estadoValor {
+  font-size: 28px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1;
+  color: var(--h-estado-color);
+}
+
+.estadoEtiqueta {
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+}
+
+/* ------------------------------ Lista de filas ---------------------------- */
+
+/*
+ * Tarjeta de filas separadas por línea, compartida por «Visitas domiciliarias»
+ * (línea 501) y «Novedades» (línea 630).
+ */
+.listaCard {
+  padding: 8px 22px;
+  gap: 0;
+}
+
+.lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.fila {
+  padding: var(--h-fila-alto, 16px) 0;
+  border-bottom: 1px solid var(--h-borde-topbar);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* ------------------------------- Barra de valor --------------------------- */
+
+/*
+ * Barra de puntuación (610 y 578). Es una imagen del valor que ya está escrito
+ * al lado: expone nombre y valor accesibles y nunca es el único medio de
+ * conocer la cifra.
+ */
+.barra {
+  display: block;
+  height: var(--h-barra-alto, 10px);
+  background: var(--h-borde-topbar);
+  border-radius: var(--b-radio-pildora);
+  overflow: hidden;
+}
+
+.barraRelleno {
+  display: block;
+  width: var(--h-barra-pct, 0%);
+  height: 100%;
+  background: var(--h-barra-color, var(--b-azul));
+  border-radius: var(--b-radio-pildora);
+}

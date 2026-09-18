@@ -1,0 +1,14 @@
+{
+  "name": "@merdn/identity-provisioning",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MERDN — comando administrativo de aprovisionamiento de identidad humana (IDENTITY-RELATIONSHIPS-CORE-01 §9). Herramienta fuera de la API en ejecución.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0 <25.0.0"
+  },
+  "main": "src/main.ts",
+  "dependencies": {},
+  "devDependencies": {}
+}

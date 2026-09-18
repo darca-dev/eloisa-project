@@ -1,0 +1,47 @@
+/*
+ * Vista «Visitas domiciliarias» (TASK-003H-04, alcance B).
+ *
+ * Fuente visual vinculante: `prototype-claude/Eligeme-Hospital.dc.html`,
+ * vista `vVisitas` (líneas 482–515). Los patrones compartidos con otras vistas
+ * (etiquetas de filtro, conteos por estado y tarjeta de filas) viven en
+ * `hospitalViews.module.css`; aquí solo quedan las medidas propias de la fila.
+ */
+
+.fecha {
+  flex: 0 0 110px;
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.textos {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.paciente {
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.zona {
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.profesional {
+  flex: 0 0 190px;
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.estado {
+  flex: 0 0 auto;
+  gap: 0;
+  padding: 8px 13px;
+  font-size: 13px;
+}

@@ -1,0 +1,1614 @@
+// ---------------------------------------------------------------------------
+// MERDN — esquema Prisma
+//
+// TASK-001 declaró únicamente el datasource y el generator, sin modelos.
+// TASK-MVP-CORE-01 incorpora el PRIMER modelo de negocio autorizado: la cadena
+// mínima «Inscripción → Paciente persistente» de la rama Paciente.
+//
+// Fronteras respetadas (TASK-MVP-CORE-01 §4, §9):
+// - multi-tenant: toda entidad personal porta `tenantId` no nulo y las claves
+//   únicas lo incluyen; las FKs son compuestas `(id, tenantId)` para que la
+//   base de datos impida asociaciones entre tenants distintos;
+// - la edad NO se persiste: se deriva de `birthDate`;
+// - la dirección exacta se almacena separada del territorio canónico y se
+//   clasifica como dato personal sensible;
+// - el token de sesión NUNCA se persiste: solo su hash;
+// - el evento de auditoría es append-only y no copia valores sensibles.
+//
+// Fuera de alcance de CORE-01 y por tanto ausentes aquí: cuidador, profesional,
+// agenda, hospital, alcaldía, programas, finanzas, FURAG/MIPG, ADRES, SENA,
+// evidencias, indicadores, integraciones y autenticación completa.
+//
+// En Prisma 7 la cadena de conexión se resuelve desde `DATABASE_URL` en
+// `prisma.config.ts` (raíz del repositorio), no en este archivo.
+// ---------------------------------------------------------------------------
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../apps/api/src/generated/prisma"
+  moduleFormat = "cjs"
+  runtime      = "nodejs"
+}
+
+/**
+ * --------------------------------------------------------------------------
+ */
+/**
+ * Catálogos controlados
+ */
+/**
+ * --------------------------------------------------------------------------
+ */
+
+/// Tipos documentales del formulario de Inscripción aprobado. No se inventan
+/// tipos nuevos ni se reinterpreta su significado legal.
+enum DocumentType {
+  CEDULA_CIUDADANIA
+  CEDULA_EXTRANJERIA
+  PASAPORTE
+  PERMISO_PROTECCION_TEMPORAL
+  OTRO
+}
+
+/// Valores de sexo/género mostrados por la UI aprobada. No es una categoría
+/// clínica ni una clasificación oficial.
+enum SexGenderCode {
+  FEMENINO
+  MASCULINO
+  OTRO
+  PREFIERE_NO_DECIRLO
+}
+
+/// Estado del paciente. CORE-01 solo crea pacientes activos.
+enum PatientStatus {
+  ACTIVE
+}
+
+/// Procedencia del registro. CORE-01 solo admite autoinscripción pública.
+enum PatientOrigin {
+  PUBLIC_SELF_ENROLLMENT
+}
+
+/// Pertenencias poblacionales no excluyentes. No son diagnósticos ni
+/// certificaciones oficiales de discapacidad o dependencia.
+enum PopulationType {
+  OLDER_ADULT_60_PLUS
+  DISABILITY
+  HOME_CARE_REQUIRED
+}
+
+/// Origen de la pertenencia poblacional. `DERIVED_BIRTH_DATE` solo lo asigna el
+/// servidor a partir de la fecha de nacimiento.
+enum PopulationSource {
+  DECLARED
+  DERIVED_BIRTH_DATE
+}
+
+enum TerritorialUnitType {
+  DEPARTMENT
+  MUNICIPALITY
+  NEIGHBORHOOD
+  RURAL_SETTLEMENT
+}
+
+enum TerritorialUnitStatus {
+  ACTIVE
+  INACTIVE
+}
+
+/// Área declarada de la dirección. Ver nota en `PatientAddress.areaType`.
+enum AreaType {
+  URBAN
+  RURAL
+}
+
+/// Finalidad del consentimiento. CORE-01 conserva únicamente la autorización de
+/// tratamiento ya presente en la UI aprobada; no crea texto legal nuevo.
+enum ConsentType {
+  PERSONAL_AND_HEALTH_DATA_PROCESSING
+}
+
+/// Eventos mínimos de auditoría.
+///
+/// CORE-01 creó únicamente `PATIENT_ENROLLMENT_CREATED`.
+/// TASK-MUNICIPALITY-CORE-01 añade, de forma ADITIVA, los eventos de sesión
+/// institucional y de acceso municipal agregado exigidos por su §Audit.
+/// TASK-HOSPITAL-CORE-01 añade, también de forma ADITIVA, los eventos de acceso
+/// hospitalario a la superficie de Pacientes. Son eventos DIFERENCIADOS de los
+/// municipales a propósito: una lectura nominal del Hospital y una lectura
+/// agregada de Alcaldía no deben confundirse en la traza.
+///
+/// La spec 021 —Paciente MVP operativo— añade, también de forma ADITIVA, los
+/// DOS únicos eventos del acceso propio del Paciente:
+/// `PATIENT_SELF_ACCESS_GRANTED` y `PATIENT_SELF_ACCESS_DENIED`. No se crea un
+/// valor por endpoint: el resumen, las citas y las visitas se diferencian
+/// DENTRO del evento, por `resourceType` y por `endpoint`, que la tabla ya
+/// tiene (021 §9.1, §17.D-1). Su actor es SIEMPRE la cuenta humana OPACA y su
+/// `actorRole` queda NULO.
+enum AuditEventType {
+  PATIENT_ENROLLMENT_CREATED
+  INSTITUTIONAL_SESSION_CREATED
+  INSTITUTIONAL_SESSION_REVOKED
+  MUNICIPAL_AGGREGATE_ACCESS_GRANTED
+  MUNICIPAL_AGGREGATE_ACCESS_DENIED
+  HOSPITAL_PATIENT_LIST_ACCESS_GRANTED
+  HOSPITAL_PATIENT_DETAIL_ACCESS_GRANTED
+  HOSPITAL_PATIENT_ANALYTICS_ACCESS_GRANTED
+  HOSPITAL_PATIENT_ACCESS_DENIED
+  HOSPITAL_PROFESSIONAL_LIST_ACCESS_GRANTED
+  HOSPITAL_PROFESSIONAL_DETAIL_ACCESS_GRANTED
+  HOSPITAL_AGENDA_ACCESS_GRANTED
+  CARE_ASSIGNMENT_CREATED
+  APPOINTMENT_ASSIGNED
+  HOSPITAL_OPERATIONS_ACCESS_DENIED
+  HUMAN_IDENTITY_LINKED
+  HUMAN_IDENTITY_UNLINKED
+  HUMAN_ACCOUNT_DISABLED
+  HUMAN_SESSION_CREATED
+  HUMAN_SESSION_REVOKED
+  CAREGIVER_RELATIONSHIP_CREATED
+  CAREGIVER_RELATIONSHIP_VALIDATED
+  CAREGIVER_RELATIONSHIP_REVOKED
+  HOME_VISIT_MATERIALIZED
+  HOME_VISIT_STARTED
+  HOME_VISIT_COMPLETED
+  HOME_VISIT_NOT_COMPLETED
+  PLATFORM_SUPPORT_CAPABILITY_CREATED
+  PLATFORM_SUPPORT_CAPABILITY_DISABLED
+  SUPPORT_GRANT_CREATED
+  SUPPORT_GRANT_REVOKED
+  SUPPORT_CONTEXT_ENTRY_GRANTED
+  SUPPORT_CONTEXT_ENTRY_DENIED
+  SUPPORT_CONTEXT_EXITED
+  SUPPORT_CONTEXT_EXPIRED
+  SUPPORT_CONTEXT_REVOKED
+  SUPPORT_PATIENT_READ_GRANTED
+  SUPPORT_PATIENT_READ_DENIED
+  SUPPORT_PROFESSIONAL_READ_GRANTED
+  SUPPORT_PROFESSIONAL_READ_DENIED
+  SUPPORT_AGENDA_READ_GRANTED
+  SUPPORT_AGENDA_READ_DENIED
+  SUPPORT_HOME_VISIT_READ_GRANTED
+  SUPPORT_HOME_VISIT_READ_DENIED
+  SUPPORT_OPERATIONAL_AUDIT_READ_GRANTED
+  SUPPORT_OPERATIONAL_AUDIT_READ_DENIED
+  PATIENT_SELF_ACCESS_GRANTED
+  PATIENT_SELF_ACCESS_DENIED
+}
+
+/// Tipo de actor del evento de auditoría. CORE-01 no inventa un usuario
+/// autenticado: la autoinscripción pública no tiene identidad verificada.
+///
+/// `INSTITUTIONAL_IDENTITY` identifica a la identidad institucional mínima de
+/// TASK-MUNICIPALITY-CORE-01 mediante un identificador OPACO; `UNAUTHENTICATED`
+/// registra un intento denegado sin sesión válida, sin describir a nadie.
+/// `HUMAN_ACCOUNT` identifica a la cuenta humana autenticada por OIDC mediante
+/// `HumanAccount.id`, que es OPACO: no es un nombre, un documento ni un
+/// `subject` del proveedor. `SYSTEM` identifica al proceso de provisioning
+/// administrativo, que NO es una persona y por tanto nunca lleva `actorUserId`.
+enum AuditActorType {
+  PUBLIC_SELF_ENROLLMENT
+  INSTITUTIONAL_IDENTITY
+  UNAUTHENTICATED
+  HUMAN_ACCOUNT
+  SYSTEM
+}
+
+enum AuditOutcome {
+  SUCCESS
+  DENIED
+}
+
+/// Roles institucionales implementados. NO es el sistema completo de
+/// usuarios/roles de MERDN: TASK-MUNICIPALITY-CORE-01 aprueba únicamente el rol
+/// de consulta municipal agregada y TASK-HOSPITAL-CORE-01 añade, de forma
+/// ADITIVA, el rol mínimo de consulta hospitalaria de Pacientes.
+///
+/// Los dos roles son DISJUNTOS: una identidad municipal no accede a la
+/// superficie Hospital y una identidad hospitalaria no accede a los agregados
+/// municipales. Ninguno de los dos identifica a una persona trabajadora
+/// concreta, de modo que no equivalen todavía al RBAC definitivo de MERDN.
+enum InstitutionalRole {
+  MUNICIPAL_VIEWER
+  HOSPITAL_PATIENT_VIEWER
+  HOSPITAL_SCHEDULER
+  CAREGIVER_RELATIONSHIP_MANAGER
+}
+
+/// Estado de la identidad institucional. Una identidad deshabilitada no
+/// autentica y sus sesiones dejan de ser válidas.
+enum InstitutionalIdentityStatus {
+  ACTIVE
+  DISABLED
+}
+
+/**
+ * --------------------------------------------------------------------------
+ */
+/**
+ * Tenant
+ */
+/**
+ * --------------------------------------------------------------------------
+ */
+
+/// Tenant institucional lógico (docs/DATA.md §5.1). CORE-01 resuelve un único
+/// tenant activo desde configuración del servidor; no hay selector, no hay
+/// administración multiempresa y el navegador nunca envía un `tenantId`.
+model Tenant {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  code      String   @unique
+  name      String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  people             Person[]
+  patients           Patient[]
+  territorialUnits   TerritorialUnit[]
+  patientAddresses   PatientAddress[]
+  consentRecords     ConsentRecord[]
+  enrollmentSessions EnrollmentSession[]
+  auditEvents        AuditEvent[]       @relation("AuditEventTenant")
+
+  institutionalIdentities InstitutionalIdentity[]
+  institutionalSessions   InstitutionalSession[]
+
+  professionalProfiles     ProfessionalProfile[]
+  professionalAffiliations ProfessionalAffiliation[]
+  careAssignments          CareAssignment[]
+  appointments             Appointment[]
+
+  humanAccounts                 HumanAccount[]
+  externalAuthIdentities        ExternalAuthIdentity[]
+  humanSessions                 HumanSession[]
+  humanAuthAttempts             HumanAuthAttempt[]
+  caregiverRelationships        PatientCaregiverRelationship[]
+  caregiverRelationshipScopes   PatientCaregiverRelationshipScope[]
+
+  homeVisits           HomeVisit[]
+  homeVisitTransitions HomeVisitTransition[]
+
+  /// Soporte de Plataforma (ELOISA-ADMIN-ACCESS-01 MP01). Un tenant participa
+  /// de DOS maneras distintas y deliberadamente separadas: como tenant HOME de
+  /// la cuenta administrativa y como tenant OBJETIVO de una autorización.
+  platformSupportCapabilities   PlatformSupportCapability[]
+  supportGrantsAsHomeTenant     SupportGrant[]              @relation("SupportGrantHomeTenant")
+  supportGrantsAsTargetTenant   SupportGrant[]              @relation("SupportGrantTargetTenant")
+  supportContextSessions        SupportContextSession[]
+  auditEventsAsSupportActorHome AuditEvent[]                @relation("AuditEventActorHomeTenant")
+
+  @@map("tenant")
+}
+
+/**
+ * --------------------------------------------------------------------------
+ */
+/**
+ * Persona e identidad
+ */
+/**
+ * --------------------------------------------------------------------------
+ */
+
+/// Persona única dentro del tenant (docs/DATA.md §2.1). Contiene identidad
+/// mínima y contacto: `SENSITIVE_PERSONAL`.
+///
+/// La edad NO se persiste. Se deriva de `birthDate` y de la fecha de consulta,
+/// de modo que nunca queda obsoleta.
+model Person {
+  id       String @id @default(uuid(7)) @db.Uuid
+  tenantId String @db.Uuid
+
+  documentType             DocumentType
+  /// Documento tal como lo declaró la persona, únicamente recortado.
+  documentNumber           String
+  /// Forma normalizada por tipo documental. Es la clave de unicidad.
+  documentNumberNormalized String
+
+  givenNames    String
+  familyNames   String
+  /// Fecha de nacimiento sin componente horario: evita desplazamientos de zona.
+  birthDate     DateTime      @db.Date
+  sexGenderCode SexGenderCode
+
+  phone String?
+  email String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient Patient?
+
+  /// Participación PROFESIONAL de esta misma persona dentro del tenant.
+  /// No duplica identidad: un profesional es un ROL de la única `Person`.
+  professionalProfile ProfessionalProfile?
+
+  /// Cuentas humanas autenticables de esta persona (0..*, docs/DATA.md).
+  /// NO se declara unicidad por `Person`: la Task aprobada admite varias.
+  humanAccounts HumanAccount[]
+
+  /// Relaciones en las que esta persona es la CUIDADORA. Ser cuidadora es una
+  /// participación más de la única `Person`: no crea una segunda identidad.
+  caregiverRelationships PatientCaregiverRelationship[] @relation("CaregiverPerson")
+
+  /// Unicidad de documento por tenant (TASK-MVP-CORE-01 §4). Es la barrera
+  /// final contra duplicados y contra carreras concurrentes.
+  @@unique([tenantId, documentType, documentNumberNormalized], map: "person_tenant_document_unique")
+  /// Permite FKs compuestas que impiden asociaciones entre tenants distintos.
+  @@unique([id, tenantId], map: "person_id_tenant_unique")
+  @@index([tenantId])
+  @@map("person")
+}
+
+/// Perfil de paciente de una persona dentro del tenant.
+model Patient {
+  id       String @id @default(uuid(7)) @db.Uuid
+  tenantId String @db.Uuid
+  personId String @db.Uuid
+
+  /// Código estable del catálogo de EPS controlado por el servidor.
+  epsCode           String
+  /// Nombre controlado correspondiente al código. No proviene del cliente.
+  epsNameControlled String
+
+  status     PatientStatus @default(ACTIVE)
+  origin     PatientOrigin
+  enrolledAt DateTime      @default(now()) @db.Timestamptz(6)
+
+  /// Nulo mientras no exista identidad autenticada. Nunca se sustituye por
+  /// texto libre ni por un usuario ficticio.
+  createdByUserId String? @db.Uuid
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  person Person @relation(fields: [personId, tenantId], references: [id, tenantId], onDelete: Restrict)
+
+  populationMemberships PatientPopulationMembership[]
+  address               PatientAddress?
+  consentRecords        ConsentRecord[]
+  enrollmentSessions    EnrollmentSession[]
+  careAssignments       CareAssignment[]
+  appointments          Appointment[]
+  caregiverRelationships PatientCaregiverRelationship[]
+  homeVisits             HomeVisit[]
+
+  @@unique([personId, tenantId], map: "patient_person_tenant_unique")
+  @@unique([id, tenantId], map: "patient_id_tenant_unique")
+  @@index([tenantId])
+  @@map("patient")
+}
+
+/// Pertenencia poblacional. Las intersecciones se representan como filas
+/// independientes: una persona puede pertenecer a las tres.
+model PatientPopulationMembership {
+  patientId      String           @db.Uuid
+  tenantId       String           @db.Uuid
+  populationType PopulationType
+  source         PopulationSource
+  createdAt      DateTime         @default(now()) @db.Timestamptz(6)
+
+  patient Patient @relation(fields: [patientId, tenantId], references: [id, tenantId], onDelete: Cascade)
+
+  @@id([patientId, populationType])
+  @@index([tenantId, populationType])
+  @@map("patient_population_membership")
+}
+
+/**
+ * --------------------------------------------------------------------------
+ */
+/**
+ * Territorio
+ */
+/**
+ * --------------------------------------------------------------------------
+ */
+
+/// Unidad territorial jerárquica.
+///
+/// - `DEPARTMENT` y `MUNICIPALITY` son unidades nacionales compartidas con
+///   código oficial DIVIPOLA verificable y `tenantId` nulo.
+/// - `NEIGHBORHOOD` y `RURAL_SETTLEMENT` son unidades locales administradas por
+///   un tenant y exigen `tenantId`.
+///
+/// El texto libre declarado por una persona NUNCA crea una fila aquí.
+model TerritorialUnit {
+  id       String  @id @default(uuid(7)) @db.Uuid
+  tenantId String? @db.Uuid
+  parentId String? @db.Uuid
+
+  type           TerritorialUnitType
+  /// Código oficial de la fuente territorial verificable (DIVIPOLA).
+  /// Obligatorio para departamento y municipio; nulo para unidades locales.
+  officialCode   String?
+  /// Nombre normalizado para comparación (mayúsculas, sin tildes ni dobles
+  /// espacios). No sustituye al nombre oficial.
+  normalizedName String
+  /// Nombre tal como debe mostrarse.
+  displayName    String
+  status         TerritorialUnitStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  tenant   Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  parent   TerritorialUnit?  @relation("TerritorialUnitHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children TerritorialUnit[] @relation("TerritorialUnitHierarchy")
+
+  addressesAsDepartment   PatientAddress[] @relation("PatientAddressDepartment")
+  addressesAsMunicipality PatientAddress[] @relation("PatientAddressMunicipality")
+  addressesAsLocalUnit    PatientAddress[] @relation("PatientAddressLocalUnit")
+
+  @@unique([type, officialCode], map: "territorial_unit_type_official_code_unique")
+  @@unique([tenantId, parentId, type, normalizedName], map: "territorial_unit_scope_name_unique")
+  @@index([parentId])
+  @@index([tenantId])
+  @@map("territorial_unit")
+}
+
+/// Dirección del paciente. El territorio canónico y la dirección exacta se
+/// mantienen separados: la dirección exacta es `SENSITIVE_PERSONAL`, nunca
+/// aparece en logs, en agregados municipales ni en respuestas generales.
+model PatientAddress {
+  id        String @id @default(uuid(7)) @db.Uuid
+  tenantId  String @db.Uuid
+  patientId String @db.Uuid
+
+  departmentUnitId   String  @db.Uuid
+  municipalityUnitId String  @db.Uuid
+  /// Unidad local canónica. Nulo cuando la localidad declarada queda pendiente
+  /// de normalización; en ese caso nunca se crea una unidad canónica silenciosa.
+  localUnitId        String? @db.Uuid
+
+  /// Área urbana o rural de la dirección. OBLIGATORIA.
+  ///
+  /// La declara la persona en el formulario de Inscripción: NO se infiere del
+  /// texto de la dirección ni de ningún otro dato. Cuando además existe unidad
+  /// local canónica, la base exige que ambas concuerden
+  /// (`NEIGHBORHOOD` → `URBAN`, `RURAL_SETTLEMENT` → `RURAL`).
+  areaType AreaType
+
+  localityPendingNormalization Boolean @default(false)
+  /// Barrio o vereda declarado como texto no canónico. Solo con
+  /// `localityPendingNormalization = true`.
+  localityUnverifiedText       String?
+  /// Corregimiento declarado como texto no canónico. Nunca es territorio oficial.
+  settlementUnverifiedText     String?
+
+  /// Dirección exacta. Dato personal sensible.
+  exactAddress String
+  /// Indicaciones para llegar. Minimizado y opcional.
+  directions   String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  tenant           Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient          Patient          @relation(fields: [patientId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  departmentUnit   TerritorialUnit  @relation("PatientAddressDepartment", fields: [departmentUnitId], references: [id], onDelete: Restrict)
+  municipalityUnit TerritorialUnit  @relation("PatientAddressMunicipality", fields: [municipalityUnitId], references: [id], onDelete: Restrict)
+  localUnit        TerritorialUnit? @relation("PatientAddressLocalUnit", fields: [localUnitId], references: [id], onDelete: Restrict)
+
+  @@unique([patientId, tenantId], map: "patient_address_patient_unique")
+  @@index([tenantId])
+  @@index([municipalityUnitId])
+  @@map("patient_address")
+}
+
+/**
+ * --------------------------------------------------------------------------
+ */
+/**
+ * Consentimiento
+ */
+/**
+ * --------------------------------------------------------------------------
+ */
+
+/// Registro versionado del consentimiento aceptado. El booleano del cliente solo
+/// comunica aceptación; la versión y la fecha las fija el servidor.
+model ConsentRecord {
+  id        String @id @default(uuid(7)) @db.Uuid
+  tenantId  String @db.Uuid
+  patientId String @db.Uuid
+
+  consentVersion String
+  consentType    ConsentType
+  /// Finalidad controlada por configuración; no es texto legal nuevo.
+  purpose        String
+
+  acceptedAt DateTime @db.Timestamptz(6)
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient Patient @relation(fields: [patientId, tenantId], references: [id, tenantId], onDelete: Cascade)
+
+  @@index([tenantId, patientId])
+  @@map("consent_record")
+}
+
+/**
+ * --------------------------------------------------------------------------
+ */
+/**
+ * Sesión de inscripción
+ */
+/**
+ * --------------------------------------------------------------------------
+ */
+
+/// Credencial temporal creada tras una inscripción correcta.
+///
+/// El token en claro NUNCA se persiste ni se registra: solo viaja una vez en una
+/// cookie `HttpOnly`. Aquí se guarda exclusivamente su hash criptográfico.
+model EnrollmentSession {
+  id        String @id @default(uuid(7)) @db.Uuid
+  tenantId  String @db.Uuid
+  patientId String @db.Uuid
+
+  /// Hash del token aleatorio. Único: identifica la sesión sin conocer el token.
+  tokenHash String @unique
+
+  expiresAt  DateTime  @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+  lastUsedAt DateTime? @db.Timestamptz(6)
+  revokedAt  DateTime? @db.Timestamptz(6)
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient Patient @relation(fields: [patientId, tenantId], references: [id, tenantId], onDelete: Cascade)
+
+  @@index([tenantId, patientId])
+  @@index([expiresAt])
+  @@map("enrollment_session")
+}
+
+/**
+ * --------------------------------------------------------------------------
+ */
+/**
+ * Auditoría mínima
+ */
+/**
+ * --------------------------------------------------------------------------
+ */
+
+/// Evento mínimo append-only exigido por TASK-MVP-CORE-01 §4.
+///
+/// No copia documento, nombre, dirección, teléfono, correo, consentimiento ni
+/// token. Solo referencia el recurso creado y su contexto institucional.
+/// No es todavía el sistema completo de auditoría de MERDN.
+model AuditEvent {
+  id       String @id @default(uuid(7)) @db.Uuid
+  tenantId String @db.Uuid
+
+  eventType     AuditEventType
+  actorType     AuditActorType
+  /// Identificador OPACO del actor. Con `INSTITUTIONAL_IDENTITY` es el
+  /// identificador de la identidad institucional, nunca un dato personal.
+  actorUserId   String?            @db.Uuid
+  /// Rol efectivo del actor institucional en el momento del evento.
+  /// TASK-MUNICIPALITY-CORE-01: aditivo y nulo para los eventos de CORE-01.
+  actorRole     InstitutionalRole?
+  resourceType  String
+  /// Nulo cuando el evento describe un ACCESO a una superficie agregada y no la
+  /// creación o modificación de un recurso concreto. Se relajó de forma aditiva
+  /// en TASK-MUNICIPALITY-CORE-01; ninguna fila existente cambió.
+  resourceId    String?            @db.Uuid
+  outcome       AuditOutcome
+  /// Ruta lógica accedida. No contiene parámetros, cuerpo, filtros ni conteos.
+  endpoint      String?
+  /// Correlación técnica de la petición. Opaca y sin datos personales.
+  correlationId String?
+
+  /// ------------------------------------------------------------------
+  /// Procedencia de SOPORTE DE PLATAFORMA (ELOISA-ADMIN-ACCESS-01 MP01).
+  ///
+  /// Las cinco columnas son NULLABLE y ADITIVAS: ninguna fila ya registrada
+  /// cambia y ningún evento anterior queda obligado a llenarlas.
+  ///
+  /// En un evento de soporte, `tenantId` es el TENANT OBJETIVO auditado —la
+  /// institución cuya superficie se leyó—, mientras que `actorHomeTenantId` es
+  /// el tenant HOME de la cuenta administrativa. Que sean columnas DISTINTAS
+  /// es justamente lo que hace legible una lectura cruzada.
+  ///
+  /// `actorType` es SIEMPRE `HUMAN_ACCOUNT` y `actorRole` permanece NULO: el
+  /// soporte NUNCA se atribuye a una identidad institucional ni a un rol
+  /// hospitalario. No se copia nombre, documento, emisor OIDC, `subject`,
+  /// token, cookie, cuerpo, filtro ni dato clínico alguno.
+  /// ------------------------------------------------------------------
+
+  /// Tenant HOME de la cuenta administrativa que actuó. Nulo fuera de soporte.
+  actorHomeTenantId String? @db.Uuid
+
+  /// Autorización explícita que habilitó la lectura. Nulo fuera de soporte.
+  supportGrantId String? @db.Uuid
+
+  /// Contexto temporal de soporte dentro del cual ocurrió el evento.
+  supportContextSessionId String? @db.Uuid
+
+  /// Motivo declarado al entrar en soporte. Texto ACOTADO; nunca un secreto y
+  /// nunca información personal o clínica.
+  supportReason String?
+
+  /// Referencia opcional de ticket. Opaca y acotada.
+  supportTicketReference String?
+
+  occurredAt DateTime @default(now()) @db.Timestamptz(6)
+
+  tenant Tenant @relation("AuditEventTenant", fields: [tenantId], references: [id], onDelete: Restrict)
+
+  /// NINGUNA de estas tres relaciones borra en cascada: la evidencia de una
+  /// lectura de soporte no puede desaparecer como efecto colateral del borrado
+  /// de un tenant, de una autorización o de un contexto.
+  actorHomeTenant       Tenant?                @relation("AuditEventActorHomeTenant", fields: [actorHomeTenantId], references: [id], onDelete: Restrict)
+  supportGrant          SupportGrant?          @relation(fields: [supportGrantId], references: [id], onDelete: NoAction)
+  supportContextSession SupportContextSession? @relation(fields: [supportContextSessionId], references: [id], onDelete: NoAction)
+
+  @@index([tenantId, occurredAt])
+  @@index([resourceType, resourceId])
+  /// Sostiene la traza completa de UN contexto de soporte concreto.
+  @@index([supportContextSessionId])
+  @@map("audit_event")
+}
+
+/**
+ * --------------------------------------------------------------------------
+ */
+/**
+ * Identidad y sesión institucional mínimas
+ */
+/**
+ * --------------------------------------------------------------------------
+ */
+
+/// Identidad institucional mínima (TASK-MUNICIPALITY-CORE-01, OD-01).
+///
+/// NO es el sistema completo de usuarios/roles de MERDN: no hay registro
+/// público, no hay recuperación de cuenta, no hay directorio de personas y no
+/// se almacena ningún dato personal. Es una identidad de INSTITUCIÓN, con un
+/// código estable, un rol y una credencial de acceso aprovisionada por
+/// configuración del servidor.
+///
+/// La credencial en claro NUNCA se persiste ni se registra: solo su derivación
+/// `scrypt` con sal propia.
+model InstitutionalIdentity {
+  id       String @id @default(uuid(7)) @db.Uuid
+  tenantId String @db.Uuid
+
+  /// Código estable de la identidad dentro del tenant. No es un nombre propio.
+  code   String
+  role   InstitutionalRole
+  status InstitutionalIdentityStatus @default(ACTIVE)
+
+  /// Derivación `scrypt` de la credencial, en hexadecimal.
+  accessSecretHash String
+  /// Sal aleatoria de la derivación, en hexadecimal.
+  accessSecretSalt String
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  tenant   Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  sessions InstitutionalSession[]
+
+  /// Asignaciones de cuidado creadas por esta identidad institucional OPACA.
+  /// No identifica a ninguna persona trabajadora concreta.
+  createdCareAssignments CareAssignment[]
+
+  /// Relaciones Paciente–Cuidador validadas y revocadas por esta identidad
+  /// institucional OPACA. Tampoco aquí identifica a una persona concreta.
+  validatedCaregiverRelationships PatientCaregiverRelationship[] @relation("CaregiverRelationshipValidator")
+  revokedCaregiverRelationships   PatientCaregiverRelationship[] @relation("CaregiverRelationshipRevoker")
+
+  /// Visitas domiciliarias que esta identidad institucional OPACA materializo
+  /// administrativamente. NO es la persona visitadora que las ejecuta.
+  createdHomeVisits HomeVisit[]
+
+  @@unique([tenantId, code], map: "institutional_identity_tenant_code_unique")
+  /// Permite FKs compuestas que impiden asociaciones entre tenants distintos.
+  @@unique([id, tenantId], map: "institutional_identity_id_tenant_unique")
+  @@index([tenantId])
+  @@map("institutional_identity")
+}
+
+/// Sesión institucional server-side.
+///
+/// Igual que `EnrollmentSession`, el token en claro solo viaja una vez en una
+/// cookie `HttpOnly` y aquí se guarda exclusivamente su hash. Es una entidad
+/// SEPARADA: una sesión de autoinscripción de paciente nunca autentica a
+/// Alcaldía, y una sesión institucional nunca da acceso a un paciente concreto.
+model InstitutionalSession {
+  id         String @id @default(uuid(7)) @db.Uuid
+  tenantId   String @db.Uuid
+  identityId String @db.Uuid
+
+  /// Hash del token aleatorio. Único: identifica la sesión sin conocer el token.
+  tokenHash String @unique
+
+  expiresAt  DateTime  @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+  lastUsedAt DateTime? @db.Timestamptz(6)
+  revokedAt  DateTime? @db.Timestamptz(6)
+
+  tenant   Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  identity InstitutionalIdentity @relation(fields: [identityId, tenantId], references: [id, tenantId], onDelete: Cascade)
+
+  @@index([tenantId, identityId])
+  @@index([expiresAt])
+  @@map("institutional_session")
+}
+
+/**
+ * --------------------------------------------------------------------------
+ */
+/**
+ * Profesionales, asignaciones y agenda mínimos (TASK-HOSPITAL-CORE-02 §5)
+ */
+/**
+ * --------------------------------------------------------------------------
+ */
+
+/// Estado del PERFIL profesional. No es disponibilidad, no es turno y no es
+/// habilitación: solo dice si el perfil sigue vigente en la institución.
+enum ProfessionalStatus {
+  ACTIVE
+  INACTIVE
+}
+
+/// Tipo de vínculo operativo DECLARADO. No acredita relación laboral, contrato,
+/// nómina, honorarios, habilitación ni documento verificado.
+enum ProfessionalEngagementType {
+  EMPLOYEE
+  INDEPENDENT
+  THIRD_PARTY
+}
+
+/// Estado del vínculo operativo declarado.
+enum ProfessionalAffiliationStatus {
+  ACTIVE
+  INACTIVE
+  ENDED
+}
+
+/// Papel de la asignación. Este slice solo admite `PRIMARY`; los papeles de
+/// apoyo, suplencia o equipo exigen una Task propia.
+enum CareAssignmentRole {
+  PRIMARY
+}
+
+/// Estado de la asignación. Este slice solo CREA o REUTILIZA asignaciones
+/// activas: finalizar o reasignar exige una Task propia.
+enum CareAssignmentStatus {
+  ACTIVE
+  ENDED
+}
+
+/// Clasificación de AGENDA de la cita. No abre los módulos Visitas
+/// domiciliarias ni Consultas virtuales, no habilita videollamada, no describe
+/// desplazamiento y no implica ningún flujo operativo de esos dominios.
+enum AppointmentModality {
+  ON_SITE
+  HOME
+  VIRTUAL
+}
+
+/// Estado de la cita. Este slice solo transiciona `REQUESTED → ASSIGNED`.
+/// `CANCELLED` existe para que el contrato no cambie cuando se apruebe la
+/// cancelación, pero NINGÚN endpoint de esta Task lo produce.
+enum AppointmentStatus {
+  REQUESTED
+  ASSIGNED
+  CANCELLED
+}
+
+/// Participación profesional de una `Person` dentro del tenant.
+///
+/// NO duplica nombre, documento, contacto ni fecha de nacimiento: un profesional
+/// es un ROL de la única persona del tenant. Tampoco acredita título,
+/// habilitación, tarjeta profesional, RETHUS, contrato ni pago: nada de eso está
+/// modelado y nada de eso debe deducirse de esta fila.
+model ProfessionalProfile {
+  id       String @id @default(uuid(7)) @db.Uuid
+  tenantId String @db.Uuid
+  personId String @db.Uuid
+
+  /// Código estable del catálogo de profesiones controlado por el SERVIDOR.
+  /// El navegador nunca escribe texto libre aquí.
+  professionCode           String
+  /// Nombre controlado correspondiente al código. No procede del cliente.
+  professionNameControlled String
+
+  status ProfessionalStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  person Person @relation(fields: [personId, tenantId], references: [id, tenantId], onDelete: Cascade)
+
+  affiliations    ProfessionalAffiliation[]
+  careAssignments CareAssignment[]
+
+  @@unique([personId, tenantId], map: "professional_profile_person_tenant_unique")
+  /// Permite FKs compuestas que impiden asociaciones entre tenants distintos.
+  @@unique([id, tenantId], map: "professional_profile_id_tenant_unique")
+  @@index([tenantId, status])
+  @@map("professional_profile")
+}
+
+/// Vínculo operativo DECLARADO entre un profesional y la institución.
+///
+/// Representa únicamente un vínculo declarado. No acredita relación laboral,
+/// contrato, habilitación, pago ni documento, y no autoriza ninguna decisión
+/// financiera o jurídica.
+model ProfessionalAffiliation {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  professionalId String @db.Uuid
+
+  engagementType ProfessionalEngagementType
+  status         ProfessionalAffiliationStatus @default(ACTIVE)
+
+  /// Fechas sin componente horario: evitan desplazamientos de zona.
+  startsOn DateTime  @db.Date
+  endsOn   DateTime? @db.Date
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  professional ProfessionalProfile @relation(fields: [professionalId, tenantId], references: [id, tenantId], onDelete: Cascade)
+
+  @@unique([id, tenantId], map: "professional_affiliation_id_tenant_unique")
+  @@index([tenantId, professionalId, status])
+  @@map("professional_affiliation")
+}
+
+/// Asignación de cuidado entre un paciente y un profesional del MISMO tenant.
+///
+/// No es una autorización clínica: no concede acceso a historia clínica, no
+/// acredita necesidad individual de conocer y no habilita ninguna decisión
+/// asistencial. Es un vínculo operativo de agenda.
+///
+/// El actor es la identidad institucional OPACA que operó, NUNCA la profesional
+/// seleccionada ni una persona trabajadora concreta: la identidad institucional
+/// mínima es compartida y no identifica a nadie.
+model CareAssignment {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  patientId      String @db.Uuid
+  professionalId String @db.Uuid
+
+  role   CareAssignmentRole   @default(PRIMARY)
+  status CareAssignmentStatus @default(ACTIVE)
+
+  startsAt DateTime  @db.Timestamptz(6)
+  endsAt   DateTime? @db.Timestamptz(6)
+
+  /// Identidad institucional OPACA que creó la asignación.
+  createdByIdentityId String @db.Uuid
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  tenant            Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient           Patient               @relation(fields: [patientId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  professional      ProfessionalProfile   @relation(fields: [professionalId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  createdByIdentity InstitutionalIdentity @relation(fields: [createdByIdentityId, tenantId], references: [id, tenantId], onDelete: Restrict)
+
+  appointments Appointment[]
+  homeVisits   HomeVisit[]
+
+  @@unique([id, tenantId], map: "care_assignment_id_tenant_unique")
+  @@index([tenantId, patientId, status])
+  @@index([tenantId, professionalId, status])
+  @@map("care_assignment")
+}
+
+/// Cita de agenda de un paciente del tenant.
+///
+/// NO persiste dirección, motivo, pago, diagnóstico, duración, zona, origen
+/// humano en texto ni notas: nada de eso está modelado y publicarlo lo haría
+/// pasar por un dato del que la plataforma no dispone.
+///
+/// `version` sostiene el control OPTIMISTA de la única mutación autorizada: dos
+/// asignaciones simultáneas de la misma solicitud no pueden triunfar las dos.
+model Appointment {
+  id               String  @id @default(uuid(7)) @db.Uuid
+  tenantId         String  @db.Uuid
+  patientId        String  @db.Uuid
+  /// Nulo mientras la cita está `REQUESTED`. La base lo exige al asignar.
+  careAssignmentId String? @db.Uuid
+
+  modality AppointmentModality
+  status   AppointmentStatus   @default(REQUESTED)
+
+  requestedAt    DateTime  @default(now()) @db.Timestamptz(6)
+  /// Instante exacto de inicio. NO se modela duración ni solapamiento.
+  scheduledStart DateTime? @db.Timestamptz(6)
+
+  version Int @default(1)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient        Patient         @relation(fields: [patientId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  careAssignment CareAssignment? @relation(fields: [careAssignmentId, tenantId], references: [id, tenantId], onDelete: NoAction)
+
+  /// Materializacion operativa de la cita cuando su modalidad es HOME. La
+  /// cita sigue siendo la UNICA agenda: la visita no duplica horario.
+  homeVisit HomeVisit?
+
+  @@unique([id, tenantId], map: "appointment_id_tenant_unique")
+  @@index([tenantId, status, requestedAt])
+  @@index([tenantId, scheduledStart])
+  @@map("appointment")
+}
+
+/**
+ * --------------------------------------------------------------------------
+ */
+/**
+ * Identidad humana, sesión humana y relación Paciente–Cuidador
+ * (IDENTITY-RELATIONSHIPS-CORE-01 §5)
+ */
+/**
+ * --------------------------------------------------------------------------
+ */
+
+/// Estado de la cuenta humana. Una cuenta deshabilitada no autentica y sus
+/// sesiones dejan de ser válidas de forma inmediata.
+enum HumanAccountStatus {
+  ACTIVE
+  DISABLED
+}
+
+/// Estado del vínculo con una identidad externa. `UNLINKED` conserva la fila
+/// como historia: el vínculo no se borra, se desactiva y se audita.
+enum ExternalAuthIdentityStatus {
+  ACTIVE
+  UNLINKED
+}
+
+/// Catálogo CERRADO de tipo de relación (AD-05). No existe ningún otro valor y
+/// esta Task no autoriza representación legal, tutela ni parentesco.
+enum PatientCaregiverRelationshipType {
+  DECLARED_CARE_SUPPORT
+}
+
+/// Finalidad CERRADA de la relación (AD-05). Es la única finalidad autorizada:
+/// no habilita uso clínico, financiero, jurídico ni de exportación.
+enum PatientCaregiverPurpose {
+  HOME_CARE_COORDINATION
+}
+
+/// Estados de la relación (AD-05). `REVOKED` y `EXPIRED` son TERMINALES: una
+/// reautorización posterior crea un episodio nuevo y no reabre la historia.
+/// NO existe `SUSPENDED`.
+enum PatientCaregiverRelationshipStatus {
+  PENDING_VALIDATION
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+/// Único alcance concedido a una persona cuidadora (AD-05). Es de SOLO
+/// LECTURA sobre visitas. NO existe wildcard, `VISITS_CONTRIBUTE` ni
+/// `VISITS_EXECUTE`, y no concede acceso clínico ni exportación.
+enum CaregiverScope {
+  VISITS_VIEW
+}
+
+/// Procedencia de la validación (AD-05). Declara EXPLÍCITAMENTE que la
+/// validación es una aserción de operador en un MVP controlado: no es
+/// verificación de identidad, no es autorización legal y no acredita
+/// representación de la persona paciente.
+enum CaregiverRelationshipValidationSource {
+  CONTROLLED_MVP_OPERATOR_ASSERTION
+}
+
+/// Motivos CERRADOS de revocación (AD-05). No admiten texto libre: un motivo
+/// escrito por una persona acabaría conteniendo datos personales.
+enum CaregiverRelationshipRevocationReason {
+  AUTHORIZATION_WITHDRAWN
+  RELATIONSHIP_ENDED
+  CREATED_IN_ERROR
+}
+
+/// Cuenta humana autenticable, vinculada a la única `Person` del tenant.
+///
+/// NO duplica identidad: nombre, documento, contacto y fecha de nacimiento
+/// viven exclusivamente en `Person`. Una cuenta es la capacidad de AUTENTICARSE
+/// como esa persona; los papeles de paciente, profesional y cuidadora son
+/// participaciones que se resuelven en el servidor por cada operación.
+///
+/// Una `Person` admite 0..* cuentas (docs/DATA.md). Deliberadamente NO se
+/// declara unicidad por `Person`: hacerlo cerraría un caso que la Task aprobada
+/// admite de forma expresa.
+model HumanAccount {
+  id       String @id @default(uuid(7)) @db.Uuid
+  tenantId String @db.Uuid
+  personId String @db.Uuid
+
+  status HumanAccountStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  person Person @relation(fields: [personId, tenantId], references: [id, tenantId], onDelete: Restrict)
+
+  externalIdentities ExternalAuthIdentity[]
+  sessions           HumanSession[]
+
+  /// Transiciones de visita domiciliaria ejecutadas por esta cuenta humana
+  /// OPACA. La transicion de creacion NO tiene actor humano.
+  homeVisitTransitions HomeVisitTransition[]
+
+  /// Capacidad administrativa de Soporte de Plataforma, si la cuenta la tiene.
+  /// Es una capacidad SEPARADA de `status`, de los claims OIDC y de cualquier
+  /// participacion Patient/Professional/Caregiver: tenerla no es ser paciente,
+  /// profesional ni cuidadora, y NINGUN rol institucional la concede.
+  platformSupportCapabilities PlatformSupportCapability[]
+  supportContextSessions      SupportContextSession[]
+
+  /// Permite FKs compuestas que impiden asociaciones entre tenants distintos.
+  @@unique([id, tenantId], map: "human_account_id_tenant_unique")
+  @@index([tenantId, personId, status])
+  @@map("human_account")
+}
+
+/// Vínculo entre una cuenta humana y un `subject` de un proveedor OIDC.
+///
+/// `issuer` y `subject` son OPACOS y se almacenan tal como los emite y verifica
+/// el proveedor, sin normalización que cambie el valor. NO se copian claims:
+/// ni correo, ni nombre, ni documento, ni grupos, ni roles. Cambiar el correo
+/// en el proveedor NO cambia este vínculo, que es exactamente lo que se busca.
+///
+/// El vínculo lo crea EXCLUSIVAMENTE el provisioning administrativo (AD-02):
+/// no existe autorregistro, ni autovinculación por claims, ni creación
+/// implícita de cuenta en el callback.
+model ExternalAuthIdentity {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  humanAccountId String @db.Uuid
+
+  /// Identificador del emisor, exactamente como lo verifica el adapter OIDC.
+  issuer  String
+  /// `sub` del proveedor. Es un identificador opaco, nunca un dato personal.
+  subject String
+
+  status ExternalAuthIdentityStatus @default(ACTIVE)
+
+  linkedAt   DateTime  @default(now()) @db.Timestamptz(6)
+  unlinkedAt DateTime? @db.Timestamptz(6)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  tenant  Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  account HumanAccount @relation(fields: [humanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict)
+
+  @@unique([id, tenantId], map: "external_auth_identity_id_tenant_unique")
+  /// Un `subject` de un emisor resuelve UNA sola cuenta dentro del tenant.
+  @@unique([tenantId, issuer, subject], map: "external_auth_identity_tenant_issuer_subject_unique")
+  @@index([tenantId, humanAccountId, status])
+  @@map("external_auth_identity")
+}
+
+/// Sesión humana server-side (AD-06).
+///
+/// Es una entidad SEPARADA de `EnrollmentSession` y de `InstitutionalSession`:
+/// su cookie es distinta, su tabla es distinta y ninguna de las tres autentica
+/// a las otras. El token en claro solo viaja una vez en una cookie `HttpOnly`;
+/// aquí se guarda exclusivamente su hash.
+///
+/// Validez: no revocada, `now < expiresAt` y última actividad —o creación—
+/// dentro de la ventana de inactividad. `lastUsedAt` NUNCA extiende
+/// `expiresAt`: la vigencia absoluta no se renueva usando la sesión.
+model HumanSession {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  humanAccountId String @db.Uuid
+
+  /// Hash del token aleatorio. Único: identifica la sesión sin conocer el token.
+  tokenHash String @unique
+
+  expiresAt  DateTime  @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+  lastUsedAt DateTime? @db.Timestamptz(6)
+  revokedAt  DateTime? @db.Timestamptz(6)
+
+  tenant  Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  account HumanAccount @relation(fields: [humanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict)
+
+  supportContextSessions SupportContextSession[]
+
+  @@unique([id, tenantId], map: "human_session_id_tenant_unique")
+  /// ADITIVA y NO restrictiva (ELOISA-ADMIN-ACCESS-01 MP01): `id` ya es unico
+  /// por si solo, de modo que esta clave no rechaza ninguna fila que antes
+  /// fuera valida. Existe UNICAMENTE para sostener la clave foranea compuesta
+  /// de `SupportContextSession`, que asi queda obligada por la BASE DE DATOS a
+  /// nombrar la sesion humana de ESA misma cuenta y de ESE mismo tenant.
+  @@unique([id, humanAccountId, tenantId], map: "human_session_id_account_tenant_unique")
+  @@index([tenantId, humanAccountId])
+  @@index([expiresAt])
+  @@map("human_session")
+}
+
+/// Intento de autenticación OIDC en curso (§4.3).
+///
+/// Existe para que el navegador NO custodie state, nonce ni verifier PKCE: solo
+/// recibe un token opaco en una cookie transitoria. El servidor conserva
+/// state y nonce HASHEADOS y el verifier CIFRADO con AES-256-GCM, de modo que
+/// una lectura de la base no permite completar un intento ajeno.
+///
+/// El intento se consume de forma ATÓMICA en el callback. Ausente, expirado,
+/// consumido o no coincidente producen la MISMA respuesta y nunca se reutiliza.
+model HumanAuthAttempt {
+  id       String @id @default(uuid(7)) @db.Uuid
+  tenantId String @db.Uuid
+
+  /// Hash del token opaco entregado al navegador. Nunca se guarda en claro.
+  browserTokenHash String @unique
+  /// Hash del `state`. Único: impide reutilizar un `state` ya emitido.
+  stateHash        String @unique
+  /// Hash del `nonce`. No es único: se compara contra el `nonce` del ID token.
+  nonceHash        String
+
+  /// Verifier PKCE cifrado con AES-256-GCM. Nunca se registra ni se devuelve.
+  pkceVerifierCiphertext String
+  pkceVerifierIv         String
+  pkceVerifierAuthTag    String
+
+  /// Destino posterior al login. Allowlist CERRADA, no una URL arbitraria.
+  returnTarget String
+
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+  expiresAt  DateTime  @db.Timestamptz(6)
+  consumedAt DateTime? @db.Timestamptz(6)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([id, tenantId], map: "human_auth_attempt_id_tenant_unique")
+  @@index([tenantId, expiresAt])
+  @@map("human_auth_attempt")
+}
+
+/// Relación M:N entre un `Patient` y la `Person` que ejerce el cuidado.
+///
+/// LO QUE ES: una autorización OPERATIVA, declarada por un operador
+/// institucional en un MVP controlado, con finalidad, vigencia y un alcance
+/// único de SOLO LECTURA sobre visitas.
+///
+/// LO QUE NO ES, deliberadamente: no es representación legal, no es tutela, no
+/// es parentesco, no es consentimiento informado, no acredita identidad de la
+/// persona cuidadora, no concede acceso clínico y no autoriza exportación.
+///
+/// `endsAt <= now` DENIEGA la autorización aunque la fila siga diciendo
+/// `ACTIVE`: la vigencia manda sobre el estado almacenado.
+model PatientCaregiverRelationship {
+  id                String @id @default(uuid(7)) @db.Uuid
+  tenantId          String @db.Uuid
+  patientId         String @db.Uuid
+  /// `Person` cuidadora. NO es un `Patient` y NO es un `HumanAccount`: la
+  /// relación se declara contra la persona, no contra una credencial.
+  caregiverPersonId String @db.Uuid
+
+  relationshipType PatientCaregiverRelationshipType   @default(DECLARED_CARE_SUPPORT)
+  purpose          PatientCaregiverPurpose            @default(HOME_CARE_COORDINATION)
+  status           PatientCaregiverRelationshipStatus @default(PENDING_VALIDATION)
+
+  startsAt DateTime  @db.Timestamptz(6)
+  endsAt   DateTime? @db.Timestamptz(6)
+
+  validationSource CaregiverRelationshipValidationSource @default(CONTROLLED_MVP_OPERATOR_ASSERTION)
+
+  /// Referencia OPACA del soporte de la autorización. Forma allowlisted y
+  /// NUNCA texto libre: un campo libre acabaría conteniendo datos personales.
+  authorizationReference String
+
+  /// Identidad institucional OPACA que validó. No es una persona concreta.
+  validatedByInstitutionalIdentityId String?   @db.Uuid
+  validatedAt                        DateTime? @db.Timestamptz(6)
+
+  /// Identidad institucional OPACA que revocó. No es una persona concreta.
+  revokedByInstitutionalIdentityId String?                               @db.Uuid
+  revokedAt                        DateTime?                             @db.Timestamptz(6)
+  revocationReason                 CaregiverRelationshipRevocationReason?
+
+  /// Control OPTIMISTA. Empieza en 1 y solo crece: dos operadores no pueden
+  /// activar o revocar la misma relación creyendo cada uno que fue el primero.
+  version Int @default(1)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  tenant          Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient         Patient @relation(fields: [patientId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  caregiverPerson Person  @relation("CaregiverPerson", fields: [caregiverPersonId, tenantId], references: [id, tenantId], onDelete: Restrict)
+
+  validatedByIdentity InstitutionalIdentity? @relation("CaregiverRelationshipValidator", fields: [validatedByInstitutionalIdentityId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  revokedByIdentity   InstitutionalIdentity? @relation("CaregiverRelationshipRevoker", fields: [revokedByInstitutionalIdentityId, tenantId], references: [id, tenantId], onDelete: Restrict)
+
+  scopes PatientCaregiverRelationshipScope[]
+
+  @@unique([id, tenantId], map: "patient_caregiver_relationship_id_tenant_unique")
+  @@index([tenantId, patientId, status])
+  @@index([tenantId, caregiverPersonId, status])
+  @@index([tenantId, status, startsAt, endsAt])
+  @@map("patient_caregiver_relationship")
+}
+
+/// Alcance concedido por una relación.
+///
+/// La creación del MVP añade EXACTAMENTE `VISITS_VIEW` y no existe ningún
+/// endpoint genérico de alcances: ampliar lo concedido exige una Task propia.
+model PatientCaregiverRelationshipScope {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  relationshipId String @db.Uuid
+
+  scope CaregiverScope
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  tenant       Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  relationship PatientCaregiverRelationship @relation(fields: [relationshipId, tenantId], references: [id, tenantId], onDelete: Cascade)
+
+  @@unique([id, tenantId], map: "patient_caregiver_relationship_scope_id_tenant_unique")
+  @@unique([relationshipId, tenantId, scope], map: "patient_caregiver_relationship_scope_unique")
+  @@index([tenantId, relationshipId])
+  @@map("patient_caregiver_relationship_scope")
+}
+
+/**
+ * --------------------------------------------------------------------------
+ */
+/**
+ * Visita domiciliaria compartida (VISITS-CORE-01 §5.2 y §5.3, paquete MP01)
+ */
+/**
+ * --------------------------------------------------------------------------
+ */
+
+/// Estado OPERATIVO de la visita domiciliaria.
+///
+/// El catálogo es CERRADO. Deliberadamente NO existen `EN_ROUTE` ni `ARRIVED`
+/// —implicarían despacho, ubicación o reglas operativas no aprobadas— ni
+/// `CANCELLED`: la cancelación pertenece a Agenda y no está implementada.
+enum HomeVisitStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  NOT_COMPLETED
+}
+
+/// Materialización operativa de una cita `HOME` ya asignada.
+///
+/// REUTILIZA el dominio existente y no lo duplica:
+/// - `Appointment` sigue siendo la ÚNICA agenda: el horario se lee de
+///   `Appointment.scheduledStart` y aquí NO se persiste ninguna fecha de
+///   programación;
+/// - `CareAssignment` sigue siendo la ÚNICA fuente del profesional asignado:
+///   aquí NO se persiste `professionalId`.
+///
+/// NO persiste nombre, documento, dirección, zona, diagnóstico, motivo,
+/// contacto, pago, alerta, cuidador, GPS, firma, archivo ni nota clínica: nada
+/// de eso está modelado y nada de eso debe deducirse de esta fila.
+///
+/// `createdByInstitutionalIdentityId` identifica ÚNICAMENTE a la identidad
+/// institucional OPACA que materializó administrativamente la visita al asignar
+/// la cita. NO representa a la persona visitadora que la ejecuta.
+///
+/// `version` sostiene el control OPTIMISTA de las transiciones de estado. Este
+/// paquete solo establece la persistencia: la mutación transaccional que crea
+/// visita, transición y auditoría corresponde al paquete de servicio.
+model HomeVisit {
+  id               String @id @default(uuid(7)) @db.Uuid
+  tenantId         String @db.Uuid
+  appointmentId    String @db.Uuid
+  patientId        String @db.Uuid
+  careAssignmentId String @db.Uuid
+
+  status  HomeVisitStatus
+  version Int             @default(1)
+
+  /// Se fija al entrar en `IN_PROGRESS`. Lo escribe el SERVIDOR.
+  startedAt DateTime? @db.Timestamptz(6)
+  /// Se fija al entrar en un estado terminal. Lo escribe el SERVIDOR.
+  endedAt   DateTime? @db.Timestamptz(6)
+
+  /// Identidad institucional OPACA que materializó la visita.
+  createdByInstitutionalIdentityId String @db.Uuid
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  /// NINGUNA de estas relaciones borra en cascada. La visita es un registro
+  /// MATERIAL con procedencia: no desaparece como efecto colateral del borrado
+  /// de un tenant, una cita, un paciente, una asignación o una identidad.
+  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  appointment    Appointment    @relation(fields: [appointmentId, tenantId], references: [id, tenantId], onDelete: NoAction)
+  patient        Patient        @relation(fields: [patientId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  careAssignment CareAssignment @relation(fields: [careAssignmentId, tenantId], references: [id, tenantId], onDelete: NoAction)
+
+  createdByInstitutionalIdentity InstitutionalIdentity @relation(fields: [createdByInstitutionalIdentityId, tenantId], references: [id, tenantId], onDelete: Restrict)
+
+  transitions HomeVisitTransition[]
+
+  /// Permite FKs compuestas que impiden asociaciones entre tenants distintos.
+  @@unique([id, tenantId], map: "home_visit_id_tenant_unique")
+  /// Una cita materializa como mucho UNA visita domiciliaria.
+  @@unique([appointmentId, tenantId], map: "home_visit_appointment_tenant_unique")
+  @@index([tenantId, status])
+  @@index([tenantId, patientId])
+  @@index([tenantId, careAssignmentId])
+  @@map("home_visit")
+}
+
+/// Historial APPEND-ONLY de las transiciones de estado de una visita.
+///
+/// La transición de CREACIÓN es exactamente `null → SCHEDULED` y NO lleva actor
+/// humano: quien materializó la visita es la identidad institucional opaca que
+/// vive en `HomeVisit.createdByInstitutionalIdentityId`.
+///
+/// Toda transición POSTERIOR exige una `HumanAccount`. Deliberadamente NO hay
+/// actor polimórfico sin integridad referencial ni `professionalId` recibido
+/// desde la interfaz como sustituto del principal.
+model HomeVisitTransition {
+  id          String @id @default(uuid(7)) @db.Uuid
+  tenantId    String @db.Uuid
+  homeVisitId String @db.Uuid
+
+  /// Nulo únicamente en la transición de creación.
+  fromStatus HomeVisitStatus?
+  toStatus   HomeVisitStatus
+
+  /// Nulo únicamente en la transición de creación.
+  performedByHumanAccountId String? @db.Uuid
+
+  /// Instante de la transición, fijado por el SERVIDOR.
+  occurredAt DateTime @default(now()) @db.Timestamptz(6)
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+
+  /// `Restrict` y NO `Cascade`: borrar una visita no puede llevarse por delante,
+  /// en silencio, la única constancia de quién la inició, la completó o la dio
+  /// por no realizada.
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  homeVisit HomeVisit @relation(fields: [homeVisitId, tenantId], references: [id, tenantId], onDelete: Restrict)
+
+  performedByHumanAccount HumanAccount? @relation(fields: [performedByHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict)
+
+  /// Permite FKs compuestas que impiden asociaciones entre tenants distintos.
+  @@unique([id, tenantId], map: "home_visit_transition_id_tenant_unique")
+  @@index([tenantId, homeVisitId, occurredAt])
+  @@map("home_visit_transition")
+}
+
+/**
+ * --------------------------------------------------------------------------
+ */
+/**
+ * Soporte de Plataforma: capacidad, autorización y contexto
+ * (ELOISA-ADMIN-ACCESS-01 §3, paquete MP01 — DATA FOUNDATION)
+ */
+/**
+ * --------------------------------------------------------------------------
+ */
+
+/// Estado CERRADO de la capacidad administrativa de Soporte de Plataforma.
+enum PlatformSupportCapabilityStatus {
+  ACTIVE
+  DISABLED
+}
+
+/// Alcance CERRADO de una autorización de soporte.
+///
+/// V1 tiene EXACTAMENTE uno: lectura operacional de la superficie Hospital
+/// —Pacientes, Profesionales, Agenda, Visitas y la auditoría operacional
+/// necesaria—. Deliberadamente NO existe ningún valor de escritura, clínica
+/// editable, finanzas, exportación masiva, documento sensible, firma ni
+/// impersonación: lo que la base no puede nombrar, ningún servicio posterior
+/// puede conceder por descuido.
+enum SupportGrantScope {
+  HOSPITAL_OPERATIONAL_READ
+}
+
+/// Estado CERRADO de la autorización. Una autorización se REVOCA, no se borra.
+enum SupportGrantStatus {
+  ACTIVE
+  REVOKED
+}
+
+/// Capacidad administrativa NOMINATIVA de Soporte de Plataforma.
+///
+/// LO QUE ES: la constancia persistida de que UNA cuenta humana concreta —ya
+/// autenticada por el OIDC y la `HumanSession` existentes— posee la capacidad
+/// administrativa de plataforma. Pertenece al tenant HOME de esa cuenta.
+///
+/// LO QUE NO ES, deliberadamente:
+/// - no es una contraseña maestra: aquí NO hay credencial, derivación ni sal;
+/// - no es un `subject` OIDC ni un claim: la autenticación no cambia;
+/// - no es un rol institucional: no aparece en `InstitutionalRole` y no se
+///   confunde con `MUNICIPAL_VIEWER` ni con ningún rol hospitalario;
+/// - no es una participación Patient, Professional ni Caregiver;
+/// - no es impersonación: nadie actúa «como» otra persona;
+/// - no concede POR SÍ MISMA ninguna lectura. La autorización concreta vive en
+///   `SupportGrant` y su ejercicio exige además un `SupportContextSession`
+///   vigente. Existir esta fila NO abre ninguna institución.
+model PlatformSupportCapability {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  /// Tenant HOME de la cuenta humana. Es el DUEÑO a efectos de Row Level
+  /// Security: la capacidad se valida bajo el contexto del tenant home.
+  homeTenantId String @db.Uuid
+
+  humanAccountId String @db.Uuid
+
+  status PlatformSupportCapabilityStatus @default(ACTIVE)
+
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime  @updatedAt @db.Timestamptz(6)
+  /// Obligatorio cuando el estado es `DISABLED`, prohibido cuando es `ACTIVE`.
+  disabledAt DateTime? @db.Timestamptz(6)
+
+  /// Clave foránea COMPUESTA: la cuenta humana debe pertenecer al MISMO tenant
+  /// home. Conocer un identificador de otra institución no basta para
+  /// asociarlo. `Restrict` y NO `Cascade`: la capacidad es un registro material.
+  homeTenant Tenant       @relation(fields: [homeTenantId], references: [id], onDelete: Restrict)
+  account    HumanAccount @relation(fields: [humanAccountId, homeTenantId], references: [id, tenantId], onDelete: Restrict)
+
+  grants SupportGrant[]
+
+  /// Permite FKs compuestas que impiden asociaciones entre tenants distintos.
+  @@unique([id, homeTenantId], map: "platform_support_capability_id_home_tenant_unique")
+  /// UNA sola capacidad por cuenta y tenant home.
+  @@unique([homeTenantId, humanAccountId], map: "platform_support_capability_account_unique")
+  @@index([homeTenantId, status])
+  @@map("platform_support_capability")
+}
+
+/// Autorización EXPLÍCITA de soporte sobre UNA institución concreta.
+///
+/// Es la pieza que impide que «ser administradora» equivalga a «ver todas las
+/// instituciones»: sin una fila ACTIVE y vigente para un tenant objetivo
+/// determinado, ese tenant permanece cerrado. No existe comodín, no existe
+/// «todos los tenants» y no existe alcance abierto.
+///
+/// El dueño a efectos de RLS es el tenant HOME, no el objetivo: así MP02 podrá
+/// validar capacidad y autorización bajo `withTenant(homeTenantId)` y leer el
+/// negocio bajo un segundo `withTenant(targetTenantId)`, SIN `BYPASSRLS` y sin
+/// que el navegador convierta jamás un `targetTenantId` en autoridad.
+///
+/// La creación y la revocación por Platform Owner/Admin NO existen todavía:
+/// MP01 no añade ninguna mutación sin su autorización.
+model SupportGrant {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  /// Tenant HOME. DUEÑO a efectos de Row Level Security.
+  homeTenantId String @db.Uuid
+
+  platformSupportCapabilityId String @db.Uuid
+
+  /// Institución AUTORIZADA. Es un ÚNICO tenant, nombrado de forma explícita.
+  targetTenantId String @db.Uuid
+
+  scope  SupportGrantScope
+  status SupportGrantStatus @default(ACTIVE)
+
+  /// Vigencia declarada. Cuando ambas existen, `validUntil > validFrom`. La
+  /// evaluación EFECTIVA del paso del tiempo pertenece al servidor en MP02: una
+  /// fila `ACTIVE` fuera de vigencia NO autoriza nada.
+  validFrom  DateTime? @db.Timestamptz(6)
+  validUntil DateTime? @db.Timestamptz(6)
+
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+  /// Obligatorio cuando el estado es `REVOKED`, prohibido cuando es `ACTIVE`.
+  revokedAt DateTime? @db.Timestamptz(6)
+
+  /// Referencias RESTRICTIVAS. Ninguna borra en cascada: retirar una
+  /// autorización es una decisión expresa, no el efecto colateral del borrado
+  /// de una capacidad o de un tenant.
+  homeTenant   Tenant                    @relation("SupportGrantHomeTenant", fields: [homeTenantId], references: [id], onDelete: Restrict)
+  targetTenant Tenant                    @relation("SupportGrantTargetTenant", fields: [targetTenantId], references: [id], onDelete: Restrict)
+  capability   PlatformSupportCapability @relation(fields: [platformSupportCapabilityId, homeTenantId], references: [id, homeTenantId], onDelete: Restrict)
+
+  contextSessions SupportContextSession[]
+  auditEvents     AuditEvent[]
+
+  /// Permite FKs compuestas que impiden asociaciones entre tenants distintos.
+  @@unique([id, homeTenantId], map: "support_grant_id_home_tenant_unique")
+  /// Sostiene la FK compuesta del contexto: un `SupportContextSession` no puede
+  /// declarar un tenant objetivo distinto del de SU autorización. La coherencia
+  /// la impone PostgreSQL, no la aplicación.
+  @@unique([id, homeTenantId, targetTenantId], map: "support_grant_id_home_target_unique")
+  @@index([homeTenantId, platformSupportCapabilityId, status])
+  @@index([homeTenantId, targetTenantId, status])
+  @@map("support_grant")
+}
+
+/// Contexto TEMPORAL de soporte: la ventana acotada dentro de la cual una
+/// autorización se ejerce de verdad.
+///
+/// Es una entidad SEPARADA de `HumanSession`: su tabla es distinta, su token es
+/// distinto y su hash NUNCA reutiliza `HumanSession.tokenHash`. Cerrar la
+/// sesión humana no es lo mismo que salir de soporte, y estar autenticada no es
+/// estar en soporte.
+///
+/// Reglas que la BASE sostiene: motivo obligatorio y acotado, ticket opcional y
+/// acotado, vigencia absoluta de 60 minutos como MÁXIMO, `lastUsedAt` dentro de
+/// la ventana, salida/revocación explícita y un solo contexto no revocado por
+/// cuenta.
+///
+/// Lo que la base NO puede sostener y por tanto NO finge: el PASO DEL TIEMPO.
+/// La expiración efectiva y el corte por 15 minutos de inactividad los evalúa
+/// MP02 dentro de transacción. `expiresAt` y `lastUsedAt` los hacen
+/// REPRESENTABLES y comprobables; ningún índice evalúa un reloj.
+///
+/// El token en claro NUNCA se persiste. La cookie y su validación pertenecen a
+/// MP02: esta fila, por sí sola, no autentica ni autoriza nada.
+model SupportContextSession {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  /// Tenant HOME. DUEÑO a efectos de Row Level Security.
+  homeTenantId String @db.Uuid
+
+  humanAccountId String @db.Uuid
+  humanSessionId String @db.Uuid
+
+  supportGrantId String @db.Uuid
+
+  /// Tenant objetivo DESNORMALIZADO. No es una fuente independiente de verdad:
+  /// la FK compuesta contra `support_grant` obliga a que coincida con el de la
+  /// autorización. UN solo tenant activo a la vez, por construcción.
+  targetTenantId String @db.Uuid
+
+  /// Hash del token del contexto. Único, y JAMÁS el token en claro.
+  tokenHash String @unique
+
+  /// Motivo OBLIGATORIO de la entrada en soporte. Longitud 8..500 con recorte
+  /// lógico. Nunca un secreto y nunca información personal o clínica.
+  reason String
+
+  /// Referencia opcional de ticket. Opaca y de 120 caracteres como máximo.
+  ticketReference String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  /// Vigencia ABSOLUTA. La base impone `createdAt < expiresAt <= createdAt+60m`.
+  expiresAt DateTime @db.Timestamptz(6)
+
+  /// Última actividad observada. Sostiene el corte por inactividad de MP02 y
+  /// NUNCA extiende `expiresAt`: la vigencia absoluta no se renueva usándola.
+  lastUsedAt DateTime? @db.Timestamptz(6)
+  /// Salida explícita o revocación. Un contexto se revoca, no se borra.
+  revokedAt  DateTime? @db.Timestamptz(6)
+
+  /// Referencias RESTRICTIVAS y COMPUESTAS. La sesión humana debe ser la de ESA
+  /// cuenta y ESE tenant home; la autorización debe ser la de ESE tenant home y
+  /// ESE tenant objetivo. Ninguna borra en cascada.
+  homeTenant   Tenant       @relation(fields: [homeTenantId], references: [id], onDelete: Restrict)
+  account      HumanAccount @relation(fields: [humanAccountId, homeTenantId], references: [id, tenantId], onDelete: Restrict)
+  humanSession HumanSession @relation(fields: [humanSessionId, humanAccountId, homeTenantId], references: [id, humanAccountId, tenantId], onDelete: Restrict)
+  grant        SupportGrant @relation(fields: [supportGrantId, homeTenantId, targetTenantId], references: [id, homeTenantId, targetTenantId], onDelete: Restrict)
+
+  auditEvents AuditEvent[]
+
+  /// Permite FKs compuestas que impiden asociaciones entre tenants distintos.
+  @@unique([id, homeTenantId], map: "support_context_session_id_home_tenant_unique")
+  /// Validación del contexto por tenant home y token.
+  @@index([homeTenantId, tokenHash])
+  /// Sostiene el barrido de expiración de MP02.
+  @@index([expiresAt])
+  @@index([homeTenantId, supportGrantId])
+  @@map("support_context_session")
+}

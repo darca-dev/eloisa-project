@@ -1,0 +1,14 @@
+{
+  "name": "@merdn/orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MERDN Orchestrator V1 — runtime local (TASK-MERDN-ORCHESTRATOR-V1). Herramienta de desarrollo, no producto MERDN.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0 <25.0.0"
+  },
+  "main": "src/main.ts",
+  "dependencies": {},
+  "devDependencies": {}
+}

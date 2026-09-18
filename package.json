@@ -1,0 +1,68 @@
+{
+  "name": "merdn",
+  "version": "0.0.0",
+  "private": true,
+  "description": "MERDN — fundación técnica del monorepo (TASK-001). Sin dominios de negocio.",
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=24.0.0 <25.0.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:shared": "npm run build --workspace @merdn/shared",
+    "build:api": "npm run build --workspace @merdn/api",
+    "build:web": "npm run build --workspace @merdn/web",
+    "build": "npm run build:shared && npm run build:api && npm run build:web",
+    "typecheck": "npm run build:shared && npm run typecheck --workspaces --if-present",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "npm run build:shared && npm run test --workspaces --if-present",
+    "dev:api": "npm run build:shared && npm run dev --workspace @merdn/api",
+    "dev:web": "npm run build:shared && npm run dev --workspace @merdn/web",
+    "prisma:validate": "prisma validate",
+    "prisma:format": "prisma format",
+    "db:check": "node --env-file-if-exists=.env tests/db-connection.check.mjs",
+    "secrets:scan": "node tests/secrets-scan.check.mjs",
+    "staging:preflight": "node scripts/staging/preflight.mjs",
+    "staging:runtime-db-check": "node scripts/staging/runtime-db-check.mjs",
+    "staging:smoke": "node scripts/staging/smoke.mjs",
+    "staging:test": "vitest run tests/staging",
+    "staging:typecheck": "node -e \"const{readdirSync}=require('node:fs');const{execFileSync}=require('node:child_process');const f=readdirSync('tests/staging').filter(n=>n.endsWith('.test.mts')).map(n=>'tests/staging/'+n);if(f.length===0){console.error('No tests/staging/*.test.mts found');process.exit(1)}console.error('staging typecheck: '+f.join(', '));try{execFileSync(process.execPath,['node_modules/typescript/bin/tsc','--noEmit','--allowJs','--checkJs','false','--module','nodenext','--moduleResolution','nodenext','--target','es2022','--strict','--skipLibCheck','--types','node',...f],{stdio:'inherit'})}catch(e){process.exit(typeof e.status==='number'?e.status:1)}\"",
+    "identity:provision": "node --env-file-if-exists=.env tools/identity-provisioning/src/main.ts",
+    "identity:provision:typecheck": "tsc -p tools/identity-provisioning/tsconfig.json",
+    "identity:provision:test": "vitest run --config tools/identity-provisioning/vitest.config.mts",
+    "orchestrator": "node tools/merdn-orchestrator/src/main.ts",
+    "orchestrator:mock": "node tools/merdn-orchestrator/src/main.ts --mock",
+    "orchestrator:typecheck": "tsc -p tools/merdn-orchestrator/tsconfig.json",
+    "orchestrator:test": "node --test \"tests/orchestrator/*.test.mts\"",
+    "docker:config": "docker compose config",
+    "docker:up": "docker compose up -d --build",
+    "docker:ps": "docker compose ps",
+    "docker:logs": "docker compose logs --no-color --tail=100",
+    "docker:down": "docker compose down",
+    "docker:clean": "docker compose down --volumes"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@types/node": "24.13.3",
+    "@types/pg": "8.23.1",
+    "dotenv": "17.4.2",
+    "eslint": "9.39.5",
+    "globals": "17.11.0",
+    "pg": "8.23.0",
+    "prisma": "7.9.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.67.0",
+    "vitest": "4.1.11"
+  },
+  "allowScripts": {
+    "prisma@7.9.1": true,
+    "@prisma/engines@7.9.1": true,
+    "@scarf/scarf": false
+  }
+}

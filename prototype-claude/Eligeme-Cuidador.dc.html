@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; font-family:Nunito, system-ui, sans-serif; background:#F1F3F6; color:#14213D; -webkit-font-smoothing:antialiased; }
+  a { color:#1E5AA7; text-decoration:none; font-weight:800; }
+  a:hover { color:#E83CB6; }
+  input, select, textarea, button { font-family:Nunito, sans-serif; }
+  input:focus, select:focus, textarea:focus { outline:3px solid #BFD6F0; outline-offset:1px; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;padding:24px 16px 96px">
+  <div style="max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+
+    <div style="background:#1E5AA7;border-radius:20px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <div style="width:24px;height:2.5px;background:#fff"></div>
+          <div style="width:24px;height:2.5px;background:#fff"></div>
+          <div style="width:24px;height:2.5px;background:#fff"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:1px">
+          <div style="font-size:20px;font-weight:900;color:#fff;letter-spacing:.02em">ELÍGEME</div>
+          <div style="font-size:11px;font-weight:700;color:#BFD6F0;letter-spacing:.1em">ATENCIÓN DOMICILIARIA</div>
+        </div>
+      </div>
+      <button onClick="{{ goNovedades }}" style="position:relative;display:flex;align-items:center;gap:10px;padding:10px 16px;border:2px solid #5FA8E1;border-radius:99px;background:transparent;cursor:pointer">
+        <span style="font-size:18px;line-height:1">🔔</span>
+        <span style="font-size:15px;font-weight:900;color:#fff">Novedades</span>
+        <span style="min-width:24px;height:24px;padding:0 7px;border-radius:99px;background:#DC2626;color:#fff;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center">{{ novCount }}</span>
+      </button>
+    </div>
+
+    <sc-if value="{{ isCuidador }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff;border:2px solid #E83CB6;border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="font-size:12px;font-weight:900;color:#E83CB6;letter-spacing:.09em">PACIENTE QUE ESTÁS CUIDANDO</div>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <div style="flex:0 0 62px;width:62px;height:62px;border-radius:50%;background:#EEF4FC;border:2px solid #D9E5F5;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#1E5AA7">{{ iniciales }}</div>
+          <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:3px">
+            <div style="font-size:22px;font-weight:900">{{ nombre }}</div>
+            <div style="font-size:15px;font-weight:700;color:#5B6B85">{{ edad }} años · {{ eps }} · {{ municipio }}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <sc-for list="{{ pacientes }}" as="p" hint-placeholder-count="2">
+            <button onClick="{{ p.on }}" style="padding:11px 16px;border-radius:99px;font-size:15px;font-weight:800;cursor:pointer;white-space:nowrap;border:{{ p.bd }};background:{{ p.bg }};color:{{ p.fg }}">{{ p.nombre }}</button>
+          </sc-for>
+        </div>
+        <div style="font-size:14px;line-height:1.45;color:#5B6B85;font-weight:700">Todo lo que registres queda marcado como <b>Registrado por cuidador</b>, con tu identificación, la del paciente, la fecha y la hora.</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vHome }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#fff;border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:18px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <div style="flex:0 0 74px;width:74px;height:74px;border-radius:50%;background:#EEF4FC;border:2.5px solid #D9E5F5;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#1E5AA7">{{ iniciales }}</div>
+            <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:5px">
+              <div style="font-size:28px;font-weight:900;line-height:1.15">{{ saludo }}</div>
+              <div style="font-size:16px;font-weight:700;color:#5B6B85">{{ edad }} años · {{ eps }} · {{ municipio }}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:18px;border-radius:18px;background:{{ estadoBg }};border:2px solid {{ estadoBd }}">
+            <div style="flex:0 0 46px;width:46px;height:46px;border-radius:50%;background:#fff;border:2px solid {{ estadoBd }};display:flex;align-items:center;justify-content:center;font-size:26px;line-height:1">{{ estadoEmoji }}</div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <div style="font-size:13px;font-weight:900;letter-spacing:.08em;color:{{ estadoColor }}">ESTADO GENERAL DE HOY</div>
+              <div style="font-size:21px;font-weight:900">{{ estadoTitulo }}</div>
+              <div style="font-size:15px;line-height:1.4;color:#5B6B85;font-weight:600">{{ estadoNota }}</div>
+            </div>
+          </div>
+        </div>
+
+        <button onClick="{{ goBitacora }}" style="text-align:left;padding:24px;border:3px solid #E83CB6;border-radius:22px;background:#FDF0F8;cursor:pointer;display:flex;align-items:center;gap:18px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <span style="flex:0 0 68px;width:68px;height:68px;border-radius:20px;background:#fff;border:2.5px solid #F5C0E4;display:flex;align-items:center;justify-content:center;font-size:36px;line-height:1">📖</span>
+          <span style="flex:1;display:flex;flex-direction:column;gap:5px">
+            <span style="font-size:14px;font-weight:900;color:#E83CB6;letter-spacing:.08em">LO MÁS IMPORTANTE DE HOY</span>
+            <span style="font-size:27px;font-weight:900;line-height:1.15">{{ tituloBitacora }}</span>
+            <span style="font-size:17px;line-height:1.4;color:#5B6B85;font-weight:600">{{ subBitacora }}</span>
+          </span>
+          <span style="flex:0 0 auto;font-size:30px;font-weight:900;color:#E83CB6">›</span>
+        </button>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+          <button onClick="{{ goSalud }}" style="text-align:left;padding:20px;border:2px solid #CFE9D6;border-radius:20px;background:#EFF9F1;cursor:pointer;display:flex;flex-direction:column;gap:10px">
+            <span style="width:56px;height:56px;border-radius:16px;background:#fff;border:2px solid #CFE9D6;display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1">❤️</span>
+            <span style="font-size:20px;font-weight:900;color:#16A34A">{{ tituloSalud }}</span>
+            <span style="font-size:15px;line-height:1.4;color:#5B6B85;font-weight:600">{{ subSalud }}</span>
+          </button>
+          <button onClick="{{ goAgenda }}" style="text-align:left;padding:20px;border:2px solid #D9E5F5;border-radius:20px;background:#EEF4FC;cursor:pointer;display:flex;flex-direction:column;gap:10px">
+            <span style="width:56px;height:56px;border-radius:16px;background:#fff;border:2px solid #D9E5F5;display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1">📅</span>
+            <span style="font-size:20px;font-weight:900;color:#1E5AA7">{{ tituloAgenda }}</span>
+            <span style="font-size:15px;line-height:1.4;color:#5B6B85;font-weight:600">{{ subAgenda }}</span>
+          </button>
+          <button onClick="{{ goNovedades }}" style="text-align:left;padding:20px;border:2px solid #F5E3C4;border-radius:20px;background:#FEF6E9;cursor:pointer;display:flex;flex-direction:column;gap:10px">
+            <span style="width:56px;height:56px;border-radius:16px;background:#fff;border:2px solid #F5E3C4;display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1">🔔</span>
+            <span style="font-size:20px;font-weight:900;color:#D97706">Novedades</span>
+            <span style="font-size:15px;line-height:1.4;color:#5B6B85;font-weight:600">Mensajes, cambios y recordatorios · {{ novCount }} sin leer</span>
+          </button>
+          <button onClick="{{ goVisitas }}" style="text-align:left;padding:20px;border:2px solid #DEDBF6;border-radius:20px;background:#F1F0FC;cursor:pointer;display:flex;flex-direction:column;gap:10px">
+            <span style="width:56px;height:56px;border-radius:16px;background:#fff;border:2px solid #DEDBF6;display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1">⭐</span>
+            <span style="font-size:20px;font-weight:900;color:#6D5BD0">{{ tituloVisitas }}</span>
+            <span style="font-size:15px;line-height:1.4;color:#5B6B85;font-weight:600">Consulta las atenciones y califica el servicio</span>
+          </button>
+          <button onClick="{{ goInfo }}" style="text-align:left;padding:20px;border:2px solid #D8DFEA;border-radius:20px;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:10px">
+            <span style="width:56px;height:56px;border-radius:16px;background:#fff;border:2px solid #D8DFEA;display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1">👤</span>
+            <span style="font-size:20px;font-weight:900;color:#5B6B85">{{ tituloInfo }}</span>
+            <span style="font-size:15px;line-height:1.4;color:#5B6B85;font-weight:600">{{ subInfo }}</span>
+          </button>
+          <sc-if value="{{ isCuidador }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ goFormacion }}" style="text-align:left;padding:20px;border-radius:20px;cursor:pointer;display:flex;flex-direction:column;gap:10px;border:2.5px solid {{ formEstadoBd }};background:{{ formEstadoBg }}">
+              <span style="width:56px;height:56px;border-radius:16px;background:#fff;border:2px solid {{ formEstadoBd }};display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1">🎓</span>
+              <span style="font-size:20px;font-weight:900;color:{{ formEstadoColor }}">Certificarme</span>
+              <span style="display:flex;flex-direction:column;gap:5px">
+                <span style="display:inline-flex;align-items:center;gap:7px;font-size:15px;font-weight:900;color:{{ formEstadoColor }}"><span style="font-size:15px">{{ formEstadoEmoji }}</span>{{ formEstadoTitulo }}</span>
+                <span style="font-size:15px;line-height:1.4;color:#5B6B85;font-weight:600">Encuentra formación y registra tus certificados</span>
+              </span>
+            </button>
+          </sc-if>
+        </div>
+
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vBitacora }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:16px">
+
+        <sc-if value="{{ bit0 }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+              <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.08em">{{ encabezadoBitacora }}</div>
+              <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+                <div style="flex:0 0 72px;width:72px;height:72px;border-radius:50%;background:#EEF4FC;border:2.5px solid #D9E5F5;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:900;color:#1E5AA7">{{ iniciales }}</div>
+                <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:4px">
+                  <div style="font-size:25px;font-weight:900">{{ nombre }}</div>
+                  <div style="font-size:16px;font-weight:700;color:#5B6B85">{{ edad }} años · {{ eps }} · {{ municipio }}</div>
+                  <div style="font-size:16px;font-weight:800;color:#1E5AA7">Hipertensión · Diabetes</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:14px;padding:16px;border-radius:16px;background:{{ estadoBg }};border:2px solid {{ estadoBd }}">
+                <span style="flex:0 0 30px;width:30px;height:30px;border-radius:50%;background:{{ estadoColor }}"></span>
+                <div style="display:flex;flex-direction:column;gap:2px">
+                  <div style="font-size:12px;font-weight:900;letter-spacing:.08em;color:{{ estadoColor }}">SEMÁFORO ACTUAL</div>
+                  <div style="font-size:19px;font-weight:900">{{ estadoTitulo }}</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button onClick="{{ goInfo }}" style="padding:15px 20px;border:2px solid #D8DFEA;border-radius:14px;background:#fff;font-size:16px;font-weight:900;cursor:pointer">Ver información del paciente</button>
+                <div style="display:flex;align-items:center;gap:9px;padding:15px 18px;border-radius:14px;background:#F1F3F6"><span style="width:9px;height:9px;border-radius:50%;background:#E83CB6"></span><span style="font-size:14px;font-weight:900;color:#5B6B85">{{ origenTexto }}</span></div>
+              </div>
+            </div>
+
+            <button onClick="{{ goVisitas }}" style="text-align:left;padding:20px;border:2.5px solid #F3DCA9;border-radius:20px;background:#FEF6E9;cursor:pointer;display:flex;align-items:center;gap:16px">
+              <span style="flex:0 0 14px;width:14px;height:14px;border-radius:50%;background:#F59E0B"></span>
+              <span style="flex:1;display:flex;flex-direction:column;gap:4px">
+                <span style="font-size:19px;font-weight:900;line-height:1.3">Califica la visita de hoy del Profesional en Salud</span>
+                <span style="font-size:16px;font-weight:700;color:#5B6B85">Visita finalizada y firmada · Dra. Laura Gómez</span>
+              </span>
+              <span style="flex:0 0 auto;font-size:26px;font-weight:900;color:#B45309">›</span>
+            </button>
+
+            <button onClick="{{ empezarBitacora }}" style="text-align:left;padding:26px;border:3px solid #E83CB6;border-radius:22px;background:#FDF0F8;cursor:pointer;display:flex;align-items:center;gap:18px">
+              <span style="flex:0 0 62px;width:62px;height:62px;border-radius:18px;background:#E83CB6;display:flex;align-items:center;justify-content:center"><span style="width:26px;height:26px;border-radius:6px;background:#fff"></span></span>
+              <span style="flex:1;display:flex;flex-direction:column;gap:5px">
+                <span style="font-size:27px;font-weight:900;line-height:1.15">Nueva bitácora</span>
+                <span style="font-size:17px;line-height:1.4;color:#5B6B85;font-weight:600">Ocho preguntas sencillas. Puede escucharlas o responder hablando.</span>
+              </span>
+              <span style="flex:0 0 auto;font-size:30px;font-weight:900;color:#E83CB6">›</span>
+            </button>
+
+            <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+              <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.08em">HISTORIAL</div>
+              <div style="display:flex;flex-direction:column;gap:0">
+                <div style="display:flex;gap:14px;padding-bottom:18px;border-bottom:1px solid #E4E9F2">
+                  <span style="flex:0 0 20px;width:20px;height:20px;border-radius:50%;background:#16A34A;margin-top:4px"></span>
+                  <div style="display:flex;flex-direction:column;gap:3px">
+                    <div style="font-size:19px;font-weight:900">Hoy</div>
+                    <div style="font-size:16px;line-height:1.5;font-weight:700">Estado estable · Medicamentos completos · Sin alertas</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:14px;padding:18px 0;border-bottom:1px solid #E4E9F2">
+                  <span style="flex:0 0 20px;width:20px;height:20px;border-radius:50%;background:#F59E0B;margin-top:4px"></span>
+                  <div style="display:flex;flex-direction:column;gap:3px">
+                    <div style="font-size:19px;font-weight:900">Ayer</div>
+                    <div style="font-size:16px;line-height:1.5;font-weight:700">Presión fuera de rango · el visitador revisó la alerta</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:14px;padding-top:18px">
+                  <span style="flex:0 0 20px;width:20px;height:20px;border-radius:50%;background:#DC2626;margin-top:4px"></span>
+                  <div style="display:flex;flex-direction:column;gap:3px">
+                    <div style="font-size:19px;font-weight:900">14 de agosto</div>
+                    <div style="font-size:16px;line-height:1.5;font-weight:700">Caída registrada · visita realizada</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ enPasos }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <div style="display:flex;flex-direction:column;gap:3px">
+                <div style="font-size:12px;font-weight:900;color:#5B6B85;letter-spacing:.08em">{{ origenTexto }}</div>
+                <div style="font-size:21px;font-weight:900">{{ tituloPaso }}</div>
+              </div>
+              <div style="font-size:15px;font-weight:900;color:#E83CB6;white-space:nowrap">{{ bitPaso }}</div>
+            </div>
+            <div style="height:8px;background:#E4E9F2;border-radius:99px;overflow:hidden"><div style="width:{{ bitPct }};height:100%;background:#E83CB6;border-radius:99px;transition:width .3s"></div></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ bit1 }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+            <div style="font-size:25px;font-weight:900;line-height:1.2">{{ pregComparativo }}</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button style="display:flex;align-items:center;gap:9px;padding:12px 18px;border:2px solid #5FA8E1;border-radius:99px;background:#fff;color:#1E5AA7;font-size:15px;font-weight:900;cursor:pointer"><span style="width:16px;height:16px;border-radius:50%;background:#5FA8E1"></span>Escuchar la pregunta</button>
+                <button style="display:flex;align-items:center;gap:9px;padding:12px 18px;border:2px solid #E83CB6;border-radius:99px;background:#fff;color:#E83CB6;font-size:15px;font-weight:900;cursor:pointer"><span style="width:13px;height:18px;border-radius:99px;background:#E83CB6"></span>Responder hablando</button>
+              </div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <sc-for list="{{ comparativos }}" as="o" hint-placeholder-count="3">
+                <button onClick="{{ o.on }}" style="text-align:left;display:flex;align-items:center;gap:18px;padding:20px;border-radius:20px;cursor:pointer;border:{{ o.bd }};background:{{ o.bg }}">
+                  <span style="flex:0 0 56px;width:56px;height:56px;border-radius:50%;background:{{ o.color }}"></span>
+                  <span style="display:flex;flex-direction:column;gap:3px"><span style="font-size:24px;font-weight:900">{{ o.label }}</span><span style="font-size:16px;color:#5B6B85;font-weight:600">{{ o.sub }}</span></span>
+                </button>
+              </sc-for>
+            </div>
+            <div style="height:1px;background:#E4E9F2"></div>
+            <div style="font-size:20px;font-weight:900">{{ pregAlerta }}</div>
+            <div style="display:flex;flex-direction:column;gap:11px">
+              <sc-for list="{{ alertas }}" as="o" hint-placeholder-count="4">
+                <button onClick="{{ o.on }}" style="text-align:left;display:flex;align-items:center;gap:16px;padding:18px;border-radius:18px;cursor:pointer;border:{{ o.bd }};background:{{ o.bg }}">
+                  <span style="flex:0 0 34px;width:34px;height:34px;border-radius:50%;background:{{ o.color }}"></span>
+                  <span style="font-size:19px;font-weight:800">{{ o.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <div style="height:1px;background:#E4E9F2"></div>
+            <div style="font-size:20px;font-weight:900">{{ pregMovGeneral }}</div>
+            <div style="display:flex;flex-direction:column;gap:11px">
+              <sc-for list="{{ movGenerales }}" as="o" hint-placeholder-count="3">
+                <button onClick="{{ o.on }}" style="text-align:left;display:flex;align-items:center;gap:16px;padding:18px;border-radius:18px;cursor:pointer;border:{{ o.bd }};background:{{ o.bg }}">
+                  <span style="flex:0 0 34px;width:34px;height:34px;border-radius:10px;background:{{ o.color }}"></span>
+                  <span style="font-size:19px;font-weight:800">{{ o.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ bit2 }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.08em">SIGNOS VITALES</div>
+              <div style="font-size:17px;line-height:1.45;color:#5B6B85;font-weight:600">Solo aparecen los datos que el visitador configuró para este paciente. No hay que llenarlos todos.</div>
+            </div>
+              <div style="display:flex;gap:13px;align-items:center;padding:16px;background:#EEF9FB;border:1.5px solid #CDE9EF;border-radius:16px;flex-wrap:wrap">
+                <img src="assets/eli/explica.png" alt="Elí" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex:0 0 48px;border:2px solid #E83CB6"/>
+                <div style="flex:1;min-width:160px;font-size:16px;line-height:1.45;font-weight:800;color:#0E7490">¿No sabes cómo tomar la presión?</div>
+                <button style="flex:0 0 auto;padding:13px 18px;border:2px solid #0E7490;border-radius:99px;background:#fff;color:#0E7490;font-size:15px;font-weight:900;cursor:pointer">Elí, enséñame</button>
+              </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <div style="flex:1;min-width:150px;display:flex;flex-direction:column;gap:8px">
+                <label style="font-size:17px;font-weight:900">Presión alta</label>
+                <input value="{{ sistolica }}" onChange="{{ setSist }}" placeholder="128" style="width:100%;box-sizing:border-box;padding:18px;border:1.5px solid #D8DFEA;border-radius:14px;font-size:30px;font-weight:900;color:#14213D;background:#fff;text-align:center"/>
+              </div>
+              <div style="flex:1;min-width:150px;display:flex;flex-direction:column;gap:8px">
+                <label style="font-size:17px;font-weight:900">Presión baja</label>
+                <input value="{{ diastolica }}" onChange="{{ setDia }}" placeholder="78" style="width:100%;box-sizing:border-box;padding:18px;border:1.5px solid #D8DFEA;border-radius:14px;font-size:30px;font-weight:900;color:#14213D;background:#fff;text-align:center"/>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <div style="flex:1;min-width:150px;display:flex;flex-direction:column;gap:8px">
+                <label style="font-size:17px;font-weight:900">Temperatura</label>
+                <input value="{{ temp }}" onChange="{{ setTemp }}" placeholder="36.8" style="width:100%;box-sizing:border-box;padding:18px;border:1.5px solid #D8DFEA;border-radius:14px;font-size:30px;font-weight:900;color:#14213D;background:#fff;text-align:center"/>
+              </div>
+              <div style="flex:1;min-width:150px;display:flex;flex-direction:column;gap:8px">
+                <label style="font-size:17px;font-weight:900">Glucosa</label>
+                <input value="{{ spo2 }}" onChange="{{ setSpo2 }}" placeholder="110" style="width:100%;box-sizing:border-box;padding:18px;border:1.5px solid #D8DFEA;border-radius:14px;font-size:30px;font-weight:900;color:#14213D;background:#fff;text-align:center"/>
+              </div>
+            </div>
+            <div style="padding:14px 16px;background:#EEF4FC;border-radius:12px;font-size:15px;line-height:1.5;color:#1E5AA7;font-weight:700">{{ rangoTexto }}</div>
+            <sc-if value="{{ haySev }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:20px;border-radius:18px;border:2.5px solid {{ sevBd }};background:{{ sevBg }};display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;gap:16px;align-items:flex-start">
+                  <span style="flex:0 0 38px;width:38px;height:38px;border-radius:50%;background:#fff;border:2px solid {{ sevBd }};display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1;margin-top:2px">{{ sevEmoji }}</span>
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <div style="font-size:20px;font-weight:900;color:{{ sevColor }};line-height:1.25">{{ sevTitulo }}</div>
+                    <div style="font-size:16px;line-height:1.5;font-weight:600">{{ sevDetalle }}</div>
+                    <div style="font-size:16px;line-height:1.5;font-weight:800">Ya registramos esta información para que pueda ser revisada por su equipo de atención.</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:13px;align-items:center;padding:14px;background:#fff;border-radius:14px;flex-wrap:wrap">
+                  <img src="assets/eli/alerta.png" alt="Elí" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex:0 0 44px;border:2px solid #E83CB6"/>
+                  <div style="flex:1;min-width:180px;font-size:15px;line-height:1.45;font-weight:700">Ya registramos este dato. Si quieres, puedo explicarte qué hacer dentro de ELÍGEME mientras tu equipo lo revisa.</div>
+                </div>
+              </div>
+            </sc-if>
+            <div style="padding:14px 16px;background:#F1F3F6;border-radius:12px;font-size:14px;line-height:1.5;color:#5B6B85;font-weight:700">El semáforo no diagnostica. Los rangos los define el profesional responsable de este paciente.</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ bit3 }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+            <div style="font-size:25px;font-weight:900;line-height:1.2">{{ pregComida }}</div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <sc-for list="{{ alimentaciones }}" as="o" hint-placeholder-count="3">
+                <button onClick="{{ o.on }}" style="text-align:left;display:flex;align-items:center;gap:18px;padding:20px;border-radius:20px;cursor:pointer;border:{{ o.bd }};background:{{ o.bg }}">
+                  <span style="flex:0 0 48px;width:48px;height:48px;border-radius:14px;background:{{ o.color }}"></span>
+                  <span style="font-size:21px;font-weight:900">{{ o.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <div style="height:1px;background:#E4E9F2"></div>
+            <div style="font-size:21px;font-weight:900">{{ pregLiquidos }}</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <sc-for list="{{ liquidosOpts }}" as="o" hint-placeholder-count="3">
+                <button onClick="{{ o.on }}" style="flex:1;min-width:110px;padding:20px 10px;border-radius:16px;font-size:19px;font-weight:900;cursor:pointer;border:{{ o.bd }};background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+              </sc-for>
+            </div>
+            <div style="height:1px;background:#E4E9F2"></div>
+            <div style="font-size:19px;font-weight:900">¿Hubo algún problema con la comida o los líquidos?</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button style="display:flex;align-items:center;gap:9px;padding:12px 18px;border:2px solid #5FA8E1;border-radius:99px;background:#fff;color:#1E5AA7;font-size:15px;font-weight:900;cursor:pointer"><span style="width:16px;height:16px;border-radius:50%;background:#5FA8E1"></span>Escuchar la pregunta</button>
+                <button style="display:flex;align-items:center;gap:9px;padding:12px 18px;border:2px solid #E83CB6;border-radius:99px;background:#fff;color:#E83CB6;font-size:15px;font-weight:900;cursor:pointer"><span style="width:13px;height:18px;border-radius:99px;background:#E83CB6"></span>Responder hablando</button>
+              </div>
+            <textarea rows="3" placeholder="Opcional" style="width:100%;box-sizing:border-box;padding:16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:17px;font-weight:600;color:#14213D;background:#fff;resize:vertical;line-height:1.5"></textarea>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ bit4 }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+            <div style="font-size:25px;font-weight:900;line-height:1.2">{{ preguntaMeds }}</div>
+              <div style="display:flex;gap:13px;align-items:center;padding:16px;background:#EEF9FB;border:1.5px solid #CDE9EF;border-radius:16px;flex-wrap:wrap">
+                <img src="assets/eli/explica.png" alt="Elí" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex:0 0 48px;border:2px solid #E83CB6"/>
+                <div style="flex:1;min-width:160px;font-size:16px;line-height:1.45;font-weight:800;color:#0E7490">¿No sabes cómo registrar un medicamento?</div>
+                <button style="flex:0 0 auto;padding:13px 18px;border:2px solid #0E7490;border-radius:99px;background:#fff;color:#0E7490;font-size:15px;font-weight:900;cursor:pointer">Elí, explícame</button>
+              </div>
+            <sc-for list="{{ medicamentos }}" as="m" hint-placeholder-count="3">
+              <div style="padding:18px;border:1.5px solid #D8DFEA;border-radius:18px;display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                  <div style="display:flex;flex-direction:column;gap:3px">
+                    <div style="font-size:21px;font-weight:900">{{ m.nombre }}</div>
+                    <div style="font-size:15px;font-weight:700;color:#5B6B85">{{ m.dosis }} · {{ m.ind }}</div>
+                  </div>
+                  <div style="padding:9px 15px;border-radius:99px;background:#EEF4FC;font-size:16px;font-weight:900;color:#1E5AA7;white-space:nowrap">{{ m.hora }}</div>
+                </div>
+                <div style="display:flex;gap:9px;flex-wrap:wrap">
+                  <button onClick="{{ m.tome.on }}" style="flex:1;min-width:104px;padding:15px 8px;border-radius:14px;font-size:16px;font-weight:900;cursor:pointer;border:{{ m.tome.bd }};background:{{ m.tome.bg }};color:{{ m.tome.fg }}">{{ m.etiquetaTome }}</button>
+                  <button onClick="{{ m.despues.on }}" style="flex:1;min-width:104px;padding:15px 8px;border-radius:14px;font-size:16px;font-weight:900;cursor:pointer;border:{{ m.despues.bd }};background:{{ m.despues.bg }};color:{{ m.despues.fg }}">Lo tomó tarde</button>
+                  <button onClick="{{ m.noTome.on }}" style="flex:1;min-width:104px;padding:15px 8px;border-radius:14px;font-size:16px;font-weight:900;cursor:pointer;border:{{ m.noTome.bd }};background:{{ m.noTome.bg }};color:{{ m.noTome.fg }}">No lo tomó</button>
+                  <button onClick="{{ m.noSe.on }}" style="flex:1;min-width:104px;padding:15px 8px;border-radius:14px;font-size:16px;font-weight:900;cursor:pointer;border:{{ m.noSe.bd }};background:{{ m.noSe.bg }};color:{{ m.noSe.fg }}">No sé</button>
+                </div>
+                <sc-if value="{{ m.pedirMotivo }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:16px;border-left:3px solid #E83CB6;background:#FDF7FB;border-radius:0 14px 14px 0;display:flex;flex-direction:column;gap:11px">
+                    <div style="font-size:18px;font-weight:900">¿Por qué?</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px">
+                      <sc-for list="{{ motivos }}" as="r" hint-placeholder-count="6">
+                        <span style="padding:12px 16px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">{{ r.t }}</span>
+                      </sc-for>
+                    </div>
+                    <div style="padding:14px;background:#fff;border:1.5px solid #F3DCA9;border-radius:12px;display:flex;flex-direction:column;gap:9px">
+                      <div style="font-size:16px;font-weight:900">Si le produjo malestar: ¿qué ocurrió?</div>
+                      <div style="font-size:14px;line-height:1.45;color:#5B6B85;font-weight:700">Puede contarlo hablando. Según la configuración, esto genera una alerta para el visitador.</div>
+                      <button style="align-self:flex-start;display:flex;align-items:center;gap:9px;padding:12px 18px;border:2px solid #E83CB6;border-radius:99px;background:#fff;color:#E83CB6;font-size:15px;font-weight:900;cursor:pointer"><span style="width:13px;height:18px;border-radius:99px;background:#E83CB6"></span>Contarlo hablando</button>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ bit5 }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+            <div style="font-size:25px;font-weight:900;line-height:1.2">{{ pregHigiene }}</div>
+            <div style="font-size:16px;line-height:1.45;color:#5B6B85;font-weight:600">Solo aparecen las actividades que corresponden a este paciente.</div>
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <sc-for list="{{ higieneItems }}" as="h" hint-placeholder-count="5">
+                <div style="display:flex;flex-direction:column;gap:10px;padding-bottom:16px;border-bottom:1px solid #E4E9F2">
+                  <div style="font-size:19px;font-weight:800">{{ h.label }}</div>
+                  <div style="display:flex;gap:9px;flex-wrap:wrap">
+                    <button onClick="{{ h.si.on }}" style="flex:1;min-width:96px;padding:15px 8px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;border:{{ h.si.bd }};background:{{ h.si.bg }};color:{{ h.si.fg }}">Sí</button>
+                    <button onClick="{{ h.no.on }}" style="flex:1;min-width:96px;padding:15px 8px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;border:{{ h.no.bd }};background:{{ h.no.bg }};color:{{ h.no.fg }}">No</button>
+                    <button onClick="{{ h.na.on }}" style="flex:1;min-width:96px;padding:15px 8px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;border:{{ h.na.bd }};background:{{ h.na.bg }};color:{{ h.na.fg }}">No aplica</button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ bit6 }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+            <div style="font-size:25px;font-weight:900;line-height:1.2">{{ pregMovilizacion }}</div>
+              <div style="display:flex;gap:13px;align-items:center;padding:16px;background:#EEF9FB;border:1.5px solid #CDE9EF;border-radius:16px;flex-wrap:wrap">
+                <img src="assets/eli/explica.png" alt="Elí" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex:0 0 48px;border:2px solid #E83CB6"/>
+                <div style="flex:1;min-width:160px;font-size:16px;line-height:1.45;font-weight:800;color:#0E7490">¿Quieres recordar cómo hacer el cambio de postura indicado por tu equipo?</div>
+                <button style="flex:0 0 auto;padding:13px 18px;border:2px solid #0E7490;border-radius:99px;background:#fff;color:#0E7490;font-size:15px;font-weight:900;cursor:pointer">Elí, recuérdame</button>
+              </div>
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <sc-for list="{{ movilizacionItems }}" as="h" hint-placeholder-count="2">
+                <div style="display:flex;flex-direction:column;gap:10px;padding-bottom:16px;border-bottom:1px solid #E4E9F2">
+                  <div style="font-size:19px;font-weight:800">{{ h.label }}</div>
+                  <div style="display:flex;gap:9px;flex-wrap:wrap">
+                    <button onClick="{{ h.si.on }}" style="flex:1;min-width:96px;padding:15px 8px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;border:{{ h.si.bd }};background:{{ h.si.bg }};color:{{ h.si.fg }}">Sí</button>
+                    <button onClick="{{ h.no.on }}" style="flex:1;min-width:96px;padding:15px 8px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;border:{{ h.no.bd }};background:{{ h.no.bg }};color:{{ h.no.fg }}">No</button>
+                    <button onClick="{{ h.na.on }}" style="flex:1;min-width:96px;padding:15px 8px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;border:{{ h.na.bd }};background:{{ h.na.bg }};color:{{ h.na.fg }}">No aplica</button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="font-size:19px;font-weight:900">¿Usó alguna ayuda para movilizarse?</div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px">
+              <sc-for list="{{ ayudas }}" as="o" hint-placeholder-count="5">
+                <button onClick="{{ o.on }}" style="padding:15px 20px;border-radius:99px;font-size:17px;font-weight:800;cursor:pointer;border:{{ o.bd }};background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ bit7 }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+            <div style="font-size:25px;font-weight:900;line-height:1.2">{{ pregEventos }}</div>
+            <div style="font-size:16px;line-height:1.45;color:#5B6B85;font-weight:600">Puede marcar varios.</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+              <sc-for list="{{ eventosItems }}" as="e" hint-placeholder-count="6">
+                <button onClick="{{ e.on }}" style="padding:22px 18px;border-radius:20px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:12px;border:{{ e.bd }};background:{{ e.bg }}">
+                  <span style="width:48px;height:48px;border-radius:14px;background:{{ e.color }}"></span>
+                  <span style="font-size:18px;font-weight:900;text-align:center;line-height:1.3">{{ e.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ hayEvento }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:20px;border-left:3px solid #DC2626;background:#FDEEEE;border-radius:0 18px 18px 0;display:flex;flex-direction:column;gap:12px">
+                <div style="font-size:20px;font-weight:900">¿Quieres contarnos qué pasó?</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button style="display:flex;align-items:center;gap:9px;padding:12px 18px;border:2px solid #5FA8E1;border-radius:99px;background:#fff;color:#1E5AA7;font-size:15px;font-weight:900;cursor:pointer"><span style="width:16px;height:16px;border-radius:50%;background:#5FA8E1"></span>Escuchar la pregunta</button>
+                <button style="display:flex;align-items:center;gap:9px;padding:12px 18px;border:2px solid #E83CB6;border-radius:99px;background:#fff;color:#E83CB6;font-size:15px;font-weight:900;cursor:pointer"><span style="width:13px;height:18px;border-radius:99px;background:#E83CB6"></span>Responder hablando</button>
+              </div>
+                <textarea rows="3" placeholder="Opcional" style="width:100%;box-sizing:border-box;padding:16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:17px;font-weight:600;color:#14213D;background:#fff;resize:vertical;line-height:1.5"></textarea>
+                <div style="padding:14px;background:#fff;border-radius:12px;font-size:14px;line-height:1.5;color:#5B6B85;font-weight:700">Se registra tipo de evento, fecha, hora, quién lo reportó, paciente, descripción y nivel de alerta generado. El nivel de riesgo y a quién se notifica los configura el hospital o el visitador.</div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ bit8 }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+              <div style="font-size:25px;font-weight:900;line-height:1.2">{{ preguntaExtra }}</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button style="display:flex;align-items:center;gap:9px;padding:12px 18px;border:2px solid #5FA8E1;border-radius:99px;background:#fff;color:#1E5AA7;font-size:15px;font-weight:900;cursor:pointer"><span style="width:16px;height:16px;border-radius:50%;background:#5FA8E1"></span>Escuchar la pregunta</button>
+                <button style="display:flex;align-items:center;gap:9px;padding:12px 18px;border:2px solid #E83CB6;border-radius:99px;background:#fff;color:#E83CB6;font-size:15px;font-weight:900;cursor:pointer"><span style="width:13px;height:18px;border-radius:99px;background:#E83CB6"></span>Responder hablando</button>
+              </div>
+              <textarea rows="4" placeholder="Opcional. No hace falta escribir nada." style="width:100%;box-sizing:border-box;padding:16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:17px;font-weight:600;color:#14213D;background:#fff;resize:vertical;line-height:1.5"></textarea>
+              <button style="align-self:flex-start;padding:15px 22px;border:2px solid #16A34A;border-radius:99px;background:#EFF9F1;color:#16A34A;font-size:17px;font-weight:900;cursor:pointer">No, terminar</button>
+            </div>
+            <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+              <div style="font-size:23px;font-weight:900">Revisa tu registro</div>
+              <div style="display:flex;flex-direction:column;gap:0">
+                <div style="display:flex;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid #E4E9F2;flex-wrap:wrap"><span style="font-size:16px;font-weight:700;color:#5B6B85">¿Cómo está?</span><span style="font-size:17px;font-weight:900">{{ resumenEstado }}</span></div>
+                <div style="display:flex;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid #E4E9F2;flex-wrap:wrap"><span style="font-size:16px;font-weight:700;color:#5B6B85">Presión arterial</span><span style="font-size:17px;font-weight:900">{{ resumenPresion }}</span></div>
+                <div style="display:flex;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid #E4E9F2;flex-wrap:wrap"><span style="font-size:16px;font-weight:700;color:#5B6B85">Alertas</span><span style="font-size:17px;font-weight:900">{{ resumenAlertas }}</span></div>
+                <div style="display:flex;justify-content:space-between;gap:12px;padding:14px 0;flex-wrap:wrap"><span style="font-size:16px;font-weight:700;color:#5B6B85">Origen del registro</span><span style="font-size:17px;font-weight:900">{{ origenDetalle }}</span></div>
+              </div>
+            </div>
+            <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+              <button onClick="{{ toggleAutDatos }}" style="text-align:left;display:flex;gap:14px;align-items:flex-start;padding:18px;border-radius:16px;cursor:pointer;background:{{ autBg }};border:{{ autBd }}">
+                <span style="flex:0 0 30px;width:30px;height:30px;border-radius:9px;border:2.5px solid #D8DFEA;display:flex;align-items:center;justify-content:center;background:{{ autBox }}"><span style="width:12px;height:12px;border-radius:3px;background:{{ autTick }}"></span></span>
+                <span style="display:flex;flex-direction:column;gap:4px">
+                  <span style="font-size:17px;font-weight:900;line-height:1.35">{{ autTitulo }}</span>
+                  <span style="font-size:15px;line-height:1.5;font-weight:700;color:#5B6B85">Ley 1581 de 2012. Sin esta autorización no podemos guardar el registro.</span>
+                </span>
+              </button>
+              <sc-if value="{{ autFalta }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:14px 16px;background:#FDEEEE;border:1.5px solid #F5C2C2;border-radius:12px;font-size:15px;font-weight:800;color:#DC2626">Marca la autorización de tratamiento de datos para poder guardar.</div>
+              </sc-if>
+              <div style="height:1px;background:#E4E9F2"></div>
+              <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.08em">{{ firmaTitulo }}</div>
+              <button onClick="{{ firmar }}" style="height:120px;border:2px dashed #D8DFEA;border-radius:16px;background:#FAFBFD;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#5B6B85">Toca aquí para firmar</button>
+              <div style="font-size:14px;line-height:1.5;color:#5B6B85;font-weight:700">La firma se conserva para no romper lo que ya existe. Más adelante puede validarse con la sesión del usuario.</div>
+              <div style="display:flex;gap:12px;flex-wrap:wrap">
+                <button onClick="{{ bitPrev }}" style="padding:18px 24px;border:2px solid #D8DFEA;border-radius:14px;background:#fff;font-size:17px;font-weight:900;cursor:pointer">Corregir</button>
+                <button onClick="{{ guardarBitacora }}" style="flex:1;min-width:200px;padding:20px;border:none;border-radius:14px;background:{{ guardarBg }};color:#fff;font-size:19px;font-weight:900;cursor:pointer">Guardar bitácora</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ enPasos }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <button onClick="{{ bitPrev }}" style="padding:16px 24px;border:2px solid #D8DFEA;border-radius:14px;background:#fff;font-size:17px;font-weight:900;cursor:pointer">Atrás</button>
+            <button onClick="{{ bitNext }}" style="flex:1;min-width:200px;padding:18px;border:none;border-radius:14px;background:#1E5AA7;color:#fff;font-size:19px;font-weight:900;cursor:pointer">Siguiente</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vSalud }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:26px;font-weight:900">{{ tituloSalud }}</div>
+          <div style="font-size:17px;line-height:1.5;color:#5B6B85;font-weight:600">Un resumen sencillo. La historia clínica completa la manejan el hospital y los profesionales.</div>
+        </div>
+        <div style="background:#fff;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.08em">INDICACIONES ACTUALES</div>
+          <div style="padding:16px;border-left:3px solid #1E5AA7;background:#EEF4FC;border-radius:0 14px 14px 0;display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:17px;line-height:1.5;font-weight:700">Tomar la presión dos veces al día, en la mañana y en la noche, siempre a la misma hora.</div>
+            <div style="font-size:14px;font-weight:800;color:#5B6B85">Dra. Ana Torres · Visitador · 14 ago 2026</div>
+          </div>
+          <div style="padding:16px;border-left:3px solid #1E5AA7;background:#EEF4FC;border-radius:0 14px 14px 0;display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:17px;line-height:1.5;font-weight:700">Caminar 15 minutos al día, acompañada, dentro de la casa o el patio.</div>
+            <div style="font-size:14px;font-weight:800;color:#5B6B85">Dr. Juan Pérez · Hospital · 10 ago 2026</div>
+          </div>
+        </div>
+        <div style="background:#fff;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.08em">RESULTADOS RECIENTES DE LA BITÁCORA</div>
+          <div style="display:flex;align-items:center;gap:14px;padding:15px;border-radius:14px;background:#FEF6E9;border:1.5px solid #F3DCA9">
+            <span style="flex:0 0 26px;width:26px;height:26px;border-radius:50%;background:#F59E0B"></span>
+            <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:17px;font-weight:900">Presión 148 / 92 · requiere seguimiento</div><div style="font-size:14px;font-weight:700;color:#5B6B85">16 ago 2026, 8:10 a. m. · Registrado por cuidador</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:15px;border-radius:14px;background:#EFF9F1;border:1.5px solid #BFE5C9">
+            <span style="flex:0 0 26px;width:26px;height:26px;border-radius:50%;background:#16A34A"></span>
+            <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:17px;font-weight:900">Presión 128 / 80 · dentro del rango</div><div style="font-size:14px;font-weight:700;color:#5B6B85">15 ago 2026, 8:05 a. m. · Registrado por el paciente</div></div>
+          </div>
+        </div>
+        <div style="background:#fff;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.08em">MEDICAMENTOS ACTUALES</div>
+          <sc-for list="{{ medicamentos }}" as="m" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid #E4E9F2;flex-wrap:wrap">
+              <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:17px;font-weight:900">{{ m.nombre }}</div><div style="font-size:14px;font-weight:700;color:#5B6B85">{{ m.dosis }} · {{ m.ind }}</div></div>
+              <div style="font-size:15px;font-weight:900;color:#1E5AA7">{{ m.hora }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vAgenda }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:26px;font-weight:900">{{ tituloAgenda }}</div>
+          <div style="padding:20px;border:2.5px solid #16A34A;border-radius:18px;background:#EFF9F1;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:12px;font-weight:900;color:#16A34A;letter-spacing:.08em">{{ tituloProxima }} · CONFIRMADA</div>
+              <div style="font-size:21px;font-weight:900">Mañana, 18 ago · 10:00 a. m.</div>
+              <div style="font-size:16px;font-weight:700;color:#5B6B85">{{ subProxima }}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <span style="padding:10px 16px;border-radius:99px;background:#fff;border:1.5px solid #BFE5C9;font-size:14px;font-weight:900;color:#16A34A;text-align:center">Recordatorio activo</span>
+              <span style="font-size:13px;font-weight:800;color:#5B6B85;text-align:center">También por WhatsApp</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:22px;font-weight:900">Solicitar una cita</div>
+            <div style="font-size:17px;line-height:1.5;color:#5B6B85;font-weight:600">Elige el tipo de atención que necesitas.</div>
+          </div>
+          <sc-for list="{{ citas }}" as="c" hint-placeholder-count="3">
+            <button onClick="{{ c.on }}" style="text-align:left;padding:20px;border-radius:20px;cursor:pointer;display:flex;flex-direction:column;gap:8px;border:{{ c.bd }};background:{{ c.bg }}">
+              <span style="display:flex;align-items:center;gap:13px">
+                <span style="flex:0 0 54px;width:54px;height:54px;border-radius:16px;background:#fff;border:2px solid #D8DFEA;display:flex;align-items:center;justify-content:center;font-size:28px;line-height:1">{{ c.emoji }}</span>
+                <span style="font-size:21px;font-weight:900;line-height:1.25">{{ c.titulo }}</span>
+              </span>
+              <span style="font-size:16px;line-height:1.45;color:#5B6B85;font-weight:600">{{ c.sub }}</span>
+              <span style="font-size:17px;font-weight:900;color:#1E5AA7">{{ c.costo }}</span>
+            </button>
+          </sc-for>
+
+          <sc-if value="{{ citaSolicitada }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:20px;border-radius:18px;background:#EEF4FC;border:2px solid #D9E5F5;display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:12px;font-weight:900;color:#1E5AA7;letter-spacing:.08em">SOLICITUD DE CITA ENVIADA</div>
+              <div style="font-size:17px;line-height:1.5;font-weight:700">{{ textoSolicitud }}</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ pagoCosto }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:22px;border-radius:18px;background:#FDF7FB;border:2.5px solid #E83CB6;display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                <div style="font-size:19px;font-weight:900">{{ tituloElegido }}</div>
+                <div style="font-size:26px;font-weight:900;color:#E83CB6">{{ costoElegido }}</div>
+              </div>
+              <div style="font-size:16px;line-height:1.5;color:#5B6B85;font-weight:600">Antes de confirmar la solicitud debes completar el pago. La cita solo se agenda cuando el pago quede confirmado.</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button onClick="{{ irAPago }}" style="flex:1;min-width:200px;padding:18px;border:none;border-radius:14px;background:#16A34A;color:#fff;font-size:18px;font-weight:900;cursor:pointer">Continuar al pago</button>
+                <button onClick="{{ cancelarCita }}" style="padding:18px 22px;border:2px solid #D8DFEA;border-radius:14px;background:#fff;font-size:17px;font-weight:900;cursor:pointer">Cancelar</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ pagoProceso }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:22px;border-radius:18px;background:#fff;border:2.5px solid #1E5AA7;display:flex;flex-direction:column;gap:16px">
+              <div style="font-size:19px;font-weight:900">¿Cómo quieres pagar?</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button onClick="{{ confirmarPago }}" style="flex:1;min-width:150px;padding:22px;border:2px solid #D8DFEA;border-radius:16px;background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:12px;background:#6D5BD0"></span><span style="font-size:19px;font-weight:900">Nequi</span></button>
+                <button onClick="{{ confirmarPago }}" style="flex:1;min-width:150px;padding:22px;border:2px solid #D8DFEA;border-radius:16px;background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:12px;background:#1E5AA7"></span><span style="font-size:19px;font-weight:900">PSE</span></button>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:#FEF6E9;border:1.5px solid #F3DCA9;border-radius:12px">
+                <span style="flex:0 0 10px;width:10px;height:10px;border-radius:50%;background:#F59E0B"></span>
+                <span style="font-size:15px;line-height:1.45;font-weight:700">Estado: esperando confirmación del pago. La cita todavía no está solicitada.</span>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ pagoConfirmado }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:22px;border-radius:18px;background:#EFF9F1;border:2.5px solid #16A34A;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:11px"><span style="width:22px;height:22px;border-radius:50%;background:#16A34A"></span><span style="font-size:16px;font-weight:900;letter-spacing:.06em">PAGO CONFIRMADO</span></div>
+                <div style="display:flex;align-items:center;gap:11px"><span style="width:22px;height:22px;border-radius:50%;background:#16A34A"></span><span style="font-size:16px;font-weight:900;letter-spacing:.06em">SOLICITUD DE CITA ENVIADA</span></div>
+                <div style="display:flex;align-items:center;gap:11px"><span style="width:22px;height:22px;border-radius:50%;background:#E4E9F2"></span><span style="font-size:16px;font-weight:900;letter-spacing:.06em;color:#5B6B85">CITA CONFIRMADA · PENDIENTE</span></div>
+              </div>
+              <div style="font-size:16px;line-height:1.5;font-weight:700">{{ tituloElegido }} · {{ costoElegido }}. {{ textoAvisaremos }}</div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vNovedades }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:26px;font-weight:900">Novedades</div>
+          <div style="font-size:17px;line-height:1.5;color:#5B6B85;font-weight:600">Cada novedad guarda fecha, hora, origen, tipo, paciente y estado. Las marcadas también se envían por WhatsApp.</div>
+        </div>
+        <div style="background:#fff;border-radius:20px;padding:8px 20px;display:flex;flex-direction:column;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="padding:18px 0;border-bottom:1px solid #E4E9F2;display:flex;gap:14px;align-items:flex-start">
+            <span style="flex:0 0 12px;width:12px;height:12px;border-radius:50%;background:#DC2626;margin-top:6px"></span>
+            <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:18px;font-weight:900;line-height:1.35">Uno de tus registros requiere seguimiento</div>
+              <div style="font-size:15px;font-weight:700;color:#5B6B85">Bitácora · 16 ago 2026, 8:12 a. m. · Origen: SISTEMA</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:4px"><span style="padding:6px 12px;border-radius:99px;background:#FDEEEE;font-size:13px;font-weight:900;color:#DC2626">NUEVA</span><span style="padding:6px 12px;border-radius:99px;background:#EFF9F1;font-size:13px;font-weight:900;color:#16A34A">ENVIADA POR WHATSAPP</span></div>
+            </div>
+          </div>
+          <div style="padding:18px 0;border-bottom:1px solid #E4E9F2;display:flex;gap:14px;align-items:flex-start">
+            <span style="flex:0 0 12px;width:12px;height:12px;border-radius:50%;background:#1E5AA7;margin-top:6px"></span>
+            <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:18px;font-weight:900;line-height:1.35">Tu visitador dejó una nueva indicación</div>
+              <div style="font-size:15px;font-weight:700;color:#5B6B85">Indicación · 14 ago 2026, 4:30 p. m. · Origen: VISITADOR</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:4px"><span style="padding:6px 12px;border-radius:99px;background:#FDEEEE;font-size:13px;font-weight:900;color:#DC2626">NUEVA</span></div>
+            </div>
+          </div>
+          <div style="padding:18px 0;border-bottom:1px solid #E4E9F2;display:flex;gap:14px;align-items:flex-start">
+            <span style="flex:0 0 12px;width:12px;height:12px;border-radius:50%;background:#16A34A;margin-top:6px"></span>
+            <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:18px;font-weight:900;line-height:1.35">Tu cita fue confirmada</div>
+              <div style="font-size:15px;font-weight:700;color:#5B6B85">Cita · 13 ago 2026, 11:02 a. m. · Origen: HOSPITAL</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:4px"><span style="padding:6px 12px;border-radius:99px;background:#FDEEEE;font-size:13px;font-weight:900;color:#DC2626">NUEVA</span></div>
+            </div>
+          </div>
+          <div style="padding:18px 0;border-bottom:1px solid #E4E9F2;display:flex;gap:14px;align-items:flex-start">
+            <span style="flex:0 0 12px;width:12px;height:12px;border-radius:50%;background:#D97706;margin-top:6px"></span>
+            <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:18px;font-weight:900;line-height:1.35">Tienes un medicamento pendiente</div>
+              <div style="font-size:15px;font-weight:700;color:#5B6B85">Medicamentos · 13 ago 2026, 1:15 p. m. · Origen: SISTEMA</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:4px"><span style="padding:6px 12px;border-radius:99px;background:#F1F3F6;font-size:13px;font-weight:900;color:#5B6B85">VISTA</span></div>
+            </div>
+          </div>
+          <div style="padding:18px 0;display:flex;gap:14px;align-items:flex-start">
+            <span style="flex:0 0 12px;width:12px;height:12px;border-radius:50%;background:#6D5BD0;margin-top:6px"></span>
+            <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:18px;font-weight:900;line-height:1.35">Tu historia tiene una nueva actualización</div>
+              <div style="font-size:15px;font-weight:700;color:#5B6B85">Historia clínica · 12 ago 2026, 5:40 p. m. · Origen: HOSPITAL</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:4px"><span style="padding:6px 12px;border-radius:99px;background:#EFF9F1;font-size:13px;font-weight:900;color:#16A34A">ATENDIDA</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vVisitas }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:26px;font-weight:900">{{ tituloVisitas }}</div>
+          <div style="font-size:17px;line-height:1.5;color:#5B6B85;font-weight:600">Cuando una visita queda finalizada, ELÍGEME pide la calificación del profesional.</div>
+        </div>
+        <div style="background:#fff;border-radius:20px;padding:8px 20px;display:flex;flex-direction:column;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="padding:18px 0;border-bottom:1px solid #E4E9F2;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:3px"><div style="font-size:18px;font-weight:900">12 ago 2026 · Visita domiciliaria</div><div style="font-size:15px;font-weight:700;color:#5B6B85">Dra. Ana Torres · ESE Hospital Mario Gaitán Yanguas</div></div>
+            <span style="padding:9px 15px;border-radius:99px;background:#EFF9F1;font-size:14px;font-weight:900;color:#16A34A">Completada</span>
+          </div>
+          <div style="padding:18px 0;border-bottom:1px solid #E4E9F2;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:3px"><div style="font-size:18px;font-weight:900">5 ago 2026 · Consulta virtual</div><div style="font-size:15px;font-weight:700;color:#5B6B85">Dr. Juan Pérez · ESE Hospital Mario Gaitán Yanguas</div></div>
+            <span style="padding:9px 15px;border-radius:99px;background:#EFF9F1;font-size:14px;font-weight:900;color:#16A34A">Completada</span>
+          </div>
+          <div style="padding:18px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:3px"><div style="font-size:18px;font-weight:900">18 ago 2026 · Visita domiciliaria</div><div style="font-size:15px;font-weight:700;color:#5B6B85">Dra. Ana Torres · pendiente</div></div>
+            <span style="padding:9px 15px;border-radius:99px;background:#EEF4FC;font-size:14px;font-weight:900;color:#1E5AA7">Programada</span>
+          </div>
+        </div>
+        <div style="background:#fff;border:2.5px solid #E83CB6;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:12px;font-weight:900;color:#E83CB6;letter-spacing:.08em">VISITA FINALIZADA · 12 AGO 2026</div>
+            <div style="font-size:25px;font-weight:900;line-height:1.2">{{ preguntaCalificacion }}</div>
+            <div style="font-size:16px;font-weight:700;color:#5B6B85">Dra. Ana Torres · Visita domiciliaria</div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <sc-for list="{{ estrellas }}" as="e" hint-placeholder-count="5">
+              <button onClick="{{ e.on }}" style="width:58px;height:58px;border:none;border-radius:14px;cursor:pointer;background:{{ e.bg }}"></button>
+            </sc-for>
+            <span style="font-size:16px;font-weight:900;color:#5B6B85">{{ starsTexto }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <sc-for list="{{ criterios }}" as="c" hint-placeholder-count="9">
+              <div style="display:flex;flex-direction:column;gap:9px;padding-bottom:16px;border-bottom:1px solid #E4E9F2">
+                <div style="display:flex;flex-direction:column;gap:2px">
+                  <div style="font-size:18px;font-weight:900">{{ c.t }}</div>
+                  <div style="font-size:15px;line-height:1.4;font-weight:700;color:#5B6B85">{{ c.sub }}</div>
+                </div>
+                <div style="display:flex;gap:9px;flex-wrap:wrap">
+                  <sc-for list="{{ c.estrellas }}" as="e" hint-placeholder-count="5">
+                    <button onClick="{{ e.on }}" style="width:48px;height:48px;border:none;border-radius:12px;cursor:pointer;background:{{ e.bg }}"></button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div style="font-size:18px;font-weight:900">{{ subCalificacion }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <sc-for list="{{ calChips }}" as="c" hint-placeholder-count="7">
+                <button onClick="{{ c.on }}" style="padding:12px 16px;border-radius:99px;font-size:15px;font-weight:800;cursor:pointer;border:{{ c.bd }};background:{{ c.bg }};color:{{ c.fg }}">{{ c.t }}</button>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:4px">
+              <button style="flex:1;min-width:150px;padding:16px;border:2px solid #E83CB6;border-radius:14px;background:#FDF0F8;font-size:17px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px"><span style="width:16px;height:22px;border-radius:99px;background:#E83CB6"></span>Hablar</button>
+              <button style="flex:1;min-width:150px;padding:16px;border:2px solid #D8DFEA;border-radius:14px;background:#fff;font-size:17px;font-weight:900;cursor:pointer">Escribir</button>
+            </div>
+          </div>
+          <div style="padding:14px 16px;background:#F1F3F6;border-radius:12px;font-size:14px;line-height:1.5;color:#5B6B85;font-weight:700">Se guarda paciente, visitador, visita, fecha, puntuación y comentario. El profesional no puede modificar la evaluación recibida.</div>
+          <button onClick="{{ enviarCalificacion }}" style="width:100%;padding:18px;border:none;border-radius:14px;background:#16A34A;color:#fff;font-size:19px;font-weight:900;cursor:pointer">Enviar calificación</button>
+          <sc-if value="{{ calEnviada }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:18px;background:#EFF9F1;border:2px solid #CFE9D6;border-radius:16px;font-size:18px;line-height:1.45;font-weight:900;color:#16A34A">Gracias. Tu opinión nos ayuda a mejorar la atención.</div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vEli }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#1E5AA7;border-radius:22px;padding:24px;display:flex;align-items:center;gap:16px">
+          <img src="assets/eli/guia.png" alt="Elí" style="width:82px;height:82px;border-radius:50%;object-fit:cover;flex:0 0 82px;border:3px solid #E83CB6;background:#fff"/>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:25px;font-weight:900;color:#fff">Hablar con Elí</div>
+            <div style="font-size:16px;line-height:1.45;color:#BFD6F0;font-weight:700">Soy Elí, tu asistente virtual. No soy médica y no reemplazo la valoración de un profesional de salud.</div>
+          </div>
+        </div>
+        <div style="background:#fff;border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:12px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="align-self:flex-start;max-width:86%;background:#F1F3F6;border-radius:18px 18px 18px 5px;padding:15px 17px;font-size:17px;line-height:1.5;font-weight:700">Puedo explicarte cómo usar ELÍGEME, recordarte las indicaciones que dejó tu equipo y ayudarte a encontrar lo que necesitas.</div>
+          <div style="align-self:flex-end;max-width:86%;background:#1E5AA7;border-radius:18px 18px 5px 18px;padding:15px 17px;font-size:17px;line-height:1.5;color:#fff;font-weight:700">Me duele el pecho desde anoche</div>
+          <div style="align-self:flex-start;max-width:86%;background:#FDEEEE;border:1.5px solid #F5C2C2;border-radius:18px 18px 18px 5px;padding:15px 17px;display:flex;flex-direction:column;gap:8px">
+            <div style="font-size:17px;line-height:1.5;font-weight:800">No puedo diagnosticar esta situación. Puedo ayudarte a comunicarte con tu equipo de atención ahora mismo.</div>
+            <div style="font-size:15px;line-height:1.45;color:#5B6B85;font-weight:700">Si es una emergencia, llama a la línea de urgencias.</div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:9px;padding-top:6px">
+            <button onClick="{{ goAgenda }}" style="padding:14px 18px;border:2px solid #1E5AA7;border-radius:99px;background:#fff;color:#1E5AA7;font-size:16px;font-weight:900;cursor:pointer">Solicitar cita</button>
+            <button onClick="{{ goAgenda }}" style="padding:14px 18px;border:2px solid #1E5AA7;border-radius:99px;background:#fff;color:#1E5AA7;font-size:16px;font-weight:900;cursor:pointer">Solicitar visita</button>
+            <button onClick="{{ goAgenda }}" style="padding:14px 18px;border:2px solid #1E5AA7;border-radius:99px;background:#fff;color:#1E5AA7;font-size:16px;font-weight:900;cursor:pointer">Consulta virtual</button>
+            <button onClick="{{ goNovedades }}" style="padding:14px 18px;border:2px solid #1E5AA7;border-radius:99px;background:#fff;color:#1E5AA7;font-size:16px;font-weight:900;cursor:pointer">Ver novedades</button>
+            <sc-if value="{{ isCuidador }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ goFormacion }}" style="padding:14px 18px;border:2px solid #16A34A;border-radius:99px;background:#EFF9F1;color:#16A34A;font-size:16px;font-weight:900;cursor:pointer">¿Cómo puedo capacitarme como cuidador?</button>
+            </sc-if>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding-top:8px">
+            <div style="flex:1;padding:15px 18px;border-radius:99px;background:#F1F3F6;font-size:16px;color:#8A97AC;font-weight:600">Escribe o toca el micrófono…</div>
+            <div style="flex:0 0 54px;width:54px;height:54px;border-radius:50%;background:#E83CB6;display:flex;align-items:center;justify-content:center"><div style="width:18px;height:24px;border-radius:99px;background:#fff"></div></div>
+          </div>
+        </div>
+        <div style="background:#fff;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:10px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.08em">LÍMITES DE ELÍ</div>
+          <div style="font-size:16px;line-height:1.6;font-weight:700">No diagnostica. No prescribe medicamentos. No cambia tratamientos. No decide emergencias médicas por sí sola. Cuando una pregunta excede su función, orienta hacia el canal correspondiente.</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vInfo }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:26px;font-weight:900">{{ tituloInfo }}</div>
+          <div style="font-size:17px;line-height:1.5;color:#5B6B85;font-weight:600">Los mismos datos de la inscripción. Puede corregirlos cuando quiera.</div>
+        </div>
+        <div style="background:#fff;border-radius:20px;padding:8px 20px;display:flex;flex-direction:column;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="padding:18px 0;border-bottom:1px solid #E4E9F2;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">NOMBRE Y DOCUMENTO</div><div style="font-size:18px;font-weight:800">{{ nombre }} · CC 1.032.455.789</div></div>
+            <span style="padding:9px 15px;border:1.5px solid #D8DFEA;border-radius:99px;font-size:14px;font-weight:900;color:#1E5AA7">Editar</span>
+          </div>
+          <div style="padding:18px 0;border-bottom:1px solid #E4E9F2;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">CLASIFICACIÓN</div><div style="font-size:18px;font-weight:800">Mayor de 60 · Con discapacidad · Requiere cuidados en casa</div></div>
+            <span style="padding:9px 15px;border:1.5px solid #D8DFEA;border-radius:99px;font-size:14px;font-weight:900;color:#1E5AA7">Editar</span>
+          </div>
+          <div style="padding:18px 0;border-bottom:1px solid #E4E9F2;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">DIRECCIÓN Y CÓMO LLEGAR</div><div style="font-size:18px;font-weight:800;line-height:1.4">Cra 45 # 32-16, La Esperanza, Soacha<br/><span style="font-size:16px;font-weight:700;color:#5B6B85">Casa de dos pisos, portón verde, tercera casa después de la tienda La Central.</span></div></div>
+            <span style="padding:9px 15px;border:1.5px solid #D8DFEA;border-radius:99px;font-size:14px;font-weight:900;color:#1E5AA7">Editar</span>
+          </div>
+          <div style="padding:18px 0;border-bottom:1px solid #E4E9F2;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">VECINO O CONTACTO CERCANO</div><div style="font-size:18px;font-weight:800">Rosa Delgado · 312 778 4410 · Vecina, casa del frente</div></div>
+            <span style="padding:9px 15px;border:1.5px solid #D8DFEA;border-radius:99px;font-size:14px;font-weight:900;color:#1E5AA7">Editar</span>
+          </div>
+          <div style="padding:18px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">EPS Y MEMBRESÍA</div><div style="font-size:18px;font-weight:800">{{ eps }} · Plan Oro activo</div></div>
+            <span style="padding:9px 15px;border:1.5px solid #D8DFEA;border-radius:99px;font-size:14px;font-weight:900;color:#1E5AA7">Editar</span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vFormacion }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="font-size:12px;font-weight:900;color:#E83CB6;letter-spacing:.09em">EXCLUSIVO DEL CUIDADOR</div>
+            <div style="display:flex;align-items:center;gap:14px">
+              <span style="flex:0 0 60px;width:60px;height:60px;border-radius:18px;background:#fff;border:2.5px solid #F5C0E4;display:flex;align-items:center;justify-content:center;font-size:32px;line-height:1">🎓</span>
+              <span style="font-size:27px;font-weight:900">Certificarme</span>
+            </div>
+            <div style="font-size:17px;line-height:1.5;color:#5B6B85;font-weight:600">Fortalece tus conocimientos como cuidador y registra tus certificaciones.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;padding:20px;border-radius:18px;border:2.5px solid {{ formEstadoBd }};background:{{ formEstadoBg }}">
+            <span style="flex:0 0 44px;width:44px;height:44px;border-radius:50%;background:#fff;border:2px solid {{ formEstadoBd }};display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1">{{ formEstadoEmoji }}</span>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:12px;font-weight:900;letter-spacing:.08em;color:{{ formEstadoColor }}">ESTADO DE FORMACIÓN</div>
+              <div style="font-size:23px;font-weight:900">{{ formEstadoTitulo }}</div>
+              <div style="font-size:15px;line-height:1.45;color:#5B6B85;font-weight:600">{{ formEstadoNota }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:23px;font-weight:900;line-height:1.25">¿Tienes formación o certificación como cuidador?</div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <sc-for list="{{ formOpciones }}" as="o" hint-placeholder-count="4">
+              <button onClick="{{ o.on }}" style="text-align:left;padding:18px 20px;border-radius:18px;font-size:19px;font-weight:800;cursor:pointer;border:{{ o.bd }};background:{{ o.bg }};color:{{ o.fg }}">{{ o.t }}</button>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ formCert }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:20px;border-left:3px solid #E83CB6;background:#FDF7FB;border-radius:0 18px 18px 0;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <label style="font-size:15px;font-weight:800">Nombre de la institución</label>
+                <input placeholder="Ej. SENA" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <label style="font-size:15px;font-weight:800">Nombre del curso o programa</label>
+                <input placeholder="Ej. Cuidado del adulto mayor" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+              </div>
+              <div style="display:flex;gap:12px;flex-wrap:wrap">
+                <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+                  <label style="font-size:15px;font-weight:800">Fecha de certificación</label>
+                  <input type="date" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+                </div>
+                <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+                  <label style="font-size:15px;font-weight:800">Número o código del certificado</label>
+                  <input placeholder="Si existe" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+                </div>
+              </div>
+              <div style="padding:16px;border:1.5px dashed #D8DFEA;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                <span style="font-size:16px;font-weight:800">Cargar el certificado como soporte</span>
+                <span style="padding:10px 16px;border-radius:99px;border:1.5px solid #1E5AA7;color:#1E5AA7;font-size:14px;font-weight:900">Cargar</span>
+              </div>
+              <div style="padding:14px 16px;background:#fff;border:1.5px solid #F3DCA9;border-radius:12px;font-size:15px;line-height:1.5;font-weight:700">Haber realizado una capacitación no es lo mismo que tener la <b>certificación verificada</b>. La verificación la hace ELÍGEME o la institución, y queda registrado quién la hizo.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ formEstudiando }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:20px;border-left:3px solid #1E5AA7;background:#EEF4FC;border-radius:0 18px 18px 0;display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:18px;font-weight:900">Quedó registrado que está en formación</div>
+              <div style="font-size:16px;line-height:1.5;font-weight:700">Guardamos la fecha de inicio. Cuando termine, cargue el certificado desde aquí y su estado pasará a pendiente de verificación.</div>
+            </div>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ formSena }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border:2.5px solid #16A34A;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:12px;font-weight:900;color:#16A34A;letter-spacing:.08em">PUEDES CAPACITARTE</div>
+              <div style="font-size:24px;font-weight:900;line-height:1.25">ELÍGEME puede ayudarte a encontrar opciones de formación para fortalecer tus conocimientos como cuidador.</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px">
+              <span style="flex:0 0 56px;width:56px;height:56px;border-radius:16px;background:#fff;border:2px solid #CFE9D6;display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1">🎓</span>
+              <div style="display:flex;flex-direction:column;gap:3px">
+                <div style="font-size:21px;font-weight:900">Certificarme con el SENA</div>
+                <div style="font-size:15px;line-height:1.45;color:#5B6B85;font-weight:600">Consulta las opciones oficiales de formación para cuidadores.</div>
+              </div>
+            </div>
+            <button style="width:100%;padding:20px;border:none;border-radius:16px;background:#16A34A;color:#fff;font-size:19px;font-weight:900;cursor:pointer">Ir al SENA</button>
+            <div style="display:flex;flex-direction:column;gap:11px">
+              <div style="font-size:19px;font-weight:900">¿Ya comenzaste tu formación?</div>
+              <sc-for list="{{ senaEtapas }}" as="o" hint-placeholder-count="4">
+                <button onClick="{{ o.on }}" style="text-align:left;display:flex;align-items:center;gap:13px;padding:16px 18px;border-radius:16px;cursor:pointer;border:{{ o.bd }};background:{{ o.bg }};color:{{ o.fg }}">
+                  <span style="font-size:22px;line-height:1">{{ o.em }}</span>
+                  <span style="font-size:18px;font-weight:800">{{ o.t }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ senaTermine }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:18px;border-left:3px solid #16A34A;background:#EFF9F1;border-radius:0 16px 16px 0;display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;align-items:center;gap:11px">
+                  <span style="font-size:26px;line-height:1">📄</span>
+                  <span style="font-size:20px;font-weight:900">Subir mi certificado</span>
+                </div>
+                <div style="font-size:15px;line-height:1.5;font-weight:700;color:#5B6B85">Puede cargarlo en PDF, JPG o PNG.</div>
+                <button style="align-self:flex-start;padding:15px 22px;border:2px solid #16A34A;border-radius:99px;background:#fff;color:#16A34A;font-size:17px;font-weight:900;cursor:pointer">Cargar certificado</button>
+              </div>
+            </sc-if>
+            <div style="padding:16px;background:#F1F3F6;border-radius:14px;display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">CÓMO QUEDA CONECTADO</div>
+              <div style="font-size:15px;line-height:1.55;font-weight:700">Por ahora el botón lleva al proceso oficial de inscripción mediante enlace. Si más adelante existe convenio, se reemplaza por consulta directa de programas disponibles. ELÍGEME registra si usted inició el proceso, si está en formación, si lo completó y si cargó la certificación.</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ formSena }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#FEF6E9;border:2px solid #F3DCA9;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;gap:14px;align-items:flex-start">
+              <img src="assets/eli/motiva.png" alt="Elí" style="width:52px;height:52px;border-radius:50%;object-fit:cover;flex:0 0 52px;border:2px solid #E83CB6"/>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="font-size:20px;font-weight:900;line-height:1.3">Te recomendamos fortalecer tu formación como cuidador.</div>
+                <div style="font-size:15px;line-height:1.5;color:#5B6B85;font-weight:700">Lo sugerimos porque cuidas a una persona que requiere cuidados permanentes y todavía no hay certificación registrada. Es una recomendación: no bloquea tu acceso a ELÍGEME.</div>
+              </div>
+            </div>
+            <button style="align-self:flex-start;padding:15px 22px;border:2px solid #B45309;border-radius:99px;background:#fff;color:#B45309;font-size:17px;font-weight:900;cursor:pointer">Conocer opciones de capacitación</button>
+          </div>
+        </sc-if>
+
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:23px;font-weight:900;line-height:1.25">Soy certificado/a por:</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <sc-for list="{{ instituciones }}" as="o" hint-placeholder-count="2">
+              <button onClick="{{ o.on }}" style="flex:1;min-width:150px;padding:18px 14px;border-radius:16px;font-size:18px;font-weight:900;cursor:pointer;border:{{ o.bd }};background:{{ o.bg }};color:{{ o.fg }}">{{ o.t }}</button>
+            </sc-for>
+          </div>
+          <sc-if value="{{ instOtra }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Nombre de la institución</label>
+              <input placeholder="Ej. Hospital San Rafael" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+          </sc-if>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Nombre del curso o certificación</label>
+            <input placeholder="Ej. Cuidado del adulto mayor" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Fecha de certificación</label>
+              <input type="date" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+            <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Número del certificado</label>
+              <input placeholder="Si existe" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+          </div>
+          <div style="padding:16px;border:1.5px dashed #D8DFEA;border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <span style="display:flex;align-items:center;gap:10px;font-size:16px;font-weight:800"><span style="font-size:22px;line-height:1">📄</span>Subir certificado (PDF, JPG o PNG)</span>
+            <span style="padding:11px 18px;border-radius:99px;border:1.5px solid #1E5AA7;color:#1E5AA7;font-size:15px;font-weight:900">Cargar</span>
+          </div>
+          <button style="width:100%;padding:18px;border:none;border-radius:14px;background:#1E5AA7;color:#fff;font-size:18px;font-weight:900;cursor:pointer">Guardar esta certificación</button>
+        </div>
+
+        <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="display:flex;align-items:center;gap:11px">
+            <span style="font-size:26px;line-height:1">📄</span>
+            <span style="font-size:23px;font-weight:900">Mis certificaciones</span>
+          </div>
+          <div style="font-size:15px;line-height:1.5;color:#5B6B85;font-weight:600">No se sobrescriben. Puedes tener varias y cada una guarda su estado de validación.</div>
+          <sc-for list="{{ certificaciones }}" as="c" hint-placeholder-count="2">
+            <div style="padding:18px;border:1.5px solid #D8DFEA;border-radius:16px;display:flex;flex-direction:column;gap:9px">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                <div style="display:flex;flex-direction:column;gap:3px">
+                  <div style="font-size:19px;font-weight:900">{{ c.programa }}</div>
+                  <div style="font-size:15px;font-weight:700;color:#5B6B85">{{ c.institucion }} · {{ c.fecha }}</div>
+                </div>
+                <span style="display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:99px;background:{{ c.bg }};border:1.5px solid {{ c.bd }};font-size:14px;font-weight:900;color:{{ c.color }}"><span style="font-size:14px">{{ c.em }}</span>{{ c.estado }}</span>
+              </div>
+              <div style="font-size:14px;line-height:1.5;font-weight:700;color:#5B6B85">{{ c.detalle }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="background:#fff;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.08em">LO QUE VE EL HOSPITAL Y LA ADMINISTRACIÓN</div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <div style="display:flex;justify-content:space-between;gap:12px;padding-bottom:9px;border-bottom:1px solid #E4E9F2;flex-wrap:wrap"><span style="font-size:15px;font-weight:700;color:#5B6B85">Cuidador y pacientes asociados</span><span style="font-size:15px;font-weight:900">Ana Castro · {{ nombre }}</span></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;padding-bottom:9px;border-bottom:1px solid #E4E9F2;flex-wrap:wrap"><span style="font-size:15px;font-weight:700;color:#5B6B85">Tiene formación</span><span style="font-size:15px;font-weight:900">{{ formEstadoTitulo }}</span></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;padding-bottom:9px;border-bottom:1px solid #E4E9F2;flex-wrap:wrap"><span style="font-size:15px;font-weight:700;color:#5B6B85">Institución y programa</span><span style="font-size:15px;font-weight:900">Por registrar</span></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;padding-bottom:9px;border-bottom:1px solid #E4E9F2;flex-wrap:wrap"><span style="font-size:15px;font-weight:700;color:#5B6B85">Certificado cargado</span><span style="font-size:15px;font-weight:900">No</span></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;padding-bottom:9px;border-bottom:1px solid #E4E9F2;flex-wrap:wrap"><span style="font-size:15px;font-weight:700;color:#5B6B85">Certificación verificada</span><span style="font-size:15px;font-weight:900">No · sin verificador</span></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span style="font-size:15px;font-weight:700;color:#5B6B85">Última actualización</span><span style="font-size:15px;font-weight:900">17 ago 2026, 9:41 a. m.</span></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <div data-slot="views-end"></div>
+
+    <sc-if value="{{ notHome }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ goHome }}" style="padding:16px 22px;border:2px solid #D8DFEA;border-radius:14px;background:#fff;font-size:17px;font-weight:900;cursor:pointer;align-self:flex-start">Volver al inicio</button>
+    </sc-if>
+
+  </div>
+  <div style="position:fixed;right:20px;bottom:20px;z-index:50;display:flex;flex-direction:column;align-items:flex-end;gap:12px">
+    <sc-if value="{{ eliOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="width:330px;max-width:calc(100vw - 40px);background:#fff;border-radius:20px;box-shadow:0 18px 44px rgba(16,24,40,.28);overflow:hidden;display:flex;flex-direction:column">
+        <div style="background:#1E5AA7;padding:14px 16px;display:flex;align-items:center;gap:12px">
+          <img src="assets/eli/guia.png" alt="Elí" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex:0 0 44px;border:2px solid #E83CB6;background:#fff"/>
+          <div style="display:flex;flex-direction:column;gap:1px">
+            <div style="font-size:17px;font-weight:900;color:#fff">Elí</div>
+            <div style="font-size:12px;font-weight:700;color:#BFD6F0">Asistente virtual · No reemplaza atención médica</div>
+          </div>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="background:#F1F3F6;border-radius:16px 16px 16px 4px;padding:13px 15px;font-size:15px;line-height:1.5;font-weight:700">{{ eliSaludo }}</div>
+          <div style="background:#F1F3F6;border-radius:16px;padding:13px 15px;font-size:14px;line-height:1.5;font-weight:700;color:#5B6B85">Puedo orientarte con información general y ayudarte a usar ELÍGEME. No soy médica y no reemplazo a un profesional de salud.</div>
+          <div style="font-size:12px;font-weight:900;color:#5B6B85;letter-spacing:.08em">PUEDES PREGUNTARME</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <button onClick="{{ abrirDudaMedica }}" style="padding:11px 14px;border:1.5px solid #E83CB6;border-radius:99px;background:#FDF0F8;color:#E83CB6;font-size:14px;font-weight:900;cursor:pointer">Tengo una duda médica</button>
+            <button onClick="{{ goBitacora }}" style="padding:11px 14px;border:1.5px solid #1E5AA7;border-radius:99px;background:#fff;color:#1E5AA7;font-size:14px;font-weight:900;cursor:pointer">Cómo llenar la bitácora</button>
+            <button onClick="{{ goBitacora }}" style="padding:11px 14px;border:1.5px solid #1E5AA7;border-radius:99px;background:#fff;color:#1E5AA7;font-size:14px;font-weight:900;cursor:pointer">Registrar en bitácora</button>
+            <button onClick="{{ goSalud }}" style="padding:11px 14px;border:1.5px solid #1E5AA7;border-radius:99px;background:#fff;color:#1E5AA7;font-size:14px;font-weight:900;cursor:pointer">Ver instrucciones</button>
+            <button onClick="{{ goAgenda }}" style="padding:11px 14px;border:1.5px solid #1E5AA7;border-radius:99px;background:#fff;color:#1E5AA7;font-size:14px;font-weight:900;cursor:pointer">Solicitar atención</button>
+            <button onClick="{{ goAgenda }}" style="padding:11px 14px;border:1.5px solid #1E5AA7;border-radius:99px;background:#fff;color:#1E5AA7;font-size:14px;font-weight:900;cursor:pointer">Ver próxima cita</button>
+          </div>
+          <sc-if value="{{ dudaMedica }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:14px 15px;background:#FDEEEE;border:1.5px solid #F5C2C2;border-radius:16px;display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:15px;line-height:1.5;font-weight:900">Puedo escucharte y explicarte información general, pero no soy médica.</div>
+              <div style="font-size:14px;line-height:1.5;font-weight:700;color:#5B6B85">No diagnostico, no receto y no cambio tratamientos. Cuéntame tu duda y te ayudo a llevarla a tu equipo de atención.</div>
+              <button onClick="{{ goAgenda }}" style="align-self:flex-start;padding:11px 15px;border:1.5px solid #DC2626;border-radius:99px;background:#fff;color:#DC2626;font-size:14px;font-weight:900;cursor:pointer">Llevar mi duda a mi equipo</button>
+            </div>
+          </sc-if>
+          <div style="display:flex;align-items:center;gap:9px;padding-top:4px">
+            <div style="flex:1;padding:12px 15px;border-radius:99px;background:#F1F3F6;font-size:14px;color:#8A97AC;font-weight:600">Escribe o habla…</div>
+            <div style="flex:0 0 44px;width:44px;height:44px;border-radius:50%;background:#E83CB6;display:flex;align-items:center;justify-content:center"><div style="width:15px;height:20px;border-radius:99px;background:#fff"></div></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+    <button onClick="{{ toggleEli }}" style="display:flex;align-items:center;gap:8px;padding:6px 20px 6px 8px;border:none;border-radius:99px;background:#fff;box-shadow:0 10px 26px rgba(16,24,40,.24);cursor:pointer">
+      <img src="assets/eli/saluda2.png" alt="Elí saludando" style="width:66px;height:66px;object-fit:contain;display:block"/>
+      <span style="font-size:16px;font-weight:900;color:#1E5AA7">¡Hola, soy Elí!</span>
+    </button>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:800,&quot;height&quot;:900}}">
+const PACIENTES = [
+  { nombre: 'María Rodríguez', iniciales: 'MR', edad: 78, eps: 'Nueva EPS', municipio: 'Soacha', estado: 'amarillo' },
+  { nombre: 'José Martínez', iniciales: 'JM', edad: 71, eps: 'Sanitas', municipio: 'Soacha', estado: 'verde' }
+];
+
+// Rangos definidos por el visitador para cada paciente. No son límites universales.
+const RANGOS = {
+  sistolica: { verdeMin: 110, verdeMax: 139, amarilloMax: 159 }
+};
+
+const ESTADOS = {
+  verde: { emoji: '🟢', color: '#16A34A', bg: '#EFF9F1', bd: '#BFE5C9', titulo: 'Estable', nota: 'Sigue el plan de cuidado establecido por tu equipo.' },
+  amarillo: { emoji: '🟡', color: '#B45309', bg: '#FEF6E9', bd: '#F3DCA9', titulo: 'Requiere seguimiento', nota: 'Tu equipo de atención está haciendo seguimiento cercano.' },
+  rojo: { emoji: '🔴', color: '#DC2626', bg: '#FDEEEE', bd: '#F5C2C2', titulo: 'Atención prioritaria', nota: 'Tu equipo de atención fue alertado y va a comunicarse.' }
+};
+
+const MEDICAMENTOS = [
+  { nombre: 'Losartán 50 mg', hora: '7:00 a. m.', dosis: '1 tableta', ind: 'Con el desayuno' },
+  { nombre: 'Metformina 850 mg', hora: '1:00 p. m.', dosis: '1 tableta', ind: 'Después del almuerzo' },
+  { nombre: 'Calcio + D', hora: '8:00 p. m.', dosis: '1 tableta', ind: 'Con la comida' }
+];
+
+const SINTOMAS = [
+  { id: 'dolor', p: '¿Tienes dolor?', c: '¿Tiene dolor?' },
+  { id: 'mareo', p: '¿Tienes mareo?', c: '¿Tiene mareo?' },
+  { id: 'respirar', p: '¿Tienes dificultad para respirar?', c: '¿Tiene dificultad para respirar?' },
+  { id: 'fiebre', p: '¿Tienes fiebre?', c: '¿Tiene fiebre?' },
+  { id: 'comida', p: '¿Has comido normalmente?', c: '¿Ha comido normalmente?' },
+  { id: 'sueno', p: '¿Dormiste bien?', c: '¿Durmió bien?' },
+  { id: 'meds', p: '¿Tomaste tus medicamentos?', c: '¿Tomó sus medicamentos?' },
+  { id: 'caida', p: '¿Tuviste una caída?', c: '¿Tuvo una caída?' },
+  { id: 'cansancio', p: '¿Te sientes más cansado de lo habitual?', c: '¿Se siente más cansado de lo habitual?' }
+];
+
+const MOTIVOS = ['No había medicamento', 'Lo rechacé', 'Lo olvidé', 'Me produjo malestar', 'No sé cómo tomarlo', 'Otra razón'];
+const MOTIVOS_C = ['No había medicamento', 'Lo rechazó', 'Lo olvidamos', 'Le produjo malestar', 'No sabemos cómo administrarlo', 'Otra razón'];
+
+const CAL_CHIPS = ['Excelente atención', 'Fue muy amable', 'Explicó muy bien', 'Llegó puntual', 'Me enseñó cómo cuidar al paciente', 'Respondió mis preguntas', 'Llegó tarde', 'La atención fue muy rápida', 'No entendí algunas indicaciones', 'Necesito más explicación', 'Otro'];
+const CAL_CRITERIOS = [
+  { k: 'puntualidad', t: 'Puntualidad', sub: '¿Llegó o inició la consulta a tiempo?' },
+  { k: 'comunicacion', t: 'Comunicación', sub: '¿Explicó la información de manera clara?' },
+  { k: 'orientacionPac', t: 'Orientación al paciente', sub: '¿Le explicó qué debía hacer?' },
+  { k: 'orientacionCui', t: 'Orientación al cuidador', sub: '¿Le enseñó y respondió sus preguntas?' },
+  { k: 'empatia', t: 'Empatía', sub: '¿Lo trató con respeto y consideración?' },
+  { k: 'medicamentos', t: 'Claridad sobre medicamentos', sub: '¿Explicó para qué eran y qué observar después?' },
+  { k: 'tiempo', t: 'Tiempo dedicado', sub: '¿Dedicó suficiente tiempo a revisar al paciente?' },
+  { k: 'profesionalismo', t: 'Profesionalismo', sub: '¿Se comportó de manera profesional?' },
+  { k: 'dudas', t: 'Resolución de dudas', sub: '¿Respondió sus preguntas de manera comprensible?' }
+];
+
+class Component extends DCLogic {
+  state = {
+    role: 'CUIDADOR', view: 'home', pi: 0,
+    bitStep: 0, mood: null, sintomas: {}, intensidad: null,
+    comparativo: null, alerta: null, movGeneral: null,
+    alimentacion: null, liquidos: null,
+    higiene: {}, movilizacion: {}, ayuda: null, eventos: {},
+    medMotivo: {}, firmada: false, eliOpen: false, eliTema: null,
+    dudaMedica: false, autDatos: false, autIntento: false,
+    calCriterios: {}, calEnviada: false,
+    senaEtapa: null, institucion: null,
+    sistolica: '', diastolica: '', temp: '', spo2: '',
+    meds: {}, medReason: null,
+    citaTipo: null, pagoEstado: 'inicio',
+    stars: 0, chips: {},
+    formResp: 'no'
+  };
+
+  p() { return PACIENTES[this.state.pi]; }
+  esC() { return this.state.role === 'CUIDADOR'; }
+  nom() { return this.p().nombre.split(' ')[0]; }
+
+  go(view) { this.setState({ view: view, bitStep: 0, pagoEstado: 'inicio', citaTipo: null }); }
+
+  evalSist() {
+    const v = parseInt(this.state.sistolica, 10);
+    if (!v || isNaN(v)) return null;
+    const R = RANGOS.sistolica;
+    if (v >= R.verdeMin && v <= R.verdeMax) return 'verde';
+    if (v > R.verdeMax && v <= R.amarilloMax) return 'amarillo';
+    if (v > R.amarilloMax) return 'rojo';
+    return 'amarillo';
+  }
+
+  tri(on, color) {
+    return {
+      bd: on ? '2.5px solid ' + color : '1.5px solid #D8DFEA',
+      bg: on ? '#fff' : '#fff',
+      fg: on ? color : '#5B6B85'
+    };
+  }
+
+  pill(on) {
+    return { bd: on ? '2px solid #16A34A' : '1.5px solid #D8DFEA', bg: on ? '#EFF9F1' : '#fff', fg: on ? '#16A34A' : '#5B6B85' };
+  }
+
+  renderVals() {
+    const s = this.state, C = this.esC(), P = this.p(), n = this.nom();
+    const est = ESTADOS[P.estado];
+    const sev = this.evalSist();
+    const sevMap = {
+      verde: { emoji: '🟢', color: '#16A34A', bg: '#EFF9F1', bd: '#BFE5C9', t: 'Dentro del rango establecido', d: 'Este valor está dentro del rango que definió tu equipo de atención.' },
+      amarillo: { emoji: '🟡', color: '#B45309', bg: '#FEF6E9', bd: '#F3DCA9', t: 'Este resultado requiere seguimiento', d: 'Este valor está fuera del rango establecido por tu equipo de atención. Se creó una alerta de seguimiento.' },
+      rojo: { emoji: '🔴', color: '#DC2626', bg: '#FDEEEE', bd: '#F5C2C2', t: 'Este resultado requiere atención', d: 'Este valor está fuera del rango establecido por tu equipo de atención. Se generó una alerta para el visitador y el hospital.' }
+    };
+    const sv = sev ? sevMap[sev] : null;
+    const FORM_ESTADOS = {
+      si: { emoji: '🟢', titulo: 'Certificado cargado', color: '#16A34A', bg: '#EFF9F1', bd: '#BFE5C9', nota: 'Su certificado está cargado. Falta la verificación institucional.' },
+      estudiando: { emoji: '🔵', titulo: 'Actualmente en formación', color: '#1E5AA7', bg: '#EEF4FC', bd: '#D9E5F5', nota: 'Registramos que inició el proceso. Cargue el certificado al terminar.' },
+      no: { emoji: '🟡', titulo: 'Sin certificación registrada', color: '#B45309', bg: '#FEF6E9', bd: '#F3DCA9', nota: 'Le mostramos opciones para capacitarse. Esto no bloquea su acceso a ELÍGEME.' },
+      nose: { emoji: '🟡', titulo: 'Certificado pendiente de verificación', color: '#6D5BD0', bg: '#F1F0FC', bd: '#DEDBF6', nota: 'Cargue el soporte y ELÍGEME revisará si su formación aplica.' }
+    };
+    const FE = FORM_ESTADOS[s.formResp] || FORM_ESTADOS.no;
+
+    const mkOne = (field, id, color) => {
+      const on = s[field] === id;
+      return { on: () => this.setState({ [field]: id }),
+        bd: on ? '3px solid ' + color : '2px solid #D8DFEA', bg: on ? '#FAFBFD' : '#fff', fg: on ? color : '#5B6B85' };
+    };
+    const mkMulti = (field, key, val, color) => {
+      const on = s[field][key] === val;
+      return { on: () => this.setState({ [field]: Object.assign({}, s[field], { [key]: val }) }),
+        bd: on ? '2.5px solid ' + color : '1.5px solid #D8DFEA', bg: on ? '#FAFBFD' : '#fff', fg: on ? color : '#5B6B85' };
+    };
+    const moods = [
+      { id: 'bien', label: 'Bien', color: '#16A34A', sub: C ? 'Sin molestias hoy' : 'Sin molestias hoy' },
+      { id: 'regular', label: 'Regular', color: '#F59E0B', sub: 'Algo le incomoda' },
+      { id: 'mal', label: 'Mal', color: '#DC2626', sub: 'Necesita ayuda' }
+    ];
+
+    return {
+      isCuidador: C,
+      isPaciente: !C,
+
+      nombre: P.nombre, iniciales: P.iniciales, edad: P.edad, eps: P.eps, municipio: P.municipio,
+      saludo: C ? 'Cuidando a ' + P.nombre : 'Hola, ' + n,
+      pacientes: PACIENTES.map((x, i) => {
+        const on = s.pi === i;
+        return { nombre: x.nombre, on: () => this.setState({ pi: i }), bd: on ? '2px solid #E83CB6' : '1.5px solid #D8DFEA', bg: on ? '#FDF0F8' : '#fff', fg: on ? '#14213D' : '#5B6B85' };
+      }),
+
+      estadoColor: est.color, estadoBg: est.bg, estadoBd: est.bd, estadoTitulo: est.titulo, estadoNota: est.nota, estadoEmoji: est.emoji,
+      novCount: 3,
+      consejo: C ? 'Registra la bitácora de ' + n + ' cada día a la misma hora. Es lo que permite ver cómo evoluciona.' : 'Registra tu bitácora cada día a la misma hora. Así tu equipo ve cómo vas.',
+
+      tituloBitacora: C ? 'Bitácora de ' + n : 'Mi bitácora',
+      subBitacora: C ? '¿Cómo se encuentra ' + n + ' hoy? Toma dos minutos.' : '¿Cómo te sientes hoy? Toma dos minutos.',
+      tituloSalud: C ? 'Historial clínico de ' + n : 'Mi historial clínico',
+      subSalud: C ? 'Consulta la información y seguimiento de ' + n : 'Consulta tu información y seguimiento',
+      tituloAgenda: C ? 'Agendar cita para ' + n : 'Agendar mi cita',
+      subAgenda: C ? 'Elige cómo necesitas que atiendan a ' + n : 'Elige cómo necesitas que te atiendan',
+      tituloVisitas: C ? 'Visitas de ' + n : 'Mis visitas',
+      tituloInfo: C ? 'Información de ' + n : 'Mi información',
+      subInfo: C ? 'Consulta y actualiza los datos de ' + n : 'Consulta y actualiza tus datos',
+
+      vHome: s.view === 'home', notHome: s.view !== 'home',
+      vBitacora: s.view === 'bitacora', vSalud: s.view === 'salud', vAgenda: s.view === 'agenda',
+      vEli: s.view === 'eli', vNovedades: s.view === 'novedades', vVisitas: s.view === 'visitas', vInfo: s.view === 'info',
+      goHome: () => this.go('home'), goBitacora: () => this.go('bitacora'), goSalud: () => this.go('salud'),
+      goAgenda: () => this.go('agenda'), goEli: () => this.go('eli'), goNovedades: () => this.go('novedades'),
+      goVisitas: () => this.go('visitas'), goInfo: () => this.go('info'),
+
+      bitStep: s.bitStep,
+      bit0: s.bitStep === 0,
+      bit1: s.bitStep === 1, bit2: s.bitStep === 2, bit3: s.bitStep === 3, bit4: s.bitStep === 4,
+      bit5: s.bitStep === 5, bit6: s.bitStep === 6, bit7: s.bitStep === 7, bit8: s.bitStep === 8,
+      enPasos: s.bitStep >= 1,
+      bitNext: () => this.setState({ bitStep: Math.min(8, s.bitStep + 1) }),
+      bitPrev: () => this.setState({ bitStep: Math.max(0, s.bitStep - 1) }),
+      empezarBitacora: () => this.setState({ bitStep: 1 }),
+      bitPct: (s.bitStep / 8 * 100) + '%',
+      bitPaso: 'Paso ' + s.bitStep + ' de 8',
+      tituloPaso: ['', '¿Cómo está hoy?', 'Signos vitales', 'Comida y líquidos', 'Medicamentos', 'Higiene y cuidado', 'Movilidad', '¿Ocurrió algo importante?', 'Observaciones y confirmar'][s.bitStep] || '',
+      pregComparativo: C ? '¿Cómo encuentra a ' + n + ' comparado con ayer?' : '¿Cómo te sientes comparado con ayer?',
+      pregAlerta: C ? '¿Cómo la ve o la nota?' : '¿Cómo te sientes de ánimo y atención?',
+      pregMovGeneral: C ? '¿Cómo se moviliza hoy?' : '¿Cómo te movilizas hoy?',
+      pregComida: C ? '¿' + n + ' comió normalmente?' : '¿Comiste normalmente?',
+      pregLiquidos: C ? '¿Tomó suficientes líquidos?' : '¿Tomaste suficientes líquidos?',
+      pregHigiene: C ? 'Higiene y cuidado de ' + n : 'Tu higiene y cuidado de hoy',
+      pregMovilizacion: C ? 'Movilización de ' + n : 'Tu movilización de hoy',
+      pregEventos: C ? '¿Le ocurrió algo importante a ' + n + ' hoy?' : '¿Te ocurrió algo importante hoy?',
+      firmaTitulo: C ? 'Firma del cuidador' : 'Firma del paciente',
+
+      comparativos: [
+        { id: 'mejor', label: 'Mejor', color: '#16A34A', sub: 'Se ve mejor que ayer' },
+        { id: 'igual', label: 'Igual', color: '#F59E0B', sub: 'Sin cambios frente a ayer' },
+        { id: 'peor', label: 'Peor', color: '#DC2626', sub: 'Se ve peor que ayer' }
+      ].map(o => Object.assign({}, o, mkOne('comparativo', o.id, o.color))),
+      alertas: [
+        { id: 'atento', label: 'Despierto y atento', color: '#16A34A' },
+        { id: 'dormido', label: 'Más dormido de lo normal', color: '#F59E0B' },
+        { id: 'confundido', label: 'Confundido o desorientado', color: '#DC2626' },
+        { id: 'nose', label: 'No sé', color: '#5B6B85' }
+      ].map(o => Object.assign({}, o, mkOne('alerta', o.id, o.color))),
+      movGenerales: [
+        { id: 'camina', label: 'Camina', color: '#16A34A' },
+        { id: 'ayuda', label: 'Necesita ayuda', color: '#F59E0B' },
+        { id: 'cama', label: 'Permanece en cama', color: '#6D5BD0' }
+      ].map(o => Object.assign({}, o, mkOne('movGeneral', o.id, o.color))),
+      alimentaciones: [
+        { id: 'completa', label: 'Comió normalmente', color: '#16A34A' },
+        { id: 'parcial', label: 'Comió poco', color: '#F59E0B' },
+        { id: 'no', label: 'No pudo comer', color: '#DC2626' }
+      ].map(o => Object.assign({}, o, mkOne('alimentacion', o.id, o.color))),
+      liquidosOpts: [
+        { id: 'si', label: 'Sí', color: '#16A34A' },
+        { id: 'no', label: 'No', color: '#DC2626' },
+        { id: 'nose', label: 'No sé', color: '#5B6B85' }
+      ].map(o => Object.assign({}, o, mkOne('liquidos', o.id, o.color))),
+      higieneItems: [
+        { k: 'bano', label: 'Baño realizado' },
+        { k: 'ropa', label: 'Cambio de ropa' },
+        { k: 'piel', label: 'Cuidado de piel o cremas' },
+        { k: 'panal', label: 'Cambió pañal' },
+        { k: 'oral', label: 'Higiene oral' }
+      ].map(it => ({ label: it.label, si: mkMulti('higiene', it.k, 'si', '#16A34A'), no: mkMulti('higiene', it.k, 'no', '#DC2626'), na: mkMulti('higiene', it.k, 'na', '#5B6B85') })),
+      movilizacionItems: [
+        { k: 'levanto', label: C ? '¿Se levantó o movió?' : '¿Te levantaste o moviste?' },
+        { k: 'postura', label: C ? '¿Realizó cambio de postura?' : '¿Cambiaste de postura?' }
+      ].map(it => ({ label: it.label, si: mkMulti('movilizacion', it.k, 'si', '#16A34A'), no: mkMulti('movilizacion', it.k, 'no', '#DC2626'), na: mkMulti('movilizacion', it.k, 'na', '#5B6B85') })),
+      ayudas: [
+        { id: 'baston', label: 'Bastón' }, { id: 'caminador', label: 'Caminador' },
+        { id: 'silla', label: 'Silla de ruedas' }, { id: 'otra', label: 'Otra' },
+        { id: 'ninguna', label: 'No utiliza ayuda' }
+      ].map(o => Object.assign({}, o, mkOne('ayuda', o.id, '#E83CB6'))),
+      eventosItems: [
+        { k: 'caida', label: 'Caída', color: '#DC2626' },
+        { k: 'fiebre', label: 'Fiebre', color: '#F59E0B' },
+        { k: 'dolor', label: 'Dolor', color: '#E83CB6' },
+        { k: 'respirar', label: 'Dificultad para respirar', color: '#DC2626' },
+        { k: 'conducta', label: 'Cambio en conducta', color: '#6D5BD0' },
+        { k: 'nada', label: 'Nada de lo anterior', color: '#16A34A' }
+      ].map(e => {
+        const on = !!s.eventos[e.k];
+        return { label: e.label, color: e.color, on: () => this.setState({ eventos: Object.assign({}, s.eventos, { [e.k]: !s.eventos[e.k] }) }),
+          bd: on ? '3px solid ' + e.color : '2px solid #D8DFEA', bg: on ? '#FAFBFD' : '#fff' };
+      }),
+      hayEvento: ['caida', 'fiebre', 'dolor', 'respirar', 'conducta'].some(k => s.eventos[k]),
+      firmada: s.firmada,
+      firmar: () => this.setState({ firmada: !s.firmada }),
+      resumenEstado: s.comparativo ? ({ mejor: 'Mejor que ayer', igual: 'Igual que ayer', peor: 'Peor que ayer' })[s.comparativo] : 'Sin responder',
+      resumenPresion: (s.sistolica && s.diastolica) ? s.sistolica + ' / ' + s.diastolica : 'Sin registrar',
+      resumenAlertas: ['caida', 'fiebre', 'dolor', 'respirar', 'conducta'].filter(k => s.eventos[k]).length ? 'Se reportaron eventos' : 'Sin eventos reportados',
+
+      eliOpen: s.eliOpen,
+      toggleEli: () => this.setState({ eliOpen: !s.eliOpen }),
+      eliSaludo: C ? 'Hola Ana. ¿Necesitas ayuda con el cuidado registrado para ' + n + '?' : 'Hola ' + n + ', ¿en qué puedo ayudarte?',
+      dudaMedica: s.dudaMedica,
+      abrirDudaMedica: () => this.setState({ dudaMedica: !s.dudaMedica }),
+      autTitulo: C ? 'Autorizo el tratamiento de los datos de salud registrados hoy para ' + n + '.' : 'Autorizo el tratamiento de mis datos de salud registrados hoy.',
+      toggleAutDatos: () => this.setState({ autDatos: !s.autDatos, autIntento: false }),
+      autBd: s.autDatos ? '2.5px solid #16A34A' : (s.autIntento ? '2.5px solid #DC2626' : '2px solid #D8DFEA'),
+      autBg: s.autDatos ? '#EFF9F1' : '#fff',
+      autBox: s.autDatos ? '#16A34A' : '#fff',
+      autTick: s.autDatos ? '#fff' : 'transparent',
+      autFalta: s.autIntento && !s.autDatos,
+      guardarBg: s.autDatos ? '#16A34A' : '#A8B4C6',
+      guardarBitacora: () => { if (!s.autDatos) { this.setState({ autIntento: true }); return; } this.setState({ autIntento: false }); },
+      preguntaMood: C ? '¿Cómo se encuentra ' + n + ' hoy?' : '¿Cómo te sientes hoy?',
+      preguntaMeds: C ? '¿' + n + ' tomó sus medicamentos?' : '¿Tomaste tus medicamentos?',
+      preguntaExtra: C ? '¿Quieres contarnos algo más sobre ' + n + '?' : '¿Quieres contarnos algo más?',
+      origenTexto: C ? 'REGISTRADO POR CUIDADOR' : 'REGISTRADO POR EL PACIENTE',
+      encabezadoBitacora: C ? 'ESTÁS REGISTRANDO INFORMACIÓN DE' : 'MI REGISTRO DE HOY',
+      origenDetalle: C ? 'Cuidador Ana Castro · Paciente ' + P.nombre + ' · 17 ago 2026, 9:41 a. m.' : P.nombre + ' · 17 ago 2026, 9:41 a. m.',
+
+      moods: moods.map(m => {
+        const on = s.mood === m.id;
+        return { label: m.label, sub: m.sub, color: m.color, on: () => this.setState({ mood: m.id }),
+          bd: on ? '3px solid ' + m.color : '2px solid #D8DFEA', bg: on ? '#FAFBFD' : '#fff' };
+      }),
+
+      sintomas: SINTOMAS.map(q => {
+        const val = s.sintomas[q.id] || null;
+        const mk = v => {
+          const on = val === v;
+          const col = v === 'si' ? '#DC2626' : (v === 'no' ? '#16A34A' : '#5B6B85');
+          return { on: () => this.setState({ sintomas: Object.assign({}, s.sintomas, { [q.id]: v }) }),
+            bd: on ? '2.5px solid ' + col : '1.5px solid #D8DFEA', bg: on ? '#FAFBFD' : '#fff', fg: on ? col : '#5B6B85' };
+        };
+        return { pregunta: C ? q.c : q.p, si: mk('si'), no: mk('no'), ns: mk('ns') };
+      }),
+      mostrarIntensidad: s.sintomas.dolor === 'si',
+      niveles: [1, 2, 3, 4, 5].map(v => {
+        const on = s.intensidad === v;
+        return { n: String(v), on: () => this.setState({ intensidad: v }),
+          bd: on ? '3px solid #E83CB6' : '1.5px solid #D8DFEA', bg: on ? '#FDF0F8' : '#fff' };
+      }),
+
+      sistolica: s.sistolica, diastolica: s.diastolica, temp: s.temp, spo2: s.spo2,
+      setSist: e => this.setState({ sistolica: e.target.value }),
+      setDia: e => this.setState({ diastolica: e.target.value }),
+      setTemp: e => this.setState({ temp: e.target.value }),
+      setSpo2: e => this.setState({ spo2: e.target.value }),
+      haySev: !!sev,
+      sevColor: sv ? sv.color : '#5B6B85', sevBg: sv ? sv.bg : '#F1F3F6', sevBd: sv ? sv.bd : '#D8DFEA',
+      sevTitulo: sv ? sv.t : '', sevDetalle: sv ? sv.d : '',
+      sevEmoji: sev === 'rojo' ? '🔴' : (sev === 'amarillo' ? '🟡' : '🟢'),
+      rangoTexto: 'Rango definido por el visitador para ' + n + ': verde ' + RANGOS.sistolica.verdeMin + ' a ' + RANGOS.sistolica.verdeMax + ', amarillo ' + (RANGOS.sistolica.verdeMax + 1) + ' a ' + RANGOS.sistolica.amarilloMax + ', rojo ' + (RANGOS.sistolica.amarilloMax + 1) + ' o más.',
+
+      medicamentos: MEDICAMENTOS.map((m, i) => {
+        const val = s.meds[i] || null;
+        const mk = v => {
+          const on = val === v;
+          const col = v === 'tome' ? '#16A34A' : (v === 'despues' ? '#D97706' : '#DC2626');
+          return { on: () => this.setState({ meds: Object.assign({}, s.meds, { [i]: v }), medReason: v === 'no' ? i : (s.medReason === i ? null : s.medReason) }),
+            bd: on ? '2.5px solid ' + col : '1.5px solid #D8DFEA', bg: on ? '#FAFBFD' : '#fff', fg: on ? col : '#5B6B85' };
+        };
+        return { nombre: m.nombre, hora: m.hora, dosis: m.dosis, ind: m.ind,
+          etiquetaTome: C ? 'Lo tomó' : 'Lo tomé',
+          tome: mk('tome'), despues: mk('despues'), noTome: mk('no'), noSe: mk('nose'),
+          pedirMotivo: s.medReason === i };
+      }),
+      motivos: (C ? MOTIVOS_C : MOTIVOS).map(t => ({ t: t })),
+
+      citas: [
+        { tipo: 'hospital', titulo: 'Cita prioritaria en el hospital', sub: C ? 'Según la disponibilidad del hospital o ESE de ' + n : 'Según la disponibilidad de tu hospital o ESE', costo: C ? 'Sin costo para el paciente' : 'Sin costo para ti', pago: false },
+        { tipo: 'casa', titulo: 'Visita médica en casa', sub: C ? 'Un profesional podrá atender a ' + n + ' en su domicilio.' : 'Un profesional podrá atenderte en tu domicilio.', costo: '$68.000', pago: true },
+        { tipo: 'virtual', titulo: 'Consulta virtual', sub: C ? n + ' puede hablar con un profesional desde su teléfono o computador.' : 'Habla con un profesional desde tu teléfono o computador.', costo: '$32.000', pago: true }
+      ].map(c => {
+        const on = s.citaTipo === c.tipo;
+        c.emoji = c.tipo === 'hospital' ? '🏥' : (c.tipo === 'casa' ? '🏠' : '📱');
+        return Object.assign({}, c, { on: () => this.setState({ citaTipo: c.tipo, pagoEstado: c.pago ? 'costo' : 'solicitado' }),
+          bd: on ? '3px solid #E83CB6' : '2px solid #D8DFEA', bg: on ? '#FDF0F8' : '#fff' });
+      }),
+      citaElegida: !!s.citaTipo,
+      tituloProxima: C ? 'Próxima cita de ' + n : 'Tu próxima cita',
+      subProxima: C ? 'Visita en casa · Dra. Ana Torres · domicilio de ' + n : 'Visita en casa · Dra. Ana Torres · Cra 45 # 32-16',
+      textoSolicitud: C ? 'El hospital revisará la disponibilidad y les confirmará por novedades y WhatsApp. Esta opción no tiene cobro para el paciente.' : 'Tu hospital revisará la disponibilidad y te confirmará por novedades y WhatsApp. Esta opción no tiene cobro para ti.',
+      textoAvisaremos: C ? 'Les avisaremos por novedades y WhatsApp cuando quede confirmada la hora.' : 'Te avisaremos por novedades y WhatsApp cuando quede confirmada la hora.',
+      preguntaCalificacion: C ? '¿Cómo fue la atención de ' + n + '?' : '¿Cómo fue tu atención?',
+      subCalificacion: C ? '¿Quieres contarnos algo sobre el servicio que recibió ' + n + '?' : '¿Quieres contarnos algo sobre el servicio?',
+      pagoCosto: s.pagoEstado === 'costo',
+      pagoProceso: s.pagoEstado === 'pago',
+      pagoConfirmado: s.pagoEstado === 'confirmado',
+      citaSolicitada: s.pagoEstado === 'solicitado',
+      costoElegido: s.citaTipo === 'casa' ? '$68.000' : (s.citaTipo === 'virtual' ? '$32.000' : 'Sin costo'),
+      tituloElegido: s.citaTipo === 'casa' ? 'Visita médica en casa' : (s.citaTipo === 'virtual' ? 'Consulta virtual' : 'Cita prioritaria en el hospital'),
+      irAPago: () => this.setState({ pagoEstado: 'pago' }),
+      confirmarPago: () => this.setState({ pagoEstado: 'confirmado' }),
+      cancelarCita: () => this.setState({ citaTipo: null, pagoEstado: 'inicio' }),
+
+      vFormacion: s.view === 'formacion',
+      goFormacion: () => this.go('formacion'),
+      senaEtapas: [
+        { id: 'noinicie', t: 'No he iniciado', em: '⚪' },
+        { id: 'inscrito', t: 'Estoy inscrita o inscrito', em: '🔵' },
+        { id: 'estudiando', t: 'Estoy estudiando', em: '🔵' },
+        { id: 'termine', t: 'Ya terminé', em: '🟢' }
+      ].map(o => { const on = s.senaEtapa === o.id; return Object.assign({}, o, {
+        on: () => this.setState({ senaEtapa: o.id }),
+        bd: on ? '2.5px solid #16A34A' : '1.5px solid #D8DFEA', bg: on ? '#EFF9F1' : '#fff', fg: on ? '#16A34A' : '#5B6B85' }); }),
+      senaTermine: s.senaEtapa === 'termine',
+      instituciones: [
+        { id: 'sena', t: 'SENA' }, { id: 'otra', t: 'Otra institución' }
+      ].map(o => { const on = s.institucion === o.id; return Object.assign({}, o, {
+        on: () => this.setState({ institucion: o.id }),
+        bd: on ? '2.5px solid #1E5AA7' : '1.5px solid #D8DFEA', bg: on ? '#EEF4FC' : '#fff', fg: on ? '#1E5AA7' : '#5B6B85' }); }),
+      instOtra: s.institucion === 'otra',
+      certificaciones: [
+        { programa: 'Cuidado básico del adulto mayor', institucion: 'SENA', fecha: 'marzo 2026', em: '🟡', estado: 'Certificado cargado', color: '#B45309', bg: '#FEF6E9', bd: '#F3DCA9', detalle: 'Cargado el 2 de abril de 2026. Pendiente de validación institucional.' },
+        { programa: 'Primeros auxilios', institucion: 'Hospital San Rafael', fecha: 'noviembre 2025', em: '🟢', estado: 'Certificación verificada', color: '#16A34A', bg: '#EFF9F1', bd: '#BFE5C9', detalle: 'Verificada por Hospital San Rafael el 20 de noviembre de 2025.' }
+      ],
+      formEstadoTitulo: FE.titulo, formEstadoEmoji: FE.emoji, formEstadoColor: FE.color, formEstadoBg: FE.bg, formEstadoBd: FE.bd, formEstadoNota: FE.nota,
+      formOpciones: [
+        { id: 'si', t: 'Sí, tengo formación o certificación' },
+        { id: 'estudiando', t: 'Estoy estudiando actualmente' },
+        { id: 'no', t: 'No tengo formación' },
+        { id: 'nose', t: 'No sé si mi formación aplica' }
+      ].map(o => {
+        const on = s.formResp === o.id;
+        return { t: o.t, on: () => this.setState({ formResp: o.id }),
+          bd: on ? '3px solid #E83CB6' : '2px solid #D8DFEA', bg: on ? '#FDF0F8' : '#fff', fg: on ? '#14213D' : '#5B6B85' };
+      }),
+      formCert: s.formResp === 'si',
+      formSena: s.formResp === 'no' || s.formResp === 'nose',
+      formEstudiando: s.formResp === 'estudiando',
+      estrellas: [1, 2, 3, 4, 5].map(v => ({
+        on: () => this.setState({ stars: v }),
+        bg: v <= s.stars ? '#F59E0B' : '#E4E9F2'
+      })),
+      starsTexto: s.stars === 0 ? 'Sin calificar' : s.stars + ' de 5',
+      calEnviada: s.calEnviada,
+      enviarCalificacion: () => this.setState({ calEnviada: true }),
+      criterios: CAL_CRITERIOS.map(c => ({
+        t: c.t, sub: c.sub,
+        estrellas: [1, 2, 3, 4, 5].map(v => ({
+          on: () => this.setState({ calCriterios: Object.assign({}, s.calCriterios, { [c.k]: v }) }),
+          bg: v <= (s.calCriterios[c.k] || 0) ? '#F59E0B' : '#E4E9F2'
+        }))
+      })),
+      calChips: CAL_CHIPS.map(t => {
+        const on = !!s.chips[t];
+        return { t: t, on: () => this.setState({ chips: Object.assign({}, s.chips, { [t]: !s.chips[t] }) }),
+          bd: on ? '2px solid #E83CB6' : '1.5px solid #D8DFEA', bg: on ? '#FDF0F8' : '#fff', fg: on ? '#14213D' : '#5B6B85' };
+      })
+    };
+  }
+}
+
+</script>
+</body>
+</html>

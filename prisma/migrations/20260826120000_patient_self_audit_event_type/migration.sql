@@ -1,0 +1,93 @@
+-- ---------------------------------------------------------------------------
+-- SPEC 021 — PACIENTE MVP OPERATIVO — MICRO-PACKET 1: AUDITORIA MINIMA.
+--
+-- Migracion ADITIVA de DOS valores de enum, y NADA mas.
+--
+-- Contenido, integro:
+--   1. "AuditEventType" += 'PATIENT_SELF_ACCESS_GRANTED'
+--   2. "AuditEventType" += 'PATIENT_SELF_ACCESS_DENIED'
+--
+-- Son los DOS UNICOS eventos del acceso propio del Paciente (021 §9.1, §9.3,
+-- §17.D-1). NO se crea un valor por endpoint: el resumen, las citas y las
+-- visitas se diferencian DENTRO del evento, por `resourceType` y por
+-- `endpoint`, dos columnas que "audit_event" YA tiene. Multiplicar el enum por
+-- endpoint romperia el limite «aditiva y minima» fijado por el Product Owner
+-- (021 §17.B-4) y es una STOP CONDITION (021 §19.3).
+--
+-- Lo que esta migracion NO hace:
+--   - NO crea tablas, columnas, indices, triggers, funciones ni politicas RLS;
+--   - NO concede ni retira ningun privilegio;
+--   - NO modifica ninguna restriccion existente. En particular NO toca
+--     `audit_event_resource_required` ni `audit_event_actor_role_scope`;
+--   - NO renombra, reordena ni elimina ningun valor preexistente del enum;
+--   - NO anade valor alguno a ningun OTRO enum;
+--   - NO INSERTA NI ACTUALIZA NINGUNA FILA. En particular no escribe ningun
+--     evento de auditoria: PostgreSQL 12+ admite `ALTER TYPE ... ADD VALUE`
+--     dentro de la transaccion de la migracion, pero PROHIBE USAR el valor
+--     recien anadido en esa MISMA transaccion. Cualquier uso corresponde a la
+--     ejecucion de la aplicacion, despues de confirmada esta migracion.
+--
+-- Sin perdida de datos y sin romper compatibilidad: un valor nuevo de enum no
+-- invalida ninguna fila ya registrada y no obliga a nadie a emitirlo.
+--
+-- NO contiene ningun secreto y no toca dato personal alguno.
+--
+-- Rollback documentado y CONDICIONAL:
+-- `prisma/migrations/ROLLBACK-patient_self_audit_event_type.sql`.
+-- Ese archivo COMPRUEBA PRIMERO si existen eventos dependientes y ABORTA con
+-- error explicito si los hay. NO borra eventos, NO los reasigna y NO continua
+-- (021 §9.4, §19.14).
+-- ---------------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------------
+-- 1. Acceso propio del Paciente, CONCEDIDO
+-- ---------------------------------------------------------------------------
+--
+-- Una lectura self-scope servida a la persona autenticada. `outcome` es
+-- 'SUCCESS'. El actor es SIEMPRE la cuenta humana OPACA (`HumanAccount.id`) y
+-- `actorRole` queda NULO: el check `audit_event_actor_role_scope` solo admite
+-- rol junto a un actor institucional, e `InstitutionalRole` no describe a una
+-- persona.
+--
+-- El evento NO copia documento, nombre, iniciales, direccion, territorio, EPS,
+-- fecha de nacimiento, sexo o genero, ni el contenido de la cita o de la visita.
+ALTER TYPE "AuditEventType" ADD VALUE IF NOT EXISTS 'PATIENT_SELF_ACCESS_GRANTED';
+
+-- ---------------------------------------------------------------------------
+-- 2. Acceso propio del Paciente, DENEGADO
+-- ---------------------------------------------------------------------------
+--
+-- Un intento denegado CON principal humano resoluble. `outcome` es 'DENIED'.
+--
+-- Una peticion SIN principal humano resoluble NO genera evento de esta familia
+-- y NO recibe actor de relleno (021 §9.2-1, §9.2-2): queda cubierta por el 401
+-- uniforme. Tampoco se registra el motivo detallado de la denegacion, que
+-- permitiria deducir si existe un paciente asociado.
+ALTER TYPE "AuditEventType" ADD VALUE IF NOT EXISTS 'PATIENT_SELF_ACCESS_DENIED';
+
+-- ---------------------------------------------------------------------------
+-- 3. NOTA DELIBERADA sobre `audit_event_resource_required`
+-- ---------------------------------------------------------------------------
+--
+-- El check vigente, reescrito por TASK-HOSPITAL-CORE-01, expresa el invariante
+-- en forma NEGATIVA: solo los eventos NOMBRADOS en su lista estan OBLIGADOS a
+-- llevar `resourceId`, y esa lista contiene exclusivamente
+-- 'PATIENT_ENROLLMENT_CREATED', 'INSTITUTIONAL_SESSION_CREATED' e
+-- 'INSTITUTIONAL_SESSION_REVOKED'.
+--
+-- Los dos valores nuevos NO figuran en ella, de modo que el check los admite
+-- con `resourceId` NULO SIN NINGUN CAMBIO. Es lo correcto: un acceso a una
+-- superficie no crea ni modifica un recurso identificable y no se sustituye por
+-- un identificador inventado.
+--
+-- Esta migracion NO modifica ese check, en coherencia con su limite «aditiva y
+-- minima».
+
+-- ---------------------------------------------------------------------------
+-- 4. NOTA DELIBERADA sobre `audit_event_actor_role_scope`
+-- ---------------------------------------------------------------------------
+--
+-- El check vigente exige `actorRole IS NULL OR actorType = 'INSTITUTIONAL_IDENTITY'`.
+-- Los eventos de esta familia se escriben SIEMPRE con `actorType =
+-- 'HUMAN_ACCOUNT'` y `actorRole` NULO, de modo que el check los admite sin
+-- cambio alguno. Esta migracion tampoco lo toca.

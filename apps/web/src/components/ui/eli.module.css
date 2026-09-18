@@ -1,0 +1,117 @@
+/*
+ * Presencia visual de Elí (TASK-002, FR-11).
+ *
+ * El rosa pertenece a Elí en Línea Visual B: halo de su avatar, fondo de su
+ * burbuja y de sus tarjetas de ayuda. Elí orienta; no diagnostica, no
+ * prescribe y no representa autoridad clínica.
+ */
+
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--b-blanco);
+  border: 2.5px solid var(--b-rosa-eli);
+  flex: 0 0 auto;
+}
+
+.avatarLarge {
+  border-width: 5px;
+}
+
+.avatarMedium {
+  border-width: 4px;
+}
+
+.avatarSmall {
+  border-width: 2px;
+}
+
+.avatarSuccess {
+  border-color: var(--b-verde);
+}
+
+.speech {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.bubble {
+  background: var(--b-rosa-eli-fondo);
+  border: 1.5px solid var(--b-rosa-eli-borde);
+  border-radius: 18px 18px 18px 5px;
+  padding: 14px 16px;
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+}
+
+.bubbleHero {
+  border-radius: 24px 24px 24px 6px;
+  padding: 22px 24px;
+  background: var(--b-blanco);
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.bubbleHeroTitle {
+  margin: 0;
+  font-size: 27px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-azul);
+}
+
+.bubbleHeroBody {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.45;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+  text-wrap: pretty;
+}
+
+/* Tarjeta de ayuda de Elí en el inicio local. */
+.helpCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--b-radio-tarjeta);
+  background: var(--b-rosa-eli-fondo);
+  border: 1px solid var(--b-rosa-eli-borde);
+}
+
+.helpText {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+}
+
+.helpButton {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--b-blanco);
+  border: 1px solid var(--b-rosa-eli-borde);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.helpButtonDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--b-fucsia-novedades);
+}

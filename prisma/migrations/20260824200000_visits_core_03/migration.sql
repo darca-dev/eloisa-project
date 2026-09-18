@@ -1,0 +1,85 @@
+-- ---------------------------------------------------------------------------
+-- VISITS-CORE-01 — MP03 PROFESSIONAL TRANSITIONS.
+--
+-- Migracion ADITIVA de TRES valores de enum, y NADA mas.
+--
+-- Contenido exacto:
+--   1. "AuditEventType" += 'HOME_VISIT_STARTED'
+--   2. "AuditEventType" += 'HOME_VISIT_COMPLETED'
+--   3. "AuditEventType" += 'HOME_VISIT_NOT_COMPLETED'
+--
+-- Son los tres eventos de las transiciones PROFESIONALES de la visita
+-- domiciliaria: iniciar, completar y dar por no realizada. El actor de los tres
+-- es la CUENTA HUMANA OPACA autenticada —`AuditActorType.HUMAN_ACCOUNT`— y no
+-- una identidad institucional: iniciar o completar una visita es un acto de una
+-- persona concreta, a diferencia de la materializacion administrativa de MP02.
+--
+-- Lo que esta migracion NO hace:
+--   - NO crea tablas, columnas, indices, triggers, funciones ni politicas;
+--   - NO concede ni retira ningun privilegio. `merdn_runtime` ya recibio en MP01
+--     exactamente lo que estas transiciones necesitan: UPDATE sobre
+--     "home_visit", INSERT sobre "home_visit_transition" —APPEND-ONLY, sin
+--     UPDATE ni DELETE— e INSERT sobre "audit_event". No hace falta ninguno mas
+--     y no se anade ninguno;
+--   - NO modifica ninguna restriccion existente. En particular NO toca
+--     "home_visit_transition_machine", que ya declara desde MP01 las cuatro
+--     transiciones legales y la exigencia de actor humano en todas ellas: la
+--     maquina de estados NO se reescribe aqui, se APOYA en la que ya existe;
+--   - NO INSERTA NI ACTUALIZA NINGUNA FILA. PostgreSQL 12+ admite
+--     `ALTER TYPE ... ADD VALUE` dentro de la transaccion de la migracion, pero
+--     PROHIBE USAR el valor recien anadido en esa MISMA transaccion. Cualquier
+--     uso corresponde a la ejecucion de la aplicacion, ya confirmada esta
+--     migracion.
+--
+-- NO contiene ningun secreto y no toca dato personal alguno.
+--
+-- Rollback documentado: `prisma/migrations/ROLLBACK-visits_core_03.sql`.
+-- ADVERTENCIA: esa reversion NO puede retirar un valor de un enum. PostgreSQL
+-- no ofrece `ALTER TYPE ... DROP VALUE`. El archivo lo DOCUMENTA en lugar de
+-- simular una reversion limpia.
+-- ---------------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------------
+-- 1. Visita domiciliaria INICIADA por la profesional asignada
+-- ---------------------------------------------------------------------------
+--
+-- `SCHEDULED -> IN_PROGRESS`. El evento referencia el recurso ("HomeVisit") y la
+-- cuenta humana OPACA que lo ejecuto. NO copia nombre, documento, direccion,
+-- horario, nota ni dato clinico alguno.
+ALTER TYPE "AuditEventType" ADD VALUE IF NOT EXISTS 'HOME_VISIT_STARTED';
+
+-- ---------------------------------------------------------------------------
+-- 2. Visita domiciliaria COMPLETADA
+-- ---------------------------------------------------------------------------
+--
+-- `IN_PROGRESS -> COMPLETED`. Estado TERMINAL: la base no admite reapertura ni
+-- reversion. El evento no describe que ocurrio durante la visita —MERDN no
+-- modela nota, diagnostico ni evidencia clinica aqui—: solo que la visita quedo
+-- completada y quien lo registro.
+ALTER TYPE "AuditEventType" ADD VALUE IF NOT EXISTS 'HOME_VISIT_COMPLETED';
+
+-- ---------------------------------------------------------------------------
+-- 3. Visita domiciliaria NO REALIZADA
+-- ---------------------------------------------------------------------------
+--
+-- `SCHEDULED -> NOT_COMPLETED` e `IN_PROGRESS -> NOT_COMPLETED`. Estado
+-- TERMINAL. Deliberadamente NO se registra el MOTIVO: MERDN no tiene aprobado
+-- ningun catalogo de causas de no realizacion, y inventar uno haria pasar por
+-- dato institucional algo que la plataforma no posee. El evento dice que la
+-- visita quedo como no realizada, no por que.
+ALTER TYPE "AuditEventType" ADD VALUE IF NOT EXISTS 'HOME_VISIT_NOT_COMPLETED';
+
+-- NOTA DELIBERADA sobre `audit_event_resource_required`.
+--
+-- El check vigente, reescrito por TASK-HOSPITAL-CORE-01, expresa el invariante
+-- en forma NEGATIVA: solo los eventos nombrados en su lista estan OBLIGADOS a
+-- llevar `resourceId`. Los tres valores nuevos no figuran en esa lista, de modo
+-- que el check los admite sin ningun cambio.
+--
+-- La aplicacion SIEMPRE escribe el `resourceId` de la visita: el servicio de
+-- transiciones no admite otro camino. Endurecer el check anadiendo los tres
+-- valores a una lista positiva NO es posible aqui, porque PostgreSQL prohibe
+-- usar en la misma transaccion un valor de enum anadido en esa misma
+-- transaccion. Exigiria una migracion posterior separada; se reporta como
+-- riesgo residual conocido, identico al ya declarado por HOSPITAL-CORE-02,
+-- IDENTITY-RELATIONSHIPS-CORE-01 y VISITS-CORE-01 MP02.

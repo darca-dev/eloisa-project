@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; font-family:Nunito, system-ui, sans-serif; background:#F7F9FA; color:#0F2E3D; -webkit-font-smoothing:antialiased; }
+  a { color:#075985; text-decoration:none; font-weight:800; }
+  a:hover { color:#D63384; }
+  input, select, textarea, button { font-family:Nunito, sans-serif; }
+</style>
+</helmet>
+
+<div style="padding:40px;display:flex;flex-direction:column;gap:40px;align-items:flex-start">
+
+  <div style="width:1160px;display:flex;flex-direction:column;gap:10px">
+    <div style="font-size:13px;font-weight:900;color:#0A6873;letter-spacing:.14em">ELÍGEME · LÍNEA VISUAL · OPCIÓN B</div>
+    <div style="font-size:44px;font-weight:900;line-height:1.1">Humana adelante, institucional detrás</div>
+    <div style="font-size:19px;line-height:1.55;color:#5A6474;font-weight:600;max-width:820px">Una sola identidad con dos intensidades emocionales. Los valores de abajo son el sistema: cada pantalla los consume, ninguna define color propio. La calidez viene de los bordes redondeados, los iconos grandes, el espacio en blanco y el lenguaje sencillo, no del rosa: el rosa pertenece a Elí. El aguamarina toma como referencia institucional el color corporativo de la Superintendencia Nacional de Salud sin aparentar ser un producto oficial de esa entidad. El semáforo clínico no cambia en ninguna interfaz.</div>
+  </div>
+
+  <div style="width:1160px;background:#fff;border-radius:24px;padding:32px;display:flex;flex-direction:column;gap:20px;box-shadow:0 2px 14px rgba(15,46,61,.07)">
+    <div style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.1em">INTENSIDAD POR INTERFAZ</div>
+    <div style="display:flex;flex-direction:column;gap:0">
+      <sc-for list="{{ intensidades }}" as="i" hint-placeholder-count="7">
+        <div style="display:flex;align-items:center;gap:18px;padding:15px 0;border-bottom:1px solid #E4EBEE;flex-wrap:wrap">
+          <span style="flex:0 0 190px;font-size:17px;font-weight:900">{{ i.interfaz }}</span>
+          <span style="flex:1;min-width:220px;font-size:16px;font-weight:700;color:#5A6474">{{ i.sensacion }}</span>
+          <span style="flex:0 0 150px;height:10px;background:#E4EBEE;border-radius:99px;overflow:hidden"><span style="display:block;width:{{ i.pct }};height:100%;background:{{ i.color }};border-radius:99px"></span></span>
+          <span style="flex:0 0 150px;font-size:14px;font-weight:900;color:{{ i.color }}">{{ i.nivel }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="padding:15px 17px;background:#F7F9FA;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">La barra mide cuánta institucionalidad lleva cada interfaz. Ninguna cambia de paleta: cambia la densidad de datos, el tamaño de la tipografía y la cantidad de ilustración.</div>
+  </div>
+
+  <div style="width:1160px;background:#fff;border-radius:24px;padding:32px;display:flex;flex-direction:column;gap:26px;box-shadow:0 2px 14px rgba(15,46,61,.07)">
+    <div style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.1em">1 · PALETA CENTRAL</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px">
+      <sc-for list="{{ paleta }}" as="c" hint-placeholder-count="8">
+        <div style="border:1.5px solid #DDE7EA;border-radius:18px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:92px;background:{{ c.hex }};display:flex;align-items:flex-end;padding:12px"><span style="font-size:14px;font-weight:900;color:{{ c.fg }}">{{ c.hex }}</span></div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:17px;font-weight:900">{{ c.nombre }}</div>
+            <div style="font-size:15px;line-height:1.45;color:#5A6474;font-weight:700">{{ c.uso }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="height:1px;background:#E4EBEE"></div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.1em">SEMÁFORO UNIVERSAL · NO SE ADAPTA A LA MARCA</div>
+        <sc-for list="{{ semaforo }}" as="s" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:13px;padding:15px 17px;border-radius:14px;background:{{ s.bg }};border:1.5px solid {{ s.bd }}">
+            <span style="flex:0 0 34px;width:34px;height:34px;border-radius:50%;background:#fff;border:1.5px solid {{ s.bd }};display:flex;align-items:center;justify-content:center;color:{{ s.color }}">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+            </span>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <div style="font-size:16px;font-weight:900;color:{{ s.color }}">{{ s.t }}</div>
+              <div style="font-size:14px;font-weight:700;color:#5A6474">{{ s.uso }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.1em">JERARQUÍA DE BOTONES</div>
+        <button style="padding:17px 22px;border:none;border-radius:14px;background:#32B4A8;color:#0F2E3D;font-size:17px;font-weight:900;cursor:pointer">Principal cálido · aguamarina con tinta oscura</button>
+        <button style="padding:17px 22px;border:none;border-radius:14px;background:#075985;color:#fff;font-size:17px;font-weight:900;cursor:pointer">Principal institucional · azul ELÍGEME</button>
+        <button style="padding:17px 22px;border:2px solid #075985;border-radius:14px;background:#fff;color:#075985;font-size:17px;font-weight:900;cursor:pointer">Secundario · borde azul</button>
+        <button style="display:flex;align-items:center;justify-content:center;gap:10px;padding:17px 22px;border:none;border-radius:14px;background:#D63384;color:#fff;font-size:17px;font-weight:900;cursor:pointer">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          Novedades · fucsia solo si hay algo nuevo
+        </button>
+        <div style="padding:15px 17px;background:#F7FAFC;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">El fucsia significa «hay algo nuevo», nunca «hay peligro». Una acción clínica prioritaria usa amarillo o rojo, jamás fucsia.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:13px;font-weight:900;color:#5A6474;letter-spacing:.1em">CONTENEDORES DE ICONO</div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px">
+          <div style="width:150px;padding:16px;border:1.5px solid #DDE7EA;border-radius:16px;display:flex;flex-direction:column;gap:10px">
+            <span style="width:50px;height:50px;border-radius:15px;background:#E8F6F8;border:1.5px solid #CFE6EE;display:flex;align-items:center;justify-content:center;color:#0A6873"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2v2a4 4 0 0 1-8 0V2"/><path d="M7 8v4a6 6 0 0 0 12 0v-1"/><circle cx="20" cy="10" r="2"/></svg></span>
+            <span style="font-size:14px;font-weight:900;line-height:1.35">Institucional</span>
+          </div>
+          <div style="width:150px;padding:16px;border:1.5px solid #DDE7EA;border-radius:16px;display:flex;flex-direction:column;gap:10px">
+            <span style="width:50px;height:50px;border-radius:15px;background:#E8F6F8;border:1.5px solid #B6E3DC;display:flex;align-items:center;justify-content:center;color:#0A6873"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h4"/></svg></span>
+            <span style="font-size:14px;font-weight:900;line-height:1.35">Acción principal</span>
+          </div>
+          <div style="width:150px;padding:16px;border:1.5px solid #DDE7EA;border-radius:16px;display:flex;flex-direction:column;gap:10px">
+            <span style="width:50px;height:50px;border-radius:15px;background:#FCEFF5;border:1.5px solid #F6C9DC;display:flex;align-items:center;justify-content:center;color:#D63384"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.5-1.5 3-3.3 3-5.5A5.5 5.5 0 0 0 12 5.5 5.5 5.5 0 0 0 2 8.5C2 13 12 21 12 21"/></svg></span>
+            <span style="font-size:14px;font-weight:900;line-height:1.35">Elí y ayuda</span>
+          </div>
+          <div style="width:150px;padding:16px;border:1.5px solid #DDE7EA;border-radius:16px;display:flex;flex-direction:column;gap:10px">
+            <span style="width:50px;height:50px;border-radius:15px;background:#ffffff;border:1.5px solid #DDE7EA;display:flex;align-items:center;justify-content:center;color:#075985"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+            <span style="font-size:14px;font-weight:900;line-height:1.35">Ciudadano</span>
+          </div>
+        </div>
+        <div style="padding:15px 17px;background:#F7FAFC;border-radius:12px;font-size:14px;line-height:1.55;font-weight:700;color:#5A6474">Iconos de trazo Lucide, nunca emoji en la versión final. Un icono, un significado, en toda la plataforma.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="width:1160px;display:flex;flex-direction:column;gap:8px">
+    <div style="font-size:13px;font-weight:900;color:#0A6873;letter-spacing:.12em">2 · INTENSIDAD CÁLIDA</div>
+    <div style="font-size:30px;font-weight:900">Inscripción, Paciente y Cuidador</div>
+    <div style="font-size:17px;line-height:1.5;color:#5A6474;font-weight:600;max-width:760px">Blanco y celeste dominan, el azul petróleo se reserva para títulos, el aguamarina para las acciones y el rosa solo marca dónde está Elí. Cálida para una mujer de 65 años y natural para un hombre de 75 o un cuidador de 40.</div>
+  </div>
+
+  <div style="display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap">
+
+    <div style="width:392px;background:#fff;border-radius:28px;overflow:hidden;box-shadow:0 8px 30px rgba(15,46,61,.12);display:flex;flex-direction:column">
+      <div style="padding:12px 18px;background:#F7FAFC;border-bottom:1px solid #E4EBEE;font-size:12px;font-weight:900;color:#5A6474;letter-spacing:.09em">INSCRIPCIÓN</div>
+      <div style="background:#F7FAFC;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <div style="background:#075985;border-radius:18px;padding:16px 18px;display:flex;align-items:center;gap:12px">
+          <span style="flex:0 0 42px;width:42px;height:42px;border-radius:13px;background:#32B4A8;display:flex;align-items:center;justify-content:center;color:#fff">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+          </span>
+          <div style="display:flex;flex-direction:column;gap:1px">
+            <div style="font-size:11px;font-weight:900;color:#CFE6EE;letter-spacing:.12em">ELÍGEME</div>
+            <div style="font-size:17px;font-weight:900;color:#fff">Crear mi cuenta</div>
+          </div>
+        </div>
+        <div style="background:#fff;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <span style="font-size:17px;font-weight:900">Dónde vives</span>
+            <span style="font-size:13px;font-weight:900;color:#0A6873">Paso 3 de 5</span>
+          </div>
+          <div style="height:8px;background:#E8F6F8;border-radius:99px;overflow:hidden"><div style="width:60%;height:100%;background:#32B4A8;border-radius:99px"></div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span style="width:44px;height:44px;border-radius:13px;background:#E8F6F8;border:1.5px solid #CFE6EE;display:flex;align-items:center;justify-content:center;color:#0A6873"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="7" r="4"/></svg></span>
+            <span style="width:44px;height:44px;border-radius:13px;background:#E8F6F8;border:1.5px solid #CFE6EE;display:flex;align-items:center;justify-content:center;color:#0A6873"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg></span>
+            <span style="width:44px;height:44px;border-radius:13px;background:#32B4A8;border:1.5px solid #32B4A8;display:flex;align-items:center;justify-content:center;color:#ffffff"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+            <span style="width:44px;height:44px;border-radius:13px;background:#ffffff;border:1.5px solid #DDE7EA;display:flex;align-items:center;justify-content:center;color:#9FB2BC"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="2"/><path d="M5 8h14M8 8l1.5 6h5L16 8M9.5 14 8 21M14.5 14 16 21"/></svg></span>
+            <span style="width:44px;height:44px;border-radius:13px;background:#ffffff;border:1.5px solid #DDE7EA;display:flex;align-items:center;justify-content:center;color:#9FB2BC"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg></span>
+          </div>
+        </div>
+        <div style="background:#fff;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:14px;font-weight:900;color:#5A6474">Dirección completa</div>
+          <div style="padding:14px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:16px;font-weight:700;color:#0F2E3D">Cra 45 # 32-16</div>
+          <div style="font-size:14px;font-weight:900;color:#5A6474">Cómo llegar a su casa</div>
+          <div style="padding:14px;border:1.5px solid #DDE7EA;border-radius:12px;font-size:15px;font-weight:600;color:#5A6474;line-height:1.4">Casa azul detrás de la iglesia</div>
+          <button style="padding:15px;border:2px solid #075985;border-radius:12px;background:#E8F6F8;color:#075985;font-size:15px;font-weight:900;cursor:pointer">Usar mi ubicación</button>
+        </div>
+        <div style="background:#FCEFF5;border:1.5px solid #F6C9DC;border-radius:18px;padding:16px;display:flex;align-items:center;gap:12px">
+          <span style="flex:0 0 40px;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#32B4A8,#F2A7C4);display:flex;align-items:center;justify-content:center;color:#0F2E3D">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 17h.01M12 13a2.5 2.5 0 1 0-2.5-2.5"/></svg>
+          </span>
+          <div style="flex:1;font-size:14px;line-height:1.45;font-weight:800;color:#0F2E3D">Elí: escriba algo como «casa azul detrás de la iglesia».</div>
+        </div>
+        <button style="padding:17px;border:none;border-radius:14px;background:#32B4A8;color:#0F2E3D;font-size:17px;font-weight:900;cursor:pointer">Continuar</button>
+      </div>
+    </div>
+
+    <div style="width:392px;background:#fff;border-radius:28px;overflow:hidden;box-shadow:0 8px 30px rgba(15,46,61,.12);display:flex;flex-direction:column">
+      <div style="padding:12px 18px;background:#F7FAFC;border-bottom:1px solid #E4EBEE;font-size:12px;font-weight:900;color:#5A6474;letter-spacing:.09em">PACIENTE</div>
+      <div style="background:#F7FAFC;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <div style="background:#075985;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px">
+          <span style="flex:1;font-size:16px;font-weight:900;color:#fff">Hola, María</span>
+          <span style="position:relative;width:40px;height:40px;border-radius:12px;background:#053F5F;display:flex;align-items:center;justify-content:center;color:#fff">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+            <span style="position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:99px;background:#D63384;color:#fff;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center">3</span>
+          </span>
+        </div>
+        <div style="background:#fff;border-radius:18px;padding:18px;display:flex;align-items:center;gap:14px">
+          <span style="flex:0 0 40px;width:40px;height:40px;border-radius:50%;background:#EFF9F1;border:1.5px solid #BFE5C9;display:flex;align-items:center;justify-content:center;color:#157F3B">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>
+          </span>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="font-size:11px;font-weight:900;color:#157F3B;letter-spacing:.09em">ESTADO DE HOY</div>
+            <div style="font-size:19px;font-weight:900">Verde · estable</div>
+          </div>
+        </div>
+        <div style="background:#E8F6F8;border:2.5px solid #CFE6EE;border-radius:20px;padding:18px;display:flex;align-items:center;gap:14px">
+          <span style="flex:0 0 52px;width:52px;height:52px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;color:#0A6873">
+            <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v18H6.5A2.5 2.5 0 0 1 4 19.5z"/><path d="M9 7h6M9 11h6"/></svg>
+          </span>
+          <div style="flex:1;display:flex;flex-direction:column;gap:3px">
+            <div style="font-size:20px;font-weight:900">Mi bitácora</div>
+            <div style="font-size:14px;line-height:1.4;font-weight:700;color:#3E6B78">¿Cómo te sientes hoy? Toma dos minutos.</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+          <div style="background:#fff;border-radius:16px;padding:15px;display:flex;flex-direction:column;gap:9px;border:1.5px solid #CFE7EC">
+            <span style="width:44px;height:44px;border-radius:13px;background:#E8F6F8;display:flex;align-items:center;justify-content:center;color:#0A6873"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.5-1.5 3-3.3 3-5.5A5.5 5.5 0 0 0 12 5.5 5.5 5.5 0 0 0 2 8.5C2 13 12 21 12 21"/></svg></span>
+            <span style="font-size:15px;font-weight:900;line-height:1.25">Historial clínico</span>
+            <span style="font-size:13px;line-height:1.35;font-weight:700;color:#5A6474">Tu información y seguimiento</span>
+          </div>
+          <div style="background:#fff;border-radius:16px;padding:15px;display:flex;flex-direction:column;gap:9px;border:1.5px solid #CFE7EC">
+            <span style="width:44px;height:44px;border-radius:13px;background:#E8F6F8;display:flex;align-items:center;justify-content:center;color:#075985"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+            <span style="font-size:15px;font-weight:900;line-height:1.25">Agendar cita</span>
+            <span style="font-size:13px;line-height:1.35;font-weight:700;color:#5A6474">Elige cómo te atienden</span>
+          </div>
+          <div style="background:#fff;border-radius:16px;padding:15px;display:flex;flex-direction:column;gap:9px;border:1.5px solid #F6C9DC">
+            <span style="width:44px;height:44px;border-radius:13px;background:#FCEFF5;display:flex;align-items:center;justify-content:center;color:#D63384"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+            <span style="font-size:15px;font-weight:900;line-height:1.25">Novedades</span>
+            <span style="font-size:13px;line-height:1.35;font-weight:700;color:#5A6474">3 nuevas</span>
+          </div>
+          <div style="background:#fff;border-radius:16px;padding:15px;display:flex;flex-direction:column;gap:9px;border:1.5px solid #B6E3DC">
+            <span style="width:44px;height:44px;border-radius:13px;background:#E8F6F8;display:flex;align-items:center;justify-content:center;color:#0A6873"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.7 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></span>
+            <span style="font-size:15px;font-weight:900;line-height:1.25">Mis visitas</span>
+            <span style="font-size:13px;line-height:1.35;font-weight:700;color:#5A6474">Consulta y califica</span>
+          </div>
+        </div>
+        <div style="align-self:flex-end;display:flex;align-items:center;gap:9px;padding:7px 18px 7px 7px;border-radius:99px;background:#fff;box-shadow:0 8px 22px rgba(15,46,61,.16)">
+          <span style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#32B4A8,#F2A7C4);display:flex;align-items:center;justify-content:center;color:#0F2E3D;font-size:17px;font-weight:900">E</span>
+          <span style="font-size:15px;font-weight:900;color:#075985">¡Hola, soy Elí!</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="width:392px;background:#fff;border-radius:28px;overflow:hidden;box-shadow:0 8px 30px rgba(15,46,61,.12);display:flex;flex-direction:column">
+      <div style="padding:12px 18px;background:#F7FAFC;border-bottom:1px solid #E4EBEE;font-size:12px;font-weight:900;color:#5A6474;letter-spacing:.09em">CUIDADOR</div>
+      <div style="background:#F7FAFC;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <div style="background:#075985;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px">
+          <span style="flex:0 0 38px;width:38px;height:38px;border-radius:50%;background:#E8F6F8;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#075985">MG</span>
+          <div style="flex:1;display:flex;flex-direction:column;gap:1px">
+            <div style="font-size:11px;font-weight:900;color:#CFE6EE;letter-spacing:.1em">ESTÁS CUIDANDO A</div>
+            <div style="font-size:16px;font-weight:900;color:#fff">María Gómez · 76 años</div>
+          </div>
+        </div>
+        <div style="background:#fff;border-radius:18px;padding:18px;display:flex;align-items:center;gap:14px;border-left:5px solid #F59E0B">
+          <span style="flex:0 0 40px;width:40px;height:40px;border-radius:50%;background:#FEF6E9;border:1.5px solid #F3DCA9;display:flex;align-items:center;justify-content:center;color:#96450A">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+          </span>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="font-size:11px;font-weight:900;color:#96450A;letter-spacing:.09em">SEMÁFORO DE HOY</div>
+            <div style="font-size:18px;font-weight:900">Amarillo · requiere seguimiento</div>
+          </div>
+        </div>
+        <div style="background:#E8F6F8;border:2.5px solid #CFE6EE;border-radius:20px;padding:18px;display:flex;align-items:center;gap:14px">
+          <span style="flex:0 0 52px;width:52px;height:52px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;color:#0A6873">
+            <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v18H6.5A2.5 2.5 0 0 1 4 19.5z"/><path d="M9 7h6M9 11h6"/></svg>
+          </span>
+          <div style="flex:1;display:flex;flex-direction:column;gap:3px">
+            <div style="font-size:20px;font-weight:900">Bitácora de María</div>
+            <div style="font-size:14px;line-height:1.4;font-weight:700;color:#3E6B78">¿Cómo se encuentra hoy?</div>
+          </div>
+        </div>
+        <div style="background:#fff;border:2px solid #F2A7C4;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:11px">
+          <span style="width:50px;height:50px;border-radius:15px;background:#FCEFF5;display:flex;align-items:center;justify-content:center;color:#D63384">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 9 12 5 2 9l10 4z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg>
+          </span>
+          <div style="font-size:19px;font-weight:900">Certificarme</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:900;color:#96450A">
+            <span style="width:11px;height:11px;border-radius:50%;background:#F59E0B"></span>
+            Sin certificación registrada
+          </div>
+          <div style="font-size:14px;line-height:1.4;font-weight:700;color:#5A6474">ELÍGEME te guía para capacitarte. No te audita.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="width:1160px;display:flex;flex-direction:column;gap:8px">
+    <div style="font-size:13px;font-weight:900;color:#075985;letter-spacing:.12em">3 · INTENSIDAD INSTITUCIONAL</div>
+    <div style="font-size:30px;font-weight:900">Profesional en Salud, Hospital y Alcaldía / Administración</div>
+    <div style="font-size:17px;line-height:1.5;color:#5A6474;font-weight:600;max-width:760px">El Profesional en Salud queda en el medio: 70 % profesional y 30 % humana, porque también alimenta ELÍGEME mientras visita familias. Hospital y Alcaldía abandonan la ilustración: datos, indicadores, tablas y tendencias sobre tarjeta blanca.</div>
+  </div>
+
+  <div style="display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap">
+
+    <div style="width:700px;background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 8px 30px rgba(15,46,61,.12);display:flex;flex-direction:column">
+      <div style="padding:12px 20px;background:#F7FAFC;border-bottom:1px solid #E4EBEE;font-size:12px;font-weight:900;color:#5A6474;letter-spacing:.09em">PROFESIONAL EN SALUD</div>
+      <div style="background:#F7FAFC;padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div style="background:#075985;border-radius:16px;padding:14px 18px;display:flex;align-items:center;gap:14px">
+          <div style="flex:1;display:flex;flex-direction:column;gap:1px">
+            <div style="font-size:11px;font-weight:900;color:#CFE6EE;letter-spacing:.12em">ELÍGEME</div>
+            <div style="font-size:17px;font-weight:900;color:#fff">Profesional en Salud</div>
+          </div>
+          <span style="position:relative;width:38px;height:38px;border-radius:11px;background:#053F5F;display:flex;align-items:center;justify-content:center;color:#fff">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+            <span style="position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;padding:0 5px;box-sizing:border-box;border-radius:99px;background:#D63384;color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center">5</span>
+          </span>
+          <span style="padding:8px 14px;border-radius:99px;background:#053F5F;font-size:13px;font-weight:900;color:#fff">Dra. Laura Gómez</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+          <div style="background:#fff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px;border-top:3px solid #075985">
+            <span style="width:40px;height:40px;border-radius:12px;background:#E8F6F8;display:flex;align-items:center;justify-content:center;color:#075985"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg></span>
+            <span style="font-size:27px;font-weight:900;line-height:1;color:#075985">6</span>
+            <span style="font-size:13px;font-weight:900;line-height:1.3">Pacientes de hoy</span>
+          </div>
+          <div style="background:#fff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px;border-top:3px solid #B45309">
+            <span style="width:40px;height:40px;border-radius:12px;background:#FEF6E9;display:flex;align-items:center;justify-content:center;color:#96450A"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+            <span style="font-size:27px;font-weight:900;line-height:1;color:#96450A">3</span>
+            <span style="font-size:13px;font-weight:900;line-height:1.3">Alertas pendientes</span>
+          </div>
+          <div style="background:#fff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px;border-top:3px solid #087F8C">
+            <span style="width:40px;height:40px;border-radius:12px;background:#E8F6F8;display:flex;align-items:center;justify-content:center;color:#0A6873"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg></span>
+            <span style="font-size:27px;font-weight:900;line-height:1;color:#0A6873">4</span>
+            <span style="font-size:13px;font-weight:900;line-height:1.3">Notas del equipo</span>
+          </div>
+          <div style="background:#fff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px;border-top:3px solid #32B4A8">
+            <span style="width:40px;height:40px;border-radius:12px;background:#E8F6F8;display:flex;align-items:center;justify-content:center;color:#0A6873"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.7 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></span>
+            <span style="font-size:27px;font-weight:900;line-height:1;color:#0A6873">4.2</span>
+            <span style="font-size:13px;font-weight:900;line-height:1.3">Mi calificación</span>
+          </div>
+        </div>
+        <div style="background:#fff;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px;border-left:5px solid #F59E0B">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <span style="font-size:12px;font-weight:900;color:#5A6474;letter-spacing:.09em">PRÓXIMA ATENCIÓN</span>
+            <span style="font-size:14px;font-weight:900;color:#96450A">En 25 minutos</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <span style="flex:0 0 50px;width:50px;height:50px;border-radius:50%;background:#E8F6F8;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#075985">MG</span>
+            <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:2px">
+              <div style="font-size:20px;font-weight:900">10:00 a. m. · María Gómez</div>
+              <div style="font-size:14px;font-weight:700;color:#5A6474">76 años · Nueva EPS · Soacha</div>
+            </div>
+            <span style="display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:99px;background:#E8F6F8;font-size:13px;font-weight:900;color:#0A6873">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+              Visita en casa
+            </span>
+            <span style="display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:99px;background:#FEF6E9;border:1.5px solid #F3DCA9;font-size:13px;font-weight:900;color:#96450A">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+              Amarillo
+            </span>
+          </div>
+          <div style="padding:14px 16px;background:#F7FAFC;border-left:3px solid #087F8C;border-radius:0 12px 12px 0;display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:11px;font-weight:900;color:#0A6873;letter-spacing:.08em">NOTA DEL EQUIPO</div>
+            <div style="font-size:15px;line-height:1.4;font-weight:800">Revisar la toma de presión y enseñar la técnica a la cuidadora.</div>
+          </div>
+          <button style="padding:15px;border:none;border-radius:12px;background:#075985;color:#fff;font-size:16px;font-weight:900;cursor:pointer">Ver paciente</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="width:700px;background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 8px 30px rgba(15,46,61,.12);display:flex;flex-direction:column">
+      <div style="padding:12px 20px;background:#F7FAFC;border-bottom:1px solid #E4EBEE;font-size:12px;font-weight:900;color:#5A6474;letter-spacing:.09em">HOSPITAL / ESE</div>
+      <div style="background:#F7FAFC;padding:20px;display:flex;gap:14px">
+        <div style="flex:0 0 168px;background:#075985;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:11px;font-weight:900;color:#CFE6EE;letter-spacing:.11em;padding-bottom:6px">HOSPITAL SAN RAFAEL</div>
+          <div style="padding:11px 13px;border-radius:10px;background:#053F5F;display:flex;align-items:center;gap:10px;color:#ffffff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span style="font-size:14px;font-weight:800">Panel</span></div>
+          <div style="padding:11px 13px;border-radius:10px;background:transparent;display:flex;align-items:center;gap:10px;color:#CFE6EE"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg><span style="font-size:14px;font-weight:800">Pacientes</span></div>
+          <div style="padding:11px 13px;border-radius:10px;background:transparent;display:flex;align-items:center;gap:10px;color:#CFE6EE"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><span style="font-size:14px;font-weight:800">Alertas</span></div>
+          <div style="padding:11px 13px;border-radius:10px;background:transparent;display:flex;align-items:center;gap:10px;color:#CFE6EE"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2v2a4 4 0 0 1-8 0V2"/><path d="M7 8v4a6 6 0 0 0 12 0v-1"/><circle cx="20" cy="10" r="2"/></svg><span style="font-size:14px;font-weight:800">Profesionales</span></div>
+          <div style="padding:11px 13px;border-radius:10px;background:transparent;display:flex;align-items:center;gap:10px;color:#CFE6EE"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span style="font-size:14px;font-weight:800">Citas</span></div>
+          <div style="padding:11px 13px;border-radius:10px;background:transparent;display:flex;align-items:center;gap:10px;color:#CFE6EE"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h4"/></svg><span style="font-size:14px;font-weight:800">Órdenes</span></div>
+          <div style="padding:11px 13px;border-radius:10px;background:transparent;display:flex;align-items:center;gap:10px;color:#CFE6EE"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.4 1.8-1.1 2.8 1.1 2.8-2.4 1.8-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.3 15.7 4.4 12.9 3.3 10.1 5.7 8.3l.9-2.9 3 .2z"/><path d="m9 12 2 2 4-4"/></svg><span style="font-size:14px;font-weight:800">Calidad</span></div>
+          <div style="padding:11px 13px;border-radius:10px;background:transparent;display:flex;align-items:center;gap:10px;color:#CFE6EE"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg><span style="font-size:14px;font-weight:800">Reportes</span></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+            <sc-for list="{{ kpisHospital }}" as="k" hint-placeholder-count="6">
+              <div style="background:#fff;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:4px">
+                <span style="font-size:12px;font-weight:900;color:#5A6474;letter-spacing:.06em">{{ k.t }}</span>
+                <span style="font-size:26px;font-weight:900;line-height:1;color:{{ k.color }}">{{ k.v }}</span>
+                <span style="font-size:12px;font-weight:700;color:#5A6474">{{ k.sub }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
+            <div style="font-size:15px;font-weight:900">Alertas por atender</div>
+            <sc-for list="{{ alertasHospital }}" as="a" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:{{ a.bg }};border-left:4px solid {{ a.color }}">
+                <span style="flex:0 0 26px;width:26px;height:26px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:{{ a.color }}">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+                </span>
+                <div style="flex:1;display:flex;flex-direction:column;gap:1px">
+                  <div style="font-size:14px;font-weight:900;line-height:1.35">{{ a.t }}</div>
+                  <div style="font-size:12px;font-weight:700;color:#5A6474">{{ a.meta }}</div>
+                </div>
+                <span style="font-size:12px;font-weight:900;color:{{ a.color }}">{{ a.nivel }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="width:700px;background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 8px 30px rgba(15,46,61,.12);display:flex;flex-direction:column">
+      <div style="padding:12px 20px;background:#F7FAFC;border-bottom:1px solid #E4EBEE;font-size:12px;font-weight:900;color:#5A6474;letter-spacing:.09em">ALCALDÍA · PANEL DE GESTIÓN TERRITORIAL</div>
+      <div style="background:#F7FAFC;padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div style="background:#075985;border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:2px">
+            <div style="font-size:11px;font-weight:900;color:#CFE6EE;letter-spacing:.12em">ALCALDÍA DE SOACHA</div>
+            <div style="font-size:18px;font-weight:900;color:#fff">Panel de gestión territorial</div>
+          </div>
+          <span style="padding:9px 14px;border-radius:10px;background:#053F5F;font-size:13px;font-weight:900;color:#fff">Agosto 2026</span>
+          <span style="padding:9px 14px;border-radius:10px;background:#053F5F;font-size:13px;font-weight:900;color:#fff">Datos agregados y anonimizados</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+          <sc-for list="{{ kpisAlcaldia }}" as="k" hint-placeholder-count="8">
+            <div style="background:#fff;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:4px">
+              <span style="font-size:24px;font-weight:900;line-height:1;color:{{ k.color }}">{{ k.v }}</span>
+              <span style="font-size:13px;font-weight:900;line-height:1.3">{{ k.t }}</span>
+              <span style="font-size:12px;font-weight:700;color:#5A6474">{{ k.sub }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background:#fff;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:15px;font-weight:900">Cobertura por comuna</div>
+          <sc-for list="{{ barrasAlcaldia }}" as="b" hint-placeholder-count="5">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <span style="font-size:14px;font-weight:800">{{ b.t }}</span>
+                <span style="font-size:14px;font-weight:900;color:{{ b.color }}">{{ b.v }}</span>
+              </div>
+              <div style="height:10px;background:#E4EBEE;border-radius:99px;overflow:hidden"><div style="width:{{ b.pct }};height:100%;background:{{ b.color }};border-radius:99px"></div></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="width:1160px;background:#075985;border-radius:24px;padding:32px;display:flex;flex-direction:column;gap:14px">
+    <div style="font-size:13px;font-weight:900;color:#CFE6EE;letter-spacing:.1em">CÓMO SE APLICA</div>
+    <div style="font-size:26px;font-weight:900;color:#fff;line-height:1.25">Una plataforma cálida sin ser femenina, institucional sin ser fría</div>
+    <div style="font-size:17px;line-height:1.6;color:#CFE6EE;font-weight:600;max-width:820px">Paciente y Cuidador dicen «estoy acompañado». El Profesional en Salud, «estoy acompañado y tengo control». Hospital, «tengo control». Alcaldía, «tengo resultados». Administración, «tengo trazabilidad». Misma paleta, misma iconografía, distinta densidad. Si apruebas esta opción la aplico en el orden que ya existe y construyo Hospital y Alcaldía sobre ella desde el inicio.</div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      intensidades: [
+        { interfaz: 'Inscripción', sensacion: '«Esto es fácil»', nivel: 'Cálida', pct: '20%', color: '#0A6873' },
+        { interfaz: 'Paciente', sensacion: '«Me acompañan»', nivel: 'Cálida', pct: '20%', color: '#0A6873' },
+        { interfaz: 'Cuidador', sensacion: '«Me ayudan a cuidar mejor»', nivel: 'Cálida y didáctica', pct: '25%', color: '#0A6873' },
+        { interfaz: 'Profesional en Salud', sensacion: '«Estoy acompañado y tengo control»', nivel: '70 / 30', pct: '70%', color: '#087F8C' },
+        { interfaz: 'Hospital / ESE', sensacion: '«Puedo gestionar la atención»', nivel: 'Institucional', pct: '90%', color: '#075985' },
+        { interfaz: 'Alcaldía', sensacion: '«Puedo medir resultados»', nivel: 'Ejecutiva', pct: '100%', color: '#075985' },
+        { interfaz: 'Administración', sensacion: '«Puedo supervisar todo»', nivel: 'Ejecutiva', pct: '100%', color: '#075985' }
+      ],
+      paleta: [
+        { nombre: 'Aguamarina institucional', hex: '#32B4A8', fg: '#0F2E3D', uso: 'Color de relleno, nunca de texto. Como botón lleva tinta oscura #0F2E3D; para texto sobre blanco se usa el petróleo oscuro #0A6873' },
+        { nombre: 'Azul ELÍGEME', hex: '#075985', fg: '#ffffff', uso: 'Encabezados, menú lateral y botones primarios con texto blanco' },
+        { nombre: 'Azul petróleo', hex: '#087F8C', fg: '#ffffff', uso: 'Iconos, gráficos y estados informativos. En texto sobre blanco se oscurece a #0A6873' },
+        { nombre: 'Celeste suave', hex: '#E8F6F8', fg: '#0F2E3D', uso: 'Fondos de tarjeta en las interfaces cálidas' },
+        { nombre: 'Fondo institucional', hex: '#F7F9FA', fg: '#0F2E3D', uso: 'Lienzo de todas las pantallas' },
+        { nombre: 'Gris texto secundario', hex: '#5A6474', fg: '#ffffff', uso: 'Descripciones, metadatos y etiquetas' },
+        { nombre: 'Rosa Elí', hex: '#F2A7C4', fg: '#0F2E3D', uso: 'Solo Elí: halo de su burbuja, tarjetas de ayuda y sus mensajes' },
+        { nombre: 'Fucsia novedades', hex: '#D63384', fg: '#ffffff', uso: 'Solo «hay algo nuevo»: badge, contador y punto. Desaparece al abrir' }
+      ],
+      semaforo: [
+        { t: 'Verde · estado esperado', uso: 'Dentro del rango, proceso completado', color: '#157F3B', bg: '#EFF9F1', bd: '#BFE5C9' },
+        { t: 'Amarillo · requiere seguimiento', uso: 'Precaución, el equipo hace seguimiento', color: '#96450A', bg: '#FEF6E9', bd: '#F3DCA9' },
+        { t: 'Rojo · requiere atención', uso: 'Hay que atender el llamado de inmediato', color: '#B91C1C', bg: '#FDEEEE', bd: '#F5C2C2' }
+      ],
+      kpisHospital: [
+        { t: 'PACIENTES ACTIVOS', v: '412', sub: '38 nuevos este mes', color: '#075985' },
+        { t: 'VISITAS DEL MES', v: '1.204', sub: '96 % completadas', color: '#087F8C' },
+        { t: 'ALERTAS ABIERTAS', v: '17', sub: '4 rojas · 13 amarillas', color: '#96450A' },
+        { t: 'ADHERENCIA', v: '87 %', sub: 'Medicamentos registrados', color: '#0A6873' },
+        { t: 'ÓRDENES PENDIENTES', v: '46', sub: 'Laboratorio y remisiones', color: '#087F8C' },
+        { t: 'SATISFACCIÓN', v: '4.4', sub: '628 visitas evaluadas', color: '#157F3B' }
+      ],
+      alertasHospital: [
+        { t: 'Sara Nieto · dificultad para respirar', meta: 'Reportado por cuidador · hoy 7:05 a. m.', nivel: 'Rojo', color: '#B91C1C', bg: '#FDEEEE' },
+        { t: 'María Gómez · presión fuera de rango', meta: 'Reportado por cuidadora · hoy 7:42 a. m.', nivel: 'Amarillo', color: '#96450A', bg: '#FEF6E9' },
+        { t: 'Jorge Beltrán · dos dosis no tomadas', meta: 'Reportado por cuidador · ayer', nivel: 'Amarillo', color: '#96450A', bg: '#FEF6E9' }
+      ],
+      kpisAlcaldia: [
+        { v: '18.402', t: 'Población registrada', sub: 'En el municipio', color: '#075985' },
+        { v: '6.117', t: 'Personas mayores de 60', sub: '33 % del registro', color: '#087F8C' },
+        { v: '2.845', t: 'Personas con discapacidad', sub: '1.912 en el RLCPD', color: '#087F8C' },
+        { v: '1.640', t: 'Requieren cuidados en casa', sub: '71 % con cuidador vinculado', color: '#0A6873' },
+        { v: '1.164', t: 'Cuidadores registrados', sub: '38 % certificados', color: '#0A6873' },
+        { v: '9.288', t: 'Atenciones del año', sub: '74 % domiciliarias', color: '#075985' },
+        { v: '212', t: 'Alertas atendidas', sub: '94 % en el tiempo definido', color: '#157F3B' },
+        { v: '4.4', t: 'Satisfacción ciudadana', sub: 'Promedio de evaluaciones', color: '#157F3B' }
+      ],
+      barrasAlcaldia: [
+        { t: 'Comuna 1 · Compartir', v: '82 %', pct: '82%', color: '#0A6873' },
+        { t: 'Comuna 2 · Soacha centro', v: '76 %', pct: '76%', color: '#0A6873' },
+        { t: 'Comuna 3 · La Despensa', v: '61 %', pct: '61%', color: '#087F8C' },
+        { t: 'Comuna 4 · Cazucá', v: '44 %', pct: '44%', color: '#96450A' },
+        { t: 'Zona rural · El Charquito', v: '31 %', pct: '31%', color: '#96450A' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

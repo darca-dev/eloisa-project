@@ -1,0 +1,1433 @@
+/*
+ * Vista «Pacientes, segmentación y analítica poblacional» (TASK-003H-03B, §4).
+ *
+ * Lenguaje visual: el ya aprobado para el Hospital. Ningún color, radio, peso,
+ * tipografía ni sombra es nuevo: todo procede de `src/styles/tokens.css` y de
+ * los patrones compartidos de `hospitalViews.module.css`.
+ *
+ * La densidad es deliberada. La vista debe permitir localizar a una persona
+ * entre miles sin scroll innecesario: filas lineales, nunca tarjetas por
+ * paciente, filtros alineados en una sola zona y analítica compacta al lado.
+ *
+ * Accesibilidad: ningún estado se comunica solo por color; las barras, la dona
+ * y las barras apiladas son decorativas y siempre van acompañadas de su valor
+ * como texto.
+ */
+
+/* ========================================================================== */
+/* Encabezado                                                                 */
+/* ========================================================================== */
+
+.encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.encabezadoTextos {
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.encabezadoTitulo {
+  margin: 0;
+  font-size: 27px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.encabezadoIntro {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.encabezadoMarcas {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.badgeDatos {
+  padding: 7px 13px;
+  border: 1.5px solid var(--b-celeste-borde);
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-celeste);
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+}
+
+.corte {
+  font-size: 12px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+/* ========================================================================== */
+/* KPI compactos                                                              */
+/* ========================================================================== */
+
+.kpiGrid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.kpiCard {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-tarjeta);
+  background: var(--b-blanco);
+  box-shadow: var(--b-sombra-tarjeta);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kpiEtiqueta {
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+}
+
+.kpiValor {
+  font-size: 24px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-azul);
+  line-height: 1.15;
+}
+
+.kpiPorcentaje {
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* ========================================================================== */
+/* Zona única de filtros                                                      */
+/* ========================================================================== */
+
+.filtrosZona {
+  padding: 14px 16px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-tarjeta);
+  background: var(--b-panel);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filtrosCabecera {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.busqueda {
+  flex: 1 1 260px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.busquedaCampo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  background: var(--b-blanco);
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+}
+
+.busquedaCampo:focus-within {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.busquedaIcono {
+  flex: 0 0 auto;
+  display: flex;
+  color: var(--b-gris);
+}
+
+.busquedaInput {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+.busquedaInput:focus-visible {
+  outline: none;
+}
+
+.busquedaInput::placeholder {
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris-inactivo);
+}
+
+/* El acceso plegable solo existe en la anchura móvil. */
+.panelBoton {
+  display: none;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.filtrosCampos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.filtro {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filtroEtiqueta {
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+}
+
+.filtroCampo {
+  min-width: 0;
+  padding: 9px 11px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  background: var(--b-blanco);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+.filtroCampo:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.filtrosPie {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding: 8px 14px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-blanco);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  cursor: pointer;
+}
+
+.chip:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+/*
+ * El chip activo cambia fondo, borde, color y peso, y además se anuncia con
+ * `aria-pressed`: la selección nunca depende solo del color.
+ */
+.chipActivo {
+  border-color: var(--b-azul);
+  background: var(--b-celeste);
+  color: var(--b-azul);
+}
+
+.contador {
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+.limpiar {
+  padding: 8px 13px;
+  font-size: 12px;
+  color: var(--b-gris);
+}
+
+.limpiar:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* ========================================================================== */
+/* Cuerpo a doce columnas                                                     */
+/* ========================================================================== */
+
+.cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.columnaListado,
+.columnaAnalitica {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ========================================================================== */
+/* Listado lineal                                                             */
+/* ========================================================================== */
+
+.barraListado {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.barraConteo {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.barraControles {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/*
+ * El listado conserva sus columnas y se desplaza dentro de su propio
+ * contenedor: ninguna columna se oculta. El contenedor es enfocable para que
+ * ese desplazamiento esté disponible con teclado.
+ */
+.tablaContenedor {
+  max-height: 68vh;
+  overflow: auto;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-tarjeta);
+  background: var(--b-blanco);
+}
+
+.tablaContenedor:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.tabla {
+  width: 100%;
+  min-width: 1080px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.encabezadoCelda {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 9px 10px;
+  background: var(--b-blanco);
+  border-bottom: 1.5px solid var(--b-borde);
+  font-size: 10px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+  white-space: nowrap;
+}
+
+.fila {
+  border-bottom: 1px solid var(--b-borde);
+}
+
+.fila:hover {
+  background: var(--b-lienzo);
+}
+
+/* La fila abierta acompaña al `aria-expanded` de su botón `Ver`. */
+.filaActiva {
+  background: var(--b-celeste);
+  box-shadow: inset 3px 0 0 0 var(--b-azul);
+}
+
+.celda {
+  padding: 9px 10px;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  vertical-align: middle;
+}
+
+.celdaNumero {
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  white-space: nowrap;
+}
+
+.celdaAccion {
+  text-align: right;
+}
+
+.celdaPaciente {
+  padding: 9px 10px;
+  vertical-align: middle;
+  display: table-cell;
+  min-width: 190px;
+}
+
+.pacienteNombre {
+  display: block;
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.pacienteDoc {
+  display: block;
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.prioridades {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.prioridad {
+  padding: 3px 9px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-celeste);
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+  white-space: nowrap;
+}
+
+.sinPrioridad {
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.semaforoBadge {
+  padding: 5px 11px;
+  font-size: 11px;
+}
+
+.accionVer {
+  padding: 6px 13px;
+  font-size: 12px;
+}
+
+/* -------------------------------- Paginación ------------------------------ */
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.paginacionTexto {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+/* ========================================================================== */
+/* Estados                                                                    */
+/* ========================================================================== */
+
+.estadoTexto {
+  margin: 0;
+  font-size: 15px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.sinResultados {
+  padding: 22px 18px;
+  border: 1.5px dashed var(--b-borde);
+  border-radius: var(--b-radio-tarjeta);
+  background: var(--b-blanco);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.esqueleto {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.esqueletoLinea {
+  height: 16px;
+  border-radius: var(--b-radio-campo);
+  background: var(--b-lienzo);
+  border: 1px solid var(--b-borde);
+}
+
+/* ========================================================================== */
+/* Analítica poblacional                                                      */
+/* ========================================================================== */
+
+.grafico {
+  padding: 14px 16px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-tarjeta);
+  background: var(--b-blanco);
+  box-shadow: var(--b-sombra-tarjeta);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.graficoCabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.graficoTitulo {
+  margin: 0;
+  font-size: 15px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.graficoDetalle {
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--b-gris);
+}
+
+.graficoNota {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.graficoTabla {
+  overflow-x: auto;
+}
+
+/* --------------------------------- Barras --------------------------------- */
+
+.barras {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.barraItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3px;
+}
+
+.barraEtiqueta {
+  font-size: 12px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+.barraPista {
+  display: block;
+  height: 9px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-lienzo);
+  border: 1px solid var(--b-borde);
+  overflow: hidden;
+}
+
+.barraRelleno {
+  display: block;
+  height: 100%;
+  width: var(--h-barra-ancho, 0%);
+  background: var(--b-petroleo);
+}
+
+.barraValor {
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* ---------------------------------- Dona ---------------------------------- */
+
+.dona {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.donaFigura {
+  flex: 0 0 96px;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--h-dona, var(--b-lienzo));
+  mask: radial-gradient(circle, transparent 46%, black 47%);
+  -webkit-mask: radial-gradient(circle, transparent 46%, black 47%);
+}
+
+.donaLeyenda {
+  flex: 1 1 180px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.donaItem {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.donaMuestra {
+  flex: 0 0 10px;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--h-dona-color, var(--b-azul));
+}
+
+.donaEtiqueta {
+  flex: 1 1 auto;
+  font-size: 12px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+.donaValor {
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* ------------------------------ Barra apilada ----------------------------- */
+
+.apilada {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.apiladaPista {
+  display: flex;
+  height: 14px;
+  border-radius: var(--b-radio-pildora);
+  border: 1px solid var(--b-borde);
+  overflow: hidden;
+}
+
+.apiladaTramo {
+  display: block;
+  width: var(--h-apilada-pct, 0%);
+  background: var(--h-apilada-color, var(--b-azul));
+}
+
+.apiladaLeyenda {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.apiladaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.apiladaEtiqueta {
+  font-size: 12px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+.apiladaValor {
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* --------------------------- Tablas de valores ---------------------------- */
+
+.tablaValores {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+
+.tablaValores th,
+.tablaValores td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--b-borde);
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+  white-space: nowrap;
+}
+
+.tablaValores thead th {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+}
+
+.tablaValores tfoot th,
+.tablaValores tfoot td {
+  border-bottom: none;
+  border-top: 1.5px solid var(--b-borde);
+  color: var(--b-azul);
+}
+
+.tablaValoresPie {
+  caption-side: bottom;
+  padding-top: 6px;
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+  text-align: left;
+  white-space: normal;
+}
+
+.avisoAlcaldia {
+  margin: 0;
+  padding: 11px 13px;
+  border: 1.5px solid var(--b-celeste-borde);
+  border-radius: var(--b-radio-tarjeta);
+  background: var(--b-celeste);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-petroleo-texto);
+}
+
+/* ========================================================================== */
+/* Panel lateral                                                              */
+/* ========================================================================== */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.overlayFondo {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 46, 61, 0.38);
+}
+
+.panel {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--b-blanco);
+  border-left: 1.5px solid var(--b-borde);
+  box-shadow: var(--b-sombra-elevada);
+  display: flex;
+  flex-direction: column;
+}
+
+.panel:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: -3px;
+}
+
+.panelCabecera {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 12px 18px;
+  background: var(--b-blanco);
+  border-bottom: 1.5px solid var(--b-borde);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/*
+ * Rótulo de la barra superior. La identidad de la persona NO vive aquí: vive en
+ * la cabecera de la ficha, como en la composición original. Esta barra solo
+ * nombra el contenido y mantiene el cierre siempre alcanzable.
+ */
+.panelEtiqueta {
+  margin: 0;
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+}
+
+.panelCerrar {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.panelCuerpo {
+  padding: 14px 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ----------------------------- Ficha: cabecera ---------------------------- */
+
+/*
+ * Tarjeta de expediente.
+ *
+ * Reproduce la estructura de la referencia original (`Eligeme-Hospital.dc.html`,
+ * líneas 303–329): tarjeta blanca de radio amplio, cabecera de identidad,
+ * clasificaciones y cuadrícula densa de datos. Cada medida procede de los tokens
+ * ya aprobados; ningún color, radio ni peso es nuevo.
+ */
+.ficha {
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-tarjeta);
+  background: var(--b-blanco);
+  box-shadow: var(--b-sombra-tarjeta);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.identidad {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.iniciales {
+  flex: 0 0 58px;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--b-celeste);
+  color: var(--b-azul);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.identidadTextos {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.nombre {
+  margin: 0;
+  font-size: 23px;
+  line-height: 1.2;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+  overflow-wrap: anywhere;
+}
+
+/*
+ * Procedencia de la ficha, en el lugar que la referencia daba al semáforo.
+ *
+ * Es una declaración de origen, NO un estado de la persona: por eso usa el
+ * celeste institucional y no ninguno de los colores de riesgo, y su texto se
+ * entiende íntegro sin ver el color.
+ */
+.procedencia {
+  flex: 0 0 auto;
+  padding: 9px 14px;
+  border: 1.5px solid var(--b-celeste-borde);
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-celeste);
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+}
+
+/* -------------------------- Ficha: clasificaciones ------------------------ */
+
+.clasificaciones {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.clasificacion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-celeste);
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+}
+
+.sinClasificacion {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+/* ----------------------------- Ficha: historial --------------------------- */
+
+/*
+ * Bloque de historial.
+ *
+ * Conserva el cierre del expediente original —tarjeta propia, encabezado y
+ * carril de línea de tiempo—, pero sin ningún día ni evento: se muestra un único
+ * estado neutral. El carril no dibuja marcas que pudieran leerse como hechos.
+ */
+.historial {
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-tarjeta);
+  background: var(--b-blanco);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.historialCabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.historialTitulo {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--b-azul);
+}
+
+.historialMarca {
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.historialCarril {
+  margin-left: 5px;
+  padding: 12px 16px;
+  border-left: 2px solid var(--b-borde);
+}
+
+.historialVacio {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.seccion {
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-tarjeta);
+  background: var(--b-blanco);
+}
+
+.seccionTitulo {
+  padding: 11px 14px;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--b-azul);
+  cursor: pointer;
+}
+
+.seccionTitulo:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.seccionCuerpo {
+  padding: 0 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+/*
+ * Cuadrícula del expediente.
+ *
+ * Recupera la densidad de la referencia original: celdas con fondo propio,
+ * rótulo corto en versalitas y valor destacado, repartidas en tantas columnas
+ * como quepan. Es la estructura que hacía reconocible la ficha.
+ */
+.campos {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.campo {
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: var(--b-radio-campo);
+  background: var(--b-lienzo);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.campoEtiqueta {
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+}
+
+.campoValor {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+  overflow-wrap: anywhere;
+}
+
+/*
+ * Una celda de un dominio no modelado se lee como ausencia de capacidad, no
+ * como un dato: su valor pierde el énfasis del resto de la cuadrícula. El color
+ * acompaña, pero el texto por sí solo ya lo dice.
+ */
+.campo[data-no-disponible='true'] .campoValor {
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.aviso {
+  margin: 0;
+  padding: 9px 11px;
+  border-left: 3px solid var(--b-amarillo-borde);
+  border-radius: var(--b-radio-campo);
+  background: var(--b-amarillo-fondo);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-amarillo);
+}
+
+.subtitulo {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--b-gris);
+}
+
+.condiciones {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.condicion {
+  padding: 8px 11px;
+  border: 1px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  background: var(--b-lienzo);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.condicionNombre {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.condicionOrigen {
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.vacioSeccion {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-gris);
+}
+
+.atenciones {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.atencion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--b-borde);
+}
+
+.atencionCuando {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+}
+
+.atencionTexto {
+  flex: 1 1 160px;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+.atencionEstado {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+.semaforoTexto {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-tinta);
+}
+
+.indicadores {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.indicador {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  padding: 8px 11px;
+  border: 1px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  background: var(--b-lienzo);
+}
+
+.indicadorEtiqueta {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+/*
+ * El valor Sí/No se lee siempre como texto. El énfasis de color acompaña, pero
+ * nunca sustituye, a esa palabra.
+ */
+.indicadorValor {
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  text-align: right;
+}
+
+.indicadorActivo {
+  color: var(--b-azul);
+}
+
+.indicadorProcedencia {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+/* ========================================================================== */
+/* Responsive                                                                 */
+/* ========================================================================== */
+
+/*
+ * Hasta 767 px: los selectores viven en un panel plegable; la búsqueda y los
+ * tres chips permanecen siempre visibles, de modo que no se oculta ninguna
+ * información sin alternativa.
+ */
+@media (max-width: 767px) {
+  .panelBoton {
+    display: inline-flex;
+  }
+
+  .filtrosCampos[data-abierto='no'] {
+    display: none;
+  }
+
+  .tablaContenedor {
+    max-height: none;
+  }
+
+  .tabla {
+    min-width: 0;
+  }
+
+  /*
+   * Resultados como filas compactas apiladas, nunca como tarjetas gigantes:
+   * el encabezado de cada dato acompaña al valor mediante `data-columna`.
+   */
+  .tabla thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .fila {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 10px;
+    padding: 10px 12px;
+  }
+
+  .celdaPaciente {
+    display: block;
+    grid-column: 1 / -1;
+    padding: 0;
+  }
+
+  .celda {
+    display: block;
+    padding: 0;
+    font-size: 12px;
+  }
+
+  /*
+   * El rótulo de la columna acompaña al valor, de modo que apilar las celdas no
+   * pierde el significado de ninguna: no se oculta información sin alternativa.
+   */
+  .celda[data-columna]::before {
+    content: attr(data-columna) ': ';
+    font-size: 10px;
+    font-weight: var(--b-peso-maximo);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--b-gris);
+  }
+
+  .celdaAccion {
+    grid-column: 1 / -1;
+    text-align: left;
+    padding-top: 6px;
+  }
+
+  /* La ficha conserva su jerarquía en pantalla estrecha, con menos aire. */
+  .ficha {
+    padding: 14px;
+  }
+
+  .nombre {
+    font-size: 20px;
+  }
+
+  .iniciales {
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+    font-size: 17px;
+  }
+}
+
+/* Tableta: KPI 3×2, filtros en dos columnas y analítica en dos columnas. */
+@media (min-width: 768px) {
+  .kpiGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .filtrosCampos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .columnaAnalitica {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    align-items: start;
+  }
+}
+
+/*
+ * Entre 768 px y 1099 px la primera columna y la acción `Ver` permanecen
+ * visibles mientras la tabla se desplaza en horizontal.
+ */
+@media (min-width: 768px) and (max-width: 1099px) {
+  .celdaPaciente {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--b-blanco);
+  }
+
+  .celdaAccion {
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    background: var(--b-blanco);
+  }
+
+  .filaActiva .celdaPaciente,
+  .filaActiva .celdaAccion {
+    background: var(--b-celeste);
+  }
+}
+
+/* Escritorio: cuerpo a doce columnas, listado en ocho y analítica en cuatro. */
+@media (min-width: 1100px) {
+  .cuerpo {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .columnaListado {
+    grid-column: span 8;
+  }
+
+  .columnaAnalitica {
+    grid-column: span 4;
+    display: flex;
+    position: sticky;
+    top: 12px;
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+  }
+}
+
+@media (min-width: 1280px) {
+  .kpiGrid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .filtrosCampos {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+/*
+ * Anchura del panel: 600 px en escritorio, 76 vw en tableta, completo en móvil.
+ *
+ * La ficha recuperada necesita al menos dos columnas de cuadrícula para leerse
+ * con la densidad de la referencia; por debajo de 768 px la cuadrícula colapsa a
+ * una sola columna y el panel ocupa la pantalla completa.
+ */
+@media (min-width: 768px) {
+  .panel {
+    width: 76vw;
+    max-width: 76vw;
+  }
+}
+
+@media (min-width: 1280px) {
+  .panel {
+    width: 600px;
+    max-width: 50vw;
+  }
+}

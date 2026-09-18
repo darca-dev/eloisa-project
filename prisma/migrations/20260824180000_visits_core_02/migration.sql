@@ -1,0 +1,51 @@
+-- ---------------------------------------------------------------------------
+-- VISITS-CORE-01 — MP02 MATERIALIZATION SERVICE.
+--
+-- Migracion ADITIVA de UN SOLO valor de enum.
+--
+-- Contenido, y NADA mas:
+--   1. "AuditEventType" += 'HOME_VISIT_MATERIALIZED'.
+--
+-- Lo que esta migracion NO hace:
+--   - NO crea tablas, columnas, indices, triggers, funciones ni politicas;
+--   - NO concede ni retira ningun privilegio;
+--   - NO modifica ninguna restriccion existente;
+--   - NO INSERTA NI ACTUALIZA NINGUNA FILA. En particular no escribe ningun
+--     evento de auditoria: PostgreSQL 12+ admite `ALTER TYPE ... ADD VALUE`
+--     dentro de la transaccion de la migracion, pero PROHIBE USAR el valor
+--     recien anadido en esa MISMA transaccion. Cualquier uso corresponde a la
+--     ejecucion de la aplicacion, despues de confirmada esta migracion.
+--
+-- NO contiene ningun secreto y no toca dato personal alguno.
+--
+-- Rollback documentado: `prisma/migrations/ROLLBACK-visits_core_02.sql`.
+-- ADVERTENCIA: esa reversion NO puede retirar el valor del enum. PostgreSQL no
+-- ofrece `ALTER TYPE ... DROP VALUE`. El archivo lo DOCUMENTA en lugar de
+-- simular una reversion limpia.
+-- ---------------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------------
+-- 1. Evento de auditoria de la materializacion de la visita domiciliaria
+-- ---------------------------------------------------------------------------
+--
+-- Registra que una cita HOME ya ASSIGNED materializo su visita domiciliaria.
+-- El actor es la identidad institucional OPACA que opero, NUNCA la persona
+-- visitadora: el profesional no autoriza ni firma la materializacion.
+--
+-- El evento referencia el recurso ("HomeVisit") y su contexto institucional, y
+-- NO copia nombre, documento, direccion, horario ni dato clinico alguno.
+ALTER TYPE "AuditEventType" ADD VALUE IF NOT EXISTS 'HOME_VISIT_MATERIALIZED';
+
+-- NOTA DELIBERADA sobre `audit_event_resource_required`.
+--
+-- El check vigente, reescrito por TASK-HOSPITAL-CORE-01, expresa el invariante
+-- en forma NEGATIVA: solo los eventos nombrados en su lista estan OBLIGADOS a
+-- llevar `resourceId`. 'HOME_VISIT_MATERIALIZED' no figura en esa lista, de modo
+-- que el check lo admite sin ningun cambio.
+--
+-- La aplicacion SIEMPRE escribe el `resourceId` de la visita: el servicio de
+-- materializacion no admite otro camino. Reforzar el check anadiendo el valor a
+-- la lista positiva NO es posible aqui, porque PostgreSQL prohibe usar en la
+-- misma transaccion un valor de enum anadido en esa misma transaccion. Exigiria
+-- una migracion posterior separada; se reporta como riesgo residual conocido,
+-- identico al ya declarado por HOSPITAL-CORE-02 e IDENTITY-RELATIONSHIPS-CORE-01.

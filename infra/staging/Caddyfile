@@ -1,0 +1,29 @@
+{
+	# Contacto ACME obligatorio (Spec 023). Sin fallback `off`: el preflight y
+	# `compose.staging.yml` fallan cerrado si la variable falta.
+	email {$MERDN_TLS_CONTACT_EMAIL}
+}
+
+{$MERDN_STAGING_DOMAIN} {
+	encode zstd gzip
+	@api path /api/* /health
+	handle @api {
+		reverse_proxy api:3001
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+}
+
+{$MERDN_OIDC_DOMAIN} {
+	reverse_proxy oidc:8080
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+	}
+}

@@ -1,0 +1,138 @@
+# Spec 023 — Compose de staging AUTONOMO (standalone).
+# NO es un overlay de `compose.yml`: el Compose local define puertos de host de
+# desarrollo, contextos de build y requisitos OIDC que contradicen el limite
+# aislado aprobado. La validacion autoritativa es:
+#   docker compose -f compose.staging.yml config
+name: merdn-staging
+
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?required}
+      POSTGRES_USER: ${POSTGRES_USER:?required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+      # Identidad aislada de Keycloak. Mismas variables que consume el servicio
+      # `oidc`: bootstrap y runtime no pueden divergir.
+      MERDN_OIDC_DATABASE_NAME: ${MERDN_OIDC_DATABASE_NAME:?required}
+      MERDN_OIDC_DATABASE_USER: ${MERDN_OIDC_DATABASE_USER:?required}
+      MERDN_OIDC_DATABASE_PASSWORD: ${MERDN_OIDC_DATABASE_PASSWORD:?required}
+    volumes:
+      - staging-postgres:/var/lib/postgresql/data
+      # Solo se ejecuta sobre un directorio de datos VACIO (volumen nuevo).
+      # Un volumen existente exige el aprovisionamiento controlado equivalente
+      # documentado en `docs/runbooks/STAGING_DEPLOYMENT.md`.
+      - ./infra/staging/init/10-keycloak-database.sh:/docker-entrypoint-initdb.d/10-keycloak-database.sh:ro
+    networks: [internal]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  oidc:
+    image: ${MERDN_OIDC_IMAGE:?immutable image required}
+    restart: unless-stopped
+    command: [start, --optimized, --http-enabled=true, --http-port=8080, --proxy-headers=xforwarded]
+    environment:
+      KC_HOSTNAME: https://${MERDN_OIDC_DOMAIN:?required}
+      KC_HEALTH_ENABLED: 'true'
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${MERDN_OIDC_DATABASE_NAME:?required}
+      KC_DB_USERNAME: ${MERDN_OIDC_DATABASE_USER:?required}
+      KC_DB_PASSWORD: ${MERDN_OIDC_DATABASE_PASSWORD:?required}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${MERDN_OIDC_ADMIN_USER:?required}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${MERDN_OIDC_ADMIN_PASSWORD:?required}
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [internal]
+    healthcheck:
+      test: [CMD-SHELL, 'exec 3<>/dev/tcp/127.0.0.1/9000; printf "GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3; grep -q "UP" <&3']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  api:
+    image: ${MERDN_API_IMAGE:?immutable image required}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      MERDN_ENVIRONMENT: mvp
+      API_PORT: '3001'
+      DATABASE_URL: ${DATABASE_URL:?migrator URL required}
+      RUNTIME_DATABASE_URL: ${RUNTIME_DATABASE_URL:?runtime URL required}
+      MERDN_RUNTIME_ROLE: enforce
+      MERDN_ACTIVE_TENANT_CODE: ${MERDN_ACTIVE_TENANT_CODE:?required}
+      # Pareja confiable id + codigo del tenant activo. Ninguno procede de una
+      # peticion: los fija el operador del despliegue.
+      MERDN_ACTIVE_TENANT_ID: ${MERDN_ACTIVE_TENANT_ID:?required}
+      API_WEB_ORIGINS: https://${MERDN_STAGING_DOMAIN:?required}
+      MERDN_HUMAN_AUTH_ISSUER: https://${MERDN_OIDC_DOMAIN:?required}/realms/${MERDN_OIDC_REALM:?required}
+      MERDN_HUMAN_AUTH_CLIENT_ID: ${MERDN_HUMAN_AUTH_CLIENT_ID:?required}
+      MERDN_HUMAN_AUTH_CALLBACK_URI: https://${MERDN_STAGING_DOMAIN:?required}/api/v1/human-auth/callback
+      MERDN_HUMAN_AUTH_ATTEMPT_KEY: ${MERDN_HUMAN_AUTH_ATTEMPT_KEY:?required}
+    depends_on:
+      postgres: { condition: service_healthy }
+      oidc: { condition: service_healthy }
+    # `edge` da SOLO salida (descubrimiento OIDC e intercambio de token contra el
+    # emisor publico HTTPS). Unirse a `edge` no publica ningun puerto de host:
+    # la API sigue sin `ports:` y solo Caddy publica 80/443.
+    networks: [internal, edge]
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  web:
+    image: ${MERDN_WEB_IMAGE:?immutable image required}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      MERDN_ENVIRONMENT: mvp
+      PORT: '3000'
+      HOSTNAME: 0.0.0.0
+      MERDN_API_BASE_URL: http://api:3001
+      NEXT_PUBLIC_MERDN_API_BASE_URL: https://${MERDN_STAGING_DOMAIN:?required}
+    depends_on:
+      api: { condition: service_healthy }
+    networks: [internal]
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    environment:
+      MERDN_STAGING_DOMAIN: ${MERDN_STAGING_DOMAIN:?required}
+      MERDN_OIDC_DOMAIN: ${MERDN_OIDC_DOMAIN:?required}
+      MERDN_TLS_CONTACT_EMAIL: ${MERDN_TLS_CONTACT_EMAIL:?ACME contact required}
+    # Unico servicio que publica puertos de host.
+    ports: ['80:80', '443:443']
+    volumes:
+      - ./infra/staging/Caddyfile:/etc/caddy/Caddyfile:ro
+      - staging-caddy-data:/data
+      - staging-caddy-config:/config
+    depends_on:
+      api: { condition: service_healthy }
+      web: { condition: service_healthy }
+      oidc: { condition: service_healthy }
+    # `edge` da salida ACME/HTTP; `internal` da acceso a los servicios privados.
+    networks: [edge, internal]
+
+networks:
+  # Salida a Internet exclusiva del borde TLS (emision ACME). No publica puertos.
+  edge:
+    internal: false
+  # Sin salida ni entrada externa: postgres, oidc, api y web viven solo aqui.
+  internal:
+    internal: true
+
+volumes:
+  staging-postgres:
+  staging-caddy-data:
+  staging-caddy-config:

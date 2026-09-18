@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; font-family:Nunito, system-ui, sans-serif; background:#F1F3F6; color:#14213D; -webkit-font-smoothing:antialiased; }
+  a { color:#1E5AA7; text-decoration:none; font-weight:800; }
+  a:hover { color:#E83CB6; }
+  input, select, textarea, button { font-family:Nunito, sans-serif; }
+  input:focus, select:focus, textarea:focus { outline:3px solid #BFD6F0; outline-offset:1px; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;padding:28px 16px 96px">
+  <div style="max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:18px">
+
+    <div style="background:#1E5AA7;border-radius:20px;padding:20px 22px;display:flex;align-items:center;gap:14px">
+      <img src="assets/eli/guia.png" alt="Elí" style="width:52px;height:52px;border-radius:50%;object-fit:cover;flex:0 0 52px;border:2.5px solid #E83CB6;background:#fff"/>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="font-size:22px;font-weight:900;color:#fff;letter-spacing:.02em">ELÍGEME</div>
+        <div style="font-size:14px;font-weight:700;color:#BFD6F0">Panel de inscripción · Atención domiciliaria</div>
+      </div>
+    </div>
+
+    <sc-if value="{{ noRole }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:22px;padding:26px;display:flex;flex-direction:column;gap:20px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <h1 style="margin:0;font-size:26px;font-weight:900;line-height:1.2">¿Cómo se va a registrar?</h1>
+          <p style="margin:0;font-size:17px;line-height:1.5;color:#5B6B85;font-weight:600">Elija una opción. El formulario le mostrará solo lo que usted necesita llenar.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <button onClick="{{ pickPaciente }}" style="text-align:left;padding:20px;border:2px solid #D8DFEA;border-radius:18px;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:4px" style-hover="border-color:#1E5AA7;background:#EEF4FC">
+            <span style="font-size:21px;font-weight:900;color:#1E5AA7">Paciente</span>
+            <span style="font-size:16px;color:#5B6B85;font-weight:600">Recibo o necesito atención en casa</span>
+          </button>
+          <button onClick="{{ pickCuidador }}" style="text-align:left;padding:20px;border:2px solid #D8DFEA;border-radius:18px;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:4px" style-hover="border-color:#1E5AA7;background:#EEF4FC">
+            <span style="font-size:21px;font-weight:900;color:#1E5AA7">Cuidador</span>
+            <span style="font-size:16px;color:#5B6B85;font-weight:600">Cuido a una o más personas</span>
+          </button>
+          <button onClick="{{ pickVisitador }}" style="text-align:left;padding:20px;border:2px solid #D8DFEA;border-radius:18px;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:4px" style-hover="border-color:#1E5AA7;background:#EEF4FC">
+            <span style="font-size:21px;font-weight:900;color:#1E5AA7">Visitador médico</span>
+            <span style="font-size:16px;color:#5B6B85;font-weight:600">Profesional que realiza visitas domiciliarias</span>
+          </button>
+        </div>
+        <div style="padding:16px 18px;background:#EEF4FC;border-radius:14px;font-size:15px;line-height:1.5;color:#1E5AA7;font-weight:700">La inscripción sirve para identificarlo, clasificarlo y ubicarlo. Los datos médicos detallados se registran después, en la bitácora y la historia clínica.</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ inForm }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">{{ roleLabel }}</div>
+            <div style="font-size:19px;font-weight:900">{{ stepTitle }}</div>
+          </div>
+          <div style="font-size:15px;font-weight:900;color:#E83CB6;white-space:nowrap">{{ stepLabel }}</div>
+        </div>
+        <div style="height:8px;background:#E4E9F2;border-radius:99px;overflow:hidden"><div style="width:{{ pct }};height:100%;background:#E83CB6;border-radius:99px;transition:width .3s"></div></div>
+        <div style="display:flex;gap:6px">
+          <sc-for list="{{ dots }}" as="d" hint-placeholder-count="5">
+            <button onClick="{{ d.on }}" style="flex:1;padding:8px 4px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;border:1.5px solid {{ d.bd }};background:{{ d.bg }};color:{{ d.fg }}">{{ d.n }}</button>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ p1 }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:22px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <img src="assets/eli/escucha.png" alt="Elí" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex:0 0 48px;border:2px solid #E83CB6"/>
+          <div style="background:#F1F3F6;border-radius:16px 16px 16px 4px;padding:13px 15px;font-size:16px;line-height:1.45;font-weight:700">Empecemos por sus datos. Si algo no lo tiene a mano, puede dejarlo para después.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">A · INFORMACIÓN PERSONAL</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Tipo de documento</label>
+            <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff">
+              <option>Cédula de ciudadanía</option>
+              <option>Cédula de extranjería</option>
+              <option>Pasaporte</option>
+              <option>Permiso por Protección Temporal</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Número de documento</label>
+            <input value="{{ doc }}" onChange="{{ setDoc }}" placeholder="Ej. 1032455789" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            <sc-if value="{{ errDoc }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;font-weight:800;color:#DC2626">Escriba su número de documento para continuar.</div></sc-if>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Nombres</label>
+              <input value="{{ nombres }}" onChange="{{ setNombres }}" placeholder="Ej. María" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+              <sc-if value="{{ errNombres }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;font-weight:800;color:#DC2626">Escriba sus nombres para continuar.</div></sc-if>
+            </div>
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Apellidos</label>
+              <input value="{{ apellidos }}" onChange="{{ setApellidos }}" placeholder="Ej. Rodríguez" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Fecha de nacimiento</label>
+              <input type="date" value="{{ fecha }}" onChange="{{ setFecha }}" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+            <div style="flex:0 0 auto;padding:14px 18px;border-radius:12px;background:#EEF4FC;font-size:16px;font-weight:900;color:#1E5AA7">{{ edadTexto }}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Sexo</label>
+            <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff">
+              <option>Femenino</option>
+              <option>Masculino</option>
+              <option>Otro</option>
+              <option>Prefiero no decirlo</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Teléfono celular</label>
+              <input value="{{ cel }}" onChange="{{ setCel }}" placeholder="Ej. 300 456 7890" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+              <sc-if value="{{ errCel }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;font-weight:800;color:#DC2626">Ingrese un número de teléfono para continuar.</div></sc-if>
+            </div>
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Teléfono alternativo</label>
+              <input placeholder="Opcional" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Correo electrónico <span style="font-weight:700;color:#5B6B85">· opcional</span></label>
+            <input placeholder="Si no tiene, déjelo vacío" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ p2 }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:22px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">B · CLASIFICACIÓN PRIORITARIA</div>
+          <div style="font-size:17px;line-height:1.5;color:#5B6B85;font-weight:600">Puede marcar una, dos o las tres. No son excluyentes.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <button onClick="{{ toggleMayor }}" style="text-align:left;padding:18px;border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:15px;border:{{ bdMayor }};background:{{ bgMayor }}">
+            <span style="flex:0 0 32px;width:32px;height:32px;border-radius:9px;border:2.5px solid #D8DFEA;display:flex;align-items:center;justify-content:center;background:{{ boxMayor }}"><span style="width:13px;height:13px;border-radius:3px;background:{{ tickMayor }}"></span></span>
+            <span style="display:flex;flex-direction:column;gap:3px">
+              <span style="font-size:19px;font-weight:900">Persona mayor de 60 años</span>
+              <span style="font-size:15px;color:#5B6B85;font-weight:600">{{ notaMayor }}</span>
+            </span>
+          </button>
+          <button onClick="{{ toggleDisc }}" style="text-align:left;padding:18px;border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:15px;border:{{ bdDisc }};background:{{ bgDisc }}">
+            <span style="flex:0 0 32px;width:32px;height:32px;border-radius:9px;border:2.5px solid #D8DFEA;display:flex;align-items:center;justify-content:center;background:{{ boxDisc }}"><span style="width:13px;height:13px;border-radius:3px;background:{{ tickDisc }}"></span></span>
+            <span style="display:flex;flex-direction:column;gap:3px">
+              <span style="font-size:19px;font-weight:900">Persona con discapacidad</span>
+              <span style="font-size:15px;color:#5B6B85;font-weight:600">Física, visual, auditiva, intelectual, psicosocial o múltiple</span>
+            </span>
+          </button>
+          <sc-if value="{{ disc }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-left:8px;padding:18px;border-left:3px solid #E83CB6;background:#FDF7FB;border-radius:0 16px 16px 0;display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <label style="font-size:15px;font-weight:800">Tipo de discapacidad</label>
+                <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff">
+                  <option>Física</option><option>Visual</option><option>Auditiva</option><option>Intelectual</option><option>Psicosocial</option><option>Múltiple</option><option>Otra</option>
+                </select>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:9px">
+                <label style="font-size:15px;font-weight:800;line-height:1.4">¿Está inscrito en el Registro para la Localización y Caracterización de Personas con Discapacidad (RLCPD)?</label>
+                <div style="display:flex;gap:9px;flex-wrap:wrap">
+                  <span style="padding:12px 20px;border-radius:99px;border:2px solid #16A34A;background:#EFF9F1;font-size:15px;font-weight:900;color:#16A34A">Sí</span>
+                  <span style="padding:12px 20px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">No</span>
+                  <span style="padding:12px 20px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">No sabe</span>
+                </div>
+              </div>
+              <div style="font-size:14px;line-height:1.45;color:#5B6B85;font-weight:700">No necesita diagnóstico médico para inscribirse.</div>
+            </div>
+          </sc-if>
+          <button onClick="{{ toggleCasa }}" style="text-align:left;padding:18px;border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:15px;border:{{ bdCasa }};background:{{ bgCasa }}">
+            <span style="flex:0 0 32px;width:32px;height:32px;border-radius:9px;border:2.5px solid #D8DFEA;display:flex;align-items:center;justify-content:center;background:{{ boxCasa }}"><span style="width:13px;height:13px;border-radius:3px;background:{{ tickCasa }}"></span></span>
+            <span style="display:flex;flex-direction:column;gap:3px">
+              <span style="font-size:19px;font-weight:900">Persona que requiere cuidados en casa</span>
+              <span style="font-size:15px;color:#5B6B85;font-weight:600">Necesito apoyo para las actividades del día</span>
+            </span>
+          </button>
+          <sc-if value="{{ casa }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-left:8px;padding:18px;border-left:3px solid #E83CB6;background:#FDF7FB;border-radius:0 16px 16px 0;display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;flex-direction:column;gap:9px">
+                <label style="font-size:15px;font-weight:800">¿Actualmente tiene cuidador?</label>
+                <div style="display:flex;gap:9px">
+                  <span style="padding:12px 24px;border-radius:99px;border:2px solid #16A34A;background:#EFF9F1;font-size:15px;font-weight:900;color:#16A34A">Sí</span>
+                  <span style="padding:12px 24px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">No</span>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:9px">
+                <label style="font-size:15px;font-weight:800">Tipo de apoyo que necesita <span style="font-weight:700;color:#5B6B85">· puede marcar varios</span></label>
+                <div style="display:flex;flex-wrap:wrap;gap:8px">
+                  <span style="padding:11px 16px;border-radius:99px;border:2px solid #E83CB6;background:#FDF0F8;font-size:15px;font-weight:800">Ayuda para movilizarse</span>
+                  <span style="padding:11px 16px;border-radius:99px;border:2px solid #E83CB6;background:#FDF0F8;font-size:15px;font-weight:800">Administración de medicamentos</span>
+                  <span style="padding:11px 16px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Alimentación</span>
+                  <span style="padding:11px 16px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Higiene personal</span>
+                  <span style="padding:11px 16px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Acompañamiento</span>
+                  <span style="padding:11px 16px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Supervisión permanente</span>
+                  <span style="padding:11px 16px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Otro</span>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ p3 }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:24px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">C · UBICACIÓN DEL PACIENTE</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Departamento</label>
+              <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"><option>Cundinamarca</option><option>Antioquia</option><option>Atlántico</option><option>Valle del Cauca</option><option>Otro</option></select>
+            </div>
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Municipio</label>
+              <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"><option>Soacha</option><option>Bogotá D.C.</option><option>Chía</option><option>Otro</option></select>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Barrio o vereda</label>
+            <input placeholder="Ej. La Esperanza" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Dirección completa</label>
+            <input placeholder="Ej. Cra 45 # 32-16" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Complemento o indicaciones para llegar</label>
+            <textarea rows="3" placeholder="Ej. Casa azul detrás de la iglesia. La calle no tiene placa." style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff;resize:vertical;line-height:1.45"></textarea>
+            <div style="font-size:14px;line-height:1.45;color:#5B6B85;font-weight:700">Descríbalo como se lo diría a un vecino. Esto es lo que más ayuda al equipo a encontrarlo.</div>
+          </div>
+          <button style="align-self:flex-start;padding:14px 20px;border:2px solid #1E5AA7;border-radius:99px;background:#fff;color:#1E5AA7;font-size:16px;font-weight:900;cursor:pointer;display:flex;align-items:center;gap:10px"><span style="width:18px;height:18px;border-radius:50%;background:#1E5AA7"></span>Usar mi ubicación</button>
+        </div>
+        <div style="height:1px;background:#E4E9F2"></div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">D · EPS</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">EPS a la que pertenece</label>
+            <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff">
+              <option>Nueva EPS</option><option>Sanitas</option><option>Sura</option><option>Salud Total</option><option>Compensar</option><option>Famisanar</option><option>Otra EPS</option><option>No sabe</option><option>No tiene EPS</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ p4 }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:24px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">E · CONTACTO FAMILIAR O DE EMERGENCIA</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Nombre completo</label>
+            <input placeholder="Ej. Carlos Rodríguez" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Parentesco</label>
+              <input placeholder="Ej. Hijo" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+            <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Teléfono</label>
+              <input placeholder="Ej. 311 220 3355" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+          </div>
+        </div>
+        <div style="padding:20px;border:2px solid #E83CB6;border-radius:18px;background:#FDF7FB;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="font-size:13px;font-weight:900;color:#E83CB6;letter-spacing:.07em">F · OBLIGATORIO</div>
+            <div style="font-size:20px;font-weight:900;line-height:1.3">Persona cercana que puede ayudarnos a ubicarlo</div>
+            <div style="font-size:16px;line-height:1.5;color:#5B6B85;font-weight:600">Registre un vecino o persona cercana que pueda ayudarnos a localizarlo si no logramos comunicarnos con usted.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Nombre del vecino o contacto cercano</label>
+            <input placeholder="Ej. Rosa Delgado" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Teléfono</label>
+              <input placeholder="Ej. 312 778 4410" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+            <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Relación con el paciente</label>
+              <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"><option>Vecino</option><option>Familiar cercano</option><option>Administrador</option><option>Portero</option><option>Líder comunitario</option><option>Otro</option></select>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Dirección o referencia</label>
+            <input placeholder="Ej. Casa de al lado, puerta verde" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+          </div>
+          <button onClick="{{ toggleAutVecino }}" style="text-align:left;display:flex;gap:13px;align-items:flex-start;padding:16px;border-radius:14px;cursor:pointer;background:#fff;border:{{ bdAutV }}">
+            <span style="flex:0 0 28px;width:28px;height:28px;border-radius:8px;border:2.5px solid #D8DFEA;display:flex;align-items:center;justify-content:center;background:{{ boxAutV }}"><span style="width:11px;height:11px;border-radius:3px;background:{{ tickAutV }}"></span></span>
+            <span style="font-size:15px;line-height:1.5;font-weight:700">Confirmo que esta persona puede ser contactada únicamente cuando sea necesario localizarme o apoyarme en una situación relacionada con mi atención.</span>
+          </button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ p5 }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:24px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">REVISE SU INFORMACIÓN</div>
+          <div style="border:1.5px solid #D8DFEA;border-radius:16px;overflow:hidden">
+            <div style="padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #E4E9F2">
+              <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.06em">NOMBRE</div><div style="font-size:17px;font-weight:800">{{ nombreCompleto }}</div></div>
+              <button onClick="{{ goStep1 }}" style="padding:9px 15px;border:1.5px solid #D8DFEA;border-radius:99px;background:#fff;font-size:14px;font-weight:800;color:#1E5AA7;cursor:pointer">Editar</button>
+            </div>
+            <div style="padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #E4E9F2">
+              <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.06em">DOCUMENTO Y TELÉFONO</div><div style="font-size:17px;font-weight:800">{{ docTexto }} · {{ celTexto }}</div><div style="font-size:15px;font-weight:700;color:#5B6B85">{{ edadTexto }}</div></div>
+              <button onClick="{{ goStep1 }}" style="padding:9px 15px;border:1.5px solid #D8DFEA;border-radius:99px;background:#fff;font-size:14px;font-weight:800;color:#1E5AA7;cursor:pointer">Editar</button>
+            </div>
+            <div style="padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.06em">CLASIFICACIÓN</div><div style="font-size:17px;font-weight:800;line-height:1.35">{{ clasifTexto }}</div></div>
+              <button onClick="{{ goStep2 }}" style="padding:9px 15px;border:1.5px solid #D8DFEA;border-radius:99px;background:#fff;font-size:14px;font-weight:800;color:#1E5AA7;cursor:pointer">Editar</button>
+            </div>
+          </div>
+        </div>
+        <div style="height:1px;background:#E4E9F2"></div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">G · CREACIÓN DE CUENTA</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Contraseña</label>
+              <input type="password" placeholder="Mínimo 6 caracteres" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Confirmar contraseña</label>
+              <input type="password" placeholder="Repítala" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+          </div>
+          <div style="display:flex;gap:13px;align-items:flex-start;padding:16px;border:2px solid #16A34A;border-radius:14px;background:#EFF9F1">
+            <span style="flex:0 0 28px;width:28px;height:28px;border-radius:8px;background:#16A34A;display:flex;align-items:center;justify-content:center"><span style="width:11px;height:11px;border-radius:3px;background:#fff"></span></span>
+            <span style="font-size:15px;line-height:1.5;font-weight:700">Autorizo el tratamiento de mis datos personales y de salud conforme a la Ley 1581 de 2012. <a href="#">Leer la política</a></span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ c1 }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:22px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <img src="assets/eli/escucha.png" alt="Elí" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex:0 0 48px;border:2px solid #E83CB6"/>
+          <div style="background:#F1F3F6;border-radius:16px 16px 16px 4px;padding:13px 15px;font-size:16px;line-height:1.45;font-weight:700">Primero usted como persona. Después vinculamos al paciente o pacientes que cuida.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">A · INFORMACIÓN DEL CUIDADOR</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Tipo de documento</label>
+              <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"><option>Cédula de ciudadanía</option><option>Cédula de extranjería</option><option>Pasaporte</option><option>Permiso por Protección Temporal</option><option>Otro</option></select>
+            </div>
+            <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Número de documento</label>
+              <input value="{{ doc }}" onChange="{{ setDoc }}" placeholder="Ej. 52988431" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+              <sc-if value="{{ errDoc }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;font-weight:800;color:#DC2626">Escriba su número de documento para continuar.</div></sc-if>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Nombres</label>
+              <input value="{{ nombres }}" onChange="{{ setNombres }}" placeholder="Ej. Ana" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+              <sc-if value="{{ errNombres }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;font-weight:800;color:#DC2626">Escriba sus nombres para continuar.</div></sc-if>
+            </div>
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Apellidos</label>
+              <input value="{{ apellidos }}" onChange="{{ setApellidos }}" placeholder="Ej. Castro" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Fecha de nacimiento</label>
+              <input type="date" value="{{ fecha }}" onChange="{{ setFecha }}" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+            <div style="flex:0 0 auto;padding:14px 18px;border-radius:12px;background:#EEF4FC;font-size:16px;font-weight:900;color:#1E5AA7">{{ edadTexto }}</div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Teléfono celular</label>
+              <input value="{{ cel }}" onChange="{{ setCel }}" placeholder="Ej. 301 552 8899" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+              <sc-if value="{{ errCel }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;font-weight:800;color:#DC2626">Ingrese un número de teléfono para continuar.</div></sc-if>
+            </div>
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Correo electrónico</label>
+              <input placeholder="Opcional" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Departamento</label>
+              <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"><option>Cundinamarca</option><option>Antioquia</option><option>Atlántico</option><option>Valle del Cauca</option><option>Otro</option></select>
+            </div>
+            <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Municipio</label>
+              <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"><option>Soacha</option><option>Bogotá D.C.</option><option>Chía</option><option>Otro</option></select>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Dirección</label>
+            <input placeholder="Su dirección de residencia" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ c2 }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:24px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">B · TIPO DE CUIDADOR</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:17px;font-weight:900">¿Qué tipo de cuidador es?</label>
+            <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff">
+              <option>Familiar</option><option>Cuidador informal</option><option>Cuidador remunerado</option><option>Auxiliar de enfermería</option><option>Profesional de salud</option><option>Otro</option>
+            </select>
+          </div>
+        </div>
+        <div style="height:1px;background:#E4E9F2"></div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">C · FORMACIÓN</div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <label style="font-size:17px;font-weight:900;line-height:1.35">¿Cuenta con formación o certificación como cuidador?</label>
+            <div style="display:flex;gap:9px">
+              <button onClick="{{ setFormSi }}" style="padding:13px 28px;border-radius:99px;font-size:16px;font-weight:900;cursor:pointer;border:{{ bdFormSi }};background:{{ bgFormSi }};color:{{ fgFormSi }}">Sí</button>
+              <button onClick="{{ setFormNo }}" style="padding:13px 28px;border-radius:99px;font-size:16px;font-weight:900;cursor:pointer;border:{{ bdFormNo }};background:{{ bgFormNo }};color:{{ fgFormNo }}">No</button>
+            </div>
+          </div>
+          <sc-if value="{{ formacion }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:18px;border-left:3px solid #E83CB6;background:#FDF7FB;border-radius:0 16px 16px 0;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <label style="font-size:15px;font-weight:800">Institución</label>
+                <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"><option>Formación SENA</option><option>Institución de educación superior</option><option>Fundación u ONG</option><option>Hospital o ESE</option><option>Otra</option></select>
+              </div>
+              <div style="display:flex;gap:12px;flex-wrap:wrap">
+                <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+                  <label style="font-size:15px;font-weight:800">Tipo de certificación</label>
+                  <input placeholder="Ej. Cuidado del adulto mayor" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+                </div>
+                <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+                  <label style="font-size:15px;font-weight:800">Fecha de certificación</label>
+                  <input type="date" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+                </div>
+              </div>
+              <div style="padding:14px 16px;background:#fff;border:1.5px dashed #D8DFEA;border-radius:12px;font-size:15px;line-height:1.45;color:#5B6B85;font-weight:700">El soporte se puede cargar más adelante desde su perfil.</div>
+            </div>
+          </sc-if>
+        </div>
+        <div style="height:1px;background:#E4E9F2"></div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">E · DISPONIBILIDAD</div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <label style="font-size:17px;font-weight:900">¿Vive con el paciente?</label>
+            <div style="display:flex;gap:9px">
+              <span style="padding:13px 28px;border-radius:99px;border:2px solid #16A34A;background:#EFF9F1;font-size:16px;font-weight:900;color:#16A34A">Sí</span>
+              <span style="padding:13px 28px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:16px;font-weight:800;color:#5B6B85">No</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <label style="font-size:15px;font-weight:800">Horario habitual de cuidado <span style="font-weight:700;color:#5B6B85">· puede marcar varios</span></label>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <span style="padding:11px 18px;border-radius:99px;border:2px solid #E83CB6;background:#FDF0F8;font-size:15px;font-weight:800">Mañana</span>
+              <span style="padding:11px 18px;border-radius:99px;border:2px solid #E83CB6;background:#FDF0F8;font-size:15px;font-weight:800">Tarde</span>
+              <span style="padding:11px 18px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Noche</span>
+              <span style="padding:11px 18px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Todo el día</span>
+              <span style="padding:11px 18px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Días específicos</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ c3 }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:22px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">D · PACIENTE AL QUE CUIDA</div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <label style="font-size:17px;font-weight:900">¿El paciente ya está registrado en ELÍGEME?</label>
+            <div style="display:flex;gap:9px;flex-wrap:wrap">
+              <button onClick="{{ setRegSi }}" style="padding:13px 26px;border-radius:99px;font-size:16px;font-weight:900;cursor:pointer;border:{{ bdRegSi }};background:{{ bgRegSi }};color:{{ fgRegSi }}">Sí</button>
+              <button onClick="{{ setRegNo }}" style="padding:13px 26px;border-radius:99px;font-size:16px;font-weight:900;cursor:pointer;border:{{ bdRegNo }};background:{{ bgRegNo }};color:{{ fgRegNo }}">No</button>
+              <button onClick="{{ setRegNS }}" style="padding:13px 26px;border-radius:99px;font-size:16px;font-weight:900;cursor:pointer;border:{{ bdRegNS }};background:{{ bgRegNS }};color:{{ fgRegNS }}">No sabe</button>
+            </div>
+          </div>
+          <sc-if value="{{ regSi }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:18px;border-left:3px solid #E83CB6;background:#FDF7FB;border-radius:0 16px 16px 0;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <label style="font-size:15px;font-weight:800">Buscar por documento del paciente o código ELÍGEME</label>
+                <div style="display:flex;gap:9px;flex-wrap:wrap">
+                  <input placeholder="1032455789 o ELI-4827" style="flex:1;min-width:180px;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+                  <button style="padding:14px 22px;border:none;border-radius:12px;background:#1E5AA7;color:#fff;font-size:16px;font-weight:900;cursor:pointer">Buscar</button>
+                </div>
+              </div>
+              <div style="padding:16px;background:#fff;border:2px solid #16A34A;border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                <div style="display:flex;flex-direction:column;gap:2px">
+                  <div style="font-size:13px;font-weight:900;color:#16A34A;letter-spacing:.06em">PACIENTE ENCONTRADO</div>
+                  <div style="font-size:18px;font-weight:900">María Rodríguez</div>
+                  <div style="font-size:15px;font-weight:700;color:#5B6B85">78 años · Soacha · ELI-4827</div>
+                </div>
+                <button style="padding:12px 20px;border:none;border-radius:99px;background:#16A34A;color:#fff;font-size:15px;font-weight:900;cursor:pointer">Confirmar vínculo</button>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ regNo }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:18px;border-left:3px solid #E83CB6;background:#FDF7FB;border-radius:0 16px 16px 0;display:flex;flex-direction:column;gap:12px">
+              <div style="font-size:16px;line-height:1.5;font-weight:700">Puede iniciar el registro básico del paciente ahora y completarlo después.</div>
+              <button style="align-self:flex-start;padding:14px 22px;border:none;border-radius:12px;background:#1E5AA7;color:#fff;font-size:16px;font-weight:900;cursor:pointer">Registrar al paciente</button>
+            </div>
+          </sc-if>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Relación con el paciente</label>
+            <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff">
+              <option>Madre</option><option>Padre</option><option>Hijo</option><option>Hija</option><option>Cónyuge</option><option>Hermano</option><option>Hermana</option><option>Otro familiar</option><option>Cuidador contratado</option><option>Otro</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ c4 }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="padding:20px;border:2px solid #E83CB6;border-radius:18px;background:#FDF7FB;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="font-size:13px;font-weight:900;color:#E83CB6;letter-spacing:.07em">F · OBLIGATORIO</div>
+            <div style="font-size:20px;font-weight:900;line-height:1.3">Contacto cercano al domicilio del paciente</div>
+            <div style="font-size:16px;line-height:1.5;color:#5B6B85;font-weight:600">No es un vecino suyo: debe ser una persona que viva cerca del <b>paciente</b> y pueda ayudar a localizarlo cuando ni el paciente ni usted respondan.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Nombre</label>
+            <input placeholder="Ej. Rosa Delgado" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Teléfono</label>
+              <input placeholder="Ej. 312 778 4410" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+            <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Relación con el paciente</label>
+              <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"><option>Vecino</option><option>Familiar</option><option>Administrador</option><option>Portero</option><option>Líder comunitario</option><option>Otro</option></select>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Dirección o referencia</label>
+            <input placeholder="Ej. Casa de al lado, puerta verde" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+          </div>
+          <button onClick="{{ toggleAutVecino }}" style="text-align:left;display:flex;gap:13px;align-items:flex-start;padding:16px;border-radius:14px;cursor:pointer;background:#fff;border:{{ bdAutV }}">
+            <span style="flex:0 0 28px;width:28px;height:28px;border-radius:8px;border:2.5px solid #D8DFEA;display:flex;align-items:center;justify-content:center;background:{{ boxAutV }}"><span style="width:11px;height:11px;border-radius:3px;background:{{ tickAutV }}"></span></span>
+            <span style="font-size:15px;line-height:1.5;font-weight:700">Autorizo el uso de este contacto exclusivamente para localizar al paciente y apoyar su atención.</span>
+          </button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ c5 }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:24px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">REVISE SU INFORMACIÓN</div>
+          <div style="border:1.5px solid #D8DFEA;border-radius:16px;overflow:hidden">
+            <div style="padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #E4E9F2">
+              <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.06em">CUIDADOR</div><div style="font-size:17px;font-weight:800">{{ nombreCompleto }}</div><div style="font-size:15px;font-weight:700;color:#5B6B85">{{ docTexto }} · {{ celTexto }}</div></div>
+              <button onClick="{{ goStep1 }}" style="padding:9px 15px;border:1.5px solid #D8DFEA;border-radius:99px;background:#fff;font-size:14px;font-weight:800;color:#1E5AA7;cursor:pointer">Editar</button>
+            </div>
+            <div style="padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.06em">PACIENTE VINCULADO</div><div style="font-size:17px;font-weight:800">María Rodríguez · ELI-4827</div></div>
+              <button onClick="{{ goStep3 }}" style="padding:9px 15px;border:1.5px solid #D8DFEA;border-radius:99px;background:#fff;font-size:14px;font-weight:800;color:#1E5AA7;cursor:pointer">Editar</button>
+            </div>
+          </div>
+        </div>
+        <div style="height:1px;background:#E4E9F2"></div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">G · CUENTA</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Contraseña</label>
+              <input type="password" placeholder="Mínimo 6 caracteres" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Confirmar contraseña</label>
+              <input type="password" placeholder="Repítala" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+          </div>
+          <div style="display:flex;gap:13px;align-items:flex-start;padding:16px;border:2px solid #16A34A;border-radius:14px;background:#EFF9F1">
+            <span style="flex:0 0 28px;width:28px;height:28px;border-radius:8px;background:#16A34A;display:flex;align-items:center;justify-content:center"><span style="width:11px;height:11px;border-radius:3px;background:#fff"></span></span>
+            <span style="font-size:15px;line-height:1.5;font-weight:700">Autorizo el tratamiento de los datos personales conforme a la Ley 1581 de 2012.</span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ v1 }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:22px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:16px;background:#FEF6E9;border:1.5px solid #F3DCA9;border-radius:16px">
+          <span style="flex:0 0 12px;width:12px;height:12px;border-radius:50%;background:#F59E0B;margin-top:5px"></span>
+          <div style="font-size:16px;line-height:1.5;font-weight:700">Este registro requiere verificación. Su cuenta quedará <b>pendiente de verificación</b> hasta que ELÍGEME o su institución validen los datos.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">A · INFORMACIÓN PERSONAL</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Tipo de documento</label>
+              <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"><option>Cédula de ciudadanía</option><option>Cédula de extranjería</option><option>Pasaporte</option><option>Otro</option></select>
+            </div>
+            <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Número de documento</label>
+              <input value="{{ doc }}" onChange="{{ setDoc }}" placeholder="Ej. 79884512" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+              <sc-if value="{{ errDoc }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;font-weight:800;color:#DC2626">Escriba su número de documento para continuar.</div></sc-if>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Nombres</label>
+              <input value="{{ nombres }}" onChange="{{ setNombres }}" placeholder="Ej. Alejandro" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+              <sc-if value="{{ errNombres }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;font-weight:800;color:#DC2626">Escriba sus nombres para continuar.</div></sc-if>
+            </div>
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Apellidos</label>
+              <input value="{{ apellidos }}" onChange="{{ setApellidos }}" placeholder="Ej. Gómez" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Teléfono</label>
+              <input value="{{ cel }}" onChange="{{ setCel }}" placeholder="Ej. 315 990 1122" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+              <sc-if value="{{ errCel }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;font-weight:800;color:#DC2626">Ingrese un número de teléfono para continuar.</div></sc-if>
+            </div>
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Correo electrónico</label>
+              <input placeholder="Preferiblemente institucional" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ v2 }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">B · PERFIL PROFESIONAL</div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <label style="font-size:15px;font-weight:800">Profesión</label>
+          <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff">
+            <option>Médico</option><option>Enfermero</option><option>Auxiliar de enfermería</option><option>Fisioterapeuta</option><option>Terapeuta ocupacional</option><option>Trabajador social</option><option>Psicólogo</option><option>Nutricionista</option><option>Otro</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Número de tarjeta profesional</label>
+            <input placeholder="Cuando corresponda" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+          </div>
+          <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Número de registro profesional</label>
+            <input placeholder="Si aplica" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:9px;padding-top:6px">
+          <label style="font-size:15px;font-weight:800">Tipo de atención que realiza <span style="font-weight:700;color:#5B6B85">· puede marcar varios</span></label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <span style="padding:11px 16px;border-radius:99px;border:2px solid #E83CB6;background:#FDF0F8;font-size:15px;font-weight:800">Visita médica domiciliaria</span>
+            <span style="padding:11px 16px;border-radius:99px;border:2px solid #E83CB6;background:#FDF0F8;font-size:15px;font-weight:800">Seguimiento al paciente</span>
+            <span style="padding:11px 16px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Enfermería</span>
+            <span style="padding:11px 16px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Valoración inicial</span>
+            <span style="padding:11px 16px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Control de medicamentos</span>
+            <span style="padding:11px 16px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Rehabilitación</span>
+            <span style="padding:11px 16px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Trabajo social</span>
+            <span style="padding:11px 16px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Verificación de condiciones domiciliarias</span>
+            <span style="padding:11px 16px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Otro</span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ v3 }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:24px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">C · EPS</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">EPS a la que pertenece o para la cual presta servicios</label>
+            <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff">
+              <option>Nueva EPS</option><option>Sanitas</option><option>Sura</option><option>Salud Total</option><option>Compensar</option><option>Famisanar</option><option>Otra EPS</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Si eligió “Otra EPS”, escriba el nombre</label>
+            <input placeholder="Nombre de la EPS" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+          </div>
+        </div>
+        <div style="height:1px;background:#E4E9F2"></div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">D · INSTITUCIÓN DONDE TRABAJA</div>
+          <div style="padding:14px 16px;background:#EEF4FC;border-radius:12px;font-size:15px;line-height:1.5;color:#1E5AA7;font-weight:700">La institución se registra aparte de la EPS: una IPS o ESE puede atender pacientes afiliados a varias EPS.</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Hospital, ESE, IPS o institución</label>
+            <input placeholder="Ej. ESE Hospital Mario Gaitán Yanguas" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Municipio</label>
+              <input placeholder="Ej. Soacha" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+            <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Cargo</label>
+              <input placeholder="Ej. Médico domiciliario" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ v4 }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">E · ZONA DE ATENCIÓN</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Departamento</label>
+            <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"><option>Cundinamarca</option><option>Antioquia</option><option>Atlántico</option><option>Valle del Cauca</option><option>Otro</option></select>
+          </div>
+          <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:7px">
+            <label style="font-size:15px;font-weight:800">Municipio principal</label>
+            <select style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"><option>Soacha</option><option>Bogotá D.C.</option><option>Chía</option><option>Otro</option></select>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <label style="font-size:15px;font-weight:800">Municipios o zonas que cubre <span style="font-weight:700;color:#5B6B85">· puede marcar varios</span></label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <span style="padding:11px 16px;border-radius:99px;border:2px solid #E83CB6;background:#FDF0F8;font-size:15px;font-weight:800">Soacha · Comuna 4</span>
+            <span style="padding:11px 16px;border-radius:99px;border:2px solid #E83CB6;background:#FDF0F8;font-size:15px;font-weight:800">Soacha · Comuna 6</span>
+            <span style="padding:11px 16px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Sibaté</span>
+            <span style="padding:11px 16px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Bosa</span>
+            <span style="padding:11px 16px;border-radius:99px;border:1.5px solid #D8DFEA;background:#fff;font-size:15px;font-weight:700;color:#5B6B85">Zona rural</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <label style="font-size:15px;font-weight:800">Zona o sector asignado</label>
+          <input placeholder="Ej. Sector nororiental" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ v5 }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:24px;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">G · DOCUMENTACIÓN</div>
+          <div style="font-size:16px;line-height:1.5;color:#5B6B85;font-weight:600">Puede cargarla ahora o dejarla pendiente para la fase de validación documental.</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="padding:16px;border:1.5px dashed #D8DFEA;border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><span style="font-size:16px;font-weight:800">Documento de identidad</span><span style="padding:9px 16px;border-radius:99px;border:1.5px solid #1E5AA7;color:#1E5AA7;font-size:14px;font-weight:900">Cargar</span></div>
+            <div style="padding:16px;border:1.5px dashed #D8DFEA;border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><span style="font-size:16px;font-weight:800">Tarjeta profesional</span><span style="padding:9px 16px;border-radius:99px;border:1.5px solid #1E5AA7;color:#1E5AA7;font-size:14px;font-weight:900">Cargar</span></div>
+            <div style="padding:16px;border:1.5px dashed #D8DFEA;border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><span style="font-size:16px;font-weight:800;line-height:1.4">Certificación laboral o vínculo con EPS, IPS, ESE u hospital</span><span style="padding:9px 16px;border-radius:99px;border:1.5px solid #1E5AA7;color:#1E5AA7;font-size:14px;font-weight:900">Cargar</span></div>
+          </div>
+        </div>
+        <div style="height:1px;background:#E4E9F2"></div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:900;color:#5B6B85;letter-spacing:.07em">H · CUENTA</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Contraseña</label>
+              <input type="password" placeholder="Mínimo 6 caracteres" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+              <label style="font-size:15px;font-weight:800">Confirmar contraseña</label>
+              <input type="password" placeholder="Repítala" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #D8DFEA;border-radius:12px;font-size:16px;font-weight:600;color:#14213D;background:#fff"/>
+            </div>
+          </div>
+          <div style="display:flex;gap:13px;align-items:flex-start;padding:16px;border:2px solid #16A34A;border-radius:14px;background:#EFF9F1">
+            <span style="flex:0 0 28px;width:28px;height:28px;border-radius:8px;background:#16A34A;display:flex;align-items:center;justify-content:center"><span style="width:11px;height:11px;border-radius:3px;background:#fff"></span></span>
+            <span style="font-size:15px;line-height:1.5;font-weight:700">Autorizo el tratamiento de mis datos personales conforme a la Ley 1581 de 2012.</span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ done }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff;border-radius:22px;padding:32px 26px;display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center;box-shadow:0 2px 10px rgba(20,33,61,.06)">
+        <img src="assets/eli/agradece.png" alt="Elí" style="width:130px;height:130px;border-radius:50%;object-fit:cover;border:4px solid #16A34A"/>
+        <sc-if value="{{ isVisitador }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="font-size:28px;font-weight:900">Registro recibido</div>
+            <div style="font-size:18px;line-height:1.5;color:#5B6B85;font-weight:600">Estamos verificando su información. Recibirá una notificación cuando su cuenta sea habilitada.</div>
+            <div style="align-self:center;padding:12px 20px;border-radius:99px;background:#FEF6E9;border:1.5px solid #F3DCA9;font-size:16px;font-weight:900;color:#B45309">Pendiente de verificación</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isPaciente }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="font-size:28px;font-weight:900">¡Su cuenta está lista!</div>
+            <div style="font-size:18px;line-height:1.5;color:#5B6B85;font-weight:600">{{ nombreCompleto }}, ya puede entrar a ELÍGEME. Su hospital podrá asignarle un cuidador y programar su primera visita.</div>
+            <div style="align-self:center;padding:12px 20px;border-radius:99px;background:#EFF9F1;border:1.5px solid #BFE5C9;font-size:16px;font-weight:900;color:#16A34A">{{ clasifTexto }}</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isCuidador }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="font-size:28px;font-weight:900">Cuenta de cuidador creada</div>
+            <div style="font-size:18px;line-height:1.5;color:#5B6B85;font-weight:600">{{ nombreCompleto }}, quedó vinculado con María Rodríguez. Ya puede registrar la bitácora diaria.</div>
+          </div>
+        </sc-if>
+        <button onClick="{{ reset }}" style="width:100%;padding:18px;border:none;border-radius:16px;background:#16A34A;color:#fff;font-size:19px;font-weight:900;cursor:pointer">Entrar a ELÍGEME</button>
+      </div>
+    </sc-if>
+
+    <div data-slot="steps-end"></div>
+
+    <sc-if value="{{ inForm }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <button onClick="{{ back }}" style="padding:16px 24px;border:2px solid #D8DFEA;border-radius:14px;background:#fff;font-size:17px;font-weight:800;cursor:pointer">Atrás</button>
+        <button onClick="{{ next }}" style="flex:1;min-width:200px;padding:18px 24px;border:none;border-radius:14px;background:#16A34A;color:#fff;font-size:19px;font-weight:900;cursor:pointer">{{ nextLabel }}</button>
+      </div>
+      <button onClick="{{ reset }}" style="align-self:center;padding:10px 16px;border:none;background:transparent;color:#5B6B85;font-size:15px;font-weight:800;cursor:pointer">Cambiar de rol</button>
+    </sc-if>
+
+  </div>
+
+  <div style="position:fixed;right:20px;bottom:20px;z-index:50;display:flex;flex-direction:column;align-items:flex-end;gap:12px">
+    <sc-if value="{{ eliOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="width:330px;max-width:calc(100vw - 40px);background:#fff;border-radius:20px;box-shadow:0 18px 44px rgba(16,24,40,.28);overflow:hidden;display:flex;flex-direction:column">
+        <div style="background:#1E5AA7;padding:14px 16px;display:flex;align-items:center;gap:12px">
+          <img src="assets/eli/guia.png" alt="Elí" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex:0 0 44px;border:2px solid #E83CB6;background:#fff"/>
+          <div style="display:flex;flex-direction:column;gap:1px">
+            <div style="font-size:17px;font-weight:900;color:#fff">Elí</div>
+            <div style="font-size:12px;font-weight:700;color:#BFD6F0">Asistente virtual · No reemplaza atención médica</div>
+          </div>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="background:#F1F3F6;border-radius:16px 16px 16px 4px;padding:13px 15px;font-size:15px;line-height:1.5;font-weight:700">{{ eliSaludo }}</div>
+          <div style="background:#EEF9FB;border:1.5px solid #CDE9EF;border-radius:16px;padding:13px 15px;display:flex;flex-direction:column;gap:5px">
+            <div style="font-size:12px;font-weight:900;color:#0E7490;letter-spacing:.07em">EN ESTE PASO</div>
+            <div style="font-size:15px;line-height:1.5;font-weight:800;color:#0E7490">{{ eliAyudaPaso }}</div>
+          </div>
+          <div style="font-size:12px;font-weight:900;color:#5B6B85;letter-spacing:.08em">PUEDES PREGUNTARME</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <button onClick="{{ eliRoles }}" style="padding:11px 14px;border:1.5px solid #1E5AA7;border-radius:99px;background:#fff;color:#1E5AA7;font-size:14px;font-weight:900;cursor:pointer">¿Cuál rol me corresponde?</button>
+            <button onClick="{{ eliCampos }}" style="padding:11px 14px;border:1.5px solid #1E5AA7;border-radius:99px;background:#fff;color:#1E5AA7;font-size:14px;font-weight:900;cursor:pointer">¿Qué pongo en este campo?</button>
+            <button onClick="{{ eliVecino }}" style="padding:11px 14px;border:1.5px solid #1E5AA7;border-radius:99px;background:#fff;color:#1E5AA7;font-size:14px;font-weight:900;cursor:pointer">¿Por qué piden un vecino?</button>
+            <button onClick="{{ eliDatos }}" style="padding:11px 14px;border:1.5px solid #1E5AA7;border-radius:99px;background:#fff;color:#1E5AA7;font-size:14px;font-weight:900;cursor:pointer">¿Qué hacen con mis datos?</button>
+          </div>
+          <sc-if value="{{ eliRespuesta }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#F1F3F6;border-radius:16px;padding:13px 15px;font-size:14px;line-height:1.55;font-weight:700">{{ eliRespuesta }}</div>
+          </sc-if>
+          <div style="display:flex;align-items:center;gap:9px;padding-top:4px">
+            <div style="flex:1;padding:12px 15px;border-radius:99px;background:#F1F3F6;font-size:14px;color:#8A97AC;font-weight:600">Escribe o habla…</div>
+            <div style="flex:0 0 44px;width:44px;height:44px;border-radius:50%;background:#E83CB6;display:flex;align-items:center;justify-content:center"><div style="width:15px;height:20px;border-radius:99px;background:#fff"></div></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+    <button onClick="{{ toggleEli }}" style="display:flex;align-items:center;gap:8px;padding:6px 20px 6px 8px;border:none;border-radius:99px;background:#fff;box-shadow:0 10px 26px rgba(16,24,40,.24);cursor:pointer">
+      <img src="assets/eli/saluda2.png" alt="Elí saludando" style="width:66px;height:66px;object-fit:contain;display:block"/>
+      <span style="font-size:16px;font-weight:900;color:#1E5AA7">¡Hola, soy Elí!</span>
+    </button>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:680,&quot;height&quot;:900}}">
+const TITLES = {
+  PACIENTE: ['Datos personales', 'Condición y necesidades', 'Ubicación y EPS', 'Contactos', 'Confirmación'],
+  CUIDADOR: ['Datos personales', 'Perfil del cuidador', 'Vincular paciente', 'Contacto cercano', 'Confirmación'],
+  VISITADOR: ['Datos personales', 'Información profesional', 'EPS e institución', 'Zona de atención', 'Verificación']
+};
+const ROLE_LABEL = { PACIENTE: 'INSCRIPCIÓN COMO PACIENTE', CUIDADOR: 'INSCRIPCIÓN COMO CUIDADOR', VISITADOR: 'INSCRIPCIÓN COMO VISITADOR MÉDICO' };
+
+const ELI_PASOS = {
+  PACIENTE: [
+    'Escribe tu documento, tu nombre y un teléfono donde podamos llamarte. El correo es opcional: si no tienes, déjalo vacío.',
+    'Marca todas las casillas que se parezcan a tu situación. Puedes marcar una, dos o las tres.',
+    'La dirección y las indicaciones para llegar son lo más importante de este paso. Escribe algo como “casa azul detrás de la iglesia”.',
+    'Registra un familiar y un vecino cercano. Nos sirven para ubicarte si no logramos comunicarnos contigo.',
+    'Revisa que todo esté bien. Si algo cambió, toca Editar antes de crear tu cuenta.'
+  ],
+  CUIDADOR: [
+    'Estos son tus datos, no los del paciente. Más adelante registramos a la persona que cuidas.',
+    'Cuéntanos qué tipo de cuidador eres y si tienes formación. Si no la tienes, no hay problema: después te muestro opciones del SENA.',
+    'Si el paciente ya está en ELÍGEME, búscalo por su documento. Si no, puedes registrarlo desde aquí.',
+    'Este vecino debe vivir cerca del paciente, no cerca de ti. Sirve para ubicarlo si ninguno de los dos responde.',
+    'Revisa la información antes de crear tu cuenta de cuidador.'
+  ],
+  VISITADOR: [
+    'Usa preferiblemente tu correo institucional. Con eso agilizamos la verificación.',
+    'Indica tu profesión y el número de tu tarjeta profesional cuando corresponda.',
+    'La EPS y la institución donde trabajas son datos separados. Puede que atiendas afiliados de una EPS desde una IPS o ESE distinta.',
+    'Selecciona todos los municipios o zonas que cubres y el tipo de atención que realizas.',
+    'Tu cuenta queda pendiente de verificación. Te avisamos cuando quede habilitada.'
+  ]
+};
+
+const ELI_RESPUESTAS = {
+  roles: 'Si la plataforma es para tu propia salud, eres paciente. Si registras información de otra persona a la que cuidas, eres cuidador. Si eres personal de salud que hace visitas, eres visitador médico.',
+  campos: 'Toca el campo que te genera duda y te explico qué escribir con un ejemplo. Si no sabes un dato, puedes dejarlo para después, salvo los que aparecen marcados como obligatorios.',
+  vecino: 'Muchos pacientes viven en zonas de difícil acceso. Ese contacto solo se usa para ubicar al paciente cuando no responde llamadas o cuando hay que llegar a su casa.',
+  datos: 'Tus datos se usan para tu atención y para el seguimiento de tu equipo de salud, según la Ley 1581 de 2012. La alcaldía solo ve información agregada y sin nombres.',
+  duda: 'Puedo explicarte información general, pero no soy médica. No diagnostico, no receto y no cambio tratamientos. Termina tu inscripción y te ayudo a llevar la duda a tu equipo de atención.'
+};
+
+class Component extends DCLogic {
+  state = {
+    role: null, step: 1, done: false, tried: false,
+    eliOpen: false, eliTema: null,
+    doc: '', nombres: '', apellidos: '', fecha: '', cel: '',
+    mayor60: false, discapacidad: false, requiereCuidadoCasa: false,
+    autVecino: false, mayorAuto: false,
+    formacion: true, pacienteReg: 'si'
+  };
+
+  pill(on) {
+    return {
+      bd: on ? '2px solid #16A34A' : '1.5px solid #D8DFEA',
+      bg: on ? '#EFF9F1' : '#fff',
+      fg: on ? '#16A34A' : '#5B6B85'
+    };
+  }
+
+  edad() {
+    if (!this.state.fecha) return null;
+    const d = new Date(this.state.fecha);
+    if (isNaN(d)) return null;
+    const t = new Date();
+    let a = t.getFullYear() - d.getFullYear();
+    const m = t.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && t.getDate() < d.getDate())) a--;
+    return a >= 0 && a < 130 ? a : null;
+  }
+
+  pick(role) { this.setState({ role: role, step: 1, tried: false, done: false }); }
+
+  missing() {
+    if (this.state.step !== 1) return {};
+    return { doc: !this.state.doc.trim(), nombres: !this.state.nombres.trim(), cel: !this.state.cel.trim() };
+  }
+
+  next() {
+    const m = this.missing();
+    if (Object.values(m).some(Boolean)) { this.setState({ tried: true }); return; }
+    if (this.state.step >= 5) { this.setState({ done: true }); return; }
+    this.setState({ step: this.state.step + 1, tried: false });
+  }
+
+  back() {
+    if (this.state.step <= 1) { this.setState({ role: null, tried: false }); return; }
+    this.setState({ step: this.state.step - 1, tried: false });
+  }
+
+  setFecha(e) {
+    const v = e.target.value;
+    this.setState({ fecha: v }, () => {
+      const a = this.edad();
+      if (a !== null && a >= 60) this.setState({ mayor60: true, mayorAuto: true });
+      else if (this.state.mayorAuto) this.setState({ mayor60: false, mayorAuto: false });
+    });
+  }
+
+  box(on) {
+    return {
+      bd: on ? '2.5px solid #E83CB6' : '2px solid #D8DFEA',
+      bg: on ? '#FDF0F8' : '#fff',
+      boxBg: on ? '#16A34A' : '#fff',
+      tick: on ? '#fff' : 'transparent'
+    };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const role = s.role;
+    const inForm = !!role && !s.done;
+    const m = s.tried ? this.missing() : {};
+    const a = this.edad();
+    const M = this.box(s.mayor60), D = this.box(s.discapacidad), C = this.box(s.requiereCuidadoCasa), AV = this.box(s.autVecino);
+    const FS = this.pill(s.formacion), FN = this.pill(!s.formacion);
+    const RS = this.pill(s.pacienteReg === 'si'), RN = this.pill(s.pacienteReg === 'no'), RX = this.pill(s.pacienteReg === 'ns');
+
+    return {
+      noRole: !role && !s.done,
+      inForm: inForm,
+      done: s.done,
+      roleLabel: role ? ROLE_LABEL[role] : '',
+      stepTitle: role ? TITLES[role][s.step - 1] : '',
+      stepLabel: 'Paso ' + s.step + ' de 5',
+      pct: (s.step / 5 * 100) + '%',
+      nextLabel: s.step >= 5 ? (role === 'VISITADOR' ? 'Solicitar registro como visitador' : (role === 'CUIDADOR' ? 'Crear cuenta de cuidador' : 'Crear mi cuenta')) : 'Continuar',
+      dots: TITLES[role || 'PACIENTE'].map((t, i) => {
+        const on = s.step === i + 1;
+        return {
+          n: (i + 1) + '. ' + t,
+          on: () => this.setState({ step: i + 1, tried: false }),
+          bg: on ? '#1E5AA7' : '#fff',
+          fg: on ? '#ffffff' : '#5B6B85',
+          bd: on ? '#1E5AA7' : '#D8DFEA'
+        };
+      }),
+      p1: role === 'PACIENTE' && s.step === 1 && !s.done,
+      p2: role === 'PACIENTE' && s.step === 2 && !s.done,
+      p3: role === 'PACIENTE' && s.step === 3 && !s.done,
+      p4: role === 'PACIENTE' && s.step === 4 && !s.done,
+      p5: role === 'PACIENTE' && s.step === 5 && !s.done,
+      c1: role === 'CUIDADOR' && s.step === 1 && !s.done,
+      c2: role === 'CUIDADOR' && s.step === 2 && !s.done,
+      c3: role === 'CUIDADOR' && s.step === 3 && !s.done,
+      c4: role === 'CUIDADOR' && s.step === 4 && !s.done,
+      c5: role === 'CUIDADOR' && s.step === 5 && !s.done,
+      v1: role === 'VISITADOR' && s.step === 1 && !s.done,
+      v2: role === 'VISITADOR' && s.step === 2 && !s.done,
+      v3: role === 'VISITADOR' && s.step === 3 && !s.done,
+      v4: role === 'VISITADOR' && s.step === 4 && !s.done,
+      v5: role === 'VISITADOR' && s.step === 5 && !s.done,
+      isVisitador: role === 'VISITADOR',
+      isPaciente: role === 'PACIENTE',
+      isCuidador: role === 'CUIDADOR',
+      nombreCompleto: (s.nombres + ' ' + s.apellidos).trim() || 'Sin nombre registrado',
+      docTexto: s.doc || 'Sin documento',
+      celTexto: s.cel || 'Sin teléfono',
+      edadTexto: a === null ? 'Edad —' : 'Edad ' + a + ' años',
+      notaMayor: s.mayorAuto ? 'Marcado automáticamente por su fecha de nacimiento' : '60 años o más',
+      clasifTexto: [s.mayor60 ? 'Mayor de 60' : null, s.discapacidad ? 'Con discapacidad' : null, s.requiereCuidadoCasa ? 'Requiere cuidados en casa' : null].filter(Boolean).join(' · ') || 'Sin clasificación marcada',
+      disc: s.discapacidad,
+      casa: s.requiereCuidadoCasa,
+      doc: s.doc, nombres: s.nombres, apellidos: s.apellidos, fecha: s.fecha, cel: s.cel,
+      setDoc: e => this.setState({ doc: e.target.value }),
+      setNombres: e => this.setState({ nombres: e.target.value }),
+      setApellidos: e => this.setState({ apellidos: e.target.value }),
+      setCel: e => this.setState({ cel: e.target.value }),
+      setFecha: e => this.setFecha(e),
+      errDoc: !!m.doc, errNombres: !!m.nombres, errCel: !!m.cel,
+      toggleMayor: () => this.setState({ mayor60: !s.mayor60, mayorAuto: false }),
+      toggleDisc: () => this.setState({ discapacidad: !s.discapacidad }),
+      toggleCasa: () => this.setState({ requiereCuidadoCasa: !s.requiereCuidadoCasa }),
+      toggleAutVecino: () => this.setState({ autVecino: !s.autVecino }),
+      bdMayor: M.bd, bgMayor: M.bg, boxMayor: M.boxBg, tickMayor: M.tick,
+      bdDisc: D.bd, bgDisc: D.bg, boxDisc: D.boxBg, tickDisc: D.tick,
+      bdCasa: C.bd, bgCasa: C.bg, boxCasa: C.boxBg, tickCasa: C.tick,
+      bdAutV: AV.bd, boxAutV: AV.boxBg, tickAutV: AV.tick,
+      goStep1: () => this.setState({ step: 1, tried: false }),
+      goStep2: () => this.setState({ step: 2, tried: false }),
+      goStep3: () => this.setState({ step: 3, tried: false }),
+      formacion: s.formacion,
+      setFormSi: () => this.setState({ formacion: true }),
+      setFormNo: () => this.setState({ formacion: false }),
+      bdFormSi: FS.bd, bgFormSi: FS.bg, fgFormSi: FS.fg,
+      bdFormNo: FN.bd, bgFormNo: FN.bg, fgFormNo: FN.fg,
+      regSi: s.pacienteReg === 'si',
+      regNo: s.pacienteReg === 'no',
+      setRegSi: () => this.setState({ pacienteReg: 'si' }),
+      setRegNo: () => this.setState({ pacienteReg: 'no' }),
+      setRegNS: () => this.setState({ pacienteReg: 'ns' }),
+      bdRegSi: RS.bd, bgRegSi: RS.bg, fgRegSi: RS.fg,
+      bdRegNo: RN.bd, bgRegNo: RN.bg, fgRegNo: RN.fg,
+      bdRegNS: RX.bd, bgRegNS: RX.bg, fgRegNS: RX.fg,
+      pickPaciente: () => this.pick('PACIENTE'),
+      pickCuidador: () => this.pick('CUIDADOR'),
+      pickVisitador: () => this.pick('VISITADOR'),
+      next: () => this.next(),
+      back: () => this.back(),
+      reset: () => this.setState({ role: null, step: 1, done: false, tried: false }),
+
+      eliOpen: s.eliOpen,
+      toggleEli: () => this.setState({ eliOpen: !s.eliOpen }),
+      eliSaludo: role
+        ? 'Hola. Te acompaño en la inscripción como ' + ROLE_LABEL[role].toLowerCase() + '. Si algo no se entiende, pregúntame.'
+        : 'Hola, soy Elí. Te acompaño paso a paso en la inscripción. Primero dime quién eres.',
+      eliAyudaPaso: s.done
+        ? 'Ya terminaste. Puedo explicarte qué sigue después del registro.'
+        : (role ? (ELI_PASOS[role] || [])[s.step - 1] : 'Elige si eres paciente, cuidador o visitador médico. Si cuidas a otra persona, eres cuidador.'),
+      eliRespuesta: s.eliTema ? ELI_RESPUESTAS[s.eliTema] : null,
+      eliRoles: () => this.setState({ eliTema: s.eliTema === 'roles' ? null : 'roles' }),
+      eliCampos: () => this.setState({ eliTema: s.eliTema === 'campos' ? null : 'campos' }),
+      eliVecino: () => this.setState({ eliTema: s.eliTema === 'vecino' ? null : 'vecino' }),
+      eliDatos: () => this.setState({ eliTema: s.eliTema === 'datos' ? null : 'datos' }),
+      eliDuda: () => this.setState({ eliTema: s.eliTema === 'duda' ? null : 'duda' })
+    };
+  }
+}
+
+</script>
+</body>
+</html>

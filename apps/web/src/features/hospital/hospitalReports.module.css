@@ -1,0 +1,989 @@
+/*
+ * Vista «Reportes» (TASK-003H-07, §3).
+ *
+ * Lenguaje visual: el ya aprobado para el Hospital. Ningún color, radio, peso,
+ * tipografía ni sombra es nuevo: todo procede de `src/styles/tokens.css` y de
+ * los patrones compartidos de `hospitalViews.module.css`.
+ *
+ * Composición: encabezado con selector de audiencia, barra global de filtros
+ * fija, tabs y un cuerpo de una o dos columnas según el tab. La densidad es
+ * ejecutiva: bloques compactos, tablas con desplazamiento propio y primera
+ * columna fija, nunca tablas interminables.
+ *
+ * Rejillas responsive (§3.9): desde 1280 px los KPI ocupan seis columnas y el
+ * cuerpo se reparte 8/4; entre 768 y 1279 px los KPI van en 3×2 y los gráficos
+ * en dos columnas; por debajo de 768 px todo se apila en una sola columna, los
+ * KPI van en dos y los tabs se desplazan horizontalmente.
+ *
+ * Accesibilidad: ningún estado se comunica solo por color. Las barras son
+ * decorativas y siempre acompañan a su valor escrito; cada gráfico ofrece su
+ * tabla de valores; el foco es siempre visible y el movimiento se reduce
+ * cuando el sistema lo pide.
+ */
+
+.vista {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* ========================================================================== */
+/* Encabezado y selector de audiencia                                         */
+/* ========================================================================== */
+
+.encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.encabezadoTextos {
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 27px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.intro {
+  margin: 0;
+  max-width: 760px;
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.marcas {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 7px 13px;
+  border: 1.5px solid var(--b-celeste-borde);
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-celeste);
+  color: var(--b-petroleo-texto);
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.corte {
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.selector {
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-blanco);
+  flex-wrap: wrap;
+}
+
+.selectorBoton {
+  font-family: inherit;
+  border: none;
+  background: transparent;
+  color: var(--b-gris);
+  padding: 9px 16px;
+  border-radius: var(--b-radio-pildora);
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.selectorActivo {
+  background: var(--b-azul);
+  color: var(--b-blanco);
+}
+
+.selectorBoton:focus-visible,
+.tab:focus-visible,
+.subtab:focus-visible,
+.chip:focus-visible,
+.accion:focus-visible,
+.detalleBoton:focus-visible,
+.filtroCampo:focus-visible,
+.barraCampoControl:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+/* ========================================================================== */
+/* Barra global de filtros                                                    */
+/* ========================================================================== */
+
+/*
+ * HOSPITAL-REPORTS-UX-01 — Barra compacta y fija.
+ *
+ * La barra conserva exactamente los seis grupos de filtro aprobados, sus
+ * controles, su orden y sus acciones. Solo cambian densidad, reparto y
+ * adherencia:
+ *
+ * 1. `position: sticky` con offset explícito. La topbar del shell Hospital
+ *    (`hospital.module.css`, `.topbar`) NO es fija ni adherente: se desplaza
+ *    con el documento, de modo que el borde superior efectivo bajo el que debe
+ *    quedar la barra es el del viewport. Por eso el offset declarado es `0px`,
+ *    y se expone como variable local para poder ajustarlo en un solo punto si
+ *    algún día la topbar pasa a ser fija.
+ * 2. `z-index: 20`: por encima del contenido y de las cabeceras adherentes de
+ *    las tablas (`z-index: 2`), y por debajo del panel modal (`z-index: 40`),
+ *    que debe seguir cubriéndola.
+ * 3. Fondo opaco propio (`--b-blanco`), borde y sombra: el contenido pasa por
+ *    debajo sin transparentarse.
+ * 4. Alturas por breakpoint (etiqueta + control + relleno):
+ *    - hasta 767 px: franja de campos con desplazamiento horizontal
+ *      controlado + pie; objetivos táctiles de 44 px; ~2 filas.
+ *    - 768–1399 px: rejilla de 3 columnas (2 filas de campos) + pie.
+ *    - desde 1024 px: densidad de escritorio, controles de 32 px.
+ *    - desde 1400 px: una sola franja de seis columnas + pie (~100 px totales
+ *      frente a los ~172 px de la composición anterior).
+ *    - `pointer: coarse` restituye 44 px en cualquier anchura.
+ *
+ * Los estilos genéricos `.filtros`, `.filtro`, `.filtroEtiqueta` y
+ * `.filtroCampo` NO se tocan: siguen sirviendo al bloque de filtros del tab
+ * «Evidencias e institucional», que esta tarea no rediseña.
+ */
+
+.barra {
+  /* Borde superior efectivo bajo el que se fija la barra. */
+  --h-reportes-barra-top: 0px;
+
+  position: sticky;
+  top: var(--h-reportes-barra-top);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-tarjeta);
+  background: var(--b-blanco);
+  box-shadow: var(--b-sombra-tarjeta);
+}
+
+/*
+ * Hasta 767 px los seis campos forman una franja de desplazamiento horizontal
+ * controlado: ninguna etiqueta se recorta, ningún control se solapa y la barra
+ * no crece hasta tapar el contenido. El relleno vertical reserva sitio al foco,
+ * que de otro modo recortaría el contenedor de desplazamiento.
+ */
+.barraCampos {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  overflow-x: auto;
+  padding-block: 5px;
+  scrollbar-width: thin;
+}
+
+.barraCampo {
+  flex: 0 0 178px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.barraCampoPrioridades {
+  flex: 0 0 auto;
+}
+
+.barraCampoEtiqueta {
+  font-size: 10px;
+  line-height: 1.25;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  overflow-wrap: anywhere;
+}
+
+.barraCampoControl {
+  font-family: inherit;
+  width: 100%;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+  padding: 6px 9px;
+  min-height: 44px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  background: var(--b-blanco);
+}
+
+/* Multiselección de `Población prioritaria`: misma semántica, menos altura. */
+.chips {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+  min-height: 44px;
+}
+
+.chip {
+  font-family: inherit;
+  white-space: nowrap;
+  padding: 6px 11px;
+  min-height: 44px;
+  border-radius: var(--b-radio-pildora);
+  border: 1.5px solid var(--b-borde);
+  background: var(--b-blanco);
+  color: var(--b-gris);
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+}
+
+.chipActivo {
+  border-color: var(--b-azul);
+  background: var(--b-azul);
+  color: var(--b-blanco);
+}
+
+/*
+ * Pie de la barra: el resumen `Filtros aplicados` queda discreto a la
+ * izquierda y `Limpiar filtros` más las cuatro acciones inertes se agrupan a la
+ * derecha. El motivo de exportación ya no reserva una fila completa: fluye
+ * junto a las acciones.
+ */
+.barraPie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  flex-wrap: wrap;
+}
+
+.resumenFiltros {
+  margin: 0;
+  flex: 1 1 220px;
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+  overflow-wrap: anywhere;
+}
+
+/*
+ * Hasta 767 px las cinco acciones forman una sola fila con desplazamiento
+ * horizontal controlado: apiladas ocuparían tres filas y la barra fija llegaría
+ * a cubrir cerca de la mitad de la pantalla. El motivo de exportación queda
+ * FUERA de esta franja, como hermano en `.barraPie`, para que siga leyéndose
+ * completo sin desplazar nada.
+ */
+.acciones {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  overflow-x: auto;
+  padding-block: 4px;
+  scrollbar-width: thin;
+}
+
+.accion {
+  font-family: inherit;
+  white-space: nowrap;
+  padding: 6px 11px;
+  min-height: 44px;
+  border-radius: var(--b-radio-boton);
+  border: 1.5px solid var(--b-borde);
+  background: var(--b-panel);
+  color: var(--b-gris-inactivo);
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  cursor: not-allowed;
+}
+
+.accionMotivo {
+  margin: 0;
+  flex: 0 1 auto;
+  font-size: 10px;
+  line-height: 1.3;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.limpiar {
+  font-family: inherit;
+  padding: 10px 14px;
+  min-height: 44px;
+  border-radius: var(--b-radio-boton);
+  border: 2px solid var(--b-borde);
+  background: var(--b-blanco);
+  color: var(--b-tinta);
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+}
+
+/*
+ * Variante compacta de `Limpiar filtros` dentro de la barra. `.limpiar` se
+ * mantiene intacto porque también viste el botón `Reintentar` del estado de
+ * error, que esta tarea no toca.
+ */
+.limpiarCompacto {
+  white-space: nowrap;
+  padding: 6px 11px;
+  border-width: 1.5px;
+}
+
+.limpiar:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+/* ========================================================================== */
+/* Filtros del tab «Evidencias e institucional»                               */
+/* ========================================================================== */
+
+/*
+ * Estilos genéricos de filtro, intactos desde TASK-003H-07. Los usa el bloque
+ * de filtros de «Evidencias e institucional» (`HospitalReports.tsx`), que
+ * HOSPITAL-REPORTS-UX-01 no rediseña. La barra global dejó de usarlos y ahora
+ * declara los suyos (`barraCampo*`).
+ */
+
+.filtros {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.filtro {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.filtroEtiqueta {
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.filtroCampo {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+  padding: 10px 12px;
+  min-height: 44px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  background: var(--b-blanco);
+}
+
+/* ========================================================================== */
+/* Tabs                                                                       */
+/* ========================================================================== */
+
+/*
+ * HOSPITAL-REPORTS-UX-01: los tabs suben contra la barra compacta. `.vista`
+ * separa sus bloques 16 px; este margen negativo deja 10 px entre la barra y
+ * los tabs sin alterar la separación del resto de la vista.
+ */
+.tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin-top: -6px;
+  padding-bottom: 2px;
+}
+
+.tab {
+  font-family: inherit;
+  white-space: nowrap;
+  padding: 10px 16px;
+  min-height: 44px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-blanco);
+  color: var(--b-gris);
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+}
+
+.tabActivo {
+  border-color: var(--b-azul);
+  background: var(--b-azul);
+  color: var(--b-blanco);
+}
+
+.subtabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.subtab {
+  font-family: inherit;
+  padding: 8px 13px;
+  min-height: 44px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-blanco);
+  color: var(--b-gris);
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+}
+
+.subtabActivo {
+  border-color: var(--b-petroleo);
+  background: var(--b-celeste);
+  color: var(--b-petroleo-texto);
+}
+
+/* ========================================================================== */
+/* Bloques y rejillas                                                         */
+/* ========================================================================== */
+
+.bloque {
+  min-width: 0;
+  background: var(--b-blanco);
+  border-radius: var(--b-radio-tarjeta);
+  border: 1.5px solid var(--b-borde);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bloqueTitulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.bloqueNota {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.cuerpo {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  min-width: 0;
+}
+
+.columna {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* ========================================================================== */
+/* KPI                                                                        */
+/* ========================================================================== */
+
+.kpiGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.kpiCard {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 13px 14px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-tarjeta);
+  background: var(--b-blanco);
+  min-width: 0;
+}
+
+.kpiEtiqueta {
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.kpiValor {
+  font-size: 22px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+  overflow-wrap: anywhere;
+}
+
+.kpiMeta {
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.kpiEstado {
+  align-self: flex-start;
+  padding: 3px 9px;
+  border-radius: var(--b-radio-pildora);
+  border: 1.5px solid var(--b-celeste-borde);
+  background: var(--b-celeste);
+  color: var(--b-petroleo-texto);
+  font-size: 10px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.kpiEstadoAusente {
+  border-color: var(--b-amarillo-borde);
+  background: var(--b-amarillo-fondo);
+  color: var(--b-amarillo);
+}
+
+.definicion {
+  font-size: 11px;
+  color: var(--b-gris);
+}
+
+.definicionResumen {
+  cursor: pointer;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+  min-height: 24px;
+}
+
+.definicionCuerpo {
+  margin: 5px 0 0;
+  font-weight: var(--b-peso-medio);
+  line-height: 1.45;
+}
+
+.desglose {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* ========================================================================== */
+/* Gráficos                                                                   */
+/* ========================================================================== */
+
+.grafico {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.graficoCabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.graficoTitulo {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.serie {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.serieTitulo {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+}
+
+.barras {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.barraItem {
+  display: grid;
+  grid-template-columns: minmax(96px, 34%) 1fr auto;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.barraEtiqueta {
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+  overflow-wrap: anywhere;
+}
+
+.barraPista {
+  display: block;
+  height: 10px;
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-panel);
+  border: 1px solid var(--b-borde);
+  overflow: hidden;
+}
+
+.barraRelleno {
+  display: block;
+  height: 100%;
+  width: var(--h-rep-ancho, 0%);
+  background: var(--b-petroleo);
+  border-radius: var(--b-radio-pildora);
+}
+
+.barraValor {
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+  white-space: nowrap;
+}
+
+.detalleBoton {
+  font-family: inherit;
+  padding: 7px 12px;
+  min-height: 36px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-pildora);
+  background: var(--b-blanco);
+  color: var(--b-tinta);
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  cursor: pointer;
+}
+
+/* ========================================================================== */
+/* Tablas                                                                     */
+/* ========================================================================== */
+
+.tablaContenedor {
+  overflow-x: auto;
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.tabla caption {
+  text-align: left;
+  padding: 9px 11px;
+  font-size: 11px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.tabla th,
+.tabla td {
+  padding: 9px 11px;
+  border-bottom: 1px solid var(--b-borde);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.tabla thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--b-panel);
+  color: var(--b-tinta);
+  font-weight: var(--b-peso-maximo);
+}
+
+.tabla tbody th {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--b-blanco);
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.numerica {
+  text-align: right;
+}
+
+/* ========================================================================== */
+/* Estados, avisos y panel                                                    */
+/* ========================================================================== */
+
+.aviso {
+  margin: 0;
+  padding: 11px 13px;
+  border: 1.5px solid var(--b-celeste-borde);
+  border-radius: var(--b-radio-campo);
+  background: var(--b-celeste);
+  color: var(--b-petroleo-texto);
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  line-height: 1.5;
+}
+
+.limite {
+  margin: 0;
+  padding: 11px 13px;
+  border: 1.5px solid var(--b-amarillo-borde);
+  border-radius: var(--b-radio-campo);
+  background: var(--b-amarillo-fondo);
+  color: var(--b-amarillo);
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  line-height: 1.5;
+}
+
+.vacio {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.esqueletoBloque {
+  height: 74px;
+  border-radius: var(--b-radio-tarjeta);
+  background: var(--b-panel);
+  border: 1.5px solid var(--b-borde);
+}
+
+.panelFondo {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(15, 46, 61, 0.35);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.panel {
+  width: min(420px, 100%);
+  height: 100%;
+  overflow-y: auto;
+  background: var(--b-blanco);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panelCabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.panelTitulo {
+  margin: 0;
+  font-size: 17px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.campos {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.campoEtiqueta {
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.campoValor {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
+  overflow-wrap: anywhere;
+}
+
+/* ========================================================================== */
+/* Responsive                                                                 */
+/* ========================================================================== */
+
+@media (min-width: 768px) {
+  .filtros {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /*
+   * Desde tableta la franja deja de desplazarse: los seis campos caben en una
+   * rejilla de tres columnas y dos filas, sin recorte ni solapamiento.
+   */
+  .barraCampos {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+    gap: 8px 10px;
+    overflow-x: visible;
+    padding-block: 0;
+  }
+
+  .barraCampo {
+    flex: initial;
+  }
+
+  .chips {
+    flex-wrap: wrap;
+  }
+
+  .acciones {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    padding-block: 0;
+  }
+
+  .kpiGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .graficos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+/*
+ * Densidad de escritorio: la etiqueta, el control, los chips y las acciones
+ * bajan de 44 px a 32 px de alto. Se mantiene muy por encima del objetivo
+ * mínimo de 24×24 px, y `pointer: coarse` restituye los 44 px en cualquier
+ * dispositivo táctil.
+ */
+@media (min-width: 1024px) {
+  .barra {
+    gap: 6px;
+    padding: 8px 12px;
+  }
+
+  .barraCampoControl,
+  .chips,
+  .chip,
+  .accion,
+  .limpiarCompacto {
+    min-height: 32px;
+  }
+
+  .barraCampoControl {
+    padding: 4px 8px;
+  }
+
+  .chip,
+  .accion,
+  .limpiarCompacto {
+    padding: 4px 10px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .filtros {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .kpiGrid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .cuerpo {
+    grid-template-columns: 8fr 4fr;
+  }
+}
+
+/*
+ * Desde 1400 px la barra es una sola franja de seis columnas más el pie.
+ * `Población prioritaria` recibe una pista más ancha para que sus tres chips
+ * quepan en una línea.
+ */
+@media (min-width: 1400px) {
+  .barraCampos {
+    grid-template-columns:
+      minmax(112px, 1fr) minmax(112px, 1fr) minmax(120px, 1fr)
+      minmax(290px, 1.6fr) minmax(112px, 1fr) minmax(112px, 1fr);
+    gap: 8px;
+  }
+
+  .chips {
+    flex-wrap: nowrap;
+  }
+}
+
+/*
+ * Dispositivos táctiles: se restituye el objetivo de 44 px en toda anchura,
+ * por encima de la densidad de escritorio.
+ */
+@media (pointer: coarse) {
+  .barraCampoControl,
+  .chips,
+  .chip,
+  .accion,
+  .limpiarCompacto {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barraRelleno {
+    transition: none;
+  }
+}
