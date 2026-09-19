@@ -54,6 +54,17 @@ export interface RateLimitConfig {
   readonly windowSeconds: number;
 }
 
+/** Configuración de Keycloak para pacientes (Spec 027). Opcional: si no se definen las vars, la feature se deshabilita. */
+export interface KeycloakPatientConfig {
+  readonly adminUrl: string;
+  readonly adminUser: string;
+  readonly adminPassword: string;
+  readonly realm: string;
+  readonly clientId: string;
+  readonly clientSecret: string;
+  readonly issuerUrl: string;
+}
+
 /**
  * Modo de aplicación del rol runtime de base de datos.
  *
@@ -106,6 +117,8 @@ export interface ApiEnvironment {
   /** Orígenes web autorizados a enviar credenciales a la API. */
   readonly webOrigins: readonly string[];
   readonly enrollmentRateLimit: RateLimitConfig;
+  /** Configuración de Keycloak para pacientes (Spec 027). Opcional: undefined si las vars no están definidas. */
+  readonly keycloakPatient: KeycloakPatientConfig | undefined;
 }
 
 /** Error de validación de entorno. Nunca contiene valores de variables. */
@@ -548,6 +561,69 @@ function parseWebOrigins(source: EnvironmentSource): readonly string[] {
   });
 }
 
+function parseKeycloakPatientConfig(source: EnvironmentSource): KeycloakPatientConfig | undefined {
+  const adminUrl = readOptional(source, 'KEYCLOAK_ADMIN_URL');
+  const adminUser = readOptional(source, 'KEYCLOAK_ADMIN_USER');
+  const adminPassword = readOptional(source, 'KEYCLOAK_ADMIN_PASSWORD');
+  const realm = readOptional(source, 'KEYCLOAK_PATIENT_REALM');
+  const clientId = readOptional(source, 'KEYCLOAK_PATIENT_CLIENT_ID');
+  const clientSecret = readOptional(source, 'KEYCLOAK_PATIENT_CLIENT_SECRET');
+  const issuerUrl = readOptional(source, 'KEYCLOAK_ISSUER_URL');
+
+  // Si ninguna variable está definida, la feature está deshabilitada
+  if (
+    adminUrl === undefined &&
+    adminUser === undefined &&
+    adminPassword === undefined &&
+    realm === undefined &&
+    clientId === undefined &&
+    clientSecret === undefined &&
+    issuerUrl === undefined
+  ) {
+    return undefined;
+  }
+
+  // Si algunas están definidas pero no todas, es error de configuración
+  const allDefined = [
+    adminUrl,
+    adminUser,
+    adminPassword,
+    realm,
+    clientId,
+    clientSecret,
+    issuerUrl,
+  ].every((v) => v !== undefined);
+
+  if (!allDefined) {
+    throw new EnvironmentValidationError(
+      'KEYCLOAK_PATIENT_*',
+      'están definidas parcialmente: debe definir todas las 7 variables (KEYCLOAK_ADMIN_URL, KEYCLOAK_ADMIN_USER, KEYCLOAK_ADMIN_PASSWORD, KEYCLOAK_PATIENT_REALM, KEYCLOAK_PATIENT_CLIENT_ID, KEYCLOAK_PATIENT_CLIENT_SECRET, KEYCLOAK_ISSUER_URL) o ninguna',
+    );
+  }
+
+  // Validar URLs
+  for (const [name, url] of [
+    ['KEYCLOAK_ADMIN_URL', adminUrl!],
+    ['KEYCLOAK_ISSUER_URL', issuerUrl!],
+  ] as const) {
+    try {
+      new URL(url);
+    } catch {
+      throw new EnvironmentValidationError(name, 'no es una URL válida');
+    }
+  }
+
+  return {
+    adminUrl: adminUrl!,
+    adminUser: adminUser!,
+    adminPassword: adminPassword!,
+    realm: realm!,
+    clientId: clientId!,
+    clientSecret: clientSecret!,
+    issuerUrl: issuerUrl!,
+  };
+}
+
 /**
  * Construye la configuración de la API a partir de una fuente de entorno.
  * Lanza `EnvironmentValidationError` ante la primera variable inválida.
@@ -590,5 +666,6 @@ export function loadApiEnvironment(source: EnvironmentSource): ApiEnvironment {
         24 * 60 * 60,
       ),
     },
+    keycloakPatient: parseKeycloakPatientConfig(source),
   };
 }

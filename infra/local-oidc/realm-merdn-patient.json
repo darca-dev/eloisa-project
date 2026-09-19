@@ -1,0 +1,73 @@
+{
+  "realm": "merdn-patient",
+  "enabled": true,
+  "displayName": "MERDN Pacientes (desarrollo)",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": false,
+  "verifyEmail": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 259200,
+  "ssoSessionMaxLifespan": 2592000,
+
+  "clients": [
+    {
+      "clientId": "merdn-patient-client",
+      "name": "MERDN - Paciente (local)",
+      "description": "Cliente confidencial para pacientes. Standard Flow + Direct Access Grants + Service Accounts. PKCE S256 obligatorio.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "frontchannelLogout": true,
+      "redirectUris": [
+        "http://127.0.0.1:3001/api/v1/human-auth/callback"
+      ],
+      "webOrigins": [
+        "http://127.0.0.1:3000"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://127.0.0.1:3000/",
+        "access.token.signed.response.alg": "RS256",
+        "id.token.signed.response.alg": "RS256"
+      },
+      "secret": "${KEYCLOAK_PATIENT_CLIENT_SECRET}"
+    }
+  ],
+
+  "users": [],
+
+  "roles": {
+    "realm": [
+      {
+        "name": "manage-users",
+        "composite": true,
+        "clientRole": true,
+        "containerId": "realm-management"
+      }
+    ]
+  },
+
+  "groups": [],
+
+  "identityProviders": [],
+
+  "requiredActions": [
+    "UPDATE_PASSWORD",
+    "VERIFY_EMAIL"
+  ],
+
+  "passwordPolicy": "length(8) and digits(1) and lowerCase(1) and upperCase(1)",
+
+  "authenticationFlows": []
+}

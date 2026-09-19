@@ -113,6 +113,14 @@ export class PatientEnrollmentRequestDto {
   })
   public readonly email?: string;
 
+  @ApiPropertyOptional({
+    description:
+      'Contraseña para acceso persistente del paciente. Opcional (compatibilidad legacy). Si se proporciona: mínimo 8 caracteres, al menos una letra y un número. El servidor NO la almacena: se envía a Keycloak que la hashea con scrypt.',
+    example: 'Passw0rd123',
+    minLength: 8,
+  })
+  public readonly password?: string;
+
   @ApiProperty({
     description: 'Código del catálogo de EPS controlado por el servidor.',
     enum: EPS_CATALOG.map((entry) => entry.code),

@@ -94,11 +94,11 @@ export function isAllowedReturnTarget(value: unknown): value is HumanAuthReturnT
 /* Parámetros temporales aprobados (AD-06, §4.3, §12)                          */
 /* -------------------------------------------------------------------------- */
 
-/** Vigencia ABSOLUTA de la sesión humana: 8 horas. No se renueva usándola. */
-export const HUMAN_SESSION_TTL_SECONDS = 8 * 60 * 60;
+/** Vigencia ABSOLUTA de la sesión humana: 30 días (Spec 027: ajustado para pacientes). No se renueva usándola. */
+export const HUMAN_SESSION_TTL_SECONDS = 30 * 24 * 60 * 60;
 
-/** Inactividad máxima admitida: 30 minutos. */
-export const HUMAN_SESSION_IDLE_SECONDS = 30 * 60;
+/** Inactividad máxima admitida: 72 horas (Spec 027: ajustado para pacientes). */
+export const HUMAN_SESSION_IDLE_SECONDS = 72 * 60 * 60;
 
 /** Vigencia FIJA del intento de autenticación: 10 minutos. */
 export const HUMAN_AUTH_ATTEMPT_TTL_SECONDS = 600;

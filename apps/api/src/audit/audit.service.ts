@@ -40,6 +40,101 @@ export class AuditService {
     return event.id;
   }
 
+  /** Spec 027: Registra la creación de una cuenta humana (Paciente). */
+  public async recordHumanAccountCreatedWithin(
+    tx: PrismaTransaction,
+    input: {
+      readonly tenantId: string;
+      readonly endpoint: string;
+      readonly correlationId: string;
+    },
+    payload: { readonly humanAccountId: string; readonly personId: string },
+    occurredAt: Date,
+  ): Promise<string> {
+    const event = await tx.auditEvent.create({
+      data: {
+        tenantId: input.tenantId,
+        eventType: 'HUMAN_ACCOUNT_CREATED',
+        actorType: 'PUBLIC_SELF_ENROLLMENT',
+        actorUserId: null,
+        resourceType: 'HumanAccount',
+        resourceId: payload.humanAccountId,
+        outcome: 'SUCCESS',
+        endpoint: input.endpoint,
+        correlationId: input.correlationId,
+        occurredAt,
+      },
+      select: { id: true },
+    });
+
+    return event.id;
+  }
+
+  /** Spec 027: Registra el vínculo de identidad externa (Keycloak) con la cuenta humana. */
+  public async recordHumanIdentityLinkedWithin(
+    tx: PrismaTransaction,
+    input: {
+      readonly tenantId: string;
+      readonly endpoint: string;
+      readonly correlationId: string;
+    },
+    payload: {
+      readonly extAuthIdentityId: string;
+      readonly humanAccountId: string;
+      readonly issuer: string;
+      readonly subject: string;
+    },
+    occurredAt: Date,
+  ): Promise<string> {
+    const event = await tx.auditEvent.create({
+      data: {
+        tenantId: input.tenantId,
+        eventType: 'HUMAN_IDENTITY_LINKED',
+        actorType: 'SYSTEM',
+        actorUserId: null,
+        resourceType: 'ExternalAuthIdentity',
+        resourceId: payload.extAuthIdentityId,
+        outcome: 'SUCCESS',
+        endpoint: input.endpoint,
+        correlationId: input.correlationId,
+        occurredAt,
+      },
+      select: { id: true },
+    });
+
+    return event.id;
+  }
+
+  /** Spec 027: Registra la revocación de la sesión de inscripción al migrar a sesión humana. */
+  public async recordEnrollmentSessionRevokedWithin(
+    tx: PrismaTransaction,
+    input: {
+      readonly tenantId: string;
+      readonly endpoint: string;
+      readonly correlationId: string;
+    },
+    payload: { readonly enrollmentSessionId: string; readonly patientId: string },
+    occurredAt: Date,
+  ): Promise<string> {
+    const event = await tx.auditEvent.create({
+      data: {
+        tenantId: input.tenantId,
+        eventType: 'ENROLLMENT_SESSION_REVOKED',
+        actorType: 'HUMAN_ACCOUNT',
+        actorUserId: null,
+        resourceType: 'EnrollmentSession',
+        resourceId: payload.enrollmentSessionId,
+        outcome: 'SUCCESS',
+        endpoint: input.endpoint,
+        correlationId: input.correlationId,
+        occurredAt,
+      },
+      select: { id: true },
+    });
+
+    return event.id;
+  }
+
   /**
    * Registra la materializacion de una visita domiciliaria dentro de su misma
    * transaccion (VISITS-CORE-01 MP02).
