@@ -1,11 +1,14 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 
+import { API_ENVIRONMENT, type ApiEnvironmentProvider } from '../config/api-environment.provider';
 import { AuditService } from '../audit/audit.service';
 import { ConsentService } from '../consents/consent.service';
 import { PrismaService } from '../database/prisma.service';
 import { TenantContextService } from '../database/tenant-context.service';
 import { EnrollmentSessionService } from '../enrollment-sessions/enrollment-session.service';
 import { TerritoryService } from '../territory/territory.service';
+import { KeycloakAdminClient, KeycloakProvisionError } from './keycloak-admin.client';
 
 import {
   type PatientSummaryResponse,
@@ -84,6 +87,8 @@ class TerritoryRejectedError extends Error {
 
 @Injectable()
 export class PatientEnrollmentService {
+  private readonly logger = new Logger(PatientEnrollmentService.name);
+
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(TenantContextService) private readonly tenants: TenantContextService,
@@ -92,6 +97,8 @@ export class PatientEnrollmentService {
     @Inject(EnrollmentSessionService)
     private readonly sessions: EnrollmentSessionService,
     @Inject(AuditService) private readonly audit: AuditService,
+    @Inject(KeycloakAdminClient) private readonly keycloak: KeycloakAdminClient,
+    @Inject(API_ENVIRONMENT) private readonly environment: ApiEnvironmentProvider,
   ) {}
 
   public async enroll(body: unknown, now: Date): Promise<EnrollmentResult> {
@@ -199,6 +206,58 @@ export class PatientEnrollmentService {
 
         await this.consents.recordWithin(tx, { tenantId, patientId: patient.id }, now);
 
+        // --- Spec 027: Provisión de cuenta humana para acceso persistente ---
+        let keycloakSubject: string | null = null;
+
+        const hasKeycloak = this.environment.keycloakPatient !== undefined && input.password !== null && input.password !== undefined;
+
+        if (hasKeycloak) {
+          const keycloakConfig = this.environment.keycloakPatient!;
+          // Generar subject UUID v4 para Keycloak (predecible para ExternalAuthIdentity)
+          keycloakSubject = randomUUID();
+
+          // 1. Crear HumanAccount vinculada al personId
+          const humanAccount = await tx.humanAccount.create({
+            data: {
+              tenantId,
+              personId: person.id,
+              status: 'ACTIVE',
+            },
+            select: { id: true },
+          });
+
+          // 2. Crear ExternalAuthIdentity vinculada a Keycloak
+          const extAuth = await tx.externalAuthIdentity.create({
+            data: {
+              tenantId,
+              humanAccountId: humanAccount.id,
+              issuer: keycloakConfig.issuerUrl,
+              subject: keycloakSubject,
+              status: 'ACTIVE',
+            },
+            select: { id: true },
+          });
+
+          // 3. Auditar creación de cuenta humana y vínculo de identidad
+          await this.audit.recordHumanAccountCreatedWithin(
+            tx,
+            { tenantId, endpoint: '/api/v1/patients/enrollments', correlationId: randomUUID() },
+            { humanAccountId: humanAccount.id, personId: person.id },
+            now,
+          );
+          await this.audit.recordHumanIdentityLinkedWithin(
+            tx,
+            { tenantId, endpoint: '/api/v1/patients/enrollments', correlationId: randomUUID() },
+            {
+              extAuthIdentityId: extAuth.id,
+              humanAccountId: humanAccount.id,
+              issuer: keycloakConfig.issuerUrl,
+              subject: keycloakSubject,
+            },
+            now,
+          );
+        }
+
         const session = await this.sessions.createWithin(
           tx,
           { tenantId, patientId: patient.id },
@@ -211,8 +270,43 @@ export class PatientEnrollmentService {
           now,
         );
 
-        return { patient, session, territory: territory.value, populations };
+        // Devolver info para crear usuario en Keycloak DESPUÉS de la transacción
+        return {
+          patient,
+          session,
+          territory: territory.value,
+          populations,
+          keycloakUser: hasKeycloak
+            ? {
+                username: input.email ?? input.phone,
+                email: input.email ?? `${input.phone}@patient.merdn.local`,
+                emailVerified: false,
+                firstName: input.givenNames,
+                lastName: input.familyNames,
+                password: input.password,
+                attributes: {
+                  merdn_person_id: person.id,
+                  merdn_patient_id: patient.id,
+                  merdn_subject: keycloakSubject!,
+                },
+              }
+            : null,
+        };
       });
+
+      // Crear usuario en Keycloak FUERA de la transacción BD pero ANTES de responder 201
+      // Si falla → throw → pero la transacción YA COMMITIÓ. Para MVP aceptamos este riesgo.
+      // En producción: compensating transaction o saga pattern.
+      if (created.keycloakUser) {
+        try {
+          await this.keycloak.createUser(created.keycloakUser);
+        } catch (keycloakError) {
+          // Log y continuar: el usuario existe en BD pero no en Keycloak.
+          // El paciente podrá usar "Olvidé contraseña" para activar su cuenta.
+          this.logger?.error?.('Keycloak user creation failed', keycloakError);
+          // No lanzamos error para no bloquear la inscripción.
+        }
+      }
 
       return {
         ok: true,
@@ -250,6 +344,12 @@ export class PatientEnrollmentService {
       // porque una comprobación previa no sería atómica.
       if (isUniqueDocumentViolation(error)) {
         return { ok: false, failure: { kind: 'DOCUMENT_CONFLICT' } };
+      }
+
+      if (error instanceof KeycloakProvisionError) {
+        // Si Keycloak falla DENTRO de la transacción (no debería pasar con el patrón actual)
+        // se propaga para rollback.
+        throw error;
       }
 
       // Cualquier otra violación de unicidad es un defecto, no un duplicado de

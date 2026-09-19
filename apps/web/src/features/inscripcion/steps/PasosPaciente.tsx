@@ -28,6 +28,7 @@ import type {
 import styles from '../inscripcion.module.css';
 import {
   AccionDemostrativa,
+  CampoContrasena,
   CampoLista,
   CampoTexto,
   CampoTextoLargo,
@@ -233,6 +234,14 @@ export function PasosPaciente({
             value={valores.correo}
             error={errores['correo']}
             onChange={(correo) => actualizar({ correo })}
+          />
+          <CampoContrasena
+            campo="password"
+            label="Contraseña para acceso persistente"
+            placeholder="Mínimo 8 caracteres, una letra y un número"
+            value={valores.password ?? ''}
+            error={errores['password']}
+            onChange={(password) => actualizar({ password })}
           />
         </Seccion>
       </div>

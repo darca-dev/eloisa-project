@@ -604,3 +604,53 @@
     font-size: 11px;
   }
 }
+
+/* ------------------------------- Contraseña ------------------------------ */
+
+.passwordWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.passwordToggle {
+  min-width: 44px;
+  padding: 0;
+  background: var(--b-panel);
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  color: var(--b-gris);
+}
+
+.passwordToggle:hover {
+  background: var(--b-borde);
+  color: var(--b-tinta);
+}
+
+.strengthContainer {
+  margin-top: 8px;
+  height: 6px;
+  background: var(--b-borde);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.strengthBar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.2s ease, background-color 0.2s ease;
+}
+
+.strengthLabel {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.passwordHelp {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-medio);
+  color: var(--b-gris);
+}

@@ -79,6 +79,8 @@ Paciente tomó **021** para que las tres convivan cuando Visitador se integre.
 | 022 | sesion-institucional-alcaldia-mvp | Approved / Aprobada · consentida | High / Alta | Product Owner | 2026-08-27 |
 | 023 | staging-controlado-hostinger | Approved / Aprobada · consentida | High / Alta | Product Owner | 2026-08-27 |
 | 024 | bootstrap-tenant-enforce | Approved / Aprobada · consentida | High / Alta | Product Owner | 2026-08-28 |
+| 026 | experiencia-visual-responsiva-demo | Approved / Aprobada · pendiente de consentimiento SDD | High / Alta | Product Owner | 2026-09-17 |
+| 027 | portal-central-cuenta-paciente-persistente | Draft / Borrador | High / Alta | Product Owner | 2026-09-18 |
 
 ## Auditoría de Codex
 

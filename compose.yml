@@ -183,6 +183,7 @@ services:
       - '127.0.0.1:${OIDC_LOCAL_PORT:-8081}:8081'
     volumes:
       - ./infra/local-oidc/realm-merdn-local.json:/opt/keycloak/data/import/realm-merdn-local.json:ro
+      - ./infra/local-oidc/realm-merdn-patient.json:/opt/keycloak/data/import/realm-merdn-patient.json:ro
     networks:
       - merdn-internal
     healthcheck:

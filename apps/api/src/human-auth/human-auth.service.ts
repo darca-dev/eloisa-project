@@ -570,6 +570,29 @@ export class HumanAuthService implements OnModuleInit {
         now,
       );
 
+      // Spec 027: Revocar enrollment_session si existe para este paciente
+      const enrollmentSession = await tx.enrollmentSession.findFirst({
+        where: {
+          patient: { personId: binding.account.personId },
+          tenantId,
+          revokedAt: null,
+          expiresAt: { gt: now },
+        },
+        select: { id: true, patientId: true },
+      });
+      if (enrollmentSession) {
+        await tx.enrollmentSession.update({
+          where: { id: enrollmentSession.id },
+          data: { revokedAt: now },
+        });
+        await this.audit.recordEnrollmentSessionRevokedWithin(
+          tx,
+          { tenantId, endpoint, correlationId },
+          { enrollmentSessionId: enrollmentSession.id, patientId: enrollmentSession.patientId },
+          now,
+        );
+      }
+
       return {
         principal: {
           sessionId: created.id,

@@ -61,6 +61,7 @@ const ALLOWED_ROOT_KEYS = [
   'declaredPopulations',
   'territory',
   'consentAccepted',
+  'password',
 ] as const;
 
 /** Propiedades admitidas dentro de `territory`. */
@@ -102,6 +103,7 @@ export interface ValidatedEnrollment {
   readonly eps: EpsCatalogEntry;
   readonly declaredPopulations: readonly DeclarablePopulationCode[];
   readonly territory: ValidatedTerritory;
+  readonly password: string | null;
 }
 
 export interface ValidationSuccess {
@@ -293,6 +295,31 @@ export function validateEnrollmentRequest(
     semanticErrors.push('epsCode');
   }
 
+  /* ------------------------------- Password -------------------------------- */
+
+  // Password es opcional (nullable) para compatibilidad con inscripciones legacy.
+  // Si se proporciona, debe tener mínimo 8 caracteres, al menos una letra y un número.
+  const passwordValue = body['password'];
+  let password: string | null = null;
+  if (passwordValue !== undefined && passwordValue !== null) {
+    if (typeof passwordValue !== 'string') {
+      shapeErrors.push('password');
+    } else {
+      const trimmed = passwordValue.trim();
+      if (trimmed.length > 0) {
+        if (
+          trimmed.length < 8 ||
+          !/[a-zA-Z]/.test(trimmed) ||
+          !/\d/.test(trimmed)
+        ) {
+          semanticErrors.push('password');
+        } else {
+          password = trimmed;
+        }
+      }
+    }
+  }
+
   /* ------------------------------ Poblaciones ---------------------------- */
 
   const declaredRaw = body['declaredPopulations'];
@@ -391,6 +418,7 @@ export function validateEnrollmentRequest(
       eps,
       declaredPopulations,
       territory,
+      password,
     },
   };
 }

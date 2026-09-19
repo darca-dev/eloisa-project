@@ -118,6 +118,8 @@ export interface DatosPersonales {
   readonly edad: number | null;
   readonly telefono: string;
   readonly correo: string;
+  /** Contraseña para acceso persistente (Spec 027). Opcional para compatibilidad legacy. */
+  readonly password?: string;
 }
 
 /** Zona de la dirección. Coincide con `AreaType` del contrato de la API. */

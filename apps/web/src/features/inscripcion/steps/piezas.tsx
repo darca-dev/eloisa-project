@@ -1,6 +1,9 @@
 import type { Dispatch, ReactNode } from 'react';
+import { useState, useEffect } from 'react';
 
-import { Button } from '@/components/ui/Button';
+import {
+  Button
+} from '@/components/ui/Button';
 import {
   Field,
   FieldError,
@@ -166,6 +169,85 @@ export function CampoTextoLargo({
       {hint === undefined ? null : (
         <FieldHint id={`${idCampo(campo)}-ayuda`}>{hint}</FieldHint>
       )}
+      {error === undefined ? null : <FieldError id={idError(campo)}>{error}</FieldError>}
+    </Field>
+  );
+}
+
+/**
+ * Campo de contraseña con toggle mostrar/ocultar y barra de fortaleza visual.
+ * Validación cliente: mínimo 8 caracteres, al menos 1 letra y 1 número.
+ */
+export function CampoContrasena({
+  campo,
+  label,
+  value,
+  onChange,
+  error,
+  obligatorio = true,
+  placeholder,
+}: CampoBase & {
+  readonly onChange: (valor: string) => void;
+  readonly placeholder?: string;
+}): ReactNode {
+  const [show, setShow] = useState(false);
+  const [strength, setStrength] = useState(0);
+
+  // Calcular fortaleza en tiempo real
+  useEffect(() => {
+    let s = 0;
+    if (value.length >= 8) s++;
+    if (/[a-zA-Z]/.test(value)) s++;
+    if (/\d/.test(value)) s++;
+    setStrength(s);
+  }, [value]);
+
+  const strengthLabels = ['Muy débil', 'Débil', 'Media', 'Fuerte'];
+  const strengthColors = ['var(--b-rojo)', 'var(--b-naranja)', 'var(--b-amarillo)', 'var(--b-verde)'];
+
+  return (
+    <Field>
+      <Label htmlFor={idCampo(campo)} required={obligatorio}>
+        {label}
+      </Label>
+      <div className={styles.passwordWrapper}>
+        <Input
+          id={idCampo(campo)}
+          type={show ? 'text' : 'password'}
+          size="compact"
+          inputMode="text"
+          autoComplete="new-password"
+          value={value}
+          placeholder={placeholder}
+          invalid={error !== undefined}
+          aria-required={obligatorio || undefined}
+          aria-describedby={describedBy(campo, undefined, error)}
+          onChange={(event) => onChange(event.target.value)}
+        />
+        <div className={styles.passwordToggle}>
+          <Button
+            variant="pill"
+            type="button"
+            aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            onClick={() => setShow(!show)}
+          >
+            <span aria-hidden="true">{show ? '🙈' : '👁️'}</span>
+          </Button>
+        </div>
+      </div>
+      <div className={styles.strengthContainer} role="progressbar" aria-valuenow={strength} aria-valuemin={0} aria-valuemax={3} aria-label="Fortaleza de contraseña">
+        <div
+          className={styles.strengthBar}
+          style={{
+            width: `${(strength / 3) * 100}%`,
+            backgroundColor: strengthColors[strength] ?? 'transparent',
+          }}
+        />
+      </div>
+      <p className={styles.strengthLabel} aria-hidden="true">
+        {strength > 0 ? strengthLabels[strength - 1] : ''}
+      </p>
+      <p className={styles.passwordHelp}>Mínimo 8 caracteres, al menos una letra y un número.</p>
       {error === undefined ? null : <FieldError id={idError(campo)}>{error}</FieldError>}
     </Field>
   );

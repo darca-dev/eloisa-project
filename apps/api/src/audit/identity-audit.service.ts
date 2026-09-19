@@ -197,4 +197,34 @@ export class IdentityAuditService {
       select: { id: true },
     });
   }
+
+  /**
+   * Spec 027: Revocación de sesión de inscripción al migrar a sesión humana persistente.
+   *
+   * Se escribe con actor HUMAN_ACCOUNT (la cuenta que inicia sesión) porque es la
+   * acción de esa persona la que invalida la sesión temporal de inscripción.
+   */
+  public async recordEnrollmentSessionRevokedWithin(
+    tx: PrismaTransaction,
+    context: IdentityAuditContext,
+    input: { readonly enrollmentSessionId: string; readonly patientId: string },
+    occurredAt: Date,
+  ): Promise<void> {
+    await tx.auditEvent.create({
+      data: {
+        tenantId: context.tenantId,
+        eventType: 'ENROLLMENT_SESSION_REVOKED',
+        actorType: 'HUMAN_ACCOUNT',
+        actorUserId: null,
+        actorRole: null,
+        resourceType: 'EnrollmentSession',
+        resourceId: input.enrollmentSessionId,
+        outcome: 'SUCCESS',
+        endpoint: context.endpoint,
+        correlationId: context.correlationId,
+        occurredAt,
+      },
+      select: { id: true },
+    });
+  }
 }

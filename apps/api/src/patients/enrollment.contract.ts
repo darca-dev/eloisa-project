@@ -119,6 +119,8 @@ export interface PatientEnrollmentRequest {
   readonly phone: string;
   /** Correo opcional. */
   readonly email?: string;
+  /** Contraseña opcional para acceso persistente (Spec 027). Mín 8 chars, 1 letra + 1 número. */
+  readonly password?: string;
   /** Código del catálogo de EPS controlado por el servidor. */
   readonly epsCode: string;
   /**
