@@ -84,6 +84,7 @@ export function HubAccessPortal(): ReactNode {
                 <div className={styles.cardMeta}>
                   <span className={styles.cardTag}>Gobierno & Territorio</span>
                   <h3 className={styles.cardTitle}>Alcaldía de Soacha</h3>
+                  <span className={styles.demoBadge}>Datos de demostración</span>
                 </div>
               </div>
 
@@ -120,6 +121,7 @@ export function HubAccessPortal(): ReactNode {
                 <div className={styles.cardMeta}>
                   <span className={styles.cardTag}>Dirección Médica & ESE</span>
                   <h3 className={styles.cardTitle}>Hospital (ESE)</h3>
+                  <span className={styles.demoBadge}>Datos de demostración</span>
                 </div>
               </div>
 
@@ -169,6 +171,7 @@ export function HubAccessPortal(): ReactNode {
                 <div className={styles.cardMeta}>
                   <span className={styles.cardTag}>Atención Domiciliaria en Terreno</span>
                   <h3 className={styles.cardTitle}>Personal de Terreno / Visitadores</h3>
+                  <span className={styles.demoBadge}>Datos de demostración</span>
                 </div>
               </div>
 
@@ -209,6 +212,7 @@ export function HubAccessPortal(): ReactNode {
                 <div className={styles.cardMeta}>
                   <span className={styles.cardTag}>Especialistas & Telemedicina</span>
                   <h3 className={styles.cardTitle}>Médicos Clínicos & Teleconsulta</h3>
+                  <span className={styles.demoBadge}>Datos de demostración</span>
                 </div>
               </div>
 

@@ -298,6 +298,19 @@
   line-height: 1.2;
 }
 
+/* Badge "Datos de demostración" para módulos institucionales */
+.demoBadge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris-oscuro);
+  background: var(--b-gris-claro);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 .cardDescription {
   font-size: 15px;
   line-height: 1.5;
