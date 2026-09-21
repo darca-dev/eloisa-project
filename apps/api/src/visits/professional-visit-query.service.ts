@@ -1,10 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../database/prisma.service';
-import { type HomeVisitStatus } from '../generated/prisma/client';
+import { type HomeVisitStatus, type Prisma } from '../generated/prisma/client';
 import { type HumanPrincipal } from '../identity-access/human-principal';
-
-import { IdentityAccessService, asignacionAutorizada } from '../identity-access/identity-access.service';
 
 import {
   HOME_VISIT_TRANSITION_ERROR_CODES,
@@ -68,10 +66,7 @@ export interface ProfessionalHomeVisitView {
 
 @Injectable()
 export class ProfessionalVisitQueryService {
-  constructor(
-    @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(IdentityAccessService) private readonly identityAccess: IdentityAccessService,
-  ) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   public async findAuthorized(
     principal: HumanPrincipal,
@@ -90,7 +85,7 @@ export class ProfessionalVisitQueryService {
         where: {
           id: visitId,
           tenantId,
-          careAssignment: this.identityAccess.asignacionAutorizada(principal, now),
+          careAssignment: asignacionAutorizada(principal, now),
         },
         select: {
           id: true,
@@ -132,7 +127,34 @@ export class ProfessionalVisitQueryService {
         updatedAt: visita.updatedAt.toISOString(),
       };
     });
+  }
 }
+
+function asignacionAutorizada(
+  principal: HumanPrincipal,
+  now: Date,
+): Prisma.CareAssignmentWhereInput {
+  const today = fechaSinHora(now);
+
+  return {
+    tenantId: principal.tenantId,
+    status: 'ACTIVE',
+    startsAt: { lte: now },
+    OR: [{ endsAt: null }, { endsAt: { gt: now } }],
+    professional: {
+      tenantId: principal.tenantId,
+      personId: principal.personId,
+      status: 'ACTIVE',
+      affiliations: {
+        some: {
+          tenantId: principal.tenantId,
+          status: 'ACTIVE',
+          startsOn: { lte: today },
+          OR: [{ endsOn: null }, { endsOn: { gte: today } }],
+        },
+      },
+    },
+  };
 }
 
 /**

@@ -1,5 +1,12 @@
 # Especificación 028 — Completar Identidad Humana y Relaciones (Spec 011 Gaps)
 
+## Estado de aprobación / Approval status
+
+- Estado / Status: `Aprobado`
+- Aprobado por / Approved by: Product Owner
+- Fecha de aprobación / Approval date: 2026-09-19
+- Evidencia de aprobación / Approval evidence: consentimiento específico registrado el 2026-09-19 en `spec/.sdd/user-consent.log` para `028-identidad-humana-completar`.
+
 **Número**: 028
 **Slug**: `identidad-humana-completar`
 **Estado**: `Aprobado` (consentido 2026-09-19)

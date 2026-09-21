@@ -2,7 +2,7 @@
 
 **Spec**: `028-identidad-humana-completar`
 **Fecha**: 2026-09-19
-**Estado**: `Borrador` (pendiente aprobación PO)
+**Estado**: `Aprobado` (consentimiento registrado el 2026-09-19)
 
 ---
 

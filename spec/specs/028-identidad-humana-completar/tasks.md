@@ -5,6 +5,14 @@
 
 ---
 
+## Checklist de ejecución
+
+- [ ] Completar y verificar el Bloque 1 — garantías de base de datos y expiración.
+- [ ] Completar y verificar el Bloque 2 — servicio compartido de identidad para visitas.
+- [ ] Completar y verificar el Bloque 3 — autenticación y rate limit.
+- [ ] Completar y verificar el Bloque 4 — limpieza, provisioning y pruebas no omitibles.
+- [ ] Completar y verificar el Bloque 5 — integración E2E y evidencia.
+
 ## Formato
 Cada tarea: `ID | Descripción | Archivos | DoD | Test | Dependencia`
 

@@ -82,6 +82,7 @@ Paciente tomó **021** para que las tres convivan cuando Visitador se integre.
 | 026 | experiencia-visual-responsiva-demo | Approved / Aprobada · pendiente de consentimiento SDD | High / Alta | Product Owner | 2026-09-17 |
 | 027 | portal-central-cuenta-paciente-persistente | Approved / Aprobada | High / Alta | Product Owner | 2026-09-18 |
 | 028 | identidad-humana-completar | Approved / Aprobada | High / Alta | Product Owner | 2026-09-19 |
+| 029 | recuperacion-build-docker | Approved / Aprobada · consentida | Critical / Crítica | Product Owner | 2026-09-21 |
 
 ## Auditoría de Codex
 

@@ -1,5 +1,12 @@
 # Especificación 027 — Portal Central + Cuenta Persistente de Paciente
 
+## Estado de aprobación / Approval status
+
+- Estado / Status: `Borrador`
+- Aprobado por / Approved by: No aplica; pendiente de Product Owner.
+- Fecha de aprobación / Approval date: No aplica.
+- Evidencia de aprobación / Approval evidence: no existe; el encabezado canónico de esta spec declara que sigue pendiente de aprobación.
+
 **Número**: 027
 **Slug**: `portal-central-cuenta-paciente-persistente`
 **Estado**: `Borrador` (pendiente de aprobación PO)

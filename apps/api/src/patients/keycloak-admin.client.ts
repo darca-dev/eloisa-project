@@ -158,18 +158,23 @@ export class KeycloakAdminClient {
   }
 
   private async getAccessToken(): Promise<string> {
+    const config = this.config;
+    if (config === undefined) {
+      throw new KeycloakProvisionError('La provisión de pacientes en Keycloak está deshabilitada.');
+    }
+
     const now = Date.now();
 
     if (this.cachedToken && this.cachedToken.expiresAt > now + 30_000) {
       return this.cachedToken.token;
     }
 
-    const url = `${this.config.adminUrl}/realms/${this.config.realm}/protocol/openid-connect/token`;
+    const url = `${config.adminUrl}/realms/${config.realm}/protocol/openid-connect/token`;
 
     const params = new URLSearchParams();
     params.append('grant_type', 'client_credentials');
-    params.append('client_id', this.config.clientId);
-    params.append('client_secret', this.config.clientSecret);
+    params.append('client_id', config.clientId);
+    params.append('client_secret', config.clientSecret);
 
     const response = await fetch(url, {
       method: 'POST',
