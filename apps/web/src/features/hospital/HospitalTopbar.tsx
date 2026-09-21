@@ -132,6 +132,8 @@ export function HospitalTopbar({
   onCambiarSesion,
   onCerrarSesion,
   ocupado = false,
+  menuAbierto = false,
+  onToggleMenu,
 }: {
   readonly usuario: HospitalUser;
   readonly textoBuscador: string;
@@ -148,9 +150,25 @@ export function HospitalTopbar({
   readonly onCerrarSesion?: () => void;
   /** `true` mientras una operación de sesión está en curso. */
   readonly ocupado?: boolean;
+  /** Estado de apertura del menú lateral en pantallas móviles. */
+  readonly menuAbierto?: boolean;
+  /** Alterna la apertura del menú lateral en pantallas móviles. */
+  readonly onToggleMenu?: () => void;
 }): ReactNode {
   return (
     <header className={styles.topbar}>
+      {onToggleMenu !== undefined ? (
+        <button
+          type="button"
+          className={styles.menuHamburguesa}
+          onClick={onToggleMenu}
+          aria-label={menuAbierto ? 'Cerrar menú de navegación' : 'Abrir menú de navegación'}
+          aria-expanded={menuAbierto}
+          aria-controls="hospital-sidebar"
+        >
+          <HospitalIcon name={menuAbierto ? 'cerrar' : 'menu'} size={22} />
+        </button>
+      ) : null}
       <div className={styles.search}>
         <HospitalIcon name="buscar" />
         <span className={styles.searchText}>{textoBuscador}</span>

@@ -40,6 +40,10 @@ ENV NODE_ENV=production \
 
 COPY --from=build --chown=node:node /repo/apps/web/.next/standalone ./
 COPY --from=build --chown=node:node /repo/apps/web/.next/static ./apps/web/.next/static
+# Next does not copy `public/` into the standalone output.  Without this
+# explicit copy, every local asset requested by the browser (brand and Eli
+# assets) resolves to 404, and `next/image` consequently returns 400.
+COPY --from=build --chown=node:node /repo/apps/web/public ./apps/web/public
 
 USER node
 EXPOSE 3000

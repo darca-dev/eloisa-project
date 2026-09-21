@@ -1,8 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../database/prisma.service';
-import { type HomeVisitStatus, type Prisma } from '../generated/prisma/client';
+import { type HomeVisitStatus } from '../generated/prisma/client';
 import { type HumanPrincipal } from '../identity-access/human-principal';
+
+import { IdentityAccessService, asignacionAutorizada } from '../identity-access/identity-access.service';
 
 import {
   HOME_VISIT_TRANSITION_ERROR_CODES,
@@ -66,7 +68,10 @@ export interface ProfessionalHomeVisitView {
 
 @Injectable()
 export class ProfessionalVisitQueryService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(IdentityAccessService) private readonly identityAccess: IdentityAccessService,
+  ) {}
 
   public async findAuthorized(
     principal: HumanPrincipal,
@@ -85,7 +90,7 @@ export class ProfessionalVisitQueryService {
         where: {
           id: visitId,
           tenantId,
-          careAssignment: asignacionAutorizada(principal, now),
+          careAssignment: this.identityAccess.asignacionAutorizada(principal, now),
         },
         select: {
           id: true,
@@ -127,58 +132,7 @@ export class ProfessionalVisitQueryService {
         updatedAt: visita.updatedAt.toISOString(),
       };
     });
-  }
 }
-
-/**
- * Condición de AUTORIZACIÓN sobre la asignación de cuidado de la visita.
- *
- * Se construye desde `principal.personId` y de ningún otro sitio. Exige, todo a
- * la vez:
- *
- *   1. `CareAssignment` `ACTIVE` y VIGENTE en el instante de la consulta;
- *   2. que su `ProfessionalProfile` sea el de ESA persona y esté `ACTIVE`;
- *   3. que ese perfil tenga al menos una `ProfessionalAffiliation` `ACTIVE` y
- *      vigente: un perfil sin vínculo vigente no es profesional operativo.
- *
- * Ninguna de las tres es opcional y ninguna se comprueba por separado: van
- * juntas en la MISMA condición SQL.
- *
- * El `tenantId` se repite en los tres niveles ADEMÁS de Row Level Security y de
- * las claves foráneas compuestas de MP01. Es redundante a propósito.
- *
- * Las comprobaciones de FIN de vigencia no son hoy la barrera que actúa
- * —HOSPITAL-CORE-02 impone terminar el vínculo en lugar de dejarlo vencido—,
- * pero se escriben igualmente para que sigan actuando si esa forma cambiara.
- * Las de INICIO sí gobiernan hoy: una asignación o una afiliación activas cuya
- * vigencia todavía no ha empezado quedan rechazadas.
- */
-function asignacionAutorizada(
-  principal: HumanPrincipal,
-  now: Date,
-): Prisma.CareAssignmentWhereInput {
-  const hoy = fechaSinHora(now);
-
-  return {
-    tenantId: principal.tenantId,
-    status: 'ACTIVE',
-    startsAt: { lte: now },
-    OR: [{ endsAt: null }, { endsAt: { gt: now } }],
-    professional: {
-      tenantId: principal.tenantId,
-      // La persona AUTENTICADA, nunca un profesional recibido desde fuera.
-      personId: principal.personId,
-      status: 'ACTIVE',
-      affiliations: {
-        some: {
-          tenantId: principal.tenantId,
-          status: 'ACTIVE',
-          startsOn: { lte: hoy },
-          OR: [{ endsOn: null }, { endsOn: { gte: hoy } }],
-        },
-      },
-    },
-  };
 }
 
 /**

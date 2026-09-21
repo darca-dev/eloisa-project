@@ -44,17 +44,13 @@ interface KeycloakTokenResponse {
 @Injectable()
 export class KeycloakAdminClient {
   private readonly logger = new Logger(KeycloakAdminClient.name);
-  private readonly config: KeycloakPatientConfig;
+  private readonly config: KeycloakPatientConfig | undefined;
   private cachedToken: { token: string; expiresAt: number } | null = null;
 
   constructor(
     @Inject(API_ENVIRONMENT) environment: ApiEnvironmentProvider,
   ) {
-    const keycloakConfig = environment.keycloakPatient;
-    if (!keycloakConfig) {
-      throw new Error('Keycloak patient config not available - feature disabled');
-    }
-    this.config = keycloakConfig;
+    this.config = environment.keycloakPatient;
   }
 
   /**
@@ -62,6 +58,10 @@ export class KeycloakAdminClient {
    * Devuelve el `id` (subject) del usuario creado.
    */
   async createUser(dto: CreateKeycloakUserDto): Promise<string> {
+    if (this.config === undefined) {
+      throw new KeycloakProvisionError('La provisión de pacientes en Keycloak está deshabilitada.');
+    }
+
     const token = await this.getAccessToken();
 
     const url = `${this.config.adminUrl}/admin/realms/${this.config.realm}/users`;

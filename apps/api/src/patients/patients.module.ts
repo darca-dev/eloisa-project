@@ -6,6 +6,7 @@ import { EnrollmentSessionModule } from '../enrollment-sessions/enrollment-sessi
 import { TerritoryModule } from '../territory/territory.module';
 
 import { EnrollmentRateLimitGuard } from './enrollment-rate-limit.guard';
+import { KeycloakAdminClient } from './keycloak-admin.client';
 import { PatientEnrollmentController } from './patient-enrollment.controller';
 import { PatientEnrollmentService } from './patient-enrollment.service';
 
@@ -19,6 +20,6 @@ import { PatientEnrollmentService } from './patient-enrollment.service';
 @Module({
   imports: [TerritoryModule, ConsentModule, EnrollmentSessionModule, AuditModule],
   controllers: [PatientEnrollmentController],
-  providers: [PatientEnrollmentService, EnrollmentRateLimitGuard],
+  providers: [PatientEnrollmentService, EnrollmentRateLimitGuard, KeycloakAdminClient],
 })
 export class PatientsModule {}

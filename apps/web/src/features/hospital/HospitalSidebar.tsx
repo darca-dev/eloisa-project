@@ -166,6 +166,8 @@ export function HospitalSidebar({
   itemActivoId,
   idsNavegables = [],
   onSeleccionar,
+  menuAbierto = false,
+  onCerrarMenu,
 }: {
   readonly institucion: HospitalInstitution;
   readonly etiquetaPlataforma: string;
@@ -174,13 +176,35 @@ export function HospitalSidebar({
   /** Identificadores cuyas vistas existen; el resto queda inerte. */
   readonly idsNavegables?: readonly string[];
   readonly onSeleccionar?: (id: string) => void;
+  /** Estado de apertura del menú lateral en pantallas móviles. */
+  readonly menuAbierto?: boolean;
+  /** Callback para cerrar el menú lateral en pantallas móviles. */
+  readonly onCerrarMenu?: () => void;
 }): ReactNode {
+  const sidebarClase = `${styles.sidebar} ${menuAbierto ? styles.sidebarAbierto : styles.sidebarCerrado}`;
+
   return (
-    <aside className={styles.sidebar} aria-label={`Panel de ${institucion.nombre}`}>
-      <HospitalInstitutionIdentity
-        institucion={institucion}
-        etiquetaPlataforma={etiquetaPlataforma}
-      />
+    <aside
+      id="hospital-sidebar"
+      className={sidebarClase}
+      aria-label={`Panel de ${institucion.nombre}`}
+    >
+      <div className={styles.sidebarHeaderMovil}>
+        <HospitalInstitutionIdentity
+          institucion={institucion}
+          etiquetaPlataforma={etiquetaPlataforma}
+        />
+        {onCerrarMenu !== undefined ? (
+          <button
+            type="button"
+            className={styles.sidebarBotonCerrar}
+            onClick={onCerrarMenu}
+            aria-label="Cerrar menú de navegación"
+          >
+            <HospitalIcon name="cerrar" size={20} />
+          </button>
+        ) : null}
+      </div>
       <nav className={styles.nav} aria-label="Secciones de la experiencia Hospital">
         {navegacion.map((item) => (
           <Fragment key={item.id}>
@@ -226,13 +250,31 @@ export function HospitalSidebar({
  */
 export function HospitalSidebarNeutral({
   etiquetaPlataforma,
+  menuAbierto = false,
+  onCerrarMenu,
 }: {
   readonly etiquetaPlataforma: string;
+  readonly menuAbierto?: boolean;
+  readonly onCerrarMenu?: () => void;
 }): ReactNode {
+  const sidebarClase = `${styles.sidebar} ${menuAbierto ? styles.sidebarAbierto : styles.sidebarCerrado}`;
+
   return (
-    <aside className={styles.sidebar} aria-label="Panel institucional">
-      <div className={styles.identity}>
-        <HospitalPlatformBrand etiquetaPlataforma={etiquetaPlataforma} />
+    <aside id="hospital-sidebar" className={sidebarClase} aria-label="Panel institucional">
+      <div className={styles.sidebarHeaderMovil}>
+        <div className={styles.identity}>
+          <HospitalPlatformBrand etiquetaPlataforma={etiquetaPlataforma} />
+        </div>
+        {onCerrarMenu !== undefined ? (
+          <button
+            type="button"
+            className={styles.sidebarBotonCerrar}
+            onClick={onCerrarMenu}
+            aria-label="Cerrar menú de navegación"
+          >
+            <HospitalIcon name="cerrar" size={20} />
+          </button>
+        ) : null}
       </div>
       <nav className={styles.nav} aria-label="Secciones de la experiencia Hospital">
         <p className="merdn-sr-only">

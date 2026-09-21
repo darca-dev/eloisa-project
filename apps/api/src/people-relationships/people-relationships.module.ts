@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { AuditModule } from '../audit/audit.module';
 import { SameOriginGuard } from '../human-auth/same-origin.guard';
@@ -8,6 +9,7 @@ import { InstitutionalAuthModule } from '../institutional-auth/institutional-aut
 import { CaregiverRelationshipController } from './caregiver-relationship.controller';
 import { CaregiverRelationshipPolicy } from './caregiver-relationship.policy';
 import { CaregiverRelationshipService } from './caregiver-relationship.service';
+import { ExpireRelationshipsJob } from './expire-relationships.job';
 
 /**
  * Relación Paciente–Cuidador (IDENTITY-RELATIONSHIPS-CORE-01 §6, §7.2, §8.2).
@@ -31,13 +33,14 @@ import { CaregiverRelationshipService } from './caregiver-relationship.service';
  * entre módulos.
  */
 @Module({
-  imports: [AuditModule, InstitutionalAuthModule],
+  imports: [AuditModule, InstitutionalAuthModule, ScheduleModule.forRoot()],
   controllers: [CaregiverRelationshipController],
   providers: [
     CaregiverRelationshipService,
     CaregiverRelationshipPolicy,
     CaregiverRelationshipManagerGuard,
     SameOriginGuard,
+    ExpireRelationshipsJob,
   ],
   exports: [CaregiverRelationshipPolicy],
 })

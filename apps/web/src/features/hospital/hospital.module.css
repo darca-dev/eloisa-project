@@ -256,43 +256,152 @@
 /* --------------------------------- Responsive ----------------------------- */
 
 /*
- * Adaptación estructural mínima (FR-06.4): cuando el ancho ya no permite la
- * composición de escritorio, el sidebar se apila sobre el contenido y el menú
- * fluye en filas. No se elimina ningún elemento, no se introduce drawer, menú
- * hamburguesa ni interacción ausente del prototipo.
+ * Sistema de menú hamburguesa + drawer lateral (Spec 026, FR-06.4).
+ *
+ * En escritorio (> 900px) el sidebar permanece idéntico: fijo a la izquierda,
+ * 236px. El botón hamburguesa y el backdrop están ocultos.
+ *
+ * En móvil y tableta (≤ 900px) el sidebar pasa a ser un drawer off-canvas:
+ * - Oculto por defecto (translateX(-100%)).
+ * - Visible cuando `.sidebarAbierto` está activo (translateX(0)).
+ * - Acompañado por un backdrop semi-transparente que cierra al tocar fuera.
+ * - Botón hamburguesa visible en la topbar.
+ * - Se respeta prefers-reduced-motion.
  */
+
+/* --- Botón hamburguesa (solo móvil) --- */
+
+.menuHamburguesa {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: none;
+  border-radius: var(--b-radio-boton);
+  color: var(--b-tinta);
+  cursor: pointer;
+  padding: 0;
+}
+
+.menuHamburguesa:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+/* --- Header del sidebar en móvil (identidad + botón cerrar) --- */
+
+.sidebarHeaderMovil {
+  display: contents;
+}
+
+/* --- Botón cerrar dentro del drawer (solo móvil) --- */
+
+.sidebarBotonCerrar {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  background: transparent;
+  border: 1.5px solid var(--h-azul-suave);
+  border-radius: var(--b-radio-boton);
+  color: var(--b-blanco);
+  cursor: pointer;
+  padding: 0;
+}
+
+.sidebarBotonCerrar:focus-visible {
+  outline: 3px solid var(--b-blanco);
+  outline-offset: 2px;
+}
+
+/* --- Backdrop / overlay --- */
+
+.sidebarBackdrop {
+  display: none;
+}
+
 @media (max-width: 900px) {
+  /* El shell ya no necesita flex-direction: column porque el sidebar flota */
   .shell {
-    flex-direction: column;
+    /* posición relativa para que el backdrop se ubique correctamente */
+    position: relative;
   }
 
+  /* Botón hamburguesa visible en móvil */
+  .menuHamburguesa {
+    display: flex;
+  }
+
+  /* Botón cerrar visible dentro del drawer */
+  .sidebarBotonCerrar {
+    display: flex;
+  }
+
+  /* El header del sidebar en móvil muestra identidad + botón de cierre en fila */
+  .sidebarHeaderMovil {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  /* Backdrop: cubre toda la pantalla detrás del drawer */
+  .sidebarBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 999;
+  }
+
+  /* Sidebar como Drawer off-canvas */
   .sidebar {
-    flex: 0 0 auto;
-    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    z-index: 1000;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    flex: none;
   }
 
-  .nav {
-    flex-direction: row;
-    flex-wrap: wrap;
+  /* Drawer abierto */
+  .sidebarAbierto {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
   }
 
-  .navItem {
-    flex: 0 0 auto;
-  }
-
-  .navSeparator {
-    width: 100%;
-    margin: 8px 4px 0;
+  /* Drawer cerrado (mismo estado que el base) */
+  .sidebarCerrado {
+    transform: translateX(-100%);
   }
 
   .topbar {
-    padding: 10px 16px;
+    padding: 10px 12px;
+    gap: 8px;
   }
 
   .content {
     padding: 24px 16px 60px;
   }
 }
+
+/* Respetar preferencia de no animación */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none;
+  }
+}
+
 
 /* ------------------- Dashboard: encabezado y KPIs (TASK-003H-02) ----------- */
 

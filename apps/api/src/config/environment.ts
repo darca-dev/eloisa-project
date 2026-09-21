@@ -117,8 +117,8 @@ export interface ApiEnvironment {
   /** Orígenes web autorizados a enviar credenciales a la API. */
   readonly webOrigins: readonly string[];
   readonly enrollmentRateLimit: RateLimitConfig;
-  /** Configuración de Keycloak para pacientes (Spec 027). Opcional: undefined si las vars no están definidas. */
-  readonly keycloakPatient: KeycloakPatientConfig | undefined;
+  /** Configuración de Keycloak para pacientes (Spec 027). Opcional: undefined si la feature está deshabilitada. */
+  readonly keycloakPatient?: KeycloakPatientConfig;
 }
 
 /** Error de validación de entorno. Nunca contiene valores de variables. */

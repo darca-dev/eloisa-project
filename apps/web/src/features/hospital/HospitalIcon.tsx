@@ -41,7 +41,9 @@ export type HospitalIconName =
   | 'edificio'
   | 'caja'
   | 'acuerdo'
-  | 'enlace';
+  | 'enlace'
+  | 'menu'
+  | 'cerrar';
 
 /** Trazado compartido por la campana del menú y la de la topbar. */
 const CAMPANA: ReactNode = (
@@ -258,6 +260,19 @@ const PATHS: Record<HospitalIconName, ReactNode> = {
     <>
       <path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1" />
       <path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1" />
+    </>
+  ),
+  menu: (
+    <>
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <line x1="4" y1="18" x2="20" y2="18" />
+    </>
+  ),
+  cerrar: (
+    <>
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
     </>
   ),
 };

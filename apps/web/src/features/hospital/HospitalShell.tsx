@@ -334,9 +334,33 @@ function HospitalMarcoNeutral({
   readonly etiquetaPlataforma: string;
   readonly children: ReactNode;
 }): ReactNode {
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
+
+  useEffect(() => {
+    if (!menuMovilAbierto) return undefined;
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setMenuMovilAbierto(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return (): void => {
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [menuMovilAbierto]);
+
   return (
     <div className={styles.shell}>
-      <HospitalSidebarNeutral etiquetaPlataforma={etiquetaPlataforma} />
+      {menuMovilAbierto ? (
+        <div
+          className={styles.sidebarBackdrop}
+          aria-hidden="true"
+          onClick={() => { setMenuMovilAbierto(false); }}
+        />
+      ) : null}
+      <HospitalSidebarNeutral
+        etiquetaPlataforma={etiquetaPlataforma}
+        menuAbierto={menuMovilAbierto}
+        onCerrarMenu={() => { setMenuMovilAbierto(false); }}
+      />
       <div className={styles.main}>
         {/*
          * `<main>` SIN marcador de contenido: no hay módulo montado y
@@ -452,7 +476,21 @@ export function HospitalShell({
   const [aviso, setAviso] = useState<string | null>(null);
   /** `true` mientras una operación de sesión está en curso. */
   const [ocupado, setOcupado] = useState(false);
+  /** Estado del menú lateral en pantallas móviles. */
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
   const { vista, intencion } = navegacion;
+
+  /* Cerrar el menú al presionar Escape. */
+  useEffect(() => {
+    if (!menuMovilAbierto) return undefined;
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setMenuMovilAbierto(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return (): void => {
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [menuMovilAbierto]);
 
   /*
    * Consulta del contexto de sesión.
@@ -669,15 +707,26 @@ export function HospitalShell({
 
   return (
     <div className={styles.shell}>
+      {menuMovilAbierto ? (
+        <div
+          className={styles.sidebarBackdrop}
+          aria-hidden="true"
+          onClick={() => { setMenuMovilAbierto(false); }}
+        />
+      ) : null}
       <HospitalSidebar
         institucion={institucion}
         etiquetaPlataforma={etiquetaPlataforma}
         navegacion={config.navegacion}
         itemActivoId={HOSPITAL_ITEM_ACTIVO_POR_VISTA[vista]}
         idsNavegables={HOSPITAL_ITEMS_NAVEGABLES}
+        menuAbierto={menuMovilAbierto}
+        onCerrarMenu={() => { setMenuMovilAbierto(false); }}
         onSeleccionar={(id) => {
           /* El sidebar navega siempre sin intención, así que la limpia. */
           navegar(destinoDeItem(id) ?? id);
+          /* Al navegar en móvil se cierra el menú automáticamente. */
+          setMenuMovilAbierto(false);
         }}
       />
       <div className={styles.main}>
@@ -686,6 +735,8 @@ export function HospitalShell({
           textoBuscador={config.textoBuscador}
           sesion={sesion}
           ocupado={ocupado}
+          menuAbierto={menuMovilAbierto}
+          onToggleMenu={() => { setMenuMovilAbierto((prev) => !prev); }}
           onCambiarSesion={() => {
             void terminar('cambiar');
           }}
