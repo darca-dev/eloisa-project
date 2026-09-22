@@ -101,3 +101,4 @@ spec, no en `reviews/`, que está congelado. El recuento de arriba se refiere a
 auditorías registradas en `reviews/` y sigue siendo exacto para MP01 y para las
 otras nueve specs. La spec 018 nació de ese veredicto y todavía no tiene código
 que auditar.
+| 030 | hospital-demo-api-local | Approved / Aprobada · pendiente de consentimiento SDD | High / Alta | Product Owner | 2026-09-21 |
