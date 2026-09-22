@@ -531,9 +531,10 @@ describe('T-H5 — Listado servido', () => {
     }
   });
 
-  it('mantiene una fila por persona, sin tarjetas', () => {
+  it('mantiene una fila por persona y hace explícito el acceso a su ficha', () => {
     expect(HTML).not.toContain('<article');
-    expect(apariciones(HTML, / la ficha de /gu)).toBe(LISTADO.items.length);
+    expect(apariciones(HTML, /Abrir ficha/gu)).toBe(LISTADO.items.length);
+    expect(apariciones(HTML, / del paciente /gu)).toBe(LISTADO.items.length);
   });
 
   it('muestra el documento tal como el servidor lo enmascara', () => {
