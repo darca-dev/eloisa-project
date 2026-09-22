@@ -81,38 +81,27 @@ export function HospitalInstitutionalProfile({
 }
 
 /**
- * Acciones sobre la PROPIA sesión: cambiarla y cerrarla.
+ * Acción sobre la PROPIA sesión: cerrarla.
  *
  * Solo aparecen cuando hay una sesión institucional vigente. No administran
  * cuenta, no editan identidad y no conceden nada: la única capacidad que
  * ofrecen es terminar la sesión que ya existe, que es lo único que pertenece a
  * la sesión misma y no a una superficie de datos.
  *
- * `Cambiar sesión` y `Cerrar sesión` revocan igual en el servidor; se
- * distinguen únicamente en lo que la interfaz hace después: la primera deja el
- * formulario de acceso listo para otra credencial y la segunda confirma la
- * salida. Ninguna de las dos deja identidad en pantalla.
+ * La interfaz ofrece una sola acción, «Cerrar sesión». Tras una revocación
+ * confirmada se muestra el acceso sin ninguna identidad en pantalla; desde ahí
+ * puede iniciarse otra sesión si corresponde.
  */
 export function HospitalSessionActions({
-  onCambiarSesion,
   onCerrarSesion,
   ocupado = false,
 }: {
-  readonly onCambiarSesion: () => void;
   readonly onCerrarSesion: () => void;
   /** `true` mientras una operación de sesión está en curso. */
   readonly ocupado?: boolean;
 }): ReactNode {
   return (
     <div className={styles.sesionAcciones}>
-      <button
-        type="button"
-        className={styles.sesionBoton}
-        onClick={onCambiarSesion}
-        disabled={ocupado}
-      >
-        Cambiar sesión
-      </button>
       <button
         type="button"
         className={styles.sesionBoton}
@@ -129,7 +118,6 @@ export function HospitalTopbar({
   usuario,
   textoBuscador,
   sesion = null,
-  onCambiarSesion,
   onCerrarSesion,
   ocupado = false,
   menuAbierto = false,
@@ -144,8 +132,6 @@ export function HospitalTopbar({
    * topbar conserva el perfil demostrativo de la configuración.
    */
   readonly sesion?: HospitalSesionDto | null;
-  /** Revoca la sesión y deja el acceso listo para otra credencial. */
-  readonly onCambiarSesion?: () => void;
   /** Revoca la sesión y confirma la salida. */
   readonly onCerrarSesion?: () => void;
   /** `true` mientras una operación de sesión está en curso. */
@@ -179,9 +165,8 @@ export function HospitalTopbar({
         ) : (
           <HospitalInstitutionalProfile sesion={sesion} />
         )}
-        {sesion === null || onCambiarSesion === undefined || onCerrarSesion === undefined ? null : (
+        {sesion === null || onCerrarSesion === undefined ? null : (
           <HospitalSessionActions
-            onCambiarSesion={onCambiarSesion}
             onCerrarSesion={onCerrarSesion}
             ocupado={ocupado}
           />

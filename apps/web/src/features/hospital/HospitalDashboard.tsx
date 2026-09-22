@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react';
+'use client';
+
+import { useEffect, useState, type ReactNode } from 'react';
 
 import styles from './hospital.module.css';
 import { HospitalDashboardAccesos } from './HospitalDashboardAccesos';
@@ -59,6 +61,36 @@ function sinNavegacion(): void {
   /* Sin controlador el centro de control solo se lee; ningún control actúa. */
 }
 
+/**
+ * Fecha y hora local para el encabezado operativo.
+ *
+ * Los indicadores que rodean el encabezado siguen siendo datos demostrativos,
+ * pero la fecha visible debe representar el momento en que la persona abre el
+ * panel. Se calcula en el navegador para respetar su zona horaria, no la del
+ * servidor ni la de la compilación.
+ */
+export function formatearFechaOperativaActual(now: Date): string {
+  const partes = new Intl.DateTimeFormat('es-CO', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).formatToParts(now);
+
+  const parte = (type: Intl.DateTimeFormatPartTypes): string =>
+    partes.find((item) => item.type === type)?.value ?? '';
+  const semana = parte('weekday');
+  const dia = parte('day');
+  const mes = parte('month');
+  const anio = parte('year');
+  const hora24 = now.getHours();
+  const hora12 = hora24 % 12 || 12;
+  const minutos = now.getMinutes().toString().padStart(2, '0');
+  const periodo = hora24 < 12 ? 'a. m.' : 'p. m.';
+
+  return `${semana.charAt(0).toUpperCase()}${semana.slice(1)} ${dia} de ${mes} de ${anio} · ${hora12}:${minutos} ${periodo}`;
+}
+
 export function HospitalDashboard({
   config = hospitalDashboardDemo,
   inicio = hospitalInicioDemo,
@@ -69,9 +101,27 @@ export function HospitalDashboard({
   /** Navegación local del shell; nunca crea rutas ni cambia la URL. */
   readonly onNavegar?: (destino: HospitalDestino) => void;
 }): ReactNode {
+  const [fechaActual, setFechaActual] = useState<string | null>(null);
+
+  useEffect(() => {
+    const actualizar = (): void => {
+      setFechaActual(formatearFechaOperativaActual(new Date()));
+    };
+
+    actualizar();
+    const intervalo = window.setInterval(actualizar, 60_000);
+
+    return (): void => { window.clearInterval(intervalo); };
+  }, []);
+
+  const encabezado =
+    fechaActual === null
+      ? { ...config.encabezado, fecha: 'Actualizando fecha y hora…' }
+      : { ...config.encabezado, fecha: fechaActual };
+
   return (
     <section className={styles.dashboard} aria-labelledby={TITULO_ID}>
-      <HospitalDashboardHeader encabezado={config.encabezado} tituloId={TITULO_ID} />
+      <HospitalDashboardHeader encabezado={encabezado} tituloId={TITULO_ID} />
 
       <section className={styles.kpiSeccion} aria-labelledby={SECCION_ID.kpis}>
         <h2 className="merdn-sr-only" id={SECCION_ID.kpis}>

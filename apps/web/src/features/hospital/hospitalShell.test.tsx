@@ -624,33 +624,32 @@ describe('T-H12 — Sin sesión resuelta se muestra el acceso, no la demostraci�
   });
 });
 
-describe('T-H13 — Acciones sobre la propia sesión', () => {
-  it('con sesión vigente la topbar ofrece cambiar y cerrar sesión', () => {
+describe('T-H13 — Acción sobre la propia sesión', () => {
+  it('con sesión vigente la topbar ofrece solo cerrar sesión', () => {
     const envolvente = envolventeDe(shellConSesion());
 
-    expect(envolvente).toContain('Cambiar sesión');
     expect(envolvente).toContain('Cerrar sesión');
+    expect(envolvente).not.toContain('Cambiar sesión');
     expect(envolvente).toContain('data-hospital-sesion="institucional"');
   });
 
-  it('las dos acciones son botones reales, sin enlaces', () => {
+  it('la acción es un botón real, sin enlace', () => {
     const envolvente = envolventeDe(shellConSesion());
     const acciones = /<div class="[^"]*_sesionAcciones_[^"]*">(?<contenido>[\s\S]*?)<\/div>/u
       .exec(envolvente)
       ?.groups?.contenido ?? '';
 
-    expect(acciones.match(/<button[^>]*type="button"/gu) ?? []).toHaveLength(2);
+    expect(acciones.match(/<button[^>]*type="button"/gu) ?? []).toHaveLength(1);
     expect(envolvente).not.toContain('href');
   });
 
-  it('mientras la sesión no se ha resuelto no se ofrece ninguna de las dos', () => {
+  it('mientras la sesión no se ha resuelto no se ofrece cerrar sesión', () => {
     /*
      * Es el render de servidor y el primer render del cliente: ofrecer «Cerrar
      * sesión» ahí sugeriría una sesión que nadie ha confirmado todavía.
      */
     const sinResolver = shellComprobando();
 
-    expect(sinResolver).not.toContain('Cambiar sesión');
     expect(sinResolver).not.toContain('Cerrar sesión');
   });
 
@@ -845,8 +844,8 @@ describe('H-FID-B — Marca Eloisa y logo institucional', () => {
   });
 });
 
-describe('H-FID-B — Topbar compacto y acciones de sesión intactas', () => {
-  it('conserva buscador, perfil institucional y las dos acciones de sesión', () => {
+describe('H-FID-B — Topbar compacto y acción de sesión', () => {
+  it('conserva buscador, perfil institucional y cerrar sesión', () => {
     const envolvente = envolventeDe(shellConSesion());
 
     expect(envolvente).toContain('Buscar paciente, documento, profesional, cita, atención o municipio');
@@ -854,15 +853,14 @@ describe('H-FID-B — Topbar compacto y acciones de sesión intactas', () => {
     expect(envolvente).toContain('Acceso institucional');
     expect(envolvente).toContain('Consulta de pacientes');
     expect(envolvente).toContain('Sesión vigente hasta 22/08/2026 20:00 UTC');
-    expect(envolvente).toContain('Cambiar sesión');
     expect(envolvente).toContain('Cerrar sesión');
+    expect(envolvente).not.toContain('Cambiar sesión');
   });
 
-  it('las dos acciones siguen siendo botones y se deshabilitan mientras opera', () => {
+  it('cerrar sesión es un botón y se deshabilita mientras opera', () => {
     const acciones = (ocupado: boolean): string =>
       renderToStaticMarkup(
         <HospitalSessionActions
-          onCambiarSesion={() => undefined}
           onCerrarSesion={() => undefined}
           ocupado={ocupado}
         />,
@@ -871,11 +869,11 @@ describe('H-FID-B — Topbar compacto y acciones de sesión intactas', () => {
     const libre = acciones(false);
     const operando = acciones(true);
 
-    expect(libre.match(/<button[^>]*type="button"/gu) ?? []).toHaveLength(2);
-    expect(libre).toContain('Cambiar sesión');
+    expect(libre.match(/<button[^>]*type="button"/gu) ?? []).toHaveLength(1);
     expect(libre).toContain('Cerrar sesión');
+    expect(libre).not.toContain('Cambiar sesión');
     expect(libre).not.toContain('disabled');
-    expect(operando.match(/disabled/gu) ?? []).toHaveLength(2);
+    expect(operando.match(/disabled/gu) ?? []).toHaveLength(1);
   });
 
   it('el corazón de Eloisa acompaña a la marca también sin sesión', () => {

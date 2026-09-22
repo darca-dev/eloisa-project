@@ -116,7 +116,7 @@ import type {
  *   acceso integrado en el área principal y sin institución, persona, badge ni
  *   ningún otro dato demostrativo;
  * - sesión vigente: la identidad mostrada procede SIEMPRE de `current`, nunca
- *   del cuerpo de la apertura, y la topbar ofrece cambiar y cerrar sesión.
+ *   del cuerpo de la apertura, y la topbar ofrece cerrar sesión.
  *
  * Sobre la credencial: se escribe, se envía una sola vez y se borra del estado
  * en el mismo gesto que la envía. No se guarda en el navegador, no viaja por la
@@ -613,14 +613,12 @@ export function HospitalShell({
   /**
    * Cierra la sesión vigente.
    *
-   * `cambiar` y `cerrar` revocan igual: solo cambia el aviso posterior. Lo que
-   * NO cambia en ninguno de los dos es la regla: la sesión se retira de la
+   * La sesión se retira de la
    * interfaz ÚNICAMENTE cuando el servidor confirma que ya no existe —`204` o
    * `401`—. Ante cualquier otro desenlace se reconfirma el contexto y, si sigue
    * habiendo sesión o no puede saberse, se CONSERVA: esconder en pantalla una
    * sesión que el servidor mantiene abierta no la cierra, y dejar entrar con
-   * otra credencial encima de ella sería afirmar un cambio que no ocurrió. Por
-   * eso el cambio de sesión queda bloqueado hasta que la revocación se confirme.
+   * otra credencial encima de ella sería afirmar un cambio que no ocurrió.
    */
   const terminar = async (intencion: IntencionCierre): Promise<void> => {
     const red = fetchImpl ?? fetch;
@@ -737,9 +735,6 @@ export function HospitalShell({
           ocupado={ocupado}
           menuAbierto={menuMovilAbierto}
           onToggleMenu={() => { setMenuMovilAbierto((prev) => !prev); }}
-          onCambiarSesion={() => {
-            void terminar('cambiar');
-          }}
           onCerrarSesion={() => {
             void terminar('cerrar');
           }}
