@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 
 import { branding } from '@/config/branding';
+import { LiquidationsDemo } from '@/features/liquidations/LiquidationsDemo';
 import styles from './profesional.module.css';
 
 interface VisitaAsignada {
@@ -53,6 +54,7 @@ const VISITAS_INICIALES: VisitaAsignada[] = [
 
 export function ProfesionalPortal(): ReactNode {
   const [visitas, setVisitas] = useState<VisitaAsignada[]>(VISITAS_INICIALES);
+  const [seccionActiva, setSeccionActiva] = useState<'visitas' | 'liquidaciones'>('visitas');
   const [visitaSeleccionada, setVisitaSeleccionada] = useState<VisitaAsignada | null>(null);
   const [presion, setPresion] = useState('120/80');
   const [pulso, setPulso] = useState('72');
@@ -63,6 +65,15 @@ export function ProfesionalPortal(): ReactNode {
     setVisitaSeleccionada(v);
     setGuardadoExitoso(false);
     setObservacion('');
+  };
+
+  const handleAbrirLiquidaciones = (): void => {
+    setSeccionActiva('liquidaciones');
+    setVisitaSeleccionada(null);
+  };
+
+  const handleAbrirVisitas = (): void => {
+    setSeccionActiva('visitas');
   };
 
   const handleGuardarBitacora = (e: React.FormEvent): void => {
@@ -138,7 +149,12 @@ export function ProfesionalPortal(): ReactNode {
           </div>
 
           <div className={styles.tabNav}>
-            <button type="button" className={`${styles.tabButton} ${styles.tabButtonActive}`}>
+            <button
+              type="button"
+              className={`${styles.tabButton} ${seccionActiva === 'visitas' ? styles.tabButtonActive : ''}`}
+              aria-pressed={seccionActiva === 'visitas'}
+              onClick={handleAbrirVisitas}
+            >
               Visitas de Hoy (3)
             </button>
             <button type="button" className={styles.tabButton}>
@@ -147,10 +163,21 @@ export function ProfesionalPortal(): ReactNode {
             <button type="button" className={styles.tabButton}>
               Protocolos Clínicos
             </button>
+            <button
+              type="button"
+              className={`${styles.tabButton} ${seccionActiva === 'liquidaciones' ? styles.tabButtonActive : ''}`}
+              aria-pressed={seccionActiva === 'liquidaciones'}
+              onClick={handleAbrirLiquidaciones}
+            >
+              Mis pagos y liquidaciones
+            </button>
           </div>
-
-          {/* Listado de visitas asignadas */}
-          <div className={styles.visitsList}>
+          {seccionActiva === 'liquidaciones' ? (
+            <LiquidationsDemo role="visitador" />
+          ) : (
+            <>
+              {/* Listado de visitas asignadas */}
+              <div className={styles.visitsList}>
             {visitas.map((v) => {
               const iniciales = v.paciente
                 .split(' ')
@@ -197,12 +224,14 @@ export function ProfesionalPortal(): ReactNode {
                   </div>
                 </div>
               );
-            })}
-          </div>
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Panel de registro en la bitácora del paciente */}
-        {visitaSeleccionada && (
+        {seccionActiva === 'visitas' && visitaSeleccionada && (
           <div className={styles.bitacoraPanel}>
             <div className={styles.bitacoraHeader}>
               <div>

@@ -1,0 +1,222 @@
+.surface {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  color: var(--b-tinta);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--b-petroleo-texto);
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: var(--b-azul);
+  font-size: clamp(24px, 4vw, 32px);
+  line-height: 1.1;
+}
+
+.description {
+  max-width: 670px;
+  margin: 8px 0 0;
+  color: var(--b-gris);
+  font-weight: var(--b-peso-fuerte);
+  line-height: 1.5;
+}
+
+.demoBadge,
+.periodBadge,
+.status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+}
+
+.demoBadge {
+  padding: 8px 12px;
+  background: var(--b-celeste);
+  color: var(--b-petroleo-texto);
+  border: 1.5px solid var(--b-celeste-borde);
+  white-space: nowrap;
+}
+
+.notice {
+  margin: 0;
+  padding: 13px 15px;
+  border: 1.5px solid #f4cf7a;
+  border-radius: var(--b-radio-campo);
+  background: #fff8e7;
+  color: #7a4b08;
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  line-height: 1.5;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.summaryCard,
+.tableCard {
+  background: var(--b-blanco);
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-tarjeta);
+  box-shadow: var(--b-sombra-tarjeta);
+}
+
+.summaryCard {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 17px;
+  border-top: 4px solid var(--b-aguamarina);
+}
+
+.summaryLabel {
+  color: var(--b-gris);
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.summaryValue {
+  color: var(--b-petroleo-texto);
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.summaryDescription {
+  color: var(--b-gris);
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  line-height: 1.4;
+}
+
+.tableCard {
+  padding: 20px;
+}
+
+.tableHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.tableHeader h3 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.tableHeader p {
+  margin: 5px 0 0;
+  color: var(--b-gris);
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  line-height: 1.45;
+}
+
+.periodBadge {
+  padding: 7px 11px;
+  background: var(--b-panel);
+  color: var(--b-gris);
+  border: 1px solid var(--b-borde);
+}
+
+.tableScroll {
+  overflow-x: auto;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+}
+
+.tableScroll table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.tableScroll caption {
+  padding: 11px 13px;
+  color: var(--b-gris);
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  text-align: left;
+}
+
+.tableScroll th,
+.tableScroll td {
+  padding: 13px;
+  border-top: 1px solid var(--b-borde);
+  vertical-align: top;
+  font-size: 14px;
+}
+
+.tableScroll thead th {
+  border-top: 0;
+  background: var(--b-panel);
+  color: var(--b-gris);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.tableScroll tbody th {
+  color: var(--b-tinta);
+  font-weight: var(--b-peso-maximo);
+}
+
+.amount {
+  color: var(--b-petroleo-texto);
+  font-weight: var(--b-peso-maximo);
+  white-space: nowrap;
+}
+
+.status {
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.statusReview {
+  background: #fff1d6;
+  color: #8b4b06;
+}
+
+.statusApproved {
+  background: var(--b-celeste);
+  color: var(--b-petroleo-texto);
+}
+
+.statusPaid {
+  background: #e6f6ea;
+  color: #17683a;
+}
+
+@media (max-width: 600px) {
+  .tableCard {
+    padding: 15px;
+  }
+}
