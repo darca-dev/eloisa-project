@@ -15,6 +15,7 @@ import type { FinancialSeccionId } from './hospitalFinancialConfig';
 import { HOSPITAL_ETIQUETA_PLATAFORMA, hospitalShellDemo } from './hospitalConfig';
 import type { HospitalShellConfig } from './hospitalConfig';
 import { HospitalHomeVisits } from './HospitalHomeVisits';
+import { HospitalHomeVisitsDemo } from './HospitalHomeVisitsDemo';
 import {
   HOSPITAL_MENSAJE_APERTURA,
   HOSPITAL_MENSAJE_CREDENCIAL,
@@ -191,7 +192,7 @@ function HospitalContenido({
     case 'profesionales':
       return <HospitalProfessionals fetchImpl={modoDemoLocal ? hospitalDemoFetch : undefined} />;
     case 'visitas':
-      return <HospitalHomeVisits visita={visita} />;
+      return modoDemoLocal ? <HospitalHomeVisitsDemo /> : <HospitalHomeVisits visita={visita} />;
     case 'virtuales':
       return <HospitalVirtualConsultations />;
     case 'calificaciones':
