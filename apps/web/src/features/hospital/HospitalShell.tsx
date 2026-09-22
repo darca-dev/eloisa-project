@@ -7,6 +7,7 @@ import { HospitalAdministration } from './HospitalAdministration';
 import { HOSPITAL_ADMIN_PESTANA_INICIAL } from './hospitalAdministrationConfig';
 import type { HospitalAdminPestanaId } from './hospitalAdministrationConfig';
 import { HospitalAgenda } from './HospitalAgenda';
+import { HospitalAgendaDemo } from './HospitalAgendaDemo';
 import { HospitalAlerts } from './HospitalAlerts';
 import { HospitalDashboard } from './HospitalDashboard';
 import { hospitalDemoFetch } from './hospitalDemoLocal';
@@ -184,7 +185,7 @@ function HospitalContenido({
 }): ReactNode {
   switch (vista) {
     case 'agenda':
-      return <HospitalAgenda fetchImpl={modoDemoLocal ? hospitalDemoFetch : undefined} modoDemoLocal={modoDemoLocal} onVisitaMaterializada={onVisitaMaterializada} />;
+      return modoDemoLocal ? <HospitalAgendaDemo /> : <HospitalAgenda onVisitaMaterializada={onVisitaMaterializada} />;
     case 'pacientes':
       return <HospitalPatients fetchImpl={modoDemoLocal ? hospitalDemoFetch : undefined} />;
     case 'alarmas':

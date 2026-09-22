@@ -246,6 +246,129 @@
   align-items: flex-end;
 }
 
+/* ========================================================================== */
+/* Agenda canvas demo local                                                    */
+/* ========================================================================== */
+
+/* La fila conserva la huella visual de controles sin prometer una operación. */
+.demoLectura {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  background: var(--b-lienzo);
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.demoCalendario {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(46px, 1fr));
+  gap: 6px;
+  min-width: 392px;
+}
+
+.demoSemana {
+  padding-bottom: 4px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-gris);
+}
+
+.demoDia {
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 6px;
+  border: 1px solid var(--h-borde-topbar);
+  border-radius: 10px;
+  background: var(--b-lienzo);
+  color: var(--b-tinta);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.demoDiaHoy {
+  border: 2px solid var(--b-azul);
+  background: var(--b-celeste);
+}
+
+.demoDiaDestacado {
+  background: var(--b-celeste);
+}
+
+.demoDescripcion {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
+.demoEstados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.demoSubtitulo {
+  margin: 0;
+  font-size: 17px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-tinta);
+}
+
+.demoPerspectivas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.demoPerspectiva {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 15px;
+  border-radius: var(--b-radio-campo);
+  background: var(--b-lienzo);
+  flex-wrap: wrap;
+}
+
+.demoPerspectivaIcono {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--b-blanco);
+  color: var(--b-petroleo-texto);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.demoPerspectivaRol {
+  flex: 0 0 105px;
+  font-size: 13px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-petroleo-texto);
+}
+
+.demoPerspectivaTexto {
+  flex: 1 1 140px;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-gris);
+}
+
 /* Las tres acciones de la referencia viajan juntas al final de la fila. */
 .acciones {
   display: flex;

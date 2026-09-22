@@ -103,3 +103,4 @@ otras nueve specs. La spec 018 nació de ese veredicto y todavía no tiene códi
 que auditar.
 | 030 | hospital-demo-api-local | Approved / Aprobada · pendiente de consentimiento SDD | High / Alta | Product Owner | 2026-09-21 |
 | 031 | hospital-visits-demo-local | Approved / Aprobada · consentimiento SDD recibido | High / Alta | Product Owner | 2026-09-21 |
+| 032 | hospital-agenda-canvas-demo | Approved / Aprobada · consentimiento SDD recibido | High / Alta | Product Owner | 2026-09-22 |
