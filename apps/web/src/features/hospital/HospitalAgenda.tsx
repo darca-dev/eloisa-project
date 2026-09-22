@@ -496,6 +496,7 @@ export function HospitalAgenda({
   fechaInicial,
   escalaInicial = ESCALA_INICIAL,
   agendaInicial = null,
+  modoDemoLocal = false,
   onVisitaMaterializada,
 }: {
   readonly copy?: HospitalAgendaCopy;
@@ -526,6 +527,8 @@ export function HospitalAgenda({
    * fixture: es el mismo DTO que devuelve la API.
    */
   readonly agendaInicial?: HospitalAgendaVistaDto | null;
+  /** Impide mutaciones cuando la vista recibe datos ficticios locales. */
+  readonly modoDemoLocal?: boolean;
   /**
    * Aviso al shell de que una visita domiciliaria quedó materializada.
    *
@@ -646,6 +649,12 @@ export function HospitalAgenda({
    * cualquier otro: `enviando` es la guarda del doble submit.
    */
   function asignar(solicitud: HospitalSolicitudDto): void {
+    if (modoDemoLocal) {
+      setAviso('Modo demo local: los datos son ficticios y no se guardan cambios.');
+
+      return;
+    }
+
     if (enviando !== null) {
       return;
     }

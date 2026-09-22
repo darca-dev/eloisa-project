@@ -9,6 +9,7 @@ import type { HospitalAdminPestanaId } from './hospitalAdministrationConfig';
 import { HospitalAgenda } from './HospitalAgenda';
 import { HospitalAlerts } from './HospitalAlerts';
 import { HospitalDashboard } from './HospitalDashboard';
+import { hospitalDemoFetch } from './hospitalDemoLocal';
 import { HospitalFinancialManagement } from './HospitalFinancialManagement';
 import type { FinancialSeccionId } from './hospitalFinancialConfig';
 import { HOSPITAL_ETIQUETA_PLATAFORMA, hospitalShellDemo } from './hospitalConfig';
@@ -167,6 +168,7 @@ function HospitalContenido({
   onNavegar,
   onSeleccionarPestana,
   onVisitaMaterializada,
+  modoDemoLocal,
 }: {
   readonly vista: HospitalVistaId;
   readonly pestanaAdministracion: HospitalAdminPestanaId;
@@ -177,16 +179,17 @@ function HospitalContenido({
   readonly onNavegar: (destino: HospitalDestino) => void;
   readonly onSeleccionarPestana: (pestana: HospitalAdminPestanaId) => void;
   readonly onVisitaMaterializada: (visita: HospitalVisitaMaterializadaDto) => void;
+  readonly modoDemoLocal: boolean;
 }): ReactNode {
   switch (vista) {
     case 'agenda':
-      return <HospitalAgenda onVisitaMaterializada={onVisitaMaterializada} />;
+      return <HospitalAgenda fetchImpl={modoDemoLocal ? hospitalDemoFetch : undefined} modoDemoLocal={modoDemoLocal} onVisitaMaterializada={onVisitaMaterializada} />;
     case 'pacientes':
-      return <HospitalPatients />;
+      return <HospitalPatients fetchImpl={modoDemoLocal ? hospitalDemoFetch : undefined} />;
     case 'alarmas':
       return <HospitalAlerts />;
     case 'profesionales':
-      return <HospitalProfessionals />;
+      return <HospitalProfessionals fetchImpl={modoDemoLocal ? hospitalDemoFetch : undefined} />;
     case 'visitas':
       return <HospitalHomeVisits visita={visita} />;
     case 'virtuales':
@@ -382,6 +385,7 @@ export function HospitalShell({
   filaFinancieraInicial = null,
   visitaInicial = null,
   sesionInicial = null,
+  modoDemoLocal = false,
   fetchImpl,
 }: {
   readonly config?: HospitalShellConfig;
@@ -429,6 +433,8 @@ export function HospitalShell({
    *   servidor, y es el único que dispara la consulta al montar.
    */
   readonly sesionInicial?: HospitalSesionDto | 'sin-sesion' | null;
+  /** Solo `/hospital` lo activa: datos en memoria, sin API institucional. */
+  readonly modoDemoLocal?: boolean;
   /** Implementación de `fetch` usada para consultar el contexto de sesión. */
   readonly fetchImpl?: typeof fetch;
 }): ReactNode {
@@ -754,12 +760,14 @@ export function HospitalShell({
               {`Mostrando intención: ${HOSPITAL_ETIQUETA_INTENCION[intencion]}. La vista no aplica ningún filtro.`}
             </p>
           )}
+          {modoDemoLocal ? <p className={styles.intencion}>Datos ficticios de demostración local. No se guardan cambios.</p> : null}
           <HospitalContenido
             vista={vista}
             pestanaAdministracion={pestanaAdministracion}
             seccionFinanciera={seccionFinancieraInicial}
             filaFinanciera={filaFinancieraInicial}
             visita={visita}
+            modoDemoLocal={modoDemoLocal}
             onNavegar={navegar}
             onSeleccionarPestana={setPestanaAdministracion}
             onVisitaMaterializada={(materializada) => {
