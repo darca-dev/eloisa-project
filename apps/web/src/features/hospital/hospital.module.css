@@ -598,9 +598,9 @@
   display: block;
 }
 
-.inicioColumnas {
+.inicioPrincipal {
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
   gap: 12px;
   align-items: start;
 }
@@ -612,9 +612,9 @@
   min-width: 0;
 }
 
-.inicioResumenes {
+.inicioSeguimiento {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr);
   gap: 12px;
   align-items: start;
 }
@@ -658,6 +658,71 @@
   font-weight: var(--b-peso-medio);
   color: var(--b-gris);
   line-height: 1.4;
+}
+
+.semaforoLista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.semaforoFila {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: var(--b-radio-campo);
+  background: var(--h-tono-fondo);
+  border: 1.5px solid var(--h-tono-borde);
+  color: var(--h-tono-texto);
+}
+
+.semaforoIcono {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--b-blanco);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.semaforoEtiqueta {
+  flex: 1 1 160px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  line-height: 1.3;
+}
+
+.semaforoValor {
+  flex: 0 0 auto;
+  font-size: 22px;
+  font-weight: var(--b-peso-maximo);
+  line-height: 1;
+}
+
+.semaforoAccion {
+  width: 100%;
+  min-height: 34px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: var(--b-peso-enfasis);
+  color: var(--b-blanco);
+  background: var(--b-azul);
+  border: none;
+  border-radius: var(--b-radio-campo);
+  padding: 7px 12px;
+}
+
+.semaforoAccion:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
 }
 
 /* Acceso al módulo completo: botón local, nunca enlace ni ruta. */
@@ -1040,7 +1105,8 @@
  * ningún KPI, acción, estado ni nombre de sección, y ninguna fila se trunca.
  */
 @media (max-width: 1060px) {
-  .inicioColumnas {
+  .inicioPrincipal,
+  .inicioSeguimiento {
     grid-template-columns: minmax(0, 1fr);
   }
 }

@@ -13,6 +13,7 @@ import {
   hospitalKpisDemo,
 } from './hospitalDashboardConfig';
 import type { HospitalKpiConfig } from './hospitalDashboardConfig';
+import { hospitalAlertsDemo } from './hospitalAlertsConfig';
 import {
   HOSPITAL_ACCIONES_RAPIDAS,
   componerAccesos,
@@ -296,9 +297,21 @@ describe('T-05 — Acciones de las filas prioritarias', () => {
 
   it('las acciones se renderizan como botones con nombre accesible completo', () => {
     const html = inicio();
+    const verAlarma = controles(html).find(
+      (candidato) =>
+        candidato.texto.startsWith('Ver') &&
+        candidato.vista === 'alarmas' &&
+        candidato.intencion === 'rojas',
+    );
+    const asignarAgenda = controles(html).find(
+      (candidato) =>
+        candidato.texto.startsWith('Asignar') &&
+        candidato.vista === 'agenda' &&
+        candidato.texto.includes('en Agenda y citas'),
+    );
 
-    expect(control(html, 'Ver')?.texto).toContain('en Semáforo de alarmas');
-    expect(control(html, 'Asignar')?.texto).toContain('en Agenda y citas');
+    expect(verAlarma?.texto).toContain('en Semáforo de alarmas');
+    expect(asignarAgenda?.texto).toContain('en Agenda y citas');
     expect(control(html, 'Abrir cola')?.texto).toContain('la cola de Consultas virtuales');
   });
 });
@@ -421,6 +434,31 @@ describe('T-08 — Alarmas recientes', () => {
   });
 });
 
+describe('T-08B — Jerarquía visual de Inicio', () => {
+  it('prioriza Agenda, semáforo y acciones antes de las alarmas recientes', () => {
+    const html = inicio();
+    const tituloAgenda = html.indexOf('>Agenda próxima</h2>');
+    const tituloSemaforo = html.indexOf('>Semáforo de alarmas</h2>');
+    const tituloAcciones = html.indexOf('>Acciones rápidas</h2>');
+    const tituloAlarmas = html.indexOf('>Alarmas recientes</h2>');
+
+    expect(tituloAgenda).toBeGreaterThanOrEqual(0);
+    expect(tituloAgenda).toBeLessThan(tituloSemaforo);
+    expect(tituloSemaforo).toBeLessThan(tituloAcciones);
+    expect(tituloAcciones).toBeLessThan(tituloAlarmas);
+  });
+
+  it('reutiliza los tres conteos del Semáforo y conserva el acceso a su módulo', () => {
+    const html = inicio();
+
+    for (const nivel of hospitalAlertsDemo.resumen) {
+      expect(texto(html)).toContain(nivel.etiqueta);
+      expect(texto(html)).toContain(nivel.valor);
+    }
+    expect(control(html, 'Gestionar alarmas')?.vista).toBe('alarmas');
+  });
+});
+
 describe('T-09 — Resumen de profesionales', () => {
   it('muestra 4 disponibles, 3 en visita y 2 en consulta', () => {
     expect(
@@ -540,8 +578,8 @@ describe('T-13/T-14 — Semántica, foco y estados con texto', () => {
     );
     expect(html.indexOf('<h1')).toBeLessThan(html.indexOf('<h2'));
     // Una sección con nombre por cada bloque del centro de control.
-    expect(apariciones(html, /<h2/gu)).toBe(7);
-    expect(apariciones(html, /aria-labelledby="hospital-inicio-/gu)).toBe(7);
+    expect(apariciones(html, /<h2/gu)).toBe(8);
+    expect(apariciones(html, /aria-labelledby="hospital-inicio-/gu)).toBe(8);
   });
 
   it('el encabezado sigue recibiendo la fecha por configuración', () => {

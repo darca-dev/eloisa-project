@@ -10,8 +10,10 @@ import {
   HospitalDashboardAgendaProxima,
   HospitalDashboardAlarmasRecientes,
   HospitalDashboardProfesionales,
+  HospitalDashboardSemaforo,
 } from './HospitalDashboardResumenes';
 import { HospitalKpiCard } from './HospitalKpiCard';
+import { hospitalAlertsDemo } from './hospitalAlertsConfig';
 import { hospitalDashboardDemo } from './hospitalDashboardConfig';
 import type { HospitalDashboardConfig, HospitalInicioConfig } from './hospitalDashboardConfig';
 import { hospitalInicioDemo } from './hospitalDashboardOperacion';
@@ -51,6 +53,7 @@ const SECCION_ID = {
   atencion: 'hospital-inicio-atencion',
   acciones: 'hospital-inicio-acciones',
   agenda: 'hospital-inicio-agenda',
+  semaforo: 'hospital-inicio-semaforo',
   alarmas: 'hospital-inicio-alarmas',
   profesionales: 'hospital-inicio-profesionales',
   accesos: 'hospital-inicio-accesos',
@@ -134,35 +137,41 @@ export function HospitalDashboard({
         </ul>
       </section>
 
-      <div className={styles.inicioColumnas}>
-        <HospitalDashboardAtencion
-          seccion={inicio.atencion}
-          tituloId={SECCION_ID.atencion}
-          onNavegar={onNavegar}
-        />
-        <div className={styles.inicioColumnaLateral}>
-          <HospitalDashboardAcciones
-            seccion={inicio.acciones}
-            tituloId={SECCION_ID.acciones}
-            onNavegar={onNavegar}
-          />
-          <HospitalDashboardProfesionales
-            seccion={inicio.profesionales}
-            tituloId={SECCION_ID.profesionales}
-            onNavegar={onNavegar}
-          />
-        </div>
-      </div>
-
-      <div className={styles.inicioResumenes}>
+      <div className={styles.inicioPrincipal}>
         <HospitalDashboardAgendaProxima
           seccion={inicio.agenda}
           tituloId={SECCION_ID.agenda}
           onNavegar={onNavegar}
         />
-        <HospitalDashboardAlarmasRecientes
-          seccion={inicio.alarmas}
-          tituloId={SECCION_ID.alarmas}
+        <div className={styles.inicioColumnaLateral}>
+          <HospitalDashboardSemaforo
+            resumen={hospitalAlertsDemo.resumen}
+            tituloId={SECCION_ID.semaforo}
+            onNavegar={onNavegar}
+          />
+          <HospitalDashboardAcciones
+            seccion={inicio.acciones}
+            tituloId={SECCION_ID.acciones}
+            onNavegar={onNavegar}
+          />
+        </div>
+      </div>
+
+      <HospitalDashboardAlarmasRecientes
+        seccion={inicio.alarmas}
+        tituloId={SECCION_ID.alarmas}
+        onNavegar={onNavegar}
+      />
+
+      <div className={styles.inicioSeguimiento}>
+        <HospitalDashboardAtencion
+          seccion={inicio.atencion}
+          tituloId={SECCION_ID.atencion}
+          onNavegar={onNavegar}
+        />
+        <HospitalDashboardProfesionales
+          seccion={inicio.profesionales}
+          tituloId={SECCION_ID.profesionales}
           onNavegar={onNavegar}
         />
       </div>

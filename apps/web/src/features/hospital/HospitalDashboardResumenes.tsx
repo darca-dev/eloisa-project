@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import styles from './hospital.module.css';
+import { HospitalIcon } from './HospitalIcon';
 import type {
   HospitalAccionDestino,
   HospitalAgendaProximaFila,
@@ -8,6 +9,7 @@ import type {
   HospitalProfesionalConteo,
   HospitalSeccionInicio,
 } from './hospitalDashboardConfig';
+import type { HospitalAlarmaResumen } from './hospitalAlertsConfig';
 import { HOSPITAL_TONOS } from './hospitalTonos';
 import type { HospitalTonoId } from './hospitalTonos';
 import type { HospitalDestino } from './hospitalViews';
@@ -138,6 +140,48 @@ export function HospitalDashboardAlarmasRecientes({
           </li>
         ))}
       </ul>
+    </section>
+  );
+}
+
+/** Resumen demostrativo del semáforo para la cabecera de Inicio. */
+export function HospitalDashboardSemaforo({
+  resumen,
+  tituloId,
+  onNavegar,
+}: {
+  readonly resumen: readonly HospitalAlarmaResumen[];
+  readonly tituloId: string;
+  readonly onNavegar: (destino: HospitalDestino) => void;
+}): ReactNode {
+  return (
+    <section className={styles.panel} aria-labelledby={tituloId}>
+      <div className={styles.panelHead}>
+        <h2 className={styles.panelTitle} id={tituloId}>
+          Semáforo de alarmas
+        </h2>
+      </div>
+      <ul className={styles.semaforoLista} aria-label="Resumen del semáforo de alarmas">
+        {resumen.map((nivel) => (
+          <li className={styles.semaforoFila} key={nivel.id} style={tono(nivel.tono)}>
+            <span className={styles.semaforoIcono}>
+              <HospitalIcon name={nivel.icono} size={17} />
+            </span>
+            <span className={styles.semaforoEtiqueta}>{nivel.etiqueta}</span>
+            <span className={styles.semaforoValor}>{nivel.valor}</span>
+          </li>
+        ))}
+      </ul>
+      <button
+        type="button"
+        className={styles.semaforoAccion}
+        data-hospital-destino="alarmas"
+        onClick={() => {
+          onNavegar({ vista: 'alarmas' });
+        }}
+      >
+        Gestionar alarmas
+      </button>
     </section>
   );
 }
