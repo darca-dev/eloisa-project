@@ -17,6 +17,13 @@ const HTML = renderToStaticMarkup(<HospitalAlerts />);
 const TEXTO = texto(HTML);
 
 describe('T-08 — Bandeja, resumen, detalle y continuidad', () => {
+  it('prioriza el orden visual del canvas antes de la bandeja complementaria', () => {
+    const html = HTML;
+
+    expect(html.indexOf('Rojas · requieren atención')).toBeLessThan(html.indexOf('DETALLE DE LA ALERTA'));
+    expect(html.indexOf('DETALLE DE LA ALERTA')).toBeLessThan(html.indexOf('Notas de continuidad pendientes'));
+    expect(html.indexOf('Notas de continuidad pendientes')).toBeLessThan(html.indexOf('Alarmas recientes'));
+  });
   it('reproduce el encabezado de la vista', () => {
     expect(TEXTO).toContain('Semáforo de alarmas');
     expect(TEXTO).toContain(
