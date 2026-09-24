@@ -25,6 +25,7 @@ import type {
   Errores,
   InscripcionAction,
 } from '../inscripcionFlow';
+import { PACIENTES_DEMO } from '../patientDemoFixtures';
 import styles from '../inscripcion.module.css';
 import {
   AccionDemostrativa,
@@ -133,6 +134,24 @@ export function PasosPaciente({
         <EliSpeech intencion="explica">
           Empecemos por tus datos. Te acompaño campo por campo si algo no se entiende.
         </EliSpeech>
+
+        <section className={styles.demoProfiles} aria-labelledby="pacientes-demo-title">
+          <p id="pacientes-demo-title" className={styles.eyebrow}>PACIENTES DEMO</p>
+          <p className={styles.demoProfilesText}>
+            Cargue un perfil completamente ficticio para recorrer los cinco pasos sin escribir los datos manualmente.
+          </p>
+          <div className={styles.demoProfilesActions}>
+            {PACIENTES_DEMO.map((paciente) => (
+              <Button
+                key={paciente.id}
+                variant="outline"
+                onClick={() => dispatch({ type: 'cargarPacienteDemo', id: paciente.id })}
+              >
+                {paciente.etiqueta}
+              </Button>
+            ))}
+          </div>
+        </section>
 
         <RequiredLegend />
 

@@ -105,3 +105,6 @@ que auditar.
 | 031 | hospital-visits-demo-local | Approved / Aprobada · consentimiento SDD recibido | High / Alta | Product Owner | 2026-09-21 |
 | 032 | hospital-agenda-canvas-demo | Approved / Aprobada · consentimiento SDD recibido | High / Alta | Product Owner | 2026-09-22 |
 | 034 | caregiver-visitador-liquidations-demo | Approved / Aprobada · consentimiento SDD recibido | High / Alta | Product Owner | 2026-09-22 |
+| 035 | central-access-institutional-approval | Approved / Aprobada · consentimiento SDD recibido | Critical / Crítica | Product Owner | 2026-09-23 |
+| 036 | patient-demo-autofill | Approved / Aprobada · consentimiento SDD recibido | Medium / Media | Product Owner | 2026-09-23 |
+| 037 | local-oidc-recovery | Approved / Aprobada · consentimiento SDD recibido | High / Alta | Product Owner | 2026-09-24 |

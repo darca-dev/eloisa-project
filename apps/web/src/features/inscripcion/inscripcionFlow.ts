@@ -22,6 +22,8 @@
 
 import { municipioPerteneceA } from '@/data/divipola';
 
+import { PACIENTES_DEMO, copiarPacienteDemo } from './patientDemoFixtures';
+
 export type PerfilId = 'paciente' | 'cuidador' | 'visitador';
 
 export interface PerfilOpcion {
@@ -784,6 +786,7 @@ export type UbicacionId = 'principal' | 'institucion';
 
 export type InscripcionAction =
   | { readonly type: 'elegirPerfil'; readonly perfil: PerfilId }
+  | { readonly type: 'cargarPacienteDemo'; readonly id: string }
   | { readonly type: 'siguiente' }
   | { readonly type: 'atras' }
   | { readonly type: 'irAPaso'; readonly paso: number }
@@ -1039,6 +1042,21 @@ export function inscripcionReducer(
         perfil: action.perfil,
         rama: ramaVacia(action.perfil),
       };
+
+    case 'cargarPacienteDemo': {
+      const paciente = PACIENTES_DEMO.find((candidato) => candidato.id === action.id);
+      if (paciente === undefined || state.rama === null || state.rama.perfil !== 'paciente') {
+        return state;
+      }
+      return {
+        ...state,
+        paso: 1,
+        rama: { perfil: 'paciente', valores: copiarPacienteDemo(paciente) },
+        errores: {},
+        campoFoco: null,
+        envio: ENVIO_INACTIVO,
+      };
+    }
 
     case 'siguiente': {
       if (state.rama === null || state.terminada) {

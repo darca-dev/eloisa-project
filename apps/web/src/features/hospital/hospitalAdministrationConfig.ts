@@ -60,6 +60,7 @@ const PLATAFORMA = platformNameInSentence();
  * nueva ni arquitectura paralela.
  */
 export const HOSPITAL_ADMIN_PESTANAS = [
+  'Solicitudes de acceso',
   'Membresías',
   'Historia clínica',
   'Personal y accesos',
