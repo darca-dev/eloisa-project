@@ -724,8 +724,8 @@ function PoblacionFila({
             onVer(evento.currentTarget);
           }}
         >
-          Ver
-          <span className="merdn-sr-only">{` la ficha de ${paciente.fullName}`}</span>
+          Abrir ficha
+          <span className="merdn-sr-only">{` del paciente ${paciente.fullName}`}</span>
         </button>
       </td>
     </tr>

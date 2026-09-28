@@ -101,3 +101,10 @@ spec, no en `reviews/`, que está congelado. El recuento de arriba se refiere a
 auditorías registradas en `reviews/` y sigue siendo exacto para MP01 y para las
 otras nueve specs. La spec 018 nació de ese veredicto y todavía no tiene código
 que auditar.
+| 030 | hospital-demo-api-local | Approved / Aprobada · pendiente de consentimiento SDD | High / Alta | Product Owner | 2026-09-21 |
+| 031 | hospital-visits-demo-local | Approved / Aprobada · consentimiento SDD recibido | High / Alta | Product Owner | 2026-09-21 |
+| 032 | hospital-agenda-canvas-demo | Approved / Aprobada · consentimiento SDD recibido | High / Alta | Product Owner | 2026-09-22 |
+| 034 | caregiver-visitador-liquidations-demo | Approved / Aprobada · consentimiento SDD recibido | High / Alta | Product Owner | 2026-09-22 |
+| 035 | central-access-institutional-approval | Approved / Aprobada · consentimiento SDD recibido | Critical / Crítica | Product Owner | 2026-09-23 |
+| 036 | patient-demo-autofill | Approved / Aprobada · consentimiento SDD recibido | Medium / Media | Product Owner | 2026-09-23 |
+| 037 | local-oidc-recovery | Approved / Aprobada · consentimiento SDD recibido | High / Alta | Product Owner | 2026-09-24 |

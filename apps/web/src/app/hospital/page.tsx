@@ -35,5 +35,5 @@ export const metadata: Metadata = {
 };
 
 export default function HospitalPage(): ReactNode {
-  return <HospitalShell sesionInicial={SESION_DEMO} />;
+  return <HospitalShell sesionInicial={SESION_DEMO} modoDemoLocal />;
 }

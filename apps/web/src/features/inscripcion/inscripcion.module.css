@@ -272,6 +272,29 @@
   gap: 9px;
 }
 
+.demoProfiles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--b-borde);
+  border-radius: 14px;
+  background: var(--b-celeste);
+}
+
+.demoProfilesText {
+  margin: 0;
+  color: var(--b-gris);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.demoProfilesActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .eyebrow {
   margin: 0;
   font-size: 13px;

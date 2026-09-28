@@ -111,41 +111,6 @@ export function HospitalAlerts({
     <div className={compartido.view}>
       <HospitalViewHeader encabezado={config.encabezado} tituloId={TITULO_ID} />
 
-      <HospitalCard aria-labelledby={TITULO_BANDEJA_ID}>
-        <HospitalCardHeader
-          titulo={config.bandeja.titulo}
-          tituloId={TITULO_BANDEJA_ID}
-          nota={config.bandeja.nota}
-        />
-        <ul className={styles.bandeja}>
-          {config.bandeja.items.map((alarma) => (
-            <li className={styles.alarma} key={alarma.id} style={tonoVars(alarma.tono)}>
-              <span className={styles.alarmaIcono}>
-                <HospitalIcon name="alarmas" size={18} />
-              </span>
-              <span className={styles.alarmaTextos}>
-                <span className={styles.alarmaPaciente}>{alarma.paciente}</span>
-                <span className={styles.alarmaMotivo}>{alarma.motivo}</span>
-              </span>
-              <HospitalBadge tono={alarma.tono} className={styles.alarmaNivel}>
-                {alarma.nivel}
-              </HospitalBadge>
-              <span className={styles.alarmaCuando}>{alarma.cuando}</span>
-              <button
-                type="button"
-                className={styles.alarmaVer}
-                aria-label={`${config.bandeja.accionVer} el detalle de la alerta de ${alarma.paciente}`}
-                onClick={() => {
-                  detalleRef.current?.focus();
-                }}
-              >
-                {config.bandeja.accionVer}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </HospitalCard>
-
       <ul className={styles.resumen} aria-label="Resumen del semáforo de alarmas">
         {config.resumen.map((nivel) => (
           <li className={styles.resumenCard} key={nivel.id} style={tonoVars(nivel.tono)}>
@@ -176,6 +141,26 @@ export function HospitalAlerts({
           ))}
         </ul>
         <HospitalNote>{config.continuidad.nota}</HospitalNote>
+      </HospitalCard>
+
+      <HospitalCard aria-labelledby={TITULO_BANDEJA_ID}>
+        <HospitalCardHeader titulo={config.bandeja.titulo} tituloId={TITULO_BANDEJA_ID} nota={config.bandeja.nota} />
+        <ul className={styles.bandeja}>
+          {config.bandeja.items.map((alarma) => (
+            <li className={styles.alarma} key={alarma.id} style={tonoVars(alarma.tono)}>
+              <span className={styles.alarmaIcono}><HospitalIcon name="alarmas" size={18} /></span>
+              <span className={styles.alarmaTextos}>
+                <span className={styles.alarmaPaciente}>{alarma.paciente}</span>
+                <span className={styles.alarmaMotivo}>{alarma.motivo}</span>
+              </span>
+              <HospitalBadge tono={alarma.tono} className={styles.alarmaNivel}>{alarma.nivel}</HospitalBadge>
+              <span className={styles.alarmaCuando}>{alarma.cuando}</span>
+              <button type="button" className={styles.alarmaVer} aria-label={`${config.bandeja.accionVer} el detalle de la alerta de ${alarma.paciente}`} onClick={() => { detalleRef.current?.focus(); }}>
+                {config.bandeja.accionVer}
+              </button>
+            </li>
+          ))}
+        </ul>
       </HospitalCard>
     </div>
   );

@@ -7,13 +7,16 @@ import { HospitalAdministration } from './HospitalAdministration';
 import { HOSPITAL_ADMIN_PESTANA_INICIAL } from './hospitalAdministrationConfig';
 import type { HospitalAdminPestanaId } from './hospitalAdministrationConfig';
 import { HospitalAgenda } from './HospitalAgenda';
+import { HospitalAgendaDemo } from './HospitalAgendaDemo';
 import { HospitalAlerts } from './HospitalAlerts';
 import { HospitalDashboard } from './HospitalDashboard';
+import { hospitalDemoFetch } from './hospitalDemoLocal';
 import { HospitalFinancialManagement } from './HospitalFinancialManagement';
 import type { FinancialSeccionId } from './hospitalFinancialConfig';
 import { HOSPITAL_ETIQUETA_PLATAFORMA, hospitalShellDemo } from './hospitalConfig';
 import type { HospitalShellConfig } from './hospitalConfig';
 import { HospitalHomeVisits } from './HospitalHomeVisits';
+import { HospitalHomeVisitsDemo } from './HospitalHomeVisitsDemo';
 import {
   HOSPITAL_MENSAJE_APERTURA,
   HOSPITAL_MENSAJE_CREDENCIAL,
@@ -116,7 +119,7 @@ import type {
  *   acceso integrado en el área principal y sin institución, persona, badge ni
  *   ningún otro dato demostrativo;
  * - sesión vigente: la identidad mostrada procede SIEMPRE de `current`, nunca
- *   del cuerpo de la apertura, y la topbar ofrece cambiar y cerrar sesión.
+ *   del cuerpo de la apertura, y la topbar ofrece cerrar sesión.
  *
  * Sobre la credencial: se escribe, se envía una sola vez y se borra del estado
  * en el mismo gesto que la envía. No se guarda en el navegador, no viaja por la
@@ -167,6 +170,7 @@ function HospitalContenido({
   onNavegar,
   onSeleccionarPestana,
   onVisitaMaterializada,
+  modoDemoLocal,
 }: {
   readonly vista: HospitalVistaId;
   readonly pestanaAdministracion: HospitalAdminPestanaId;
@@ -177,18 +181,19 @@ function HospitalContenido({
   readonly onNavegar: (destino: HospitalDestino) => void;
   readonly onSeleccionarPestana: (pestana: HospitalAdminPestanaId) => void;
   readonly onVisitaMaterializada: (visita: HospitalVisitaMaterializadaDto) => void;
+  readonly modoDemoLocal: boolean;
 }): ReactNode {
   switch (vista) {
     case 'agenda':
-      return <HospitalAgenda onVisitaMaterializada={onVisitaMaterializada} />;
+      return modoDemoLocal ? <HospitalAgendaDemo /> : <HospitalAgenda onVisitaMaterializada={onVisitaMaterializada} />;
     case 'pacientes':
-      return <HospitalPatients />;
+      return <HospitalPatients fetchImpl={modoDemoLocal ? hospitalDemoFetch : undefined} />;
     case 'alarmas':
       return <HospitalAlerts />;
     case 'profesionales':
-      return <HospitalProfessionals />;
+      return <HospitalProfessionals fetchImpl={modoDemoLocal ? hospitalDemoFetch : undefined} />;
     case 'visitas':
-      return <HospitalHomeVisits visita={visita} />;
+      return modoDemoLocal ? <HospitalHomeVisitsDemo /> : <HospitalHomeVisits visita={visita} />;
     case 'virtuales':
       return <HospitalVirtualConsultations />;
     case 'calificaciones':
@@ -382,6 +387,7 @@ export function HospitalShell({
   filaFinancieraInicial = null,
   visitaInicial = null,
   sesionInicial = null,
+  modoDemoLocal = false,
   fetchImpl,
 }: {
   readonly config?: HospitalShellConfig;
@@ -429,6 +435,8 @@ export function HospitalShell({
    *   servidor, y es el único que dispara la consulta al montar.
    */
   readonly sesionInicial?: HospitalSesionDto | 'sin-sesion' | null;
+  /** Solo `/hospital` lo activa: datos en memoria, sin API institucional. */
+  readonly modoDemoLocal?: boolean;
   /** Implementación de `fetch` usada para consultar el contexto de sesión. */
   readonly fetchImpl?: typeof fetch;
 }): ReactNode {
@@ -613,14 +621,12 @@ export function HospitalShell({
   /**
    * Cierra la sesión vigente.
    *
-   * `cambiar` y `cerrar` revocan igual: solo cambia el aviso posterior. Lo que
-   * NO cambia en ninguno de los dos es la regla: la sesión se retira de la
+   * La sesión se retira de la
    * interfaz ÚNICAMENTE cuando el servidor confirma que ya no existe —`204` o
    * `401`—. Ante cualquier otro desenlace se reconfirma el contexto y, si sigue
    * habiendo sesión o no puede saberse, se CONSERVA: esconder en pantalla una
    * sesión que el servidor mantiene abierta no la cierra, y dejar entrar con
-   * otra credencial encima de ella sería afirmar un cambio que no ocurrió. Por
-   * eso el cambio de sesión queda bloqueado hasta que la revocación se confirme.
+   * otra credencial encima de ella sería afirmar un cambio que no ocurrió.
    */
   const terminar = async (intencion: IntencionCierre): Promise<void> => {
     const red = fetchImpl ?? fetch;
@@ -737,9 +743,6 @@ export function HospitalShell({
           ocupado={ocupado}
           menuAbierto={menuMovilAbierto}
           onToggleMenu={() => { setMenuMovilAbierto((prev) => !prev); }}
-          onCambiarSesion={() => {
-            void terminar('cambiar');
-          }}
           onCerrarSesion={() => {
             void terminar('cerrar');
           }}
@@ -759,12 +762,14 @@ export function HospitalShell({
               {`Mostrando intención: ${HOSPITAL_ETIQUETA_INTENCION[intencion]}. La vista no aplica ningún filtro.`}
             </p>
           )}
+          {modoDemoLocal ? <p className={styles.intencion}>Datos ficticios de demostración local. No se guardan cambios.</p> : null}
           <HospitalContenido
             vista={vista}
             pestanaAdministracion={pestanaAdministracion}
             seccionFinanciera={seccionFinancieraInicial}
             filaFinanciera={filaFinancieraInicial}
             visita={visita}
+            modoDemoLocal={modoDemoLocal}
             onNavegar={navegar}
             onSeleccionarPestana={setPestanaAdministracion}
             onVisitaMaterializada={(materializada) => {

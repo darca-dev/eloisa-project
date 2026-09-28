@@ -7,3 +7,11 @@
 [2026-09-17 23:02:44 -0600] [spec:026-experiencia-visual-responsiva-demo] User approved implementation for spec 026-experiencia-visual-responsiva-demo
 [2026-09-19 10:35:18 -06:00] [spec:028-identidad-humana-completar] User approved implementation for spec 028-identidad-humana-completar
 [2026-09-21 10:47:41 -0600] [spec:029-recuperacion-build-docker] Product Owner authorized Codex to implement and verify the P0 build and Docker recovery on 2026-09-21.
+[2026-09-21 19:52:40 -0600] [spec:026-experiencia-visual-responsiva-demo] Product Owner approved implementation for spec 026-experiencia-visual-responsiva-demo
+[2026-09-21 20:12:48 -0600] [spec:030-hospital-demo-api-local] Product Owner approved implementation for spec 030-hospital-demo-api-local
+[2026-09-21 23:08:13 -0600] [spec:031-hospital-visits-demo-local] Product Owner approved implementation of spec 031-hospital-visits-demo-local: five fictional read-only home-visit samples in local Hospital demo.
+[2026-09-22 00:10:21 -0600] [spec:032-hospital-agenda-canvas-demo] Product Owner approved implementation of spec 032-hospital-agenda-canvas-demo: local read-only Agenda and appointments canvas visual demo.
+[2026-09-22 10:25:13 -0600] [spec:034-caregiver-visitador-liquidations-demo] Product Owner approved implementation of local read-only demo liquidations for Caregiver and Visitador on 2026-09-22.
+[2026-09-23 21:41:26 -0600] [spec:035-central-access-institutional-approval] Product Owner approved central access and institutional approval implementation on 2026-09-23.
+[2026-09-23 22:45:00 -0600] [spec:036-patient-demo-autofill] Product Owner approved three fictional patient profiles to autofill the existing enrollment form, without passwords or automatic submission.
+[2026-09-24 00:00:00 -0600] [spec:037-local-oidc-recovery] Product Owner approved recovery of local fictional OIDC and verification of test access on 2026-09-24.

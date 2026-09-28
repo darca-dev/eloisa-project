@@ -62,11 +62,6 @@
 
   "identityProviders": [],
 
-  "requiredActions": [
-    "UPDATE_PASSWORD",
-    "VERIFY_EMAIL"
-  ],
-
   "passwordPolicy": "length(8) and digits(1) and lowerCase(1) and upperCase(1)",
 
   "authenticationFlows": []

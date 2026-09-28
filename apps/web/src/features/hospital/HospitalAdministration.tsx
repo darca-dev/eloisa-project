@@ -7,6 +7,7 @@ import type {
   HospitalAdministrationConfig,
 } from './hospitalAdministrationConfig';
 import { HospitalAudit } from './HospitalAudit';
+import { HospitalAccessApprovalsDemo } from './HospitalAccessApprovalsDemo';
 import { HospitalClinicalImport } from './HospitalClinicalImport';
 import {
   HospitalAgendaSettings,
@@ -59,6 +60,8 @@ function ContenidoAdministracion({
   readonly config: HospitalAdministrationConfig;
 }): ReactNode {
   switch (pestana) {
+    case 'Solicitudes de acceso':
+      return <HospitalAccessApprovalsDemo />;
     case 'Historia clínica':
       return <HospitalClinicalImport config={config.clinica} />;
     case 'Personal y accesos':
