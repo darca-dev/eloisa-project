@@ -31,10 +31,14 @@ describe('documento OpenAPI', () => {
 
   it('documenta exactamente las rutas aprobadas', () => {
     expect(Object.keys(document.paths).sort()).toStrictEqual([
+      '/api/v1/access-requests',
       '/api/v1/caregiver-relationships',
       '/api/v1/caregiver-relationships/{relationshipId}',
       '/api/v1/caregiver-relationships/{relationshipId}/activate',
       '/api/v1/caregiver-relationships/{relationshipId}/revoke',
+      '/api/v1/hospital/access-requests',
+      '/api/v1/hospital/access-requests/{requestId}',
+      '/api/v1/hospital/access-requests/{requestId}/decision',
       '/api/v1/hospital/agenda',
       '/api/v1/hospital/appointments/{appointmentId}/assignment',
       '/api/v1/hospital/patients',
@@ -47,6 +51,7 @@ describe('documento OpenAPI', () => {
       '/api/v1/institutional/sessions',
       '/api/v1/institutional/sessions/current',
       '/api/v1/me/contexts',
+      '/api/v1/me/experiences',
       '/api/v1/municipality/population-summary',
       '/api/v1/municipality/territory-summary',
       '/api/v1/patient-self/appointments',
@@ -67,6 +72,16 @@ describe('documento OpenAPI', () => {
     expect(
       Object.keys(document.paths['/api/v1/patients/enrollments'] ?? {}),
     ).toStrictEqual(['post']);
+    /*
+     * La superficie de solicitudes de acceso (SPEC 038, MP02-C1) es una única
+     * operación de registro de interés: `POST` y nada más. No existe lectura,
+     * ni actualización, ni borrado de una solicitud en este paquete, y su
+     * ausencia es lo que impide que se confunda un registro de interés con un
+     * recurso consultable o con un acceso concedible.
+     */
+    expect(Object.keys(document.paths['/api/v1/access-requests'] ?? {})).toStrictEqual([
+      'post',
+    ]);
     expect(Object.keys(document.paths['/api/v1/patients/me'] ?? {})).toStrictEqual([
       'get',
     ]);
@@ -92,6 +107,22 @@ describe('documento OpenAPI', () => {
     ]) {
       expect(Object.keys(document.paths[ruta] ?? {})).toStrictEqual(['get']);
     }
+    /*
+     * La revisión de solicitudes de acceso (SPEC 038, MP03-C1) es la segunda
+     * excepción declarada a la superficie Hospital de solo lectura: el revisor
+     * DECIDE, y sin ese `POST` la superficie documentaría una operación que el
+     * contrato exige y que el hospital no podría ejecutar. Las dos rutas de
+     * lectura siguen siendo `GET` y no admiten ningún otro método.
+     */
+    expect(
+      Object.keys(document.paths['/api/v1/hospital/access-requests'] ?? {}),
+    ).toStrictEqual(['get']);
+    expect(
+      Object.keys(document.paths['/api/v1/hospital/access-requests/{requestId}'] ?? {}),
+    ).toStrictEqual(['get']);
+    expect(
+      Object.keys(document.paths['/api/v1/hospital/access-requests/{requestId}/decision'] ?? {}),
+    ).toStrictEqual(['post']);
     expect(
       Object.keys(
         document.paths['/api/v1/hospital/appointments/{appointmentId}/assignment'] ?? {},
@@ -154,6 +185,43 @@ describe('documento OpenAPI', () => {
     ]) {
       expect(municipales).not.toContain(prohibido);
     }
+  });
+
+  /*
+   * SPEC 038, MP02-C2-C1. El ejemplo de `reference` DEBE cumplir el mismo patrón
+   * que el servidor emite y que el cliente web acepta. Un ejemplo con un carácter
+   * de más no rompe la API —es documentación—, pero sí enseña a cualquier consumidor
+   * a esperar una referencia que nunca llegará, y la interfaz rechazaría ese mismo
+   * ejemplo como `unavailable`. Se fija aquí el formato para que no vuelva a
+   * publicarse uno imposible.
+   */
+  it('el ejemplo de referencia publicado es un valor realmente aceptable', () => {
+    const aceptada = document.components?.schemas?.['AccessRequestAcceptedDto'] as
+      | { readonly properties?: Record<string, { readonly example?: unknown }> }
+      | undefined;
+
+    const ejemplo = aceptada?.properties?.['reference']?.example;
+
+    expect(typeof ejemplo).toBe('string');
+    expect(String(ejemplo)).toMatch(/^AR-[0-9A-F]{24}$/u);
+  });
+
+  it('declara exactamente el estado y la fuente que este endpoint emite', () => {
+    const aceptada = document.components?.schemas?.['AccessRequestAcceptedDto'] as
+      | {
+          readonly properties?: Record<
+            string,
+            { readonly enum?: readonly string[]; readonly example?: unknown }
+          >;
+        }
+      | undefined;
+
+    // No es documentación: un consumidor que lea otra cosa creería que este
+    // endpoint emite estados o procedencias que no emite.
+    expect(aceptada?.properties?.['status']?.enum).toStrictEqual(['PENDING']);
+    expect(aceptada?.properties?.['status']?.example).toBe('PENDING');
+    expect(aceptada?.properties?.['source']?.enum).toStrictEqual(['TEST_DATA']);
+    expect(aceptada?.properties?.['source']?.example).toBe('TEST_DATA');
   });
 
   it('describe los desenlaces de fallo de la inscripción', () => {
@@ -457,7 +525,7 @@ describe('documento OpenAPI de la superficie Hospital', () => {
     expect(contexto).not.toContain('Hospital San Rafael');
   });
 
-  it('declara los cuatro roles institucionales implementados y ninguno más', () => {
+  it('declara los cinco roles institucionales implementados y ninguno más', () => {
     const sesion = document.components?.schemas?.['InstitutionalSessionDto'] as
       | { readonly properties?: { readonly role?: { readonly enum?: string[] } } }
       | undefined;
@@ -466,12 +534,18 @@ describe('documento OpenAPI de la superficie Hospital', () => {
      * IDENTITY-RELATIONSHIPS-CORE-01 (AD-03) añade el cuarto rol, DISJUNTO de
      * los tres anteriores. Que figure aquí no le concede ninguna superficie:
      * cada dominio conserva su guard con su rol exacto.
+     *
+     * SPEC 038 MP03-C1 añade el quinto, el revisor de acceso, con la misma
+     * consecuencia: aparecer en el enum de la sesión NO le concede ninguna
+     * superficie. La revisión exige `HOSPITAL_ACCESS_REVIEWER` en un guard
+     * propio, y ningún otro rol la obtiene por herencia.
      */
     expect(sesion?.properties?.role?.enum).toStrictEqual([
       'MUNICIPAL_VIEWER',
       'HOSPITAL_PATIENT_VIEWER',
       'HOSPITAL_SCHEDULER',
       'CAREGIVER_RELATIONSHIP_MANAGER',
+      'HOSPITAL_ACCESS_REVIEWER',
     ]);
   });
 });
@@ -714,6 +788,7 @@ describe('documento OpenAPI del núcleo de identidad humana', () => {
       'get',
     ]);
     expect(Object.keys(document.paths['/api/v1/me/contexts'] ?? {})).toStrictEqual(['get']);
+    expect(Object.keys(document.paths['/api/v1/me/experiences'] ?? {})).toStrictEqual(['get']);
     expect(
       Object.keys(document.paths['/api/v1/caregiver-relationships'] ?? {}),
     ).toStrictEqual(['post']);
@@ -1190,5 +1265,135 @@ describe('documento OpenAPI de la superficie de Visitas', () => {
 
     expect(lectura).toContain('El cliente NO envía profesional, paciente ni institución');
     expect(lectura).toContain('NO existe listado ni búsqueda');
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* Superficie Hospital de revisión de solicitudes (SPEC 038 MP03-C1)           */
+/* -------------------------------------------------------------------------- */
+
+describe('documento OpenAPI de la revisión institucional de solicitudes', () => {
+  const LISTADO = '/api/v1/hospital/access-requests';
+  const DETALLE = '/api/v1/hospital/access-requests/{requestId}';
+  const DECISION = '/api/v1/hospital/access-requests/{requestId}/decision';
+
+  let app: INestApplication;
+  let document: ReturnType<typeof buildOpenApiDocument>;
+
+  beforeAll(async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleRef.createNestApplication();
+    await app.init();
+    document = buildOpenApiDocument(app);
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('el listado declara los cinco filtros y una respuesta paginada', () => {
+    const parametros = (document.paths[LISTADO]?.get?.parameters ?? []) as readonly {
+      readonly name?: string;
+    }[];
+
+    expect(parametros.map((parametro) => parametro.name).sort()).toStrictEqual([
+      'cursor',
+      'limit',
+      'profile',
+      'q',
+      'status',
+    ]);
+
+    /*
+     * La respuesta se documenta por `$ref`, no en línea: el contrato de esta
+     * superficie son los ESQUEMAS, y un documento que los duplicara en cada
+     * operación podría divergir de ellos sin que nada lo notara.
+     */
+    const respuestas = document.paths[LISTADO]?.get?.responses as
+      | Record<string, { readonly content?: Record<string, { readonly schema?: unknown }> }>
+      | undefined;
+
+    expect(
+      respuestas?.['200']?.content?.['application/json']?.schema,
+    ).toStrictEqual({ $ref: '#/components/schemas/AccessRequestReviewListDto' });
+  });
+
+  it('el item de listado NO declara ningún campo del detalle', () => {
+    const item = document.components?.schemas?.['AccessRequestReviewListItemDto'] as
+      | { readonly properties?: Record<string, unknown> }
+      | undefined;
+
+    expect(Object.keys(item?.properties ?? {}).sort()).toStrictEqual([
+      'familyNames',
+      'givenNames',
+      'reference',
+      'requestId',
+      'requestedProfile',
+      'status',
+      'submittedAt',
+      'version',
+    ]);
+  });
+
+  it('el detalle declara los campos personales y el 404 opaco', () => {
+    const respuestas = document.paths[DETALLE]?.get?.responses as
+      | Record<string, { readonly content?: Record<string, { readonly schema?: unknown }> }>
+      | undefined;
+
+    expect(
+      respuestas?.['200']?.content?.['application/json']?.schema,
+    ).toStrictEqual({ $ref: '#/components/schemas/AccessRequestReviewDetailDto' });
+    expect(
+      respuestas?.['404']?.content?.['application/json']?.schema,
+    ).toStrictEqual({ $ref: '#/components/schemas/AccessRequestReviewErrorDto' });
+
+    /*
+     * El `404` es OPACO: idéntico para un identificador inexistente y para uno de
+     * otra institución. Si las dos respuestas declararan motivos distintos, la
+     * propia documentación enseñaría a un atacante a distinguir tenants.
+     */
+    const detalle = JSON.stringify(document.paths[DETALLE]?.get?.responses?.['404']);
+
+    expect(detalle).toContain('idéntica para un identificador inexistente');
+    expect(detalle).toContain('otra institución');
+  });
+
+  it('la decisión declara cuerpo cerrado, respuesta 200 y los conflictos', () => {
+    const decision = JSON.stringify(document.paths[DECISION]?.post);
+
+    // El cuerpo se documenta por referencia al DTO cerrado, no como un objeto libre.
+    expect(decision).toContain('AccessRequestReviewDecisionRequestDto');
+    expect(decision).toContain('AccessRequestReviewDecisionResponseDto');
+    expect(decision).toContain('409');
+    expect(decision).toContain('404');
+    expect(decision).toContain('503');
+
+    // Y los motivos vivían en un catálogo, nunca en texto libre.
+    const cuerpo = JSON.stringify(
+      document.components?.schemas?.['AccessRequestReviewDecisionRequestDto'],
+    );
+    expect(cuerpo).toContain('DEMO_ELIGIBLE');
+    expect(cuerpo).toContain('DEMO_NOT_ELIGIBLE');
+    expect(cuerpo).toContain('expectedVersion');
+  });
+
+  it('la provisión se documenta como SAGA y nunca como alta automática', () => {
+    const decision = JSON.stringify(document.paths[DECISION]?.post);
+
+    /*
+     * MP03-C1 dejaba la aprobación PENDIENTE de provisión. MP04 ejecuta esa
+     * provisión dentro de la misma decisión, en dos fases y con salida posible
+     * a `PROVISIONING_FAILED`. Documentar «aprobar» como un alta instantánea
+     * convertiría una saga —que puede no terminar— en una promesa de acceso ya
+     * vigente.
+     */
+    expect(decision).toContain('APPROVED_PENDING_PROVISIONING');
+    expect(decision).toContain('No se crea perfil, relación ni asignación');
+    expect(decision).toContain('PROVISIONING_FAILED');
+    expect(decision).not.toContain('alta automática');
+    expect(decision).not.toContain('acceso concedido');
   });
 });

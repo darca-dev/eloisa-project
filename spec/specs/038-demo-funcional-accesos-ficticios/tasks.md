@@ -1,0 +1,100 @@
+# Tareas 038 — Demo funcional de registros y aprobaciones ficticias
+
+## Estado
+
+Checklist aprobado y consentido. Solo está autorizado el paquete que indique el
+handoff canónico vigente; completar un paquete no abre automáticamente el
+siguiente.
+
+## MP00 — Reconciliación y línea base
+
+- [x] T00.1 Cerrar OD-01 a OD-12 con decisiones de Product Owner.
+- [x] T00.2 Registrar la rama base sin merge, rebase ni commit. Basada en
+  `feat/038-demo-funcional-accesos-ficticios`, HEAD `530a722`, base contra
+  `develop` en `ad7a18c` (11 commits); sin acciones Git en esta ejecución.
+- [x] T00.3 Reconciliar 027 e índice sin aprobar retroactivamente código.
+- [x] T00.4 Registrar cómo 038 sustituye el modo en memoria de 035.
+- [x] T00.5 Clasificar los siete fallos web actuales.
+- [x] T00.6 Corregir regresiones o expectativas con trazabilidad.
+- [x] T00.7 Conectar `/acceso` a una composición autorizada.
+- [x] T00.8 Separar rutas protegidas del modo demo de servidor.
+- [x] T00.9 Auditar provisión de 027: password, `sub`, transacción, logs y retry.
+  Registrada como auditoría aplicable con disposición de cuarentena documental
+  en `research.md` §Disposición de cuarentena: prohibido password, `sub`
+  pregenerado, commit antes del IdP, logs con username y retry defectuoso; la
+  provisión nueva se implementa en MP04. Sin rediseño de identidad en MP00-C1.
+- [ ] T00.10 Ejecutar build, typecheck, web y SDD; entregar base verde.
+
+## MP01 — Datos, RLS y auditoría
+
+- [ ] T01.1 Añadir catálogos de perfil, estado, provisión y motivos.
+- [ ] T01.2 Añadir capacidad `HOSPITAL_ACCESS_REVIEWER` disjunta.
+- [ ] T01.3 Añadir `AccessRequest` con tenant, referencia y versión.
+- [ ] T01.4 Añadir unicidad y FKs compuestas.
+- [ ] T01.5 Añadir RLS y grants mínimos sin DELETE ordinario.
+- [ ] T01.6 Añadir eventos/métodos de auditoría sin PII.
+- [ ] T01.7 Crear migración aditiva y rollback condicional.
+- [ ] T01.8 Probar dos tenants, unicidad, FKs, RLS, grants y rollback.
+
+## MP02 — Registro persistente
+
+- [ ] T02.1 Definir DTOs cerrados para crear solicitud.
+- [ ] T02.2 Implementar validación, errores neutrales, rate limit e idempotencia.
+- [ ] T02.3 Implementar creación/reconciliación transaccional local.
+- [ ] T02.4 Preparar identidad deshabilitada según OD-03/OD-11.
+- [ ] T02.5 Separar sesión, solicitud y exploración en `/acceso`.
+- [ ] T02.6 Integrar los tres perfiles sin otorgar permisos.
+- [ ] T02.7 Señalizar persistencia, estado pendiente y datos ficticios.
+- [ ] T02.8 Probar recarga, reinicio, duplicado, DB/OIDC y accesibilidad.
+
+## MP03 — Revisión Hospital
+
+- [ ] T03.1 Implementar guard exacto del revisor.
+- [ ] T03.2 Implementar listado paginado/minimizado por tenant.
+- [ ] T03.3 Implementar decisión con versión e idempotencia.
+- [ ] T03.4 Auditar listado, decisión y denegaciones.
+- [ ] T03.5 Conectar bandeja a API y retirar estado React como verdad.
+- [ ] T03.6 Implementar carga, vacío, error, conflicto y confirmaciones.
+- [ ] T03.7 Probar rol, cross-tenant, Alcaldía, solicitante y concurrencia.
+
+## MP04 — Provisión y acceso posterior
+
+- [ ] T04.1 Implementar saga/estado de provisión e idempotencia Keycloak.
+- [ ] T04.2 Persistir y verificar el `sub` real.
+- [ ] T04.3 Implementar Paciente aprobado self-scope.
+- [ ] T04.4 Implementar portada Cuidador sin datos cuando no hay relación.
+- [ ] T04.5 Implementar perfil/afiliación profesional según OD-06.
+- [ ] T04.6 Mantener asignaciones como autorización separada.
+- [ ] T04.7 Implementar suspensión/revocación y OD-04.
+- [ ] T04.8 Probar login antes/después, fallo OIDC, relación y asignación.
+
+## MP05 — Seed, reset y operación
+
+- [ ] T05.1 Aprobar dataset ficticio exacto.
+- [ ] T05.2 Crear carga determinista de dos tenants ficticios.
+- [ ] T05.3 Crear reset con allowlist de ambiente/base/realm/tenant.
+- [ ] T05.4 Añadir scripts npm sin dependencias nuevas.
+- [ ] T05.5 Crear `docs/runbooks/demo.md` con arranque y healthchecks.
+- [ ] T05.6 Mantener credenciales solo en variables locales ignoradas.
+- [ ] T05.7 Probar dos resets, denegación segura y recuperación.
+
+## MP06 — Verificación y handoff
+
+- [ ] T06.1 E2E Paciente independiente.
+- [ ] T06.2 E2E Cuidador sin y con relación autorizada.
+- [ ] T06.3 E2E Personal de terreno sin y con asignación autorizada.
+- [ ] T06.4 E2E Hospital, cross-tenant, conflicto, fallo OIDC y revocación.
+- [ ] T06.5 Ejecutar axe, teclado y responsive a 320 px.
+- [ ] T06.6 Ejecutar build, typecheck, lint, Prisma, secretos y suites.
+- [ ] T06.7 Ejecutar compuerta y validación SDD estricta.
+- [ ] T06.8 Ensayar guion y recuperación desde runbook.
+- [ ] T06.9 Entregar evidencia para auditoría Codex.
+- [ ] T06.10 Codex audita; Product Owner acepta o rechaza.
+
+## Prohibiciones operativas
+
+- [ ] No ejecutar `confirm-user-consent.sh` por iniciativa del agente.
+- [ ] No modificar `prototype-claude/`, `tasks/`, `reviews/` ni `main`.
+- [ ] No hacer commit, merge, push, PR, release o deploy sin autorización.
+- [ ] No usar datos o credenciales reales.
+- [ ] No declarar el demo como producción ni verificación oficial.

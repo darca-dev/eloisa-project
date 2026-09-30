@@ -19,6 +19,7 @@ import type { HospitalAdminPestanaId } from './hospitalAdministrationConfig';
 import { HOSPITAL_NAV_ITEMS } from './hospitalConfig';
 import { HospitalMemberships } from './HospitalMemberships';
 import { HospitalShell } from './HospitalShell';
+import type { HospitalSesionDto } from './hospitalInstitutionClient';
 import { hospitalProfesionalesCore } from './hospitalProfessionalsConfig';
 import { SESION_INSTITUCIONAL_FICTICIA, apariciones, main, texto } from './hospitalTestUtils';
 import { destinoDeItem } from './hospitalViews';
@@ -39,16 +40,29 @@ const CONFIG = hospitalAdministracionDemo;
 /** Identificador del buscador local de «Personal y accesos». */
 const BUSCADOR_ID = 'hospital-admin-personal-buscador';
 
+const SESION_REVISORA: HospitalSesionDto = {
+  role: 'HOSPITAL_ACCESS_REVIEWER',
+  expiresAt: '2026-09-30T20:00:00.000Z',
+  institution: { name: 'Institución ficticia de revisión' },
+  actorDisplay: 'Acceso institucional',
+};
+
 /** Shell montado directamente en la pestaña administrativa indicada. */
-function admin(pestana: HospitalAdminPestanaId = HOSPITAL_ADMIN_PESTANA_INICIAL): string {
+function admin(
+  pestana: HospitalAdminPestanaId = HOSPITAL_ADMIN_PESTANA_INICIAL,
+  revisora = false,
+): string {
   return renderToStaticMarkup(
-    <HospitalShell sesionInicial={SESION_INSTITUCIONAL_FICTICIA} vistaInicial="administracion" pestanaAdministracionInicial={pestana} />,
+    <HospitalShell sesionInicial={revisora ? SESION_REVISORA : SESION_INSTITUCIONAL_FICTICIA} vistaInicial="administracion" pestanaAdministracionInicial={pestana} />,
   );
 }
 
 /** Texto visible del área de contenido para esa pestaña. */
-function contenido(pestana: HospitalAdminPestanaId = HOSPITAL_ADMIN_PESTANA_INICIAL): string {
-  return texto(main(admin(pestana)));
+function contenido(
+  pestana: HospitalAdminPestanaId = HOSPITAL_ADMIN_PESTANA_INICIAL,
+  revisora = false,
+): string {
+  return texto(main(admin(pestana, revisora)));
 }
 
 /* ========================================================================== */
@@ -84,7 +98,7 @@ describe('T-02 — «Configuración» es el único acceso del menú a Administra
   });
 });
 
-/** Las siete vistas/bloques autorizados y la pestaña que los monta (AC-04). */
+/** Los bloques autorizados y la pestaña que los monta (AC-04). */
 const BLOQUES_AUTORIZADOS: readonly (readonly [string, HospitalAdminPestanaId, string])[] = [
   ['Membresías y servicios', 'Membresías', 'Planes de membresía'],
   ['Información clínica institucional', 'Historia clínica', 'Información clínica institucional'],
@@ -105,8 +119,9 @@ describe('T-03 — Pestañas del contenedor', () => {
     expect(contenido(pestana)).toContain(encabezado);
   });
 
-  it('declara exactamente las siete pestañas autorizadas, con «Roles y permisos» separada', () => {
+  it('declara exactamente las ocho pestañas autorizadas, con «Roles y permisos» separada', () => {
     expect([...HOSPITAL_ADMIN_PESTANAS]).toEqual([
+      'Solicitudes de acceso',
       'Membresías',
       'Historia clínica',
       'Personal y accesos',
@@ -123,14 +138,14 @@ describe('T-03 — Pestañas del contenedor', () => {
     expect(esPestanaAdministracion('Semáforo y alertas')).toBe(false);
   });
 
-  it.each(HOSPITAL_ADMIN_PESTANAS)('%s monta un solo bloque y anuncia su estado', (pestana) => {
+  it.each(HOSPITAL_ADMIN_PESTANAS.filter((pestana) => pestana !== 'Solicitudes de acceso'))('%s monta un solo bloque y anuncia su estado', (pestana) => {
     const html = admin(pestana);
 
     expect(html).toContain(`data-hospital-admin="${pestana}"`);
     expect(apariciones(html, /data-hospital-admin=/gu)).toBe(1);
     expect(apariciones(html, /data-hospital-pestana="activa"/gu)).toBe(1);
     expect(apariciones(html, /data-hospital-pestana="inactiva"/gu)).toBe(
-      HOSPITAL_ADMIN_PESTANAS.length - 1,
+      HOSPITAL_ADMIN_PESTANAS.length - 2,
     );
     expect(apariciones(html, /aria-pressed="true"/gu)).toBe(1);
     expect(apariciones(main(html), /<h1\b/gu)).toBe(1);
@@ -141,9 +156,22 @@ describe('T-03 — Pestañas del contenedor', () => {
     const html = admin();
 
     expect(apariciones(html, /aria-controls="hospital-administracion-panel"/gu)).toBe(
-      HOSPITAL_ADMIN_PESTANAS.length,
+      HOSPITAL_ADMIN_PESTANAS.length - 1,
     );
     expect(html).toContain('id="hospital-administracion-panel"');
+  });
+
+  it('«Solicitudes de acceso» solo se monta para el rol revisor y parte de carga real', () => {
+    const html = admin('Solicitudes de acceso', true);
+    const visible = contenido('Solicitudes de acceso', true);
+
+    expect(html).toContain('data-hospital-admin="Solicitudes de acceso"');
+    expect(visible).toContain('Solicitudes de acceso');
+    expect(visible).toContain('Datos ficticios de prueba');
+    expect(visible).toContain('Cargando solicitudes');
+    expect(visible).toContain('Visitador médico');
+    expect(visible).not.toContain('SOL-DEMO');
+    expect(admin('Solicitudes de acceso')).not.toContain('data-hospital-admin="Solicitudes de acceso"');
   });
 
   it('no reimplementa «Novedades» ni «Semáforo y alertas» del prototipo', () => {

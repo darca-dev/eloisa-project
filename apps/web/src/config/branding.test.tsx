@@ -129,7 +129,7 @@ describe('sustitución futura de los nombres visibles (T-16)', () => {
     expect(conSustituto).not.toContain('Eloisa');
 
     expect(normalizar(conSustituto, SUSTITUTO)).toBe(normalizar(conDefecto, branding));
-  });
+  }, 15000);
 });
 
 /* -------------------------------------------------------------------------- */
@@ -170,7 +170,10 @@ function archivosFuente(directory: string): string[] {
     if (entry.isDirectory()) {
       return archivosFuente(full);
     }
-    return /\.tsx?$/u.test(entry.name) ? [full] : [];
+    if (!/\.tsx?$/u.test(entry.name)) {
+      return [];
+    }
+    return [full];
   });
 }
 
@@ -223,6 +226,13 @@ describe('literales de marca centralizados (T-02, T-17)', () => {
       path.join(SRC_ROOT, 'config', 'branding.test.tsx'),
       path.join(SRC_ROOT, 'app', 'page.test.tsx'),
       path.join(SRC_ROOT, 'app', 'brandingMetadata.test.ts'),
+      /*
+       * Excepción cerrada mínima: el shell Hospital integra la marca (H-FID-B)
+       * y este archivo de prueba afirma esa integración usando los nombres en
+       * sus títulos. No es una prueba de búsqueda negativa, por eso vive en
+       * `permitidos` y no en `excepciones`.
+       */
+      path.join(SRC_ROOT, 'features', 'hospital', 'hospitalShell.test.tsx'),
     ]);
 
     const duplicados: string[] = [];

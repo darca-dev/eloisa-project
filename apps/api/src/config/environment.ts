@@ -66,6 +66,43 @@ export interface KeycloakPatientConfig {
 }
 
 /**
+ * Configuración ADMINISTRATIVA OIDC para la provisión de cuentas (SPEC 038, MP04).
+ *
+ * Es COMPLETA o AUSENTE. No existe una configuración parcial: quien declara el
+ * cliente administrativo tiene intención de aprovisionar y no puede quedarse a
+ * medias sin que el arranque lo advierta.
+ *
+ * REGLAS, todas fail-closed y todas antes de atender una sola petición:
+ *
+ * 1. Solo se admite con `MERDN_ENVIRONMENT` en `development` o `test`. En `mvp`
+ *    la presencia de esta configuración DETIENE el arranque: el realm `merdn-local`
+ *    contiene únicamente personas ficticias y no puede aprovisionar nada real.
+ * 2. El realm derivado del issuer debe ser EXACTAMENTE `merdn-local`.
+ * 3. El host debe ser un host local aprobado: bucle local o `host.docker.internal`.
+ * 4. El issuer debe ser EXACTAMENTE el mismo que el de la autenticación humana.
+ *    Con dos emisores distintos, el `sub` persistido durante el registro no
+ *    coincidiría con el que devuelve el inicio de sesión, y toda cuenta quedaría
+ *    inaccesible sin que nada lo indicara.
+ * 5. Sin credenciales embebidas, sin consulta y sin fragmento.
+ *
+ * `adminUrl` NO es una variable: es el ORIGEN del issuer, derivado aquí, para
+ * que no pueda existir una administración apuntando a un host distinto del que
+ * autentica. La contraseña del cliente administrativo NUNCA se conserva en este
+ * objeto ni se registra en ningún mensaje.
+ */
+export interface AccessProvisioningConfig {
+  /** Issuer del realm humano local. Es también la base de la API admin. */
+  readonly issuer: string;
+  /** Origen del issuer, usado contra la API administrativa. Derivado, no declarado. */
+  readonly adminUrl: string;
+  /** Realm fijado por decisión del paquete. No configurable. */
+  readonly realm: string;
+  readonly clientId: string;
+  /** Secreto del cliente administrativo. Nunca se registra ni se devuelve. */
+  readonly clientSecret: string;
+}
+
+/**
  * Modo de aplicación del rol runtime de base de datos.
  *
  * `enforce` —el valor por defecto— hace que toda operación de negocio adopte el
@@ -119,6 +156,11 @@ export interface ApiEnvironment {
   readonly enrollmentRateLimit: RateLimitConfig;
   /** Configuración de Keycloak para pacientes (Spec 027). Opcional: undefined si la feature está deshabilitada. */
   readonly keycloakPatient?: KeycloakPatientConfig;
+  /**
+   * Configuración administrativa OIDC de provisión (SPEC 038, MP04).
+   * `undefined` cuando el despliegue no aprovisiona cuentas.
+   */
+  readonly accessProvisioning?: AccessProvisioningConfig;
 }
 
 /** Error de validación de entorno. Nunca contiene valores de variables. */
@@ -624,6 +666,175 @@ function parseKeycloakPatientConfig(source: EnvironmentSource): KeycloakPatientC
   };
 }
 
+/** Variables de la configuración administrativa OIDC de provisión (MP04). */
+export const ACCESS_PROVISIONING_ENV = {
+  issuer: 'MERDN_ACCESS_PROVISIONING_ISSUER',
+  clientId: 'MERDN_ACCESS_PROVISIONING_CLIENT_ID',
+  clientSecret: 'MERDN_ACCESS_PROVISIONING_CLIENT_SECRET',
+  /** Issuer humano, que debe coincidir exactamente. Se LEE, no se redeclara. */
+  humanIssuer: 'MERDN_HUMAN_AUTH_ISSUER',
+} as const;
+
+/**
+ * Realm local ÚNICO admitido para la provisión de cuentas (SPEC 038, MP04).
+ *
+ * No es una preferencia de despliegue: el realm `merdn-local` es el que contiene
+ * las personas ficticias del entorno funcional, y aprovisionar un realm distinto
+ * pondría credenciales preparadas para una demo delante de un proveedor con datos
+ * reales.
+ */
+export const ACCESS_PROVISIONING_REALM = 'merdn-local';
+
+/**
+ * Hosts locales admitidos para la administración OIDC.
+ *
+ * Comparación por IGUALDAD EXACTA, igual que en el módulo humano: un host como
+ * `localhost.ejemplo.invalid` no queda admitido. Se reutilizan los mismos
+ * nombres que ya valida la autenticación humana para que las dos superficies no
+ * puedan divergir sobre qué es "local".
+ */
+export const ACCESS_PROVISIONING_LOCAL_HOSTS: readonly string[] = [
+  '127.0.0.1',
+  'localhost',
+  '::1',
+  '[::1]',
+  'host.docker.internal',
+];
+
+/** Normaliza un issuer para compararlo por igualdad exacta: sin barra final. */
+function normalizeIssuer(value: string): string {
+  return value.trim().replace(/\/+$/u, '');
+}
+
+/**
+ * Deriva y valida la configuración administrativa OIDC.
+ *
+ * Devuelve `undefined` si NO se declara ninguna variable: en ese caso el
+ * despliegue no aprovisiona cuentas y eso no es un error. Cualquier declaración
+ * PARCIAL lanza, porque significa que alguien quiso habilitar la provisión y no
+ * puede quedarse a medias sin que el arranque lo advierta.
+ */
+function parseAccessProvisioningConfig(
+  source: EnvironmentSource,
+  merdnEnvironment: MerdnEnvironment,
+): AccessProvisioningConfig | undefined {
+  const issuerRaw = readOptional(source, ACCESS_PROVISIONING_ENV.issuer);
+  const clientId = readOptional(source, ACCESS_PROVISIONING_ENV.clientId);
+  const clientSecret = readOptional(source, ACCESS_PROVISIONING_ENV.clientSecret);
+
+  const declaradas = [issuerRaw, clientId, clientSecret].filter(
+    (value) => value !== undefined,
+  ).length;
+
+  if (declaradas === 0) {
+    return undefined;
+  }
+
+  if (declaradas !== 3) {
+    throw new EnvironmentValidationError(
+      'MERDN_ACCESS_PROVISIONING_*',
+      'está definida parcialmente: deben definirse las tres (MERDN_ACCESS_PROVISIONING_ISSUER, ' +
+        'MERDN_ACCESS_PROVISIONING_CLIENT_ID, MERDN_ACCESS_PROVISIONING_CLIENT_SECRET) o ninguna',
+    );
+  }
+
+  if (merdnEnvironment === 'mvp') {
+    throw new EnvironmentValidationError(
+      ACCESS_PROVISIONING_ENV.issuer,
+      `no puede estar definida en el entorno mvp: el realm ${ACCESS_PROVISIONING_REALM} ` +
+        'contiene únicamente personas ficticias',
+    );
+  }
+
+  const issuer = normalizeIssuer(issuerRaw as string);
+
+  let parsed: URL;
+  try {
+    parsed = new URL(issuer);
+  } catch {
+    throw new EnvironmentValidationError(
+      ACCESS_PROVISIONING_ENV.issuer,
+      'no es una URL absoluta válida',
+    );
+  }
+
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+    throw new EnvironmentValidationError(
+      ACCESS_PROVISIONING_ENV.issuer,
+      'debe usar el esquema https:// o, solo en desarrollo local, http://',
+    );
+  }
+
+  if (parsed.username !== '' || parsed.password !== '') {
+    throw new EnvironmentValidationError(
+      ACCESS_PROVISIONING_ENV.issuer,
+      'no puede incluir credenciales embebidas',
+    );
+  }
+
+  if (parsed.search !== '' || parsed.hash !== '') {
+    throw new EnvironmentValidationError(
+      ACCESS_PROVISIONING_ENV.issuer,
+      'no puede incluir cadena de consulta ni fragmento',
+    );
+  }
+
+  if (!ACCESS_PROVISIONING_LOCAL_HOSTS.includes(parsed.hostname)) {
+    throw new EnvironmentValidationError(
+      ACCESS_PROVISIONING_ENV.issuer,
+      'solo puede apuntar al bucle local o al nombre Docker local aprobado',
+    );
+  }
+
+  /*
+   * Realms exactamente `/realms/<nombre>` y `<nombre>` igual a `merdn-local`.
+   * Se exige la FORMA COMPLETA: un issuer que solo contenga el fragmento en otro
+   * punto del camino —`/merdn-local/realms/otro`— no cumple la decisión del
+   * paquete y no debe pasar por contener la subcadena.
+   */
+  const realmMatch = /^\/realms\/([^/]+)\/?$/u.exec(parsed.pathname);
+
+  if (realmMatch === null || realmMatch[1] !== ACCESS_PROVISIONING_REALM) {
+    throw new EnvironmentValidationError(
+      ACCESS_PROVISIONING_ENV.issuer,
+      `debe apuntar exactamente al realm /realms/${ACCESS_PROVISIONING_REALM}`,
+    );
+  }
+
+  /*
+   * EL MISMO EMISOR QUE LA AUTENTICACIÓN HUMANA. No es una comprobación de
+   * cortesía: la identidad persistida durante el registro es el `sub` de ESTE
+   * emisor, y el inicio de sesión verifica el `sub` del emisor humano. Dos
+   * emisores distintos dejarían toda cuenta preparada permanentemente
+   * inaccesible, y la falla se manifestaría como un rechazo de login sin causa
+   * visible.
+   */
+  const humanIssuerRaw = readOptional(source, ACCESS_PROVISIONING_ENV.humanIssuer);
+
+  if (humanIssuerRaw === undefined) {
+    throw new EnvironmentValidationError(
+      ACCESS_PROVISIONING_ENV.issuer,
+      `exige que ${ACCESS_PROVISIONING_ENV.humanIssuer} esté definida: sin autenticación ` +
+        'humana no existe ninguna vía para utilizar una cuenta aprovisionada',
+    );
+  }
+
+  if (normalizeIssuer(humanIssuerRaw) !== issuer) {
+    throw new EnvironmentValidationError(
+      ACCESS_PROVISIONING_ENV.issuer,
+      `debe coincidir exactamente con ${ACCESS_PROVISIONING_ENV.humanIssuer}`,
+    );
+  }
+
+  return {
+    issuer,
+    adminUrl: parsed.origin,
+    realm: ACCESS_PROVISIONING_REALM,
+    clientId: clientId as string,
+    clientSecret: clientSecret as string,
+  };
+}
+
 /**
  * Construye la configuración de la API a partir de una fuente de entorno.
  * Lanza `EnvironmentValidationError` ante la primera variable inválida.
@@ -667,5 +878,6 @@ export function loadApiEnvironment(source: EnvironmentSource): ApiEnvironment {
       ),
     },
     keycloakPatient: parseKeycloakPatientConfig(source),
+    accessProvisioning: parseAccessProvisioningConfig(source, merdnEnvironment),
   };
 }

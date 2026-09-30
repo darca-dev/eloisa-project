@@ -1,9 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+import {
+  APPROVED_EXPERIENCE_ORDER,
+  type ApprovedExperience,
+} from '../identity-access/approved-experiences.service';
+
 import { HUMAN_CONTEXTS, type HumanContext } from './human-auth.contract';
 
 /**
- * DTOs de la superficie HUMANA (IDENTITY-RELATIONSHIPS-CORE-01 §8.1).
+ * DTOs de la superficie HUMANA (IDENTITY-RELATIONSHIPS-CORE-01 §8.1;
+ * MP04 añade `HumanExperiencesDto`).
  *
  * Son clases explícitas y NO exponen modelos Prisma.
  *
@@ -12,9 +18,9 @@ import { HUMAN_CONTEXTS, type HumanContext } from './human-auth.contract';
  * `professionalId`, `issuer`, `subject`, claims del proveedor, nombre,
  * documento, fecha de nacimiento ni datos de contacto.
  *
- * Lo único que la interfaz necesita saber es cuánto le queda de sesión y qué
- * contextos tiene disponibles. Todo lo demás lo resuelve el servidor en cada
- * operación.
+ * Lo único que la interfaz necesita saber es cuánto le queda de sesión, qué
+ * contextos tiene disponibles y qué experiencias aprobadas puede abrir. Todo lo
+ * demás lo resuelve el servidor en cada operación.
  */
 
 export class HumanSessionDto {
@@ -57,6 +63,30 @@ export class HumanContextsDto {
     example: ['PATIENT', 'CAREGIVER'],
   })
   public contexts!: HumanContext[];
+}
+
+/**
+ * Experiencias APROBADAS de la cuenta (SPEC 038, MP04).
+ *
+ * Se separa de `HumanContextsDto` a propósito: `contexts` describe
+ * PARTICIPACIONES y `experiences` describe APROBACIONES. Un cuidador sin
+ * relación no obtiene contexto `CAREGIVER` pero sí experiencia aprobada
+ * `CAREGIVER`; una solicitud todavía `PENDING` no da experiencia aunque la
+ * `Person` ya tenga participaciones de otra procedencia.
+ */
+export class HumanExperiencesDto {
+  @ApiProperty({
+    description:
+      'Experiencias APROBADAS de la cuenta, derivadas server-side a partir de su cuenta ' +
+      'activa, sus solicitudes en estado APPROVED y la participación que cada aprobación ' +
+      'creó. Lista vacía cuando ninguna experiencia está aprobada. Una experiencia decide ' +
+      'únicamente a QUÉ portada se puede entrar: no autoriza a ver ningún paciente, visita ' +
+      'ni liquidación concretos, y cada operación posterior vuelve a evaluar sus permisos.',
+    enum: [...APPROVED_EXPERIENCE_ORDER],
+    isArray: true,
+    example: ['PATIENT'],
+  })
+  public experiences!: ApprovedExperience[];
 }
 
 /** Error uniforme de la superficie humana. */

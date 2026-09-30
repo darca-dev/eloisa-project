@@ -154,11 +154,11 @@ describe('compatibilidad de la fachada institucional de Hospital', () => {
 });
 
 /* ========================================================================== */
-/* Alcance: los tres roles siguen siendo disjuntos y Hospital no gana ninguno  */
+/* Alcance: los cuatro roles siguen siendo disjuntos y Hospital no gana ninguno */
 /* ========================================================================== */
 
 describe('alcance de la fachada institucional', () => {
-  it('rotula los mismos tres roles, incluido el municipal, sin concederlos', () => {
+  it('rotula los cuatro roles institucionales sin concederlos', () => {
     /*
      * `MUNICIPAL_VIEWER` ya estaba rotulado aquí antes de la extracción: la
      * fachada no lo estrena. Rotular un rol NO lo concede —la autorización vive
@@ -166,6 +166,7 @@ describe('alcance de la fachada institucional', () => {
      * con Alcaldía no cambia eso.
      */
     expect(HOSPITAL_ETIQUETA_ROL).toStrictEqual({
+      HOSPITAL_ACCESS_REVIEWER: 'Revisión de solicitudes de acceso',
       HOSPITAL_PATIENT_VIEWER: 'Consulta de pacientes',
       HOSPITAL_SCHEDULER: 'Agenda hospitalaria',
       MUNICIPAL_VIEWER: 'Consulta municipal agregada',

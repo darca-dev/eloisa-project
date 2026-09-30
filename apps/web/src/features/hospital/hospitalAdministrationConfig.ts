@@ -75,7 +75,7 @@ export type HospitalAdminPestanaId = (typeof HOSPITAL_ADMIN_PESTANAS)[number];
 /** Pestaña de partida cuando todavía no existe selección (FR-01.4). */
 export const HOSPITAL_ADMIN_PESTANA_INICIAL: HospitalAdminPestanaId = 'Membresías';
 
-/** `true` solo para las siete pestañas autorizadas. */
+/** `true` solo para las ocho pestañas autorizadas. */
 export function esPestanaAdministracion(id: string): id is HospitalAdminPestanaId {
   return (HOSPITAL_ADMIN_PESTANAS as readonly string[]).includes(id);
 }

@@ -391,11 +391,11 @@ describe.skipIf(!puedeEjecutarse)('Endurecimiento de CORE-01 en PostgreSQL', () 
       expect(rol[0]?.rolbypassrls).toBe(false);
     });
 
-    it('RLS está activa en las nueve tablas de negocio', async () => {
+    it('RLS esta activa y forzada en las nueve tablas de negocio', async () => {
       const tablas = await prisma.$queryRawUnsafe<
-        { relname: string; relrowsecurity: boolean }[]
+        { relname: string; relrowsecurity: boolean; relforcerowsecurity: boolean }[]
       >(
-        `SELECT relname, relrowsecurity FROM pg_class
+        `SELECT relname, relrowsecurity, relforcerowsecurity FROM pg_class
           WHERE relname IN ('person','patient','patient_population_membership',
                             'patient_address','consent_record','enrollment_session',
                             'audit_event','territorial_unit','tenant')`,
@@ -404,6 +404,7 @@ describe.skipIf(!puedeEjecutarse)('Endurecimiento de CORE-01 en PostgreSQL', () 
       expect(tablas).toHaveLength(9);
       for (const tabla of tablas) {
         expect(tabla.relrowsecurity).toBe(true);
+        expect(tabla.relforcerowsecurity).toBe(true);
       }
     });
 

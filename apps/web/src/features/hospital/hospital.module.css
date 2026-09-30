@@ -1144,8 +1144,8 @@
   min-width: 0;
   display: flex;
   align-items: flex-start;
-  justify-content: flex-start;
-  padding: 24px 26px 60px;
+  justify-content: center;
+  padding: 48px 26px;
   background: var(--b-lienzo);
 }
 

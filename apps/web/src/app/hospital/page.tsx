@@ -6,19 +6,22 @@ import { HospitalShell } from '@/features/hospital/HospitalShell';
 import type { HospitalSesionDto } from '@/features/hospital/hospitalInstitutionClient';
 
 /**
- * Superficie de revisión del Shell Hospital (TASK-003H-01, FR-01).
+ * Superficie protegida de revisión del Shell Hospital (TASK-003H-01, FR-01).
  *
- * `/hospital` existe para que el Product Owner reconozca en localhost la
- * envolvente visual aprobada. No reemplaza ni degrada `/` ni ninguna otra
- * experiencia, no consume entorno y no crea sesión, cuenta ni dato persistente.
+ * La ruta NORMAL de `/hospital` no inyecta ninguna sesión: la composición la
+ * resuelve del lado del servidor a través de la sesión institucional compartida,
+ * igual que la experiencia municipal. No consume datos ficticios para pintar un
+ * panel que la sesión no respalda.
  *
- * Se inyecta una sesión demostrativa para que el shell muestre el panel completo
- * en entornos de desarrollo local sin backend activo, reproduciendo fielmente
- * el prototipo oficial `Eligeme-Hospital.dc.html`.
+ * El modo demo local SOLO se habilita mediante configuración explícita
+ * server-side (`MERDN_HOSPITAL_DEMO_LOCAL=true`), cerrada por defecto. Ningún
+ * parámetro de URL puede activarlo: el bypass no existe en el navegador.
  *
- * NOTA: esta sesión ES FICTICIA — no otorga acceso al API real, no tiene
- * cookie HttpOnly válida y no persiste entre recargas. Los endpoints de datos
- * siguen protegidos por sus propios guards en el servidor.
+ * Con el modo demo activado se inyecta una sesión demostrativa para que el shell
+ * muestre el panel completo en un entorno local sin backend. Esa sesión ES
+ * FICTICIA: no otorga acceso al API real, no tiene cookie HttpOnly válida y no
+ * persiste entre recargas. Los endpoints de datos siguen protegidos por sus
+ * propios guards en el servidor.
  */
 const SESION_DEMO: HospitalSesionDto = {
   role: 'HOSPITAL_PATIENT_VIEWER',
@@ -26,6 +29,11 @@ const SESION_DEMO: HospitalSesionDto = {
   institution: { name: 'Hospital San Rafael (ESE)' },
   actorDisplay: 'Acceso institucional · Demo local',
 };
+
+/** Modo demo local habilitado SOLO por configuración explícita server-side. */
+function modoDemoLocal(): boolean {
+  return process.env.MERDN_HOSPITAL_DEMO_LOCAL === 'true';
+}
 
 export const metadata: Metadata = {
   title: `${platformNameInSentence()} — Hospital`,
@@ -35,5 +43,8 @@ export const metadata: Metadata = {
 };
 
 export default function HospitalPage(): ReactNode {
+  if (!modoDemoLocal()) {
+    return <HospitalShell />;
+  }
   return <HospitalShell sesionInicial={SESION_DEMO} modoDemoLocal />;
 }

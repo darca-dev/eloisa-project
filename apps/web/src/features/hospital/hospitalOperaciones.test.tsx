@@ -382,8 +382,8 @@ describe('T-10G — Sesión personal profesional sobre el flujo humano existente
     const url = new URL(urlDeLoginHumano());
 
     expect(url.pathname).toBe('/api/v1/human-auth/login');
-    expect(url.searchParams.get('returnTo')).toBe('/');
-    expect(panel(null)).toContain('/api/v1/human-auth/login?returnTo=/');
+    expect(url.searchParams.get('returnTo')).toBe('/acceso');
+    expect(panel(null)).toContain('/api/v1/human-auth/login?returnTo=/acceso');
   });
 
   it('ofrece comprobar la sesión y explica que hay que volver a esta pantalla', () => {

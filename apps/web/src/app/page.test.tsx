@@ -11,32 +11,22 @@ const markupHub = (): string => renderToStaticMarkup(<HomePage />);
 const markupInscripcion = (): string => renderToStaticMarkup(<InscripcionPage />);
 
 describe('Portal Central de Acceso (Página Raíz /)', () => {
-  it('monta el Hub Central con los módulos institucionales destacados', () => {
+  it('presenta las tres puertas de acceso sin montar sus paneles', () => {
     const html = markupHub();
 
-    expect(html).toContain('Portal Central de Acceso');
-    expect(html).toContain('Alcaldía de Soacha');
-    expect(html).toContain('/municipality');
-    expect(html).toContain('Hospital (ESE)');
-    expect(html).toContain('/hospital');
-  });
-
-  it('destaca a los Profesionales de la Salud en terreno y clínicos', () => {
-    const html = markupHub();
-
-    expect(html).toContain('Profesionales de la Salud');
-    expect(html).toContain('Personal de Terreno / Visitadores');
-    expect(html).toContain('/profesional');
-    expect(html).toContain('Teleconsulta');
-  });
-
-  it('unifica la atención domiciliaria de Paciente y Cuidador con botón de certificación', () => {
-    const html = markupHub();
-
+    expect(html).toContain('Portal Eloisa');
     expect(html).toContain('Atención Domiciliaria');
+    expect(html).toContain('/acceso');
+    expect(html).toContain('Hospital');
+    expect(html).toContain('/hospital');
+    expect(html).toContain('Alcaldía');
+    expect(html).toContain('/municipality');
     expect(html).toContain('Paciente');
     expect(html).toContain('Cuidador');
-    expect(html).toContain('Certificarse como Cuidador');
+    expect(html).toContain('Visitador médico');
+    expect(html).toContain('Iniciar sesión');
+    expect(html).not.toContain('data-hospital-content');
+    expect(html).not.toContain('data-municipality-content');
   });
 
   it('conserva el branding institucional y el logotipo', () => {

@@ -80,7 +80,7 @@ Paciente tomó **021** para que las tres convivan cuando Visitador se integre.
 | 023 | staging-controlado-hostinger | Approved / Aprobada · consentida | High / Alta | Product Owner | 2026-08-27 |
 | 024 | bootstrap-tenant-enforce | Approved / Aprobada · consentida | High / Alta | Product Owner | 2026-08-28 |
 | 026 | experiencia-visual-responsiva-demo | Approved / Aprobada · pendiente de consentimiento SDD | High / Alta | Product Owner | 2026-09-17 |
-| 027 | portal-central-cuenta-paciente-persistente | Approved / Aprobada | High / Alta | Product Owner | 2026-09-18 |
+| 027 | portal-central-cuenta-paciente-persistente | Draft / Borrador (reconciliado en 038; cuarentena OD-12) | High / Alta | Product Owner | 2026-09-18 |
 | 028 | identidad-humana-completar | Approved / Aprobada | High / Alta | Product Owner | 2026-09-19 |
 | 029 | recuperacion-build-docker | Approved / Aprobada · consentida | Critical / Crítica | Product Owner | 2026-09-21 |
 
@@ -108,3 +108,4 @@ que auditar.
 | 035 | central-access-institutional-approval | Approved / Aprobada · consentimiento SDD recibido | Critical / Crítica | Product Owner | 2026-09-23 |
 | 036 | patient-demo-autofill | Approved / Aprobada · consentimiento SDD recibido | Medium / Media | Product Owner | 2026-09-23 |
 | 037 | local-oidc-recovery | Approved / Aprobada · consentimiento SDD recibido | High / Alta | Product Owner | 2026-09-24 |
+| 038 | demo-funcional-accesos-ficticios | Approved / Aprobada · consentimiento SDD recibido | Critical / Crítica | Product Owner | 2026-09-24 |

@@ -18,17 +18,24 @@
  * TASK-HOSPITAL-CORE-01 anade `HOSPITAL_PATIENT_VIEWER` y TASK-HOSPITAL-CORE-02
  * anade `HOSPITAL_SCHEDULER`, ambos de forma ADITIVA.
  *
- * Los TRES roles son DISJUNTOS: ninguna superficie acepta otro rol que el suyo,
+ * Los roles son DISJUNTOS: ninguna superficie acepta otro rol que el suyo,
  * `HOSPITAL_PATIENT_VIEWER` conserva su caracter de SOLO LECTURA sobre Hospital
  * Pacientes y no gana ninguna escritura, `HOSPITAL_SCHEDULER` no alcanza
- * Hospital Pacientes ni los agregados municipales, y ninguno de los tres
+ * Hospital Pacientes ni los agregados municipales, y ninguno de los cuatro
  * identifica a una persona trabajadora concreta.
+ *
+ * SPEC 038 / MP03-C1 anade `HOSPITAL_ACCESS_REVIEWER`, tambien ADITIVO y
+ * DISJUNTO. Ese rol es la UNICA capacidad que revisa solicitudes de acceso
+ * (SPEC 038 §6.4): no lee historiales clinicos, no agenda, no gestiona relaciones
+ * de cuidado y no consulta agregados municipales. Aprovisionarlo NO concede por
+ * si solo ningun acceso concedido al solicitante.
  */
 export const INSTITUTIONAL_ROLES = [
   'MUNICIPAL_VIEWER',
   'HOSPITAL_PATIENT_VIEWER',
   'HOSPITAL_SCHEDULER',
   'CAREGIVER_RELATIONSHIP_MANAGER',
+  'HOSPITAL_ACCESS_REVIEWER',
 ] as const;
 
 export type InstitutionalRoleCode = (typeof INSTITUTIONAL_ROLES)[number];
@@ -87,6 +94,21 @@ export const HOSPITAL_PATIENT_VIEWER_IDENTITY_CODE = 'hospital-patient-viewer';
  */
 
 /*
+ * SPEC 038 / MP03-C1 anade `HOSPITAL_ACCESS_REVIEWER`, de forma aditiva.
+ *
+ * Es la capacidad institucional que revisa el backlog de solicitudes de acceso
+ * del PROPIO tenant. NO es un quinto rol de consulta agregada ni una jerarquia
+ * que componga a los anteriores: no lee pacientes, no agenda, no gestiona
+ * relaciones de cuidado y no alcanza los agregados municipales.
+ *
+ * Igual que la agenda y que la gestion de relaciones, NO tiene codigo por
+ * defecto: su codigo y su credencial se aprovisionan exclusivamente por
+ * `MERDN_HOSPITAL_ACCESS_REVIEWER_CODE` y `MERDN_HOSPITAL_ACCESS_REVIEWER_SECRET`.
+ * Un revisor decide sobre datos de terceros, y un literal incorporado en el
+ * codigo fuente lo habilitaria en cualquier despliegue.
+ */
+
+/*
  * La identidad de agenda hospitalaria (`HOSPITAL_SCHEDULER`) NO tiene código
  * por defecto y no debe tenerlo: su código se aprovisiona exclusivamente por
  * `MERDN_HOSPITAL_SCHEDULER_CODE`. Sin código configurado y válido —y sin
@@ -135,6 +157,8 @@ export const INSTITUTIONAL_ENV = {
   hospitalSchedulerCode: 'MERDN_HOSPITAL_SCHEDULER_CODE',
   caregiverRelationshipManagerSecret: 'MERDN_CAREGIVER_RELATIONSHIP_MANAGER_SECRET',
   caregiverRelationshipManagerCode: 'MERDN_CAREGIVER_RELATIONSHIP_MANAGER_CODE',
+  hospitalAccessReviewerSecret: 'MERDN_HOSPITAL_ACCESS_REVIEWER_SECRET',
+  hospitalAccessReviewerCode: 'MERDN_HOSPITAL_ACCESS_REVIEWER_CODE',
   sessionTtlSeconds: 'MERDN_INSTITUTIONAL_SESSION_TTL_SECONDS',
 } as const;
 

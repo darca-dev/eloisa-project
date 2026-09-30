@@ -182,6 +182,8 @@ describe('configuración del aprovisionamiento institucional', () => {
       'MUNICIPAL_VIEWER',
       'HOSPITAL_PATIENT_VIEWER',
       'HOSPITAL_SCHEDULER',
+      'CAREGIVER_RELATIONSHIP_MANAGER',
+      'HOSPITAL_ACCESS_REVIEWER',
     ]);
   });
 
@@ -271,17 +273,30 @@ describe('configuración del aprovisionamiento institucional', () => {
         [INSTITUTIONAL_ENV.municipalViewerSecret]: 'abc123',
         [INSTITUTIONAL_ENV.hospitalPatientViewerSecret]: 'xyz789',
         [INSTITUTIONAL_ENV.hospitalSchedulerSecret]: 'qwe456',
+        [INSTITUTIONAL_ENV.hospitalAccessReviewerSecret]: 'asd345',
       },
       entorno(),
     );
 
     expect(config.provisioning.identities).toStrictEqual([]);
+    expect(
+      config.provisioning.skipped.map((omitida) => omitida.role),
+    ).toStrictEqual([
+      'MUNICIPAL_VIEWER',
+      'HOSPITAL_PATIENT_VIEWER',
+      'HOSPITAL_SCHEDULER',
+      'CAREGIVER_RELATIONSHIP_MANAGER',
+      'HOSPITAL_ACCESS_REVIEWER',
+    ]);
 
-    for (const omitida of config.provisioning.skipped) {
+    for (const omitida of config.provisioning.skipped.filter(
+      (candidata) => candidata.role !== 'CAREGIVER_RELATIONSHIP_MANAGER',
+    )) {
       expect(omitida.reason).toContain('caracteres');
       expect(omitida.reason).not.toContain('abc123');
       expect(omitida.reason).not.toContain('xyz789');
       expect(omitida.reason).not.toContain('qwe456');
+      expect(omitida.reason).not.toContain('asd345');
     }
   });
 
@@ -348,11 +363,13 @@ describe('configuración del aprovisionamiento institucional', () => {
     expect(config.provisioning.skipped[0]?.reason).toContain('MUNICIPAL_VIEWER');
   });
 
-  it('los tres roles del contrato son exactamente los implementados', () => {
+  it('los cinco roles del contrato son exactamente los implementados', () => {
     expect([...INSTITUTIONAL_ROLES]).toStrictEqual([
       'MUNICIPAL_VIEWER',
       'HOSPITAL_PATIENT_VIEWER',
       'HOSPITAL_SCHEDULER',
+      'CAREGIVER_RELATIONSHIP_MANAGER',
+      'HOSPITAL_ACCESS_REVIEWER',
     ]);
   });
 
@@ -547,6 +564,8 @@ describe('aprovisionamiento fail-closed de la agenda hospitalaria', () => {
     expect(provisioning.skipped.map((omitida) => omitida.role)).toStrictEqual([
       'MUNICIPAL_VIEWER',
       'HOSPITAL_PATIENT_VIEWER',
+      'CAREGIVER_RELATIONSHIP_MANAGER',
+      'HOSPITAL_ACCESS_REVIEWER',
     ]);
     expect(provisioning.compatibilityIdentityCode).toBeNull();
   });
@@ -616,5 +635,93 @@ describe('aprovisionamiento fail-closed de la agenda hospitalaria', () => {
     expect(motivos).not.toContain(SECRETO_AGENDA);
     expect(motivos).not.toContain('qwe456');
     expect(motivos).not.toContain(CODIGO_AGENDA_CONFIGURADO);
+  });
+});
+
+/*
+ * El quinto rol, el revisor de acceso (SPEC 038 MP03-C1), se aprovisiona con la
+ * misma regla fail-closed que los otros: sin las DOS variables no existe la
+ * identidad, y con una credencial débil tampoco. La diferencia relevante es que
+ * no tiene código por defecto: un revisor que aprovisiona credenciales
+ * ajenas al hospital existiría por una variable omitida.
+ */
+describe('aprovisionamiento fail-closed del revisor de acceso', () => {
+  const SECRETO_REVISOR = 'clave-ficticia-de-pruebas-revisor-0005';
+  const CODIGO_REVISOR = 'revisor-accesos-ficticio';
+
+  function cargar(source: Record<string, string>) {
+    return loadInstitutionalAuthConfig(source, entorno()).provisioning;
+  }
+
+  function revisorOmitido(source: Record<string, string>): boolean {
+    const provisioning = cargar(source);
+
+    return (
+      !provisioning.identities.some((identity) => identity.role === 'HOSPITAL_ACCESS_REVIEWER') &&
+      provisioning.skipped.some((omitida) => omitida.role === 'HOSPITAL_ACCESS_REVIEWER')
+    );
+  }
+
+  function motivoRevisor(source: Record<string, string>): string | undefined {
+    return cargar(source).skipped.find((omitida) => omitida.role === 'HOSPITAL_ACCESS_REVIEWER')
+      ?.reason;
+  }
+
+  it('con solo la credencial válida NO aprovisiona al revisor', () => {
+    const source = { [INSTITUTIONAL_ENV.hospitalAccessReviewerSecret]: SECRETO_REVISOR };
+
+    expect(revisorOmitido(source)).toBe(true);
+    expect(motivoRevisor(source)).toContain(INSTITUTIONAL_ENV.hospitalAccessReviewerCode);
+  });
+
+  it('con solo el código válido NO aprovisiona al revisor', () => {
+    const source = { [INSTITUTIONAL_ENV.hospitalAccessReviewerCode]: CODIGO_REVISOR };
+
+    expect(revisorOmitido(source)).toBe(true);
+    expect(motivoRevisor(source)).toContain(INSTITUTIONAL_ENV.hospitalAccessReviewerSecret);
+  });
+
+  it('con la credencial demasiado corta NO aprovisiona al revisor', () => {
+    const source = {
+      [INSTITUTIONAL_ENV.hospitalAccessReviewerCode]: CODIGO_REVISOR,
+      [INSTITUTIONAL_ENV.hospitalAccessReviewerSecret]: 'qwe456',
+    };
+
+    expect(revisorOmitido(source)).toBe(true);
+    expect(motivoRevisor(source)).toContain(INSTITUTIONAL_ENV.hospitalAccessReviewerSecret);
+  });
+
+  it('con las dos variables válidas SÍ aprovisiona al revisor y a nadie más', () => {
+    const provisioning = cargar({
+      [INSTITUTIONAL_ENV.hospitalAccessReviewerSecret]: SECRETO_REVISOR,
+      [INSTITUTIONAL_ENV.hospitalAccessReviewerCode]: CODIGO_REVISOR,
+    });
+
+    expect(provisioning.identities.map((identity) => identity.role)).toStrictEqual([
+      'HOSPITAL_ACCESS_REVIEWER',
+    ]);
+    expect(provisioning.identities[0]?.identityCode).toBe(CODIGO_REVISOR);
+    expect(provisioning.identities[0]?.accessSecret).toBe(SECRETO_REVISOR);
+    expect(provisioning.skipped.map((omitida) => omitida.role)).toStrictEqual([
+      'MUNICIPAL_VIEWER',
+      'HOSPITAL_PATIENT_VIEWER',
+      'HOSPITAL_SCHEDULER',
+      'CAREGIVER_RELATIONSHIP_MANAGER',
+    ]);
+  });
+
+  it('ningún motivo de omisión del revisor revela el código ni la credencial', () => {
+    const motivos = [
+      motivoRevisor({ [INSTITUTIONAL_ENV.hospitalAccessReviewerSecret]: SECRETO_REVISOR }),
+      motivoRevisor({ [INSTITUTIONAL_ENV.hospitalAccessReviewerCode]: CODIGO_REVISOR }),
+      motivoRevisor({
+        [INSTITUTIONAL_ENV.hospitalAccessReviewerCode]: CODIGO_NO_ADMITIDO,
+        [INSTITUTIONAL_ENV.hospitalAccessReviewerSecret]: SECRETO_REVISOR,
+      }),
+    ].join(' ');
+
+    expect(motivos).not.toContain(SECRETO_REVISOR);
+    expect(motivos).not.toContain(CODIGO_REVISOR);
+    expect(motivos).not.toContain(CODIGO_NO_ADMITIDO);
   });
 });

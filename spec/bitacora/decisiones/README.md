@@ -23,3 +23,7 @@ Use `/sdd:decision` to capture one interactively. / Usa `/sdd:decision` para cap
 | 2026-08-25 | Estado de ramas tras la auditoría Git y qué NO se hace todavía | `2026-08-25-auditoria-git-y-estado-de-ramas.md` |
 | 2026-08-25 | Las capas del board son épicas, no grupos de JSON Canvas | `2026-08-25-capas-del-board-como-epicas.md` |
 | 2026-08-25 | Aprobación de alcance de B1 y B2 de Visitador MP02, y por qué la compuerta SDD sigue cerrada | `2026-08-25-aprobacion-alcance-b1-b2-visitador-mp02.md` |
+| 2026-09-24 | Aprobación formal de la spec 038 y cierre de OD-01 a OD-12 | `2026-09-24-aprobacion-spec-038-y-decisiones-producto.md` |
+| 2026-09-26 | Baseline aislada con 14 migraciones y owner test sin bypass | `2026-09-26-baseline-aislada-migraciones-y-owner-test.md` |
+| 2026-09-28 | Entorno funcional con datos de prueba y prioridad de SPEC 038 | `2026-09-28-entorno-funcional-datos-prueba-y-prioridad-038.md` |
+| 2026-09-30 | Aceptación de MP03-C2 y autorización de MP04 | `2026-09-30-aceptacion-mp03-c2-y-autorizacion-mp04.md` |

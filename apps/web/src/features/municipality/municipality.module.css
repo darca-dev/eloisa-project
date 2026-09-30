@@ -2734,33 +2734,36 @@
 
 .sesionPanel {
   width: 100%;
-  max-width: 480px;
+  max-width: 460px;
   background: var(--b-blanco);
-  border: 1px solid var(--m-borde-topbar);
-  border-radius: 12px;
-  padding: 28px;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-contenedor);
+  padding: 24px 26px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .sesionTitulo {
-  font-size: 19px;
-  font-weight: 700;
-  color: var(--m-azul-activo);
+  margin: 0;
+  font-size: 22px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-azul);
 }
 
 .sesionTexto {
-  font-size: 13.5px;
-  line-height: 1.55;
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--b-peso-medio);
+  line-height: 1.45;
   color: var(--b-gris);
 }
 
 .sesionForm {
+  margin-top: 8px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  margin-top: 4px;
 }
 
 .sesionCampo {
@@ -2770,24 +2773,25 @@
 }
 
 .sesionEtiqueta {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--b-gris);
+  font-size: 12px;
+  font-weight: var(--b-peso-fuerte);
+  color: var(--b-tinta);
 }
 
 .sesionInput {
   font: inherit;
   font-size: 14px;
-  padding: 10px 12px;
-  border: 1px solid var(--m-borde-topbar);
-  border-radius: 8px;
+  color: var(--b-tinta);
   background: var(--b-blanco);
-  color: inherit;
+  border: 1.5px solid var(--b-borde);
+  border-radius: var(--b-radio-campo);
+  padding: 10px 12px;
+  min-height: 42px;
 }
 
 .sesionInput:focus-visible {
-  outline: 2px solid var(--m-azul-activo);
-  outline-offset: 1px;
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
 }
 
 .sesionInput:disabled {
@@ -2798,24 +2802,25 @@
 .sesionBoton {
   font: inherit;
   font-size: 14px;
-  font-weight: 600;
-  align-self: flex-start;
-  padding: 10px 20px;
-  border: 1px solid var(--m-azul-activo);
-  border-radius: 8px;
-  background: var(--m-azul-activo);
+  font-weight: var(--b-peso-maximo);
   color: var(--b-blanco);
+  background: var(--b-azul);
+  border: 1.5px solid var(--b-azul);
+  border-radius: var(--b-radio-boton);
+  padding: 11px 18px;
+  min-height: 44px;
   cursor: pointer;
 }
 
 .sesionBoton:focus-visible {
-  outline: 2px solid var(--m-azul-activo);
+  outline: 3px solid var(--b-foco);
   outline-offset: 2px;
 }
 
 .sesionBoton:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
+  cursor: progress;
+  background: var(--b-gris-inactivo);
+  border-color: var(--b-gris-inactivo);
 }
 
 /*
@@ -2823,13 +2828,21 @@
  * un lector de pantalla lo anuncie al llenarse. Vacío no ocupa ni anuncia nada.
  */
 .sesionAviso {
+  margin: 0;
   font-size: 13px;
-  line-height: 1.5;
-  color: var(--m-vino-interseccion);
+  font-weight: var(--b-peso-fuerte);
+  line-height: 1.4;
+  color: var(--b-rojo);
 }
 
 .sesionAviso:empty {
   display: none;
+}
+
+@media (max-width: 640px) {
+  .sesionArea {
+    padding: 20px 14px;
+  }
 }
 
 /* ------------------------ Barra de sesión autorizada ----------------------- */

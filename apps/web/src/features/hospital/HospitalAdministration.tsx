@@ -7,7 +7,7 @@ import type {
   HospitalAdministrationConfig,
 } from './hospitalAdministrationConfig';
 import { HospitalAudit } from './HospitalAudit';
-import { HospitalAccessApprovalsDemo } from './HospitalAccessApprovalsDemo';
+import { HospitalAccessRequests } from './HospitalAccessRequests';
 import { HospitalClinicalImport } from './HospitalClinicalImport';
 import {
   HospitalAgendaSettings,
@@ -22,9 +22,9 @@ import { HospitalViewHeader, hospitalViewStyles as compartido } from './Hospital
  * Vista «Administración institucional» (TASK-003H-05, FR-01).
  *
  * Contenedor administrativo del prototipo oficial (`vConfig`, líneas 648–658).
- * Reúne las siete vistas autorizadas en siete pestañas locales: `Membresías`,
- * `Historia clínica`, `Personal y accesos`, `Roles y permisos`,
- * `Agenda y servicios`, `Institución e integraciones` —que incluye
+ * Reúne las ocho vistas autorizadas en ocho pestañas locales: `Solicitudes de
+ * acceso`, `Membresías`, `Historia clínica`, `Personal y accesos`, `Roles y
+ * permisos`, `Agenda y servicios`, `Institución e integraciones` —que incluye
  * `Integraciones`— y `Auditoría`.
  *
  * La corrección final aprobada por la Product Owner separa `Roles y permisos`
@@ -55,13 +55,21 @@ const PANEL_ID = 'hospital-administracion-panel';
 function ContenidoAdministracion({
   pestana,
   config,
+  canReviewAccessRequests,
+  fetchImpl,
+  onSessionInvalid,
 }: {
   readonly pestana: HospitalAdminPestanaId;
   readonly config: HospitalAdministrationConfig;
+  readonly canReviewAccessRequests: boolean;
+  readonly fetchImpl?: typeof fetch;
+  readonly onSessionInvalid?: () => void;
 }): ReactNode {
   switch (pestana) {
     case 'Solicitudes de acceso':
-      return <HospitalAccessApprovalsDemo />;
+      return canReviewAccessRequests
+        ? <HospitalAccessRequests fetchImpl={fetchImpl} onSessionInvalid={onSessionInvalid} />
+        : <p>Esta sesión no tiene la capacidad de revisar solicitudes de acceso.</p>;
     case 'Historia clínica':
       return <HospitalClinicalImport config={config.clinica} />;
     case 'Personal y accesos':
@@ -89,29 +97,40 @@ export function HospitalAdministration({
   config = hospitalAdministracionDemo,
   pestana,
   onSeleccionarPestana,
+  canReviewAccessRequests = false,
+  fetchImpl,
+  onSessionInvalid,
 }: {
   readonly config?: HospitalAdministrationConfig;
   readonly pestana: HospitalAdminPestanaId;
   readonly onSeleccionarPestana: (pestana: HospitalAdminPestanaId) => void;
+  readonly canReviewAccessRequests?: boolean;
+  readonly fetchImpl?: typeof fetch;
+  readonly onSessionInvalid?: () => void;
 }): ReactNode {
+  const pestanas = canReviewAccessRequests
+    ? (['Solicitudes de acceso'] as const)
+    : config.pestanas.filter((opcion) => opcion !== 'Solicitudes de acceso');
+  const pestanaVisible = pestanas.includes(pestana as never) ? pestana : pestanas[0]!;
+
   return (
     <div className={compartido.view}>
       <HospitalViewHeader encabezado={config.encabezado} tituloId={TITULO_ID} />
 
       <div className={compartido.pills} role="group" aria-label={config.etiquetaPestanas}>
-        {config.pestanas.map((opcion) => (
+        {pestanas.map((opcion) => (
           <button
             key={opcion}
             type="button"
-            aria-pressed={opcion === pestana}
+            aria-pressed={opcion === pestanaVisible}
             aria-controls={PANEL_ID}
             className={
-              opcion === pestana
+              opcion === pestanaVisible
                 ? `${compartido.pill} ${compartido.pillActiva} ${styles.pestana}`
                 : `${compartido.pill} ${styles.pestana}`
             }
             /* Marcador técnico de auditoría: no es visible ni se anuncia. */
-            data-hospital-pestana={opcion === pestana ? 'activa' : 'inactiva'}
+            data-hospital-pestana={opcion === pestanaVisible ? 'activa' : 'inactiva'}
             onClick={() => {
               onSeleccionarPestana(opcion);
             }}
@@ -121,8 +140,14 @@ export function HospitalAdministration({
         ))}
       </div>
 
-      <div id={PANEL_ID} aria-label={pestana} role="group" data-hospital-admin={pestana}>
-        <ContenidoAdministracion pestana={pestana} config={config} />
+      <div id={PANEL_ID} aria-label={pestanaVisible} role="group" data-hospital-admin={pestanaVisible}>
+        <ContenidoAdministracion
+          pestana={pestanaVisible}
+          config={config}
+          canReviewAccessRequests={canReviewAccessRequests}
+          fetchImpl={fetchImpl}
+          onSessionInvalid={onSessionInvalid}
+        />
       </div>
     </div>
   );

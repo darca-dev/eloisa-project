@@ -180,6 +180,26 @@ enum AuditEventType {
   SUPPORT_OPERATIONAL_AUDIT_READ_DENIED
   PATIENT_SELF_ACCESS_GRANTED
   PATIENT_SELF_ACCESS_DENIED
+  ACCESS_REQUEST_CREATED
+  ACCESS_REQUEST_LIST_GRANTED
+  ACCESS_REQUEST_LIST_DENIED
+  ACCESS_REQUEST_VIEWED
+  ACCESS_REQUEST_APPROVED
+  ACCESS_REQUEST_REJECTED
+  ACCESS_REQUEST_SUSPENDED
+  ACCESS_REQUEST_REVOKED
+  ACCESS_PROVISIONING_SUCCEEDED
+  ACCESS_PROVISIONING_FAILED
+  ACCESS_IDENTITY_PREPARED
+  ACCESS_IDENTITY_PREPARATION_FAILED
+  ACCESS_REQUEST_REACTIVATED
+  EXPERIENCE_ACCESS_GRANTED
+  EXPERIENCE_ACCESS_DENIED
+  DEMO_CONTEXT_ACCESS_GRANTED
+  DEMO_CONTEXT_ACCESS_DENIED
+  DEMO_DATASET_RESET_STARTED
+  DEMO_DATASET_RESET_COMPLETED
+  DEMO_DATASET_RESET_FAILED
 }
 
 /// Tipo de actor del evento de auditoría. CORE-01 no inventa un usuario
@@ -214,11 +234,19 @@ enum AuditOutcome {
 /// superficie Hospital y una identidad hospitalaria no accede a los agregados
 /// municipales. Ninguno de los dos identifica a una persona trabajadora
 /// concreta, de modo que no equivalen todavía al RBAC definitivo de MERDN.
+///
+/// SPEC 038 / MP01-C1 añade, de forma ADITIVA, `HOSPITAL_ACCESS_REVIEWER`: la
+/// capacidad dedicada para listar y decidir solicitudes de acceso del propio
+/// tenant. Es DISJUNTA de `HOSPITAL_PATIENT_VIEWER`, de `HOSPITAL_SCHEDULER` y
+/// de `CAREGIVER_RELATIONSHIP_MANAGER`: aprobar una cuenta NO concede lectura de
+/// Pacientes, agenda ni relaciones de cuidado. OD-10 mantiene esta credencial
+/// opaca y no compartida con solicitantes.
 enum InstitutionalRole {
   MUNICIPAL_VIEWER
   HOSPITAL_PATIENT_VIEWER
   HOSPITAL_SCHEDULER
   CAREGIVER_RELATIONSHIP_MANAGER
+  HOSPITAL_ACCESS_REVIEWER
 }
 
 /// Estado de la identidad institucional. Una identidad deshabilitada no
@@ -226,6 +254,48 @@ enum InstitutionalRole {
 enum InstitutionalIdentityStatus {
   ACTIVE
   DISABLED
+}
+
+/// Perfil solicitado en una solicitud de acceso. Es exactamente el conjunto
+/// autorizado por SPEC 038 §6.3; no existe un perfil «revisor» porque la
+/// revisión es una capacidad institucional, no un perfil de solicitante.
+enum AccessRequestProfile {
+  PATIENT
+  CAREGIVER
+  FIELD_PROFESSIONAL
+}
+
+/// Estado de negocio de la solicitud, cerrado según SPEC 038 §6.4.
+/// `REJECTED` y `REVOKED` son terminales. Las transiciones entre estos valores
+/// se implementan en MP03, cuando exista el comportamiento hospitalario: este
+/// paquete congela el catálogo y NO implementa ni inventa transiciones.
+enum AccessRequestStatus {
+  PENDING
+  APPROVED_PENDING_PROVISIONING
+  APPROVED
+  REJECTED
+  PROVISIONING_FAILED
+  SUSPENDED
+  REVOKED
+}
+
+/// Estado TÉCNICO de la provisión, deliberadamente SEPARADO del estado de
+/// negocio: `APPROVED` exige confirmación externa y nunca se deriva de este
+/// campo. Un fallo de Keycloak deja la solicitud en estado reintentable o
+/// fallido, nunca `APPROVED` (SPEC 038 §6.4, §12).
+enum AccessRequestProvisioningStatus {
+  NOT_STARTED
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+/// Procedencia canónica del dato. SPEC 038, decisión del Product Owner del
+/// 2026-09-28: la fuente canónica de los datos de prueba es `TEST_DATA` y el
+/// texto visible es «Datos ficticios de prueba». Este paquete NO reintroduce la
+/// referencia histórica `DEMONSTRATION` ni el rótulo de interfaz `DEMO_LOCAL_FICTICIA`.
+enum AccessRequestSource {
+  TEST_DATA
 }
 
 /**
@@ -254,7 +324,7 @@ model Tenant {
   patientAddresses   PatientAddress[]
   consentRecords     ConsentRecord[]
   enrollmentSessions EnrollmentSession[]
-  auditEvents        AuditEvent[]       @relation("AuditEventTenant")
+  auditEvents        AuditEvent[]        @relation("AuditEventTenant")
 
   institutionalIdentities InstitutionalIdentity[]
   institutionalSessions   InstitutionalSession[]
@@ -264,15 +334,19 @@ model Tenant {
   careAssignments          CareAssignment[]
   appointments             Appointment[]
 
-  humanAccounts                 HumanAccount[]
-  externalAuthIdentities        ExternalAuthIdentity[]
-  humanSessions                 HumanSession[]
-  humanAuthAttempts             HumanAuthAttempt[]
-  caregiverRelationships        PatientCaregiverRelationship[]
-  caregiverRelationshipScopes   PatientCaregiverRelationshipScope[]
+  humanAccounts               HumanAccount[]
+  externalAuthIdentities      ExternalAuthIdentity[]
+  humanSessions               HumanSession[]
+  humanAuthAttempts           HumanAuthAttempt[]
+  caregiverRelationships      PatientCaregiverRelationship[]
+  caregiverRelationshipScopes PatientCaregiverRelationshipScope[]
 
   homeVisits           HomeVisit[]
   homeVisitTransitions HomeVisitTransition[]
+
+  /// Solicitudes de acceso persistidas (SPEC 038 / MP01-C1). El tenant es la
+  /// única frontera de autorización de este agregado.
+  accessRequests AccessRequest[]
 
   /// Soporte de Plataforma (ELOISA-ADMIN-ACCESS-01 MP01). Un tenant participa
   /// de DOS maneras distintas y deliberadamente separadas: como tenant HOME de
@@ -338,6 +412,10 @@ model Person {
   /// participación más de la única `Person`: no crea una segunda identidad.
   caregiverRelationships PatientCaregiverRelationship[] @relation("CaregiverPerson")
 
+  /// Solicitudes de acceso registradas por esta `Person` ficticia. OD-02 crea la
+  /// `Person` al registrar; el perfil se crea al aprobar, en MP04.
+  accessRequests AccessRequest[] @relation("AccessRequestPerson")
+
   /// Unicidad de documento por tenant (TASK-MVP-CORE-01 §4). Es la barrera
   /// final contra duplicados y contra carreras concurrentes.
   @@unique([tenantId, documentType, documentNumberNormalized], map: "person_tenant_document_unique")
@@ -372,12 +450,12 @@ model Patient {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   person Person @relation(fields: [personId, tenantId], references: [id, tenantId], onDelete: Restrict)
 
-  populationMemberships PatientPopulationMembership[]
-  address               PatientAddress?
-  consentRecords        ConsentRecord[]
-  enrollmentSessions    EnrollmentSession[]
-  careAssignments       CareAssignment[]
-  appointments          Appointment[]
+  populationMemberships  PatientPopulationMembership[]
+  address                PatientAddress?
+  consentRecords         ConsentRecord[]
+  enrollmentSessions     EnrollmentSession[]
+  careAssignments        CareAssignment[]
+  appointments           Appointment[]
   caregiverRelationships PatientCaregiverRelationship[]
   homeVisits             HomeVisit[]
 
@@ -712,6 +790,11 @@ model InstitutionalIdentity {
   /// Visitas domiciliarias que esta identidad institucional OPACA materializo
   /// administrativamente. NO es la persona visitadora que las ejecuta.
   createdHomeVisits HomeVisit[]
+
+  /// Solicitudes de acceso que esta identidad institucional OPACA revisó.
+  /// Requiere el rol `HOSPITAL_ACCESS_REVIEWER`, que es DISJUNTO de los roles de
+  /// Pacientes, agenda y relaciones de cuidado.
+  reviewedAccessRequests AccessRequest[] @relation("AccessRequestReviewer")
 
   @@unique([tenantId, code], map: "institutional_identity_tenant_code_unique")
   /// Permite FKs compuestas que impiden asociaciones entre tenants distintos.
@@ -1051,6 +1134,11 @@ model HumanAccount {
   externalIdentities ExternalAuthIdentity[]
   sessions           HumanSession[]
 
+  /// Solicitudes de acceso que apuntan a ESTA cuenta (MP04). Una solicitud es
+  /// historia: la relacion no borra en cascada ni permite compartir cuenta
+  /// entre dos solicitudes distintas del mismo tenant.
+  accessRequests AccessRequest[] @relation("AccessRequestHumanAccount")
+
   /// Transiciones de visita domiciliaria ejecutadas por esta cuenta humana
   /// OPACA. La transicion de creacion NO tiene actor humano.
   homeVisitTransitions HomeVisitTransition[]
@@ -1223,8 +1311,8 @@ model PatientCaregiverRelationship {
   validatedAt                        DateTime? @db.Timestamptz(6)
 
   /// Identidad institucional OPACA que revocó. No es una persona concreta.
-  revokedByInstitutionalIdentityId String?                               @db.Uuid
-  revokedAt                        DateTime?                             @db.Timestamptz(6)
+  revokedByInstitutionalIdentityId String?                                @db.Uuid
+  revokedAt                        DateTime?                              @db.Timestamptz(6)
   revocationReason                 CaregiverRelationshipRevocationReason?
 
   /// Control OPTIMISTA. Empieza en 1 y solo crece: dos operadores no pueden
@@ -1613,4 +1701,128 @@ model SupportContextSession {
   @@index([expiresAt])
   @@index([homeTenantId, supportGrantId])
   @@map("support_context_session")
+}
+
+/**
+ * --------------------------------------------------------------------------
+ */
+/**
+ * Solicitud de acceso (SPEC 038 / MP01-C1)
+ */
+/**
+ * --------------------------------------------------------------------------
+ */
+
+/// Solicitud persistente de acceso a una experiencia con datos ficticios de
+/// prueba. Es un agregado SEPARADO de `Person`, `Person`'s cuentas, perfiles,
+/// relaciones de cuidado y asignaciones profesionales.
+///
+/// OD-02: la `Person` ficticia se crea AL REGISTRAR y el perfil (por ejemplo
+/// `Patient`) SOLO se crea al aprobar. Este paquete no crea ninguna de las dos.
+///
+/// Límite de autorización: aprobar una solicitud NO crea relación Cuidador–
+/// Paciente, NI asignación profesional, NI acceso clínico, NI capacidad
+/// financiera, NI autoridad institucional. Una solicitud tampoco crea sesión.
+///
+/// Prohibición de contenido: este agregado NO guarda contraseña, token, cookie,
+/// claim OIDC, nombre, documento, correo, teléfono, motivo libre ni dato clínico.
+/// La `Person` referenciada ya existe y es ficticia; aquí solo se apunta.
+model AccessRequest {
+  /// Identificador OPACO. No es un documento, un correo ni un nombre.
+  id       String @id @default(uuid(7)) @db.Uuid
+  /// Tenant derivado del SERVIDOR. El navegador nunca envía esta fuente de
+  /// autoridad y el acceso cross-tenant se rechaza igual que un ID inexistente.
+  tenantId String @db.Uuid
+
+  /// `Person` ficticia del MISMO tenant, requerida por OD-02 desde el registro.
+  /// Es OBLIGATORIA: la FK compuesta `(id, tenantId)` es la barrera que impide
+  /// asociar una solicitud a una `Person` de otro tenant.
+  personId String @db.Uuid
+
+  /// Perfil solicitado. Catálogo cerrado; no habilita por sí solo nada.
+  requestedProfile AccessRequestProfile
+
+  /// Estado de negocio. Congelado en este paquete; las transiciones se
+  /// implementan en MP03 con el comportamiento hospitalario.
+  status AccessRequestStatus @default(PENDING)
+
+  /// Estado técnico SEPARADO de la provisión. `APPROVED` NO se deriva de aquí:
+  /// exige confirmar la identidad y el vínculo OIDC externos.
+  provisioningStatus AccessRequestProvisioningStatus @default(NOT_STARTED)
+
+  /// Procedencia canónica: datos ficticios de prueba.
+  source AccessRequestSource @default(TEST_DATA)
+
+  /// Referencia OPACA mostrada al solicitante. Sin documento, correo, teléfono
+  /// ni nombre; es un identificador de la solicitud, no un dato de la persona.
+  reference String
+
+  /// Control optimista de concurrencia. La decisión hospitalaria lo incrementa y
+  /// rechaza una versión vencida; no se usa como contador de eventos.
+  version Int @default(1)
+
+  /// Fecha del SERVIDOR. No es un valor declarado por el cliente.
+  submittedAt DateTime @default(now()) @db.Timestamptz(6)
+
+  /// Identidad institucional OPACA que decidió. NULO hasta que exista decisión.
+  /// La FK compuesta impide que un revisor de otro tenant revise esta solicitud.
+  reviewedByInstitutionalIdentityId String? @db.Uuid
+
+  /// Fecha del SERVIDOR de la decisión. NULO mientras no exista decisión.
+  decidedAt DateTime? @db.Timestamptz(6)
+
+  /// Código de motivo de la decisión. El CATÁLOGO CERRIDO de valores se
+  /// define e implementa en MP03, junto con el comportamiento hospitalario.
+  /// Este paquete congela la columna y NO inventa ningún valor de motivo.
+  decisionReasonCode String?
+
+  /// Referencia OPACA de provisión. NUNCA un token, issuer, subject, username
+  /// ni secreto; nunca se expone en salida pública.
+  provisioningReference String?
+
+  /// Cuenta humana PROPIA de esta solicitud (MP04). NULA hasta que la
+  /// preparacion de identidad la crea o la recupera. La FK es COMPUESTA
+  /// `(humanAccountId, tenantId)`: una cuenta de otro tenant es inalcanzable
+  /// desde aqui, incluso si el codigo cometiera el error de apuntarla.
+  humanAccountId String? @db.Uuid
+
+  /// Contador tecnico de intentos de provision fallidos. Acotado por el
+  /// servicio: NO es un contador de eventos ni una decision de negocio y no
+  /// guarda cuando empezo ni que dijo el proveedor mas alla del codigo cerrado.
+  provisioningAttempts Int @default(0)
+
+  /// Instante del SERVIDOR del ultimo intento de provision. NULO si nunca se
+  /// ha intentado. No guarda duracion ni detalle externo.
+  provisioningStartedAt DateTime? @db.Timestamptz(6)
+
+  /// Instante del SERVIDOR del ultimo fallo de provision. NULO sin fallo.
+  provisioningLastErrorAt DateTime? @db.Timestamptz(6)
+
+  /// Codigo CERRADO del ultimo fallo de provision. Nunca texto libre, nunca
+  /// un cuerpo del proveedor, nunca un mensaje con datos de la persona.
+  provisioningErrorCode String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  /// Referencias RESTRICTIVAS y COMPUESTAS. Ninguna borra en cascada: una
+  /// solicitud es historia y se corrige por transiciones, no se elimina.
+  tenant     Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  person     Person                 @relation("AccessRequestPerson", fields: [personId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  reviewedBy InstitutionalIdentity? @relation("AccessRequestReviewer", fields: [reviewedByInstitutionalIdentityId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  account    HumanAccount?          @relation("AccessRequestHumanAccount", fields: [humanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict)
+
+  /// Unicidad de la referencia dentro del tenant: es la clave de la
+  /// idempotencia y lo que el solicitante puede citar.
+  @@unique([tenantId, reference], map: "access_request_tenant_reference_unique")
+  /// Unicidad de `id` con tenant: sostiene la FK compuesta del revisor.
+  @@unique([id, tenantId], map: "access_request_id_tenant_unique")
+  /// Una sola solicitud ABIERTA por persona, tenant y perfil. Implemented
+  /// como índice único PARCIAL sobre los estados no terminales, de modo que un
+  /// episodio nuevo no reabre historia ni choca con un `REJECTED`/`REVOKED`.
+  @@index([tenantId, status, submittedAt])
+  /// Revisión hospitalaria: listar el backlog del propio tenant.
+  @@index([tenantId, status, requestedProfile])
+  @@index([tenantId, personId])
+  @@map("access_request")
 }

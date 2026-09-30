@@ -7,6 +7,7 @@ import { nombreDepartamento, nombreMunicipio } from '@/data/divipola';
 
 import { alternarEnLista, nombreCompleto } from '../inscripcionFlow';
 import type { DatosVisitador } from '../inscripcionFlow';
+import { VISITADORES_DEMO } from '../otherDemoFixtures';
 import styles from '../inscripcion.module.css';
 import {
   AccionDemostrativa,
@@ -90,6 +91,17 @@ export function PasosVisitador({
   if (paso === 1) {
     return (
       <div className={styles.card}>
+        <section className={styles.demoProfiles} aria-labelledby="visitadores-demo-title">
+          <p id="visitadores-demo-title" className={styles.eyebrow}>VISITADORES DEMO</p>
+          <p className={styles.demoProfilesText}>Cargue datos ficticios para recorrer este formulario sin rellenarlo a mano. Esta ruta guiada todavía no envía la solicitud al Hospital.</p>
+          <div className={styles.demoProfilesActions}>
+            {VISITADORES_DEMO.map((visitador) => (
+              <Button key={visitador.id} variant="outline" onClick={() => actualizar(visitador.valores)}>
+                {visitador.etiqueta}
+              </Button>
+            ))}
+          </div>
+        </section>
         <p className={styles.warning}>
           Este registro requiere verificación. Su cuenta quedaría pendiente de verificación
           hasta que la plataforma o su institución validen los datos.
