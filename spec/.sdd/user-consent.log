@@ -15,3 +15,4 @@
 [2026-09-23 21:41:26 -0600] [spec:035-central-access-institutional-approval] Product Owner approved central access and institutional approval implementation on 2026-09-23.
 [2026-09-23 22:45:00 -0600] [spec:036-patient-demo-autofill] Product Owner approved three fictional patient profiles to autofill the existing enrollment form, without passwords or automatic submission.
 [2026-09-24 00:00:00 -0600] [spec:037-local-oidc-recovery] Product Owner approved recovery of local fictional OIDC and verification of test access on 2026-09-24.
+[2026-09-24 22:34:29 -0600] [spec:038-demo-funcional-accesos-ficticios] User approved implementation for spec 038-demo-funcional-accesos-ficticios

@@ -2,99 +2,122 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { branding } from '@/config/branding';
+import {
+  CONTEXTOS_HUMANOS,
+  cerrarSesionHumana,
+  cierreHumanoConfirmado,
+  consultarExperienciasAprobadas,
+  consultarSesionHumana,
+  urlDeLoginHumano,
+} from '@/features/auth/humanSessionClient';
 import { LiquidationsDemo } from '@/features/liquidations/LiquidationsDemo';
+import {
+  consultarWorklistProfesional,
+  ventanaUtc,
+  type ItemWorklist,
+  type VentanaWorklist,
+} from './professionalWorklistClient';
 import styles from './profesional.module.css';
 
-interface VisitaAsignada {
-  id: string;
-  paciente: string;
-  edad: number;
-  direccion: string;
-  comuna: string;
-  hora: string;
-  motivo: string;
-  estado: 'pendiente' | 'en_camino' | 'completada';
+/**
+ * Superficie del Profesional en Salud / Visitador (SPEC 038, MP04 §12).
+ *
+ * MP04 cierra `/profesional` y retira de aquí DOS cosas que no estaban
+ * respaldadas por ningún servidor:
+ *
+ * 1. las visitas estáticas que el componente tenía en memoria (`VISITAS_INICIALES`),
+ *    sustituidas por `GET /api/v1/professional/visits`, cuya lista VACÍA es la
+ *    respuesta honesta de una persona sin perfil, sin afiliación vigente, sin
+ *    asignación o sin citas;
+ * 2. la identidad ficticia del encabezado (`Dra. Laura Gómez`, sus iniciales y
+ *    su zona): una portada no puede presentar un nombre que la sesión no
+ *    respalda.
+ *
+ * DOS COMPONENTES, UNA FRONTERA:
+ *
+ * - `ProfesionalPortalProtegido` es la PUERTA. Consulta la experiencia
+ *   aprobada, la sesión y la worklist, y solo monta la vista cuando las tres
+ *   responden. Es lo que `app/profesional/page.tsx` monta;
+ * - `ProfesionalPortal` es la VISTA. Pinta lo que recibe —con una lista vacía
+ *   por defecto— y no consulta nada por su cuenta: un componente de presentación
+ *   no puede abrirse a sí mismo.
+ *
+ * QUÉ NO HACE: no guarda nada, no lee la cookie, no decide la experiencia en el
+ * navegador, no filtra por sujeto y no afirma ninguna capacidad clínica. Las
+ * APIs siguen siendo la autoridad: esta vista solo pinta lo que le llega.
+ */
+
+/* -------------------------------------------------------------------------- */
+/* Vista                                                                       */
+/* -------------------------------------------------------------------------- */
+
+export interface ProfesionalPortalProps {
+  /**
+   * Worklist a pintar. Vacía por defecto: una vista sin datos no muestra nada
+   * que la sesión no respalde.
+   */
+  readonly items?: readonly ItemWorklist[];
+  /** Ventana declarada, solo para rotular la hoja de ruta. */
+  readonly ventana?: VentanaWorklist;
+  readonly onCerrarSesion?: () => void;
 }
 
-const VISITAS_INICIALES: VisitaAsignada[] = [
-  {
-    id: 'VIS-001',
-    paciente: 'Mercedes Roa de Rincón',
-    edad: 78,
-    direccion: 'Calle 14 # 8-32, San Mateo',
-    comuna: 'Comuna 5 - San Mateo',
-    hora: '09:00 AM',
-    motivo: 'Control Hipertensión y seguimiento de curación',
-    estado: 'pendiente',
-  },
-  {
-    id: 'VIS-002',
-    paciente: 'Pedro Nel Gómez',
-    edad: 64,
-    direccion: 'Carrera 4 Este # 22-10, Cazucá',
-    comuna: 'Comuna 4 - Cazucá',
-    hora: '10:30 AM',
-    motivo: 'Evaluación de movilidad y adherencia medicamentosa',
-    estado: 'pendiente',
-  },
-  {
-    id: 'VIS-003',
-    paciente: 'Ana María Torres',
-    edad: 82,
-    direccion: 'Transversal 7 # 19-45, León XIII',
-    comuna: 'Comuna 3 - La Despensa',
-    hora: '12:00 PM',
-    motivo: 'Monitoreo de dolor crónico y signos vitales',
-    estado: 'pendiente',
-  },
-];
+/** Clave de render y de selección: la cita, que es la única agenda. */
+function claveDe(item: ItemWorklist): string {
+  return item.appointmentId;
+}
 
-export function ProfesionalPortal(): ReactNode {
-  const [visitas, setVisitas] = useState<VisitaAsignada[]>(VISITAS_INICIALES);
+/**
+ * Inicio programado como texto, SIN convertir a zona horaria.
+ *
+ * La agenda persiste instantes UTC y la ventana se declara en días de
+ * calendario UTC; formatear con la zona del navegador desplazaría en silencio
+ * qué visita cae en cada día. Se recorta el ISO tal como viene.
+ */
+function marcarInicio(iso: string): string {
+  const [dia, hora = ''] = iso.split('T');
+
+  return `${dia ?? ''} ${hora.slice(0, 5)}`.trim();
+}
+
+/** Estado visible de la visita. `visit: null` todavía no está materializada. */
+function estadoDe(item: ItemWorklist): 'pendiente' | 'completada' {
+  return item.visit?.status === 'COMPLETED' ? 'completada' : 'pendiente';
+}
+
+export function ProfesionalPortal({
+  items = [],
+  ventana,
+  onCerrarSesion,
+}: ProfesionalPortalProps): ReactNode {
   const [seccionActiva, setSeccionActiva] = useState<'visitas' | 'liquidaciones'>('visitas');
-  const [visitaSeleccionada, setVisitaSeleccionada] = useState<VisitaAsignada | null>(null);
-  const [presion, setPresion] = useState('120/80');
-  const [pulso, setPulso] = useState('72');
-  const [observacion, setObservacion] = useState('');
-  const [guardadoExitoso, setGuardadoExitoso] = useState(false);
+  const [seleccion, setSeleccion] = useState<string | null>(null);
 
-  const handleAbrirBitacora = (v: VisitaAsignada): void => {
-    setVisitaSeleccionada(v);
-    setGuardadoExitoso(false);
-    setObservacion('');
-  };
+  const visitas = items;
+  const seleccionada = visitas.find((item) => claveDe(item) === seleccion) ?? null;
 
-  const handleAbrirLiquidaciones = (): void => {
-    setSeccionActiva('liquidaciones');
-    setVisitaSeleccionada(null);
-  };
-
-  const handleAbrirVisitas = (): void => {
+  const abrirVisitas = (): void => {
     setSeccionActiva('visitas');
+    setSeleccion(null);
   };
 
-  const handleGuardarBitacora = (e: React.FormEvent): void => {
-    e.preventDefault();
-    if (!visitaSeleccionada) return;
-
-    setVisitas((prev) =>
-      prev.map((item) =>
-        item.id === visitaSeleccionada.id ? { ...item, estado: 'completada' } : item,
-      ),
-    );
-    setGuardadoExitoso(true);
-    setTimeout(() => {
-      setVisitaSeleccionada(null);
-      setGuardadoExitoso(false);
-    }, 2000);
+  const abrirLiquidaciones = (): void => {
+    setSeccionActiva('liquidaciones');
+    setSeleccion(null);
   };
+
+  const cerrarSeleccion = (): void => {
+    setSeleccion(null);
+  };
+
+  const total = visitas.length;
 
   return (
     <div className={styles.profContainer}>
-      {/* Topbar institucional */}
+      {/* Topbar institucional — sin identidad nominal: la sesión no aporta una. */}
       <header className={styles.topBar}>
         <div className={styles.profHeaderBrand}>
           <Image
@@ -110,18 +133,14 @@ export function ProfesionalPortal(): ReactNode {
           </div>
         </div>
 
-        <div className={styles.profProfileBox}>
-          <div className={styles.profAvatar}>LG</div>
-          <div className={styles.profNameBlock}>
-            <span className={styles.profName}>Dra. Laura Gómez</span>
-            <span className={styles.profRole}>Medicina General · Hospital San Rafael (ESE)</span>
-          </div>
-        </div>
+        {onCerrarSesion === undefined ? null : (
+          <button type="button" className={styles.linkBackHospital} onClick={onCerrarSesion}>
+            Cerrar sesión
+          </button>
+        )}
       </header>
 
-      {/* Contenido */}
       <main className={styles.mainContent}>
-        {/* Banner de conexión con el Hospital */}
         <div className={styles.connectionBanner}>
           <span className={styles.connectionBadge}>
             🏥 Dirigido y coordinado por: <strong>Hospital Departamental San Rafael (ESE)</strong>
@@ -130,22 +149,24 @@ export function ProfesionalPortal(): ReactNode {
             <Link href="/" className={styles.linkBackHospital}>
               ← Volver al Hub Central
             </Link>
-            <Link href="/hospital" className={styles.linkBackHospital}>
-              Ir al Sistema Hospitalario →
-            </Link>
           </div>
         </div>
 
-        {/* Resumen del turno del día */}
         <div className={styles.turnoCard}>
           <div className={styles.turnoHeader}>
             <div>
               <h2 className={styles.turnoTitle}>Hoja de Ruta del Día</h2>
               <span style={{ fontSize: 13, color: 'var(--b-gris)' }}>
-                3 visitas programadas · Asignadas por Dirección Médica Hospitalaria
+                {total === 0
+                  ? 'Sin visitas asignadas en esta ventana'
+                  : `${String(total)} visita${total === 1 ? '' : 's'} asignada${total === 1 ? '' : 's'} · Asignadas por Dirección Médica Hospitalaria`}
               </span>
             </div>
-            <span className={styles.turnoZoneBadge}>📍 Zona: Soacha · Comunas 3, 4 y 5</span>
+            {ventana === undefined ? null : (
+              <span className={styles.turnoZoneBadge}>
+                📅 Ventana: {ventana.from} → {ventana.to}
+              </span>
+            )}
           </div>
 
           <div className={styles.tabNav}>
@@ -153,190 +174,310 @@ export function ProfesionalPortal(): ReactNode {
               type="button"
               className={`${styles.tabButton} ${seccionActiva === 'visitas' ? styles.tabButtonActive : ''}`}
               aria-pressed={seccionActiva === 'visitas'}
-              onClick={handleAbrirVisitas}
+              onClick={abrirVisitas}
             >
-              Visitas de Hoy (3)
-            </button>
-            <button type="button" className={styles.tabButton}>
-              Historial de Atenciones
-            </button>
-            <button type="button" className={styles.tabButton}>
-              Protocolos Clínicos
+              Visitas ({String(total)})
             </button>
             <button
               type="button"
               className={`${styles.tabButton} ${seccionActiva === 'liquidaciones' ? styles.tabButtonActive : ''}`}
               aria-pressed={seccionActiva === 'liquidaciones'}
-              onClick={handleAbrirLiquidaciones}
+              onClick={abrirLiquidaciones}
             >
               Mis pagos y liquidaciones
             </button>
           </div>
+
           {seccionActiva === 'liquidaciones' ? (
             <LiquidationsDemo role="visitador" />
           ) : (
-            <>
-              {/* Listado de visitas asignadas */}
-              <div className={styles.visitsList}>
-            {visitas.map((v) => {
-              const iniciales = v.paciente
-                .split(' ')
-                .map((n) => n[0])
-                .slice(0, 2)
-                .join('');
-              const isSelected = visitaSeleccionada?.id === v.id;
+            <div className={styles.visitsList}>
+              {total === 0 ? (
+                <p className={styles.turnoTitle} role="status" aria-live="polite">
+                  No tiene visitas asignadas en esta ventana.
+                </p>
+              ) : null}
 
-              return (
-                <div
-                  key={v.id}
-                  className={`${styles.visitItem} ${isSelected ? styles.visitActive : ''}`}
-                >
-                  <div className={styles.visitPatientMeta}>
-                    <div className={styles.visitAvatar}>{iniciales}</div>
-                    <div className={styles.visitDetails}>
-                      <span className={styles.visitPatientName}>
-                        {v.paciente} ({v.edad} años)
+              {visitas.map((item) => {
+                const iniciales = item.patient.initials;
+                const estado = estadoDe(item);
+                const activa = seleccion === claveDe(item);
+
+                return (
+                  <div
+                    key={claveDe(item)}
+                    className={`${styles.visitItem} ${activa ? styles.visitActive : ''}`}
+                  >
+                    <div className={styles.visitPatientMeta}>
+                      <div className={styles.visitAvatar}>{iniciales}</div>
+                      <div className={styles.visitDetails}>
+                        <span className={styles.visitPatientName}>{item.patient.displayName}</span>
+                        <span className={styles.visitAddress}>
+                          🕒 {marcarInicio(item.scheduledStart)}
+                        </span>
+                        <span style={{ fontSize: 13, color: 'var(--b-petroleo-texto)' }}>
+                          {item.visit === null
+                            ? 'La agenda hospitalaria aún no ha materializado la visita'
+                            : `Visita ${item.visit.status.toLowerCase()}`}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span
+                        className={`${styles.visitBadgeStatus} ${
+                          estado === 'completada' ? styles.statusDone : styles.statusPending
+                        }`}
+                      >
+                        {estado === 'completada' ? '✓ Atención Registrada' : '⏳ Pendiente'}
                       </span>
-                      <span className={styles.visitAddress}>
-                        📍 {v.direccion} — {v.comuna}
-                      </span>
-                      <span style={{ fontSize: 13, color: 'var(--b-petroleo-texto)' }}>
-                        🕒 {v.hora} · {v.motivo}
-                      </span>
+                      <button
+                        type="button"
+                        className={styles.btnBitacora}
+                        onClick={() => setSeleccion(claveDe(item))}
+                      >
+                        {estado === 'completada' ? 'Ver Bitácora' : '📖 Abrir Bitácora'}
+                      </button>
                     </div>
                   </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span
-                      className={`${styles.visitBadgeStatus} ${
-                        v.estado === 'completada' ? styles.statusDone : styles.statusPending
-                      }`}
-                    >
-                      {v.estado === 'completada' ? '✓ Atención Registrada' : '⏳ Pendiente'}
-                    </span>
-                    <button
-                      type="button"
-                      className={styles.btnBitacora}
-                      onClick={() => handleAbrirBitacora(v)}
-                    >
-                      {v.estado === 'completada' ? 'Ver Bitácora' : '📖 Abrir Bitácora'}
-                    </button>
-                  </div>
-                </div>
-              );
-                })}
-              </div>
-            </>
+                );
+              })}
+            </div>
           )}
         </div>
 
-        {/* Panel de registro en la bitácora del paciente */}
-        {seccionActiva === 'visitas' && visitaSeleccionada && (
+        {seccionActiva === 'visitas' && seleccionada !== null ? (
           <div className={styles.bitacoraPanel}>
             <div className={styles.bitacoraHeader}>
               <div>
                 <h3 className={styles.bitacoraTitle}>
-                  Registro Clínico en Bitácora: {visitaSeleccionada.paciente}
+                  Detalle de la visita: {seleccionada.patient.displayName}
                 </h3>
                 <span style={{ fontSize: 13, color: 'var(--b-gris)' }}>
-                  Los datos se sincronizan directamente con el expediente hospitalario y la bitácora familiar.
+                  Esta superficie no registra notas clínicas ni evidencia: MERDN no tiene
+                  aprobado ningún catálogo para ello.
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={() => setVisitaSeleccionada(null)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  fontSize: 20,
-                  cursor: 'pointer',
-                  color: 'var(--b-gris)',
-                }}
-              >
-                ✕
+              <button type="button" onClick={cerrarSeleccion} className={styles.linkBackHospital}>
+                ✕ Cerrar
               </button>
             </div>
-
-            {guardadoExitoso ? (
-              <div
-                style={{
-                  background: '#d1fae5',
-                  color: '#065f46',
-                  padding: 16,
-                  borderRadius: 12,
-                  fontWeight: 'bold',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                <span>✓</span> Evolución registrada exitosamente en la Bitácora del Paciente y sincronizada con el Hospital.
-              </div>
-            ) : (
-              <form onSubmit={handleGuardarBitacora} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div className={styles.bitacoraForm}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Presión Arterial (mmHg)</label>
-                    <input
-                      type="text"
-                      className={styles.formInput}
-                      value={presion}
-                      onChange={(e) => setPresion(e.target.value)}
-                      placeholder="120/80"
-                      required
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Frecuencia Cardíaca (lpm)</label>
-                    <input
-                      type="text"
-                      className={styles.formInput}
-                      value={pulso}
-                      onChange={(e) => setPulso(e.target.value)}
-                      placeholder="72"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>
-                    Evolución Clínica y Observaciones en Domicilio
-                  </label>
-                  <textarea
-                    className={styles.formTextarea}
-                    rows={3}
-                    value={observacion}
-                    onChange={(e) => setObservacion(e.target.value)}
-                    placeholder="Paciente consciente, orientado. Se verifica toma de medicamentos indicada por el Hospital..."
-                    required
-                  />
-                </div>
-
-                <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-                  <button
-                    type="button"
-                    onClick={() => setVisitaSeleccionada(null)}
-                    style={{
-                      background: '#f1f5f9',
-                      border: '1px solid #cbd5e1',
-                      padding: '10px 18px',
-                      borderRadius: 10,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Cancelar
-                  </button>
-                  <button type="submit" className={styles.btnBitacora} style={{ padding: '10px 22px' }}>
-                    Guardar y Sincronizar con Hospital →
-                  </button>
-                </div>
-              </form>
-            )}
           </div>
-        )}
+        ) : null}
       </main>
     </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Puerta                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/** Los CINCO estados de la puerta. Mutuamente excluyentes. */
+type Fase =
+  | 'consultando'
+  | 'sin-sesion'
+  | 'sin-experiencia'
+  | 'indisponible'
+  | 'autorizado';
+
+const AVISOS: Readonly<Record<Fase, string>> = {
+  consultando: 'Comprobando su experiencia aprobada…',
+  'sin-sesion': 'No hay una sesión abierta.',
+  'sin-experiencia': 'Su cuenta no tiene acceso a esta experiencia.',
+  indisponible: 'No fue posible comprobar su acceso en este momento.',
+  autorizado: 'Su sesión está abierta.',
+};
+
+const VENTANA_DIAS = 7;
+
+/** Estado del cierre. `no-confirmado` deja la sesión EN PIE y lo dice. */
+type EstadoCierre = 'inactivo' | 'en-curso' | 'no-confirmado';
+
+const CIERRE_TEXTO: Readonly<Record<EstadoCierre, string>> = {
+  inactivo: '',
+  'en-curso': 'Cerrando su sesión.',
+  'no-confirmado':
+    'No se pudo cerrar la sesión: su sesión SIGUE ABIERTA. Inténtelo de nuevo antes de dejar el dispositivo.',
+};
+
+export function ProfesionalPortalProtegido(): ReactNode {
+  const [fase, setFase] = useState<Fase>('consultando');
+  const [cierre, setCierre] = useState<EstadoCierre>('inactivo');
+  const [items, setItems] = useState<readonly ItemWorklist[]>([]);
+  const [ventana, setVentana] = useState<VentanaWorklist | undefined>(undefined);
+  const bloqueRef = useRef<HTMLDivElement | null>(null);
+  const vigente = useRef(true);
+
+  useEffect(() => {
+    vigente.current = true;
+
+    return () => {
+      vigente.current = false;
+    };
+  }, []);
+
+  const consultar = useCallback(async (): Promise<void> => {
+    setFase('consultando');
+
+    const experiencias = await consultarExperienciasAprobadas();
+
+    if (!vigente.current) {
+      return;
+    }
+
+    if (experiencias.kind === 'sin-sesion') {
+      setFase('sin-sesion');
+      return;
+    }
+
+    if (experiencias.kind !== 'ok') {
+      setFase('indisponible');
+      return;
+    }
+
+    if (!experiencias.experiencias.includes('FIELD_PROFESSIONAL')) {
+      setFase('sin-experiencia');
+      return;
+    }
+
+    /*
+     * El contexto `PROFESSIONAL` solo certifica perfil y afiliación; la
+     * ASIGNACIÓN la resuelve el servidor dentro de la propia worklist y su
+     * ausencia se pinta como lista vacía, nunca como denegación.
+     */
+    const sesion = await consultarSesionHumana(CONTEXTOS_HUMANOS.profesional);
+
+    if (!vigente.current) {
+      return;
+    }
+
+    if (sesion === 'sin-sesion') {
+      setFase('sin-sesion');
+      return;
+    }
+
+    if (sesion !== 'activa-con-contexto') {
+      setFase(sesion === 'activa-sin-contexto' ? 'sin-experiencia' : 'indisponible');
+      return;
+    }
+
+    const rango = ventanaUtc(VENTANA_DIAS, new Date());
+    const resultado = await consultarWorklistProfesional(rango);
+
+    if (!vigente.current) {
+      return;
+    }
+
+    if (resultado.estado === 'ok') {
+      setVentana(resultado.worklist.window);
+      setItems(resultado.worklist.items);
+      setFase('autorizado');
+      return;
+    }
+
+    setFase(resultado.estado === 'sin-sesion' ? 'sin-sesion' : 'indisponible');
+  }, []);
+
+  useEffect(() => {
+    void consultar();
+  }, [consultar]);
+
+  /*
+   * CIERRE (§5.5). El estado pasa a `en-curso` solo mientras la llamada está
+   * en vuelo y `no-confirmado` se queda en pantalla cuando el servidor no
+   * confirma: esconder una sesión que sigue abierta haría creer que se cerró.
+   * El desenlace confirmado retira la portada por completo.
+   */
+  const cerrar = useCallback(async (): Promise<void> => {
+    setCierre('en-curso');
+
+    const desenlace = await cerrarSesionHumana();
+
+    if (cierreHumanoConfirmado(desenlace)) {
+      setCierre('inactivo');
+      setFase('sin-sesion');
+      return;
+    }
+
+    if (desenlace !== 'cancelado') {
+      setCierre('no-confirmado');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (fase === 'sin-sesion') {
+      return;
+    }
+
+    bloqueRef.current?.focus();
+  }, [fase]);
+
+  if (fase === 'autorizado') {
+    return (
+      <div ref={bloqueRef} tabIndex={-1}>
+        <p aria-live="polite">{CIERRE_TEXTO[cierre]}</p>
+        <ProfesionalPortal
+          items={items}
+          ventana={ventana}
+          onCerrarSesion={() => void cerrar()}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <main className={styles.profContainer}>
+      <section className={styles.turnoCard} aria-labelledby="profesional-portal-title">
+        <h2 className={styles.turnoTitle} id="profesional-portal-title">
+          Portal del Profesional en Salud
+        </h2>
+
+        <p className={styles.turnoZoneBadge} aria-live="polite">
+          {AVISOS[fase]}
+        </p>
+
+        {fase === 'sin-sesion' ? (
+          <div ref={bloqueRef} tabIndex={-1}>
+            <p>
+              Entra con la referencia de tu solicitud. MERDN no guarda ni pide aquí ninguna
+              contraseña: el inicio de sesión ocurre en el proveedor de identidad.
+            </p>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 20 }}>
+              <a className={styles.linkBackHospital} href={urlDeLoginHumano()}>
+                Iniciar sesión
+              </a>
+              <Link className={styles.linkBackHospital} href="/acceso">
+                Volver a experiencias
+              </Link>
+            </div>
+          </div>
+        ) : null}
+
+        {fase === 'sin-experiencia' || fase === 'indisponible' ? (
+          <div ref={bloqueRef} tabIndex={-1}>
+            <p>
+              {fase === 'sin-experiencia'
+                ? 'Consulte con la institución que lo atiende si considera que debe tener acceso.'
+                : 'No se muestra ningún espacio porque no hay una respuesta del servidor.'}
+            </p>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 20 }}>
+              {fase === 'indisponible' ? (
+                <button
+                  type="button"
+                  className={styles.linkBackHospital}
+                  onClick={() => void consultar()}
+                >
+                  Volver a intentar
+                </button>
+              ) : null}
+              <Link className={styles.linkBackHospital} href="/">
+                Volver al Portal Central
+              </Link>
+            </div>
+          </div>
+        ) : null}
+      </section>
+    </main>
   );
 }

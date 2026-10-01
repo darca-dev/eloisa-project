@@ -15,8 +15,7 @@
  */
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 
-import { type ApiEnvironment } from '../src/config/environment';
-import { createTestPrismaClient, unavailableBanner } from './database-availability';
+import { createTestPrismaClient } from './database-availability';
 import { ensureOtherTenant } from './enrollment-fixtures';
 import {
   crearPacienteFicticio,
@@ -68,7 +67,7 @@ describe('Exclusion constraint — solapamiento de relaciones ACTIVE', () => {
         startsAt: new Date(Date.now() - 60 * 60 * 1000),
         endsAt: null,
         authorizationReference: 'TEST-REF-1',
-        validatedByInstitutionalIdentityId: await identidadValidadoraFicticia(prisma, tenantId),
+        validatedByInstitutionalIdentityId: identidadValidadora,
         validatedAt: new Date(),
         version: 1,
       },
@@ -87,7 +86,7 @@ describe('Exclusion constraint — solapamiento de relaciones ACTIVE', () => {
         startsAt: new Date(Date.now() - 60 * 60 * 1000),
         endsAt: null,
         authorizationReference: 'TEST-REF-2',
-        validatedByInstitutionalIdentityId: await identidadValidadoraFicticia(prisma, tenantId),
+        validatedByInstitutionalIdentityId: identidadValidadora,
         validatedAt: new Date(),
         version: 1,
       },
@@ -127,7 +126,7 @@ describe('Trigger — autorrelación (paciente = cuidador)', () => {
         startsAt: new Date(Date.now() - 60 * 60 * 1000),
         endsAt: null,
         authorizationReference: 'TEST-REF-SELF',
-        validatedByInstitutionalIdentityId: await identidadValidadoraFicticia(prisma, tenantId),
+        validatedByInstitutionalIdentityId: identidadValidadora,
         validatedAt: new Date(),
         version: 1,
       },
@@ -138,7 +137,6 @@ describe('Trigger — autorrelación (paciente = cuidador)', () => {
 describe('RLS — aislamiento por tenant', () => {
   it('aisla patient_caregiver_relationship por tenant', async () => {
     if (!puedeEjecutarse) return;
-    const { personId: personIdA } = await crearPersona(prisma, tenantId, 'Persona A');
     const { patientId: patientIdA } = await crearPacienteFicticio(prisma, tenantId);
     const { personId: cuidadoraPersonIdA } = await crearPersona(prisma, tenantId, 'Cuidadora A');
     const identidadValidadoraA = await identidadValidadoraFicticia(prisma, tenantId);
@@ -155,7 +153,7 @@ describe('RLS — aislamiento por tenant', () => {
         startsAt: new Date(Date.now() - 60 * 60 * 1000),
         endsAt: null,
         authorizationReference: 'TEST-REF-A',
-        validatedByInstitutionalIdentityId: await identidadValidadoraFicticia(prisma, tenantId),
+        validatedByInstitutionalIdentityId: identidadValidadoraA,
         validatedAt: new Date(),
         version: 1,
       },

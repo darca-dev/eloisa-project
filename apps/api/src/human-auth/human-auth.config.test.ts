@@ -7,10 +7,13 @@ import {
   loadHumanAuthConfig,
 } from './human-auth.config';
 import {
+  HUMAN_AUTH_DEFAULT_RETURN_TARGET,
   HUMAN_AUTH_ENV,
   HUMAN_AUTH_LOCAL_DOCKER_HOST,
+  HUMAN_AUTH_RETURN_TARGETS,
   HUMAN_SESSION_IDLE_SECONDS,
   HUMAN_SESSION_TTL_SECONDS,
+  isAllowedReturnTarget,
 } from './human-auth.contract';
 
 /**
@@ -29,7 +32,12 @@ import {
  * 4. una configuración PARCIAL lanza, y una configuración COMPLETAMENTE ausente
  *    deshabilita el módulo. La asimetría es deliberada: quedarse a medias sin
  *    que nadie se entere es peor que no estar aprovisionado;
- * 5. la clave del intento debe decodificar EXACTAMENTE 32 bytes.
+ * 5. la clave del intento debe decodificar EXACTAMENTE 32 bytes;
+ * 6. los destinos de retorno posteriores al login son una allowlist LITERAL.
+ *    La raíz y `/acceso` —el selector de experiencias de MP04— caben en la
+ *    lista; `//host-ajeno`, `/\host-ajeno` y las rutas casi iguales, no. Un
+ *    destino elegido a voluntad convertiría el callback del login en una
+ *    redirección abierta.
  *
  * NINGÚN valor de este archivo es real: todos son locales y ficticios.
  */
@@ -288,6 +296,29 @@ describe('Configuración del acceso humano', () => {
           entorno('development'),
         ),
       ).toThrow(HumanAuthConfigurationError);
+    });
+  });
+
+  describe('destinos de retorno posteriores al login', () => {
+    it('admite exactamente la raíz y el selector de experiencias', () => {
+      expect([...HUMAN_AUTH_RETURN_TARGETS]).toStrictEqual(['/', '/acceso']);
+    });
+
+    it('usa la raíz como destino por defecto', () => {
+      expect(HUMAN_AUTH_DEFAULT_RETURN_TARGET).toBe('/');
+    });
+
+    it('rechaza cualquier destino fuera de la allowlist, incluidos los parecidos', () => {
+      expect(isAllowedReturnTarget('/')).toBe(true);
+      expect(isAllowedReturnTarget('/acceso')).toBe(true);
+
+      expect(isAllowedReturnTarget('')).toBe(false);
+      expect(isAllowedReturnTarget('/acceso/..')).toBe(false);
+      expect(isAllowedReturnTarget('/acceso/../admin')).toBe(false);
+      expect(isAllowedReturnTarget('//acceso')).toBe(false);
+      expect(isAllowedReturnTarget('/\\acceso')).toBe(false);
+      expect(isAllowedReturnTarget('https://ajeno.test/acceso')).toBe(false);
+      expect(isAllowedReturnTarget(undefined)).toBe(false);
     });
   });
 });

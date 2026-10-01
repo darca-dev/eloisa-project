@@ -34,8 +34,9 @@ import { type InstitutionalCookieOptions } from './institutional-session.cookie'
  *
  * Un rol puede además EXIGIR que su código se configure. Los dos roles de
  * consulta conservan su código histórico por defecto por compatibilidad, pero
- * `HOSPITAL_SCHEDULER` no tiene ninguno: su código y su credencial deben estar
- * ambos presentes y ser válidos en la MISMA carga de configuración, o la
+ * `HOSPITAL_SCHEDULER`, `CAREGIVER_RELATIONSHIP_MANAGER` y
+ * `HOSPITAL_ACCESS_REVIEWER` no tienen ninguno: su código y su credencial deben
+ * estar ambos presentes y ser válidos en la MISMA carga de configuración, o la
  * identidad se omite por completo. No hay fallback, código derivado del rol ni
  * literal incorporado en fuente.
  *
@@ -142,6 +143,22 @@ const IDENTIDADES_CONFIGURABLES: readonly IdentidadConfigurable[] = [
     secretVariable: INSTITUTIONAL_ENV.caregiverRelationshipManagerSecret,
     codeVariable: INSTITUTIONAL_ENV.caregiverRelationshipManagerCode,
     surface: 'la gestion de relaciones Paciente-Cuidador',
+  },
+  /*
+   * SPEC 038 / MP03-C1. Codigo y credencial PROPIOS y SEPARADOS: aprovisionar
+   * el revisor no habilita la agenda, la consulta de Pacientes, los agregados
+   * municipales ni la gestion de relaciones, ni al reves.
+   *
+   * SIN `defaultCode`, igual que la agenda y que las relaciones: exige CODIGO y
+   * CREDENCIAL configurados y validos, o la identidad NO se aprovisiona. Quien
+   * autoriza el acceso de una persona a los datos de otra no puede quedar
+   * habilitado por un literal incorporado en el codigo fuente.
+   */
+  {
+    role: 'HOSPITAL_ACCESS_REVIEWER',
+    secretVariable: INSTITUTIONAL_ENV.hospitalAccessReviewerSecret,
+    codeVariable: INSTITUTIONAL_ENV.hospitalAccessReviewerCode,
+    surface: 'la revision de solicitudes de acceso',
   },
 ];
 

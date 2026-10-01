@@ -8,12 +8,17 @@ import { resolvePublicApiBaseUrl } from '@/config/environment';
 import {
   CONTEXTOS_HUMANOS,
   DESTINO_RETORNO_HUMANO,
+  EXPERIENCIAS_APROBADAS,
+  RUTA_EXPERIENCIAS_HUMANAS,
+  RUTAS_EXPERIENCIA,
   RUTAS_SESION_HUMANA,
   cerrarSesionHumana,
   cierreHumanoConfirmado,
+  consultarExperienciasAprobadas,
   consultarSesionHumana,
   urlDeLoginHumano,
   type CierreSesionHumana,
+  type DesenlaceExperiencias,
   type EstadoSesionHumana,
 } from './humanSessionClient';
 
@@ -75,7 +80,7 @@ function respuestaJson(cuerpo: string, status = 200): Response {
 describe('URL del inicio de sesión humano', () => {
   it('es la ruta OIDC existente, absoluta y con el destino aprobado exacto', () => {
     expect(urlDeLoginHumano()).toBe(
-      `${resolvePublicApiBaseUrl()}/api/v1/human-auth/login?returnTo=/`,
+      `${resolvePublicApiBaseUrl()}/api/v1/human-auth/login?returnTo=/acceso`,
     );
     // Absoluta: el enlace no depende de dónde esté montada la interfaz.
     expect(urlDeLoginHumano().startsWith('http')).toBe(true);
@@ -86,8 +91,12 @@ describe('URL del inicio de sesión humano', () => {
 
     expect(url.pathname).toBe(RUTAS_SESION_HUMANA.login);
     expect(url.searchParams.get('returnTo')).toBe(DESTINO_RETORNO_HUMANO);
-    // Se conserva `/`: no se amplía la allowlist de retornos (spec 021 §17.B-3).
-    expect(DESTINO_RETORNO_HUMANO).toBe('/');
+    /*
+     * MP04 movió el retorno de `/` a `/acceso`: el servidor lo añadió a
+     * `HUMAN_AUTH_RETURN_TARGETS` y el selector de experiencias vive ahí. Sigue
+     * siendo UN valor, sin parámetros ni destinos compuestos.
+     */
+    expect(DESTINO_RETORNO_HUMANO).toBe('/acceso');
     // Un ÚNICO parámetro: no viaja nada más hacia el proveedor de identidad.
     expect([...url.searchParams.keys()]).toStrictEqual(['returnTo']);
   });
@@ -425,10 +434,25 @@ describe('alcance negativo del cliente humano compartido', () => {
     expect(new Set(estados).size).toBe(5);
   });
 
-  it('los contextos que una interfaz puede exigir son exactamente DOS', () => {
-    expect(Object.values(CONTEXTOS_HUMANOS)).toStrictEqual(['PATIENT', 'PROFESSIONAL']);
-    // `CAREGIVER` existe en el servidor y NO habilita ninguna experiencia hoy.
-    expect(Object.values(CONTEXTOS_HUMANOS)).not.toContain('CAREGIVER');
+  it('los contextos que una interfaz puede exigir son exactamente TRES', () => {
+    /*
+     * MP04 §12 añade `CAREGIVER`: `/cuidador` necesita pedir el contexto para
+     * separar «con relación» de «sin relación» y mostrar portada neutra sin
+     * datos nominales en el segundo caso. Sigue siendo una lista CERRADA y
+     * sigue sin ser la del servidor: pedir un contexto de más habilitaría una
+     * superficie que nadie aprobó.
+     */
+    expect(Object.values(CONTEXTOS_HUMANOS)).toStrictEqual([
+      'PATIENT',
+      'CAREGIVER',
+      'PROFESSIONAL',
+    ]);
+    // Ningún rol institucional ni ningún identificador entra en el catálogo.
+    expect(Object.keys(CONTEXTOS_HUMANOS)).toStrictEqual([
+      'paciente',
+      'cuidador',
+      'profesional',
+    ]);
   });
 
   it('no lee, escribe ni copia la credencial de sesión, y no persiste nada', () => {
@@ -480,7 +504,7 @@ describe('alcance negativo del cliente humano compartido', () => {
     expect(CODIGO).not.toContain('/api/v1/patients/me');
   });
 
-  it('usa exclusivamente las tres rutas humanas del contrato', () => {
+  it('usa exclusivamente las cuatro rutas humanas del contrato', () => {
     const rutas = [...CODIGO.matchAll(/'(?<ruta>\/api\/v1\/[\w/-]+)'/gu)].map(
       (coincidencia) => coincidencia.groups?.ruta ?? '',
     );
@@ -489,6 +513,171 @@ describe('alcance negativo del cliente humano compartido', () => {
       '/api/v1/human-auth/login',
       '/api/v1/human-auth/session',
       '/api/v1/human-auth/logout',
+      '/api/v1/me/experiences',
     ]);
+  });
+});
+
+/* ========================================================================== */
+/* Experiencias aprobadas (MP04)                                               */
+/* ========================================================================== */
+
+describe('consulta de experiencias aprobadas', () => {
+  it('consulta la ruta de experiencias por GET, con la sesión implícita y sin caché', async () => {
+    const doble = fetchDoble(() => respuestaJson('{"experiences":["PATIENT"]}'));
+
+    await consultarExperienciasAprobadas(doble.impl);
+
+    const llamada = doble.llamadas[0];
+
+    expect(doble.llamadas).toHaveLength(1);
+    expect(new URL(llamada?.url ?? '').pathname).toBe(RUTA_EXPERIENCIAS_HUMANAS);
+    expect(llamada?.init.method).toBe('GET');
+    expect(llamada?.init.credentials).toBe('include');
+    expect(llamada?.init.cache).toBe('no-store');
+    expect(llamada?.init.headers).toStrictEqual({ Accept: 'application/json' });
+    expect(llamada?.init.body).toBeUndefined();
+  });
+
+  it('la experiencia elegida NO viaja al servidor: es una lectura, no un filtro', async () => {
+    const doble = fetchDoble(() => respuestaJson('{"experiences":[]}'));
+
+    await consultarExperienciasAprobadas(doble.impl);
+
+    const url = new URL(doble.llamadas[0]?.url ?? '');
+
+    expect([...url.searchParams.keys()]).toStrictEqual([]);
+    expect(doble.llamadas[0]?.init.body).toBeUndefined();
+  });
+
+  it('devuelve exactamente las experiencias del catálogo, en el orden del servidor', async () => {
+    const doble = fetchDoble(() =>
+      respuestaJson('{"experiences":["CAREGIVER","PATIENT","FIELD_PROFESSIONAL"]}'),
+    );
+
+    await expect(consultarExperienciasAprobadas(doble.impl)).resolves.toStrictEqual({
+      kind: 'ok',
+      experiencias: ['CAREGIVER', 'PATIENT', 'FIELD_PROFESSIONAL'],
+    });
+  });
+
+  it('una lista vacía con sesión es «ok» SIN experiencias, que es la denegación neutral', async () => {
+    const doble = fetchDoble(() => respuestaJson('{"experiences":[]}'));
+
+    await expect(consultarExperienciasAprobadas(doble.impl)).resolves.toStrictEqual({
+      kind: 'ok',
+      experiencias: [],
+    });
+  });
+
+  it('descarta todo valor fuera del catálogo en lugar de seguirlo', async () => {
+    /*
+     * Un valor desconocido —de un paquete futuro o de un cuerpo alterado— no
+     * puede convertirse en un destino al que la interfaz navegue. Se descarta,
+     * no se propaga ni se infiere.
+     */
+    const doble = fetchDoble(() =>
+      respuestaJson('{"experiences":["ADMIN","PATIENT","",1,null,"CUIDADOR"]}'),
+    );
+
+    await expect(consultarExperienciasAprobadas(doble.impl)).resolves.toStrictEqual({
+      kind: 'ok',
+      experiencias: ['PATIENT'],
+    });
+
+    expect([...EXPERIENCIAS_APROBADAS]).toStrictEqual([
+      'PATIENT',
+      'CAREGIVER',
+      'FIELD_PROFESSIONAL',
+    ]);
+  });
+
+  it('un cuerpo sin `experiences` utilizable falla CERRADO, no se lee como vacío', async () => {
+    for (const cuerpo of ['{}', '{"experiences":null}', '{"experiences":"PATIENT"}']) {
+      const doble = fetchDoble(() => respuestaJson(cuerpo));
+
+      await expect(consultarExperienciasAprobadas(doble.impl)).resolves.toStrictEqual({
+        kind: 'no-disponible',
+      });
+    }
+  });
+
+  it('un 401 devuelve «sin-sesion» sin distinguir la causa', async () => {
+    const doble = fetchDoble(() => respuestaJson('{}', 401));
+
+    await expect(consultarExperienciasAprobadas(doble.impl)).resolves.toStrictEqual({
+      kind: 'sin-sesion',
+    });
+  });
+
+  it('un 503, un fallo de red y un cuerpo ilegible son «no-disponible»', async () => {
+    const caido = (async () => {
+      throw new TypeError('Failed to connect');
+    }) as unknown as typeof fetch;
+
+    await expect(consultarExperienciasAprobadas(caido)).resolves.toStrictEqual({
+      kind: 'no-disponible',
+    });
+
+    const error = fetchDoble(() => respuestaJson('{}', 503));
+    await expect(consultarExperienciasAprobadas(error.impl)).resolves.toStrictEqual({
+      kind: 'no-disponible',
+    });
+
+    const malformado = fetchDoble(() => new Response('no es json', { status: 200 }));
+    await expect(consultarExperienciasAprobadas(malformado.impl)).resolves.toStrictEqual({
+      kind: 'no-disponible',
+    });
+  });
+
+  it('un aborto devuelve «cancelado» y no se confunde con un fallo', async () => {
+    const controller = new AbortController();
+    const impl = (async () => {
+      const error = new Error('abortada');
+
+      error.name = 'AbortError';
+
+      throw error;
+    }) as unknown as typeof fetch;
+
+    controller.abort();
+
+    await expect(consultarExperienciasAprobadas(impl, controller.signal)).resolves.toStrictEqual({
+      kind: 'cancelado',
+    });
+  });
+
+  it('cada experiencia abre EXACTAMENTE su portada, y ninguna otra', () => {
+    expect(RUTAS_EXPERIENCIA).toStrictEqual({
+      PATIENT: '/paciente',
+      CAREGIVER: '/cuidador',
+      FIELD_PROFESSIONAL: '/profesional',
+    });
+
+    // No hay portada suelta: todo destino del mapa está en el catálogo.
+    for (const ruta of Object.values(RUTAS_EXPERIENCIA)) {
+      expect(Object.values(RUTAS_EXPERIENCIA)).toContain(ruta);
+      expect(ruta.startsWith('/')).toBe(true);
+    }
+  });
+
+  it('no propaga caducidad, identificadores ni el motivo de una lista vacía', async () => {
+    const doble = fetchDoble(() =>
+      respuestaJson(
+        JSON.stringify({
+          experiences: ['PATIENT'],
+          expiresAt: '2026-08-26T20:00:00.000Z',
+          reason: 'ninguna aprobación',
+          humanAccountId: 'cuenta-1',
+        }),
+      ),
+    );
+
+    const desenlace: DesenlaceExperiencias = await consultarExperienciasAprobadas(doble.impl);
+
+    expect(JSON.stringify(desenlace)).not.toContain('expiresAt');
+    expect(JSON.stringify(desenlace)).not.toContain('humanAccountId');
+    expect(JSON.stringify(desenlace)).not.toContain('ninguna aprobación');
+    expect(desenlace).toStrictEqual({ kind: 'ok', experiencias: ['PATIENT'] });
   });
 });

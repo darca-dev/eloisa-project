@@ -171,6 +171,9 @@ function HospitalContenido({
   onSeleccionarPestana,
   onVisitaMaterializada,
   modoDemoLocal,
+  canReviewAccessRequests,
+  fetchImpl,
+  onSessionInvalid,
 }: {
   readonly vista: HospitalVistaId;
   readonly pestanaAdministracion: HospitalAdminPestanaId;
@@ -182,6 +185,9 @@ function HospitalContenido({
   readonly onSeleccionarPestana: (pestana: HospitalAdminPestanaId) => void;
   readonly onVisitaMaterializada: (visita: HospitalVisitaMaterializadaDto) => void;
   readonly modoDemoLocal: boolean;
+  readonly canReviewAccessRequests: boolean;
+  readonly fetchImpl?: typeof fetch;
+  readonly onSessionInvalid: () => void;
 }): ReactNode {
   switch (vista) {
     case 'agenda':
@@ -214,6 +220,9 @@ function HospitalContenido({
         <HospitalAdministration
           pestana={pestanaAdministracion}
           onSeleccionarPestana={onSeleccionarPestana}
+          canReviewAccessRequests={canReviewAccessRequests}
+          fetchImpl={fetchImpl}
+          onSessionInvalid={onSessionInvalid}
         />
       );
     case 'inicio':
@@ -236,10 +245,16 @@ function HospitalContenido({
  * endpoint de apertura.
  */
 function HospitalAccesoInstitucional({
+  accesoDemo,
   aviso,
   ocupado,
   onEntrar,
 }: {
+  /**
+   * Credenciales FICTICIAS que el servidor solo entrega en la demostración
+   * local explícitamente habilitada. Nunca existe en la ruta normal.
+   */
+  readonly accesoDemo?: { readonly codigo: string; readonly credencial: string };
   /** Aviso de validación, de fallo o de confirmación. `null` cuando no hay. */
   readonly aviso: string | null;
   readonly ocupado: boolean;
@@ -311,6 +326,19 @@ function HospitalAccesoInstitucional({
         <button className={styles.ingresoBoton} disabled={ocupado} type="submit">
           {ocupado ? 'Comprobando…' : 'Entrar'}
         </button>
+        {accesoDemo === undefined ? null : (
+          <button
+            className={styles.ingresoBotonDemo}
+            disabled={ocupado}
+            onClick={() => {
+              setCodigo(accesoDemo.codigo);
+              setCredencial(accesoDemo.credencial);
+            }}
+            type="button"
+          >
+            Acceso demo
+          </button>
+        )}
         {/*
          * Región viva PERMANENTE: existe desde el primer render para que un
          * lector de pantalla anuncie el aviso cuando aparezca, en lugar de
@@ -387,6 +415,7 @@ export function HospitalShell({
   filaFinancieraInicial = null,
   visitaInicial = null,
   sesionInicial = null,
+  accesoDemo,
   modoDemoLocal = false,
   fetchImpl,
 }: {
@@ -435,6 +464,11 @@ export function HospitalShell({
    *   servidor, y es el único que dispara la consulta al montar.
    */
   readonly sesionInicial?: HospitalSesionDto | 'sin-sesion' | null;
+  /**
+   * Solo lo entrega la página servidor cuando el demo local está habilitado y
+   * las credenciales ficticias se configuraron fuera del repositorio.
+   */
+  readonly accesoDemo?: { readonly codigo: string; readonly credencial: string };
   /** Solo `/hospital` lo activa: datos en memoria, sin API institucional. */
   readonly modoDemoLocal?: boolean;
   /** Implementación de `fetch` usada para consultar el contexto de sesión. */
@@ -487,6 +521,11 @@ export function HospitalShell({
   /** Estado del menú lateral en pantallas móviles. */
   const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
   const { vista, intencion } = navegacion;
+  const esRevisorAccesos = sesion?.role === 'HOSPITAL_ACCESS_REVIEWER';
+  const vistaVisible: HospitalVistaId = esRevisorAccesos ? 'administracion' : vista;
+  const pestanaVisible: HospitalAdminPestanaId = esRevisorAccesos
+    ? 'Solicitudes de acceso'
+    : pestanaAdministracion;
 
   /* Cerrar el menú al presionar Escape. */
   useEffect(() => {
@@ -701,6 +740,7 @@ export function HospitalShell({
     return (
       <HospitalMarcoNeutral etiquetaPlataforma={etiquetaPlataforma}>
         <HospitalAccesoInstitucional
+          accesoDemo={accesoDemo}
           aviso={aviso}
           ocupado={ocupado}
           onEntrar={(identityCode, accessSecret) => {
@@ -723,9 +763,13 @@ export function HospitalShell({
       <HospitalSidebar
         institucion={institucion}
         etiquetaPlataforma={etiquetaPlataforma}
-        navegacion={config.navegacion}
-        itemActivoId={HOSPITAL_ITEM_ACTIVO_POR_VISTA[vista]}
-        idsNavegables={HOSPITAL_ITEMS_NAVEGABLES}
+        navegacion={
+          esRevisorAccesos
+            ? config.navegacion.filter((item) => item.id === 'configuracion')
+            : config.navegacion
+        }
+        itemActivoId={HOSPITAL_ITEM_ACTIVO_POR_VISTA[vistaVisible]}
+        idsNavegables={esRevisorAccesos ? ['configuracion'] : HOSPITAL_ITEMS_NAVEGABLES}
         menuAbierto={menuMovilAbierto}
         onCerrarMenu={() => { setMenuMovilAbierto(false); }}
         onSeleccionar={(id) => {
@@ -747,7 +791,7 @@ export function HospitalShell({
             void terminar('cerrar');
           }}
         />
-        <main className={styles.content} data-hospital-content={MARCADOR_CONTENIDO[vista]}>
+        <main className={styles.content} data-hospital-content={MARCADOR_CONTENIDO[vistaVisible]}>
           {aviso === null ? null : (
             /*
              * Avisos de la propia sesión —por ejemplo, una revocación que el
@@ -764,12 +808,19 @@ export function HospitalShell({
           )}
           {modoDemoLocal ? <p className={styles.intencion}>Datos ficticios de demostración local. No se guardan cambios.</p> : null}
           <HospitalContenido
-            vista={vista}
-            pestanaAdministracion={pestanaAdministracion}
+            vista={vistaVisible}
+            pestanaAdministracion={pestanaVisible}
             seccionFinanciera={seccionFinancieraInicial}
             filaFinanciera={filaFinancieraInicial}
             visita={visita}
             modoDemoLocal={modoDemoLocal}
+            canReviewAccessRequests={esRevisorAccesos}
+            fetchImpl={fetchImpl}
+            onSessionInvalid={() => {
+              setSesion(null);
+              setSesionResuelta(true);
+              setAviso('La sesión institucional terminó. Ingrese nuevamente.');
+            }}
             onNavegar={navegar}
             onSeleccionarPestana={setPestanaAdministracion}
             onVisitaMaterializada={(materializada) => {

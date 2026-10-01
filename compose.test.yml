@@ -1,0 +1,82 @@
+# ---------------------------------------------------------------------------
+# MERDN - Topologia declarativa de PostgreSQL de pruebas AISLADA
+# (Spec 025 "baseline de pruebas aislada", paquete MP01-C2)
+#
+# Alcance de este archivo: DESCRIBIR un cluster PostgreSQL desechable, exclusivo
+# y verificable para la baseline de pruebas. Este archivo no levanta nada por si
+# mismo. La unica validacion autorizada en este paquete es DECLARATIVA:
+#
+#   docker compose -f compose.test.yml --env-file .env.test.example config
+#
+# Reglas estructurales (Spec 025 seccion 7; handoff TO-CLAUDE.md v13):
+#   - proyecto Compose exacto: merdn-baseline-test
+#   - servicio exacto: postgres-test, imagen oficial postgres:17.6-alpine
+#   - base exacta: merdn_test
+#   - publicacion exclusiva en loopback 127.0.0.1, nunca exposed a la red
+#   - red y volumen con nombre propio, exclusivos de esta topologia
+#   - reinicio deshabilitado: el cluster es desechable y no debe sobrevivir a
+#     una parada
+#   - credenciales siempre leidas de un archivo de entorno externo; aqui no hay
+#     ningun valor secreto
+#
+# Este archivo no define la API, ni el frontend, ni un proveedor de identidad,
+# ni ningun servicio compartido con otras topologias del repositorio. No se
+# declares dependencia nueva: la imagen es oficial y ya usada en el repositorio.
+# ---------------------------------------------------------------------------
+
+name: merdn-baseline-test
+
+services:
+  postgres-test:
+    image: postgres:17.6-alpine
+    # Cluster desechable: si se detiene, no debe reiniciarse por su cuenta.
+    restart: "no"
+    environment:
+      # Sin valores por defecto: si el archivo de entorno no define una variable,
+      # la validacion declarativa falla en lugar de inventar una identidad.
+      POSTGRES_DB: ${POSTGRES_DB:?defina POSTGRES_DB en el archivo de entorno de pruebas}
+      POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER en el archivo de entorno de pruebas}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD en el archivo de entorno de pruebas}
+      # Checksums de datos: requisito de la baseline para detectar corrupcion
+      # silenciosa en el volumen desechable.
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    ports:
+      # Publicacion restringida a loopback: nunca expuesta a la red.
+      - '127.0.0.1:55432:5432'
+    volumes:
+      - merdn-test-pgdata:/var/lib/postgresql/data
+    networks:
+      - merdn-test-net
+    healthcheck:
+      # pg_isready contra el socket local, con la identidad definida en el
+      # archivo de entorno. readiness antes de cualquier migracion o prueba.
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    labels:
+      com.merdn.project: merdn-baseline-test
+      com.merdn.scope: test
+      com.merdn.disposable: 'true'
+
+networks:
+  merdn-test-net:
+    name: merdn-baseline-test-net
+    driver: bridge
+    labels:
+      com.merdn.project: merdn-baseline-test
+      com.merdn.scope: test
+      com.merdn.disposable: 'true'
+
+volumes:
+  merdn-test-pgdata:
+    name: merdn-baseline-test-pgdata
+    labels:
+      com.merdn.project: merdn-baseline-test
+      com.merdn.scope: test
+      com.merdn.disposable: 'true'

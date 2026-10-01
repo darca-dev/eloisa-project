@@ -32,6 +32,7 @@
     "staging:runtime-db-check": "node scripts/staging/runtime-db-check.mjs",
     "staging:smoke": "node scripts/staging/smoke.mjs",
     "staging:test": "vitest run tests/staging",
+    "test:baseline": "node scripts/testing/run-baseline.mjs",
     "staging:typecheck": "node -e \"const{readdirSync}=require('node:fs');const{execFileSync}=require('node:child_process');const f=readdirSync('tests/staging').filter(n=>n.endsWith('.test.mts')).map(n=>'tests/staging/'+n);if(f.length===0){console.error('No tests/staging/*.test.mts found');process.exit(1)}console.error('staging typecheck: '+f.join(', '));try{execFileSync(process.execPath,['node_modules/typescript/bin/tsc','--noEmit','--allowJs','--checkJs','false','--module','nodenext','--moduleResolution','nodenext','--target','es2022','--strict','--skipLibCheck','--types','node',...f],{stdio:'inherit'})}catch(e){process.exit(typeof e.status==='number'?e.status:1)}\"",
     "identity:provision": "node --env-file-if-exists=.env tools/identity-provisioning/src/main.ts",
     "identity:provision:typecheck": "tsc -p tools/identity-provisioning/tsconfig.json",

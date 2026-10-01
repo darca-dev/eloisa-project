@@ -174,10 +174,27 @@ describe('T-02 — Las doce vistas autorizadas', () => {
 
   it('la navegación no crea rutas ni enlaces: solo botones', () => {
     const sidebar = shell().split('</aside>')[0] ?? '';
+    const nav = /<nav[^>]*>[\s\S]*?<\/nav>/u.exec(sidebar)?.[0] ?? '';
 
     expect(sidebar).not.toContain('<a ');
     expect(sidebar).not.toContain('href');
-    expect(apariciones(sidebar, /<button type="button"/gu)).toBe(HOSPITAL_NAV_ITEMS.length);
+
+    /*
+     * Sin conteos globales: cada opción del menú es un botón real dentro del
+     * `<nav>`, con su etiqueta visible y su marcador técnico de alcance.
+     */
+    const botonesMenu = nav.match(/<button[^>]*type="button"[^>]*>[\s\S]*?<\/button>/gu) ?? [];
+
+    expect(botonesMenu.length).toBe(HOSPITAL_NAV_ITEMS.length);
+    for (const item of HOSPITAL_NAV_ITEMS) {
+      const boton = botonesMenu.find((posible) => texto(posible).includes(item.etiqueta));
+
+      expect(boton, `botón de «${item.etiqueta}»`).toBeDefined();
+      expect(boton, `botón de «${item.etiqueta}»`).toContain('data-hospital-nav=');
+    }
+
+    // El único control extra del sidebar es el cierre del menú móvil (H-FID-A).
+    expect(apariciones(sidebar, /aria-label="Cerrar menú de navegación"/gu)).toBe(1);
   });
 });
 

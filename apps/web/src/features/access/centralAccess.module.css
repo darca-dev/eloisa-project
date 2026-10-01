@@ -8,3 +8,36 @@
 .primary, .secondary { display: inline-block; box-sizing: border-box; border: 0; border-radius: 9px; padding: 12px 16px; margin-top: 22px; background: #126c87; color: #fff; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
 .human { margin-top: 32px; }.human .secondary + .secondary { margin-left: 12px; }.textLink { display: inline-block; margin: 18px 0 0 18px; color: #0b627c; font-weight: 650; }.choices, .roleGrid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); }.roleCard { display: grid; gap: 6px; min-height: 88px; box-sizing: border-box; padding: 16px; border: 1px solid #bcd0d8; border-radius: 12px; color: #183044; text-decoration: none; text-align: left; font: inherit; background: #fbfefe; cursor: pointer; }.roleCard:hover { border-color: #176e89; background: #f0f9fb; }.roleCard:focus-visible, .back:focus-visible, .textLink:focus-visible, .secondary:focus-visible { outline: 3px solid #89cbe2; outline-offset: 3px; }.roleCard span { color: #526974; font-size: .92rem; line-height: 1.4; }.note { margin-top: 24px; padding: 13px; border-left: 4px solid #166f8b; background: #edf8fb; color: #315563; line-height: 1.5; }.demoConfirmation { margin-top: 18px; padding: 12px; border-radius: 8px; background: #eaf8ee; color: #285b37 !important; }
 @media (max-width: 520px) { .textLink { display: block; margin-left: 0; }.secondary { width: 100%; text-align: center; }.roleGrid { grid-template-columns: 1fr; } }
+
+/* Solicitud de acceso persistente (SPEC 038, MP02-C2) */
+.demoWarning { margin: 18px 0 4px; padding: 13px; border-left: 4px solid #a2590b; background: #fdf3e5; color: #6b3d06 !important; line-height: 1.5; }
+.solicitud { display: grid; gap: 16px; margin-top: 20px; }
+.campo { display: grid; gap: 6px; }
+.campo label { color: #31505f; font-size: .92rem; font-weight: 650; }
+.input { box-sizing: border-box; width: 100%; padding: 11px 12px; border: 1px solid #b9ccd5; border-radius: 9px; background: #fff; color: #183044; font: inherit; }
+.input:focus-visible { outline: 3px solid #89cbe2; outline-offset: 2px; }
+.input[aria-invalid='true'] { border-color: #a3282b; border-width: 2px; }
+.campoError { margin: 0; color: #8c2022 !important; font-size: .88rem; }
+.errorMessage { margin: 0; padding: 12px; border-radius: 8px; background: #fdecec; color: #8c2022 !important; line-height: 1.5; }
+.liveRegion { margin-top: 4px; }
+.liveRegion:empty { margin-top: 0; }
+.demoProfiles { margin-top: 20px; padding: 18px; border: 1px solid #c5dce5; border-radius: 12px; background: #f3f9fb; }
+.demoProfiles > p { margin: 0 0 16px; }
+.demoProfileGroup + .demoProfileGroup { margin-top: 16px; }
+.demoProfileGroup h3 { margin: 0 0 8px; color: #20495c; font-size: 1rem; }
+.demoProfileActions { display: flex; flex-wrap: wrap; gap: 8px; }
+.demoProfileButton { padding: 9px 12px; border: 1px solid #8bb7ca; border-radius: 8px; background: #fff; color: #15566e; font: inherit; font-weight: 650; cursor: pointer; }
+.demoProfileButton:hover { background: #e3f4f8; }
+.demoProfileButton:focus-visible, .primary:focus-visible { outline: 3px solid #89cbe2; outline-offset: 3px; }
+.demoProfileButton:disabled { opacity: .55; cursor: wait; }
+
+/* OD-11: credencial ficticia. La fila existe para que el botón de mostrar/ocultar
+   no se apile debajo del campo en 320 px, y el aviso va SIEMPRE visible porque
+   una regla que nadie conoce no es una regla. */
+.passwordRow { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+.passwordRow .input { flex: 1 1 180px; min-width: 0; }
+.passwordToggle { flex: 0 0 auto; box-sizing: border-box; padding: 11px 12px; border: 1px solid #8bb7ca; border-radius: 9px; background: #f3f9fb; color: #15566e; font: inherit; font-size: .88rem; font-weight: 650; cursor: pointer; }
+.passwordToggle:hover { background: #e3f4f8; }
+.passwordToggle:focus-visible { outline: 3px solid #89cbe2; outline-offset: 3px; }
+.passwordToggle:disabled { opacity: .55; cursor: wait; }
+.campoAyuda { margin: 0; color: #4c6470 !important; font-size: .86rem; line-height: 1.5; }

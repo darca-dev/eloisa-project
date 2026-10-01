@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useReducer, useRef } from 'react';
 import type { ReactNode } from 'react';
 
@@ -373,6 +374,11 @@ export function InscripcionExperience({
             </p>
 
             <div className={styles.doneActions}>
+              {state.rama.perfil !== 'paciente' ? (
+                <Link className={styles.actionNext} href="/acceso?accion=registro">
+                  Enviar solicitud de acceso al Hospital
+                </Link>
+              ) : null}
               {state.rama.perfil === 'paciente' ? (
                 <button
                   type="button"

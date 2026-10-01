@@ -1,16 +1,24 @@
 import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 
 import { platformNameInSentence } from '@/config/branding';
-import { DemoNavigation } from '@/features/access/DemoNavigation';
+import { CentralAccess } from '@/features/access/CentralAccess';
+import { humanAccessDemoLocalEnabled } from '@/features/access/humanAccessDemoLocal';
+
+/* La bandera demo se evalúa al atender la solicitud, no al construir la imagen. */
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: `${platformNameInSentence()} — Acceso central`,
+  title: `${platformNameInSentence()} — Atención Domiciliaria`,
   description:
-    'Entrada segura para los espacios institucionales y para solicitudes de acceso ciudadano.',
+    'Acceso y solicitudes para pacientes, cuidadores y visitadores médicos.',
   robots: { index: false, follow: false },
 };
 
 export default function AccessPage(): ReactNode {
-  return <DemoNavigation />;
+  return (
+    <Suspense fallback={null}>
+      <CentralAccess modoDemoLocal={humanAccessDemoLocalEnabled()} />
+    </Suspense>
+  );
 }

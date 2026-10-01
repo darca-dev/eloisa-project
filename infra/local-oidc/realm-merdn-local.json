@@ -1,13 +1,17 @@
 {
   "realm": "merdn-local",
   "enabled": true,
-  "displayName": "MERDN local (desarrollo)",
+  "displayName": "Eloisa · Atención Domiciliaria",
+  "loginTheme": "eloisa",
+  "internationalizationEnabled": true,
+  "defaultLocale": "es",
+  "supportedLocales": ["es"],
   "sslRequired": "none",
   "registrationAllowed": false,
   "resetPasswordAllowed": false,
   "rememberMe": false,
   "verifyEmail": false,
-  "loginWithEmailAllowed": false,
+  "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
   "editUsernameAllowed": false,
   "bruteForceProtected": true,
@@ -37,6 +41,23 @@
         "access.token.signed.response.alg": "RS256",
         "id.token.signed.response.alg": "RS256"
       }
+    },
+    {
+      "clientId": "merdn-access-provisioning",
+      "name": "MERDN - provision de cuentas (local)",
+      "description": "Cliente CONFIDENCIAL de servicio (SPEC 038 MP04). Solo obtiene token administrativo por client_credentials para aprovisionar cuentas ficticias en este realm. Sin Authorization Code ni Direct Access Grant.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "frontchannelLogout": false,
+      "redirectUris": [],
+      "webOrigins": [],
+      "secret": "${MERDN_ACCESS_PROVISIONING_CLIENT_SECRET}"
     }
   ],
 
@@ -76,6 +97,19 @@
       ],
       "realmRoles": [],
       "clientRoles": {}
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000f1c9",
+      "username": "service-account-merdn-access-provisioning",
+      "serviceAccountClientId": "merdn-access-provisioning",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "service",
+      "lastName": "account",
+      "realmRoles": [],
+      "clientRoles": {
+        "realm-management": ["manage-users"]
+      }
     }
   ]
 }

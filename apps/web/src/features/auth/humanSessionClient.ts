@@ -67,27 +67,51 @@ export const RUTAS_SESION_HUMANA = {
 /**
  * Destino posterior al login.
  *
- * Es el ÚNICO valor de la allowlist CERRADA del servidor. No se compone, no se
- * deduce de la ubicación actual y no se recibe por parámetro: un destino
- * distinto sería descartado por el servidor, y fabricarlo aquí solo invitaría a
- * creer que la interfaz elige a dónde vuelve. Conservarlo en `/` es además lo
- * que evita ampliar la allowlist de retornos del servidor (spec 021 §17.B-3).
+ * Es el ÚNICO valor de la allowlist CERRADA del servidor que esta superficie
+ * usa. No se compone, no se deduce de la ubicación actual y no se recibe por
+ * parámetro: un destino distinto sería descartado por el servidor, y fabricarlo
+ * aquí solo invitaría a creer que la interfaz elige a dónde vuelve.
+ *
+ * Desde MP04 es `/acceso`, no `/`: el servidor añadió esa ruta a
+ * `HUMAN_AUTH_RETURN_TARGETS` a propósito, y el selector de experiencias vive
+ * ahí. Devolver a `/` dejaría a la persona en el portal central con una sesión
+ * abierta y sin decidir a qué portada entrar.
  */
-export const DESTINO_RETORNO_HUMANO = '/';
+export const DESTINO_RETORNO_HUMANO = '/acceso';
+
+/**
+ * Ruta de las EXPERIENCIAS aprobadas de la cuenta.
+ *
+ * Es la CUARTA ruta que esta superficie toca, y no es una ruta de sesión: la
+ * sesión dice que hay persona; esta dice qué portadas le aprobó la
+ * institución. Se declara aparte de `RUTAS_SESION_HUMANA` porque pertenece a
+ * otro controlador (`/api/v1/me`) y mezclarlas daría a entender que cerrar
+ * sesión cierra algo más.
+ */
+export const RUTA_EXPERIENCIAS_HUMANAS = '/api/v1/me/experiences';
 
 /* -------------------------------------------------------------------------- */
 /* Contrato de la sesión                                                       */
 /* -------------------------------------------------------------------------- */
 
 /**
- * Los DOS contextos humanos que hoy exige alguna superficie de MERDN.
+ * Los TRES contextos humanos que hoy exige alguna superficie de MERDN.
  *
- * No es el catálogo del servidor —que además incluye `CAREGIVER`—: es la lista
- * de los que una interfaz puede pedir. Ampliarla es habilitar una experiencia
- * nueva, y eso exige una spec, no una constante.
+ * No es el catálogo del servidor —que además puede no devolver ninguno—: es la
+ * lista de los que una interfaz puede pedir. Ampliarla es habilitar una
+ * experiencia nueva, y eso exige una spec, no una constante.
+ *
+ * MP04 §12 es esa spec para `CAREGIVER`: `/cuidador` debe distinguir «con
+ * relación» de «sin relación» y mostrar en el segundo caso una portada neutra
+ * SIN datos nominales. Sin pedir el contexto no hay forma de hacerlo en la
+ * interfaz, y decidirlo en el navegador a partir de la experiencia aprobada
+ * sería exactamente lo que la spec prohíbe: una experiencia dice a QUÉ portada
+ * se entra, no sobre QUIÉN se cuida. El servidor sigue siendo la autoridad —
+ * `HumanContextsService` solo emite `CAREGIVER` con una relación activa—.
  */
 export const CONTEXTOS_HUMANOS = {
   paciente: 'PATIENT',
+  cuidador: 'CAREGIVER',
   profesional: 'PROFESSIONAL',
 } as const;
 
@@ -251,6 +275,118 @@ export async function consultarSesionHumana(
   return contextos.includes(contextoRequerido)
     ? 'activa-con-contexto'
     : 'activa-sin-contexto';
+}
+
+/* -------------------------------------------------------------------------- */
+/* Experiencias aprobadas (MP04)                                               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Catálogo CERRADO de experiencias que el servidor puede emitir.
+ *
+ * No es una lista de permisos: una experiencia decide únicamente a QUÉ portada
+ * se puede entrar. Mantenerla cerrada aquí es lo que impide que un valor
+ * desconocido —una experiencia de un paquete futuro, o un cuerpo alterado— se
+ * convierta en un enlace que la interfaz siga.
+ */
+export const EXPERIENCIAS_APROBADAS = ['PATIENT', 'CAREGIVER', 'FIELD_PROFESSIONAL'] as const;
+
+export type ExperienciaAprobada = (typeof EXPERIENCIAS_APROBADAS)[number];
+
+/** Las TRES portadas que una experiencia puede abrir. Ninguna otra. */
+export const RUTAS_EXPERIENCIA: Readonly<Record<ExperienciaAprobada, string>> = {
+  PATIENT: '/paciente',
+  CAREGIVER: '/cuidador',
+  FIELD_PROFESSIONAL: '/profesional',
+};
+
+/**
+ * Desenlace de la consulta de experiencias.
+ *
+ * `sin-sesion` es además el desenlace de una PRIMERA visita: sin sesión no hay
+ * nada que enrutar y la pantalla muestra el acceso normal, no una denegación.
+ * `ninguna` —lista vacía con sesión vigente— sí es la denegación neutral: hay
+ * persona, y ninguna aprobación.
+ */
+export type DesenlaceExperiencias =
+  | { readonly kind: 'ok'; readonly experiencias: readonly ExperienciaAprobada[] }
+  | { readonly kind: 'sin-sesion' }
+  | { readonly kind: 'cancelado' }
+  | { readonly kind: 'no-disponible' };
+
+/** Descarta todo lo que no esté en el catálogo: FAIL-CLOSED, no se infiere. */
+function filtrarExperiencias(crudo: unknown): readonly ExperienciaAprobada[] {
+  if (!Array.isArray(crudo)) {
+    return [];
+  }
+
+  const validas: ExperienciaAprobada[] = [];
+
+  for (const item of crudo) {
+    if (
+      typeof item === 'string' &&
+      (EXPERIENCIAS_APROBADAS as readonly string[]).includes(item)
+    ) {
+      validas.push(item as ExperienciaAprobada);
+    }
+  }
+
+  return validas;
+}
+
+/**
+ * Consulta qué experiencias aprobó la institución para la cuenta de la sesión.
+ *
+ * Mismas reglas que la consulta de sesión: cookie administrada por el navegador,
+ * sin caché, sin cabecera de identidad, sin lanzar nunca. La respuesta se
+ * REDUCE a la lista de catálogo: ni caducidad, ni identificadores, ni motivo de
+ * una lista vacía —el servidor deliberadamente no lo sabe decir—.
+ */
+export async function consultarExperienciasAprobadas(
+  fetchImpl: typeof fetch = fetch,
+  signal?: AbortSignal,
+): Promise<DesenlaceExperiencias> {
+  let response: Response;
+
+  try {
+    response = await fetchImpl(
+      `${resolvePublicApiBaseUrl()}${RUTA_EXPERIENCIAS_HUMANAS}`,
+      peticionHumana('GET', signal),
+    );
+  } catch (error) {
+    return esCancelacion(error, signal) ? { kind: 'cancelado' } : { kind: 'no-disponible' };
+  }
+
+  if (signal?.aborted === true) {
+    return { kind: 'cancelado' };
+  }
+
+  if (response.status === 401) {
+    return { kind: 'sin-sesion' };
+  }
+
+  if (!response.ok) {
+    return { kind: 'no-disponible' };
+  }
+
+  let datos: { readonly experiences?: unknown };
+
+  try {
+    datos = (await response.json()) as { readonly experiences?: unknown };
+  } catch {
+    return { kind: 'no-disponible' };
+  }
+
+  /*
+   * FAIL-CLOSED: un cuerpo SIN `experiences` no es una lista vacía de
+   * experiencias, es una respuesta que no se entiende. Solo la ausencia
+   * EXPLÍCITA de aprobaciones —`[]`— significa «ninguna».
+   */
+  if (!Array.isArray(datos.experiences)) {
+    return { kind: 'no-disponible' };
+  }
+
+  return { kind: 'ok', experiencias: filtrarExperiencias(datos.experiences) };
 }
 
 /**

@@ -435,7 +435,7 @@ describe.skipIf(!puedeEjecutarse)('Superficie humana y de relaciones', () => {
 
         const respuesta = await peticion.expect(302);
 
-        expect(respuesta.headers['location']).toBe('/');
+        expect(respuesta.headers['location']).toBe(`${ORIGEN_AUTORIZADO}/`);
         expect(respuesta.headers['cache-control']).toBe('private, no-store');
 
         const borrado = respuesta.headers['set-cookie'];

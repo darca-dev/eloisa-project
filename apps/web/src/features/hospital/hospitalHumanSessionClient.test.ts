@@ -128,7 +128,7 @@ describe('compatibilidad de la fachada de Hospital', () => {
 describe('URL del inicio de sesión humano', () => {
   it('es la ruta OIDC existente, absoluta y con el destino aprobado exacto', () => {
     expect(urlDeLoginHumano()).toBe(
-      `${resolvePublicApiBaseUrl()}/api/v1/human-auth/login?returnTo=/`,
+      `${resolvePublicApiBaseUrl()}/api/v1/human-auth/login?returnTo=/acceso`,
     );
     // Absoluta: el enlace no depende de dónde esté montada la interfaz.
     expect(urlDeLoginHumano().startsWith('http')).toBe(true);
@@ -139,7 +139,7 @@ describe('URL del inicio de sesión humano', () => {
 
     expect(url.pathname).toBe(RUTAS_SESION_HUMANA.login);
     expect(url.searchParams.get('returnTo')).toBe(DESTINO_RETORNO_HUMANO);
-    expect(DESTINO_RETORNO_HUMANO).toBe('/');
+    expect(DESTINO_RETORNO_HUMANO).toBe('/acceso');
     // Un ÚNICO parámetro: no viaja nada más hacia el proveedor de identidad.
     expect([...url.searchParams.keys()]).toStrictEqual(['returnTo']);
   });

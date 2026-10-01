@@ -131,11 +131,13 @@ describe('consulta del contexto', () => {
 });
 
 describe('presentación del rol', () => {
-  it('rotula los tres roles implementados sin prometer capacidades', () => {
+  it('rotula los cuatro roles implementados sin prometer capacidades', () => {
     expect(etiquetaDeRol('HOSPITAL_PATIENT_VIEWER')).toBe('Consulta de pacientes');
     expect(etiquetaDeRol('HOSPITAL_SCHEDULER')).toBe('Agenda hospitalaria');
     expect(etiquetaDeRol('MUNICIPAL_VIEWER')).toBe('Consulta municipal agregada');
+    expect(etiquetaDeRol('HOSPITAL_ACCESS_REVIEWER')).toBe('Revisión de solicitudes de acceso');
     expect(Object.keys(ETIQUETA_ROL_INSTITUCIONAL).sort()).toStrictEqual([
+      'HOSPITAL_ACCESS_REVIEWER',
       'HOSPITAL_PATIENT_VIEWER',
       'HOSPITAL_SCHEDULER',
       'MUNICIPAL_VIEWER',

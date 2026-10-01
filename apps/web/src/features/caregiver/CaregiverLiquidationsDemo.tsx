@@ -31,7 +31,7 @@ export function CaregiverLiquidationsDemo(): ReactNode {
           <Link href="/" className={styles.backLink}>
             Volver al portal central
           </Link>
-          <span>Experiencia visual ficticia · sin cuenta autenticada</span>
+          <span>Datos ficticios de demostración — sin dinero ni acciones persistentes</span>
         </div>
         <LiquidationsDemo role="cuidador" />
       </main>

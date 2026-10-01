@@ -66,7 +66,8 @@ import { resolvePublicApiBaseUrl } from '@/config/environment';
 export type RolInstitucional =
   | 'MUNICIPAL_VIEWER'
   | 'HOSPITAL_PATIENT_VIEWER'
-  | 'HOSPITAL_SCHEDULER';
+  | 'HOSPITAL_SCHEDULER'
+  | 'HOSPITAL_ACCESS_REVIEWER';
 
 export interface SesionInstitucionalDto {
   readonly role: RolInstitucional;
@@ -88,6 +89,7 @@ export const RUTA_SESION_INSTITUCIONAL = '/api/v1/institutional/sessions/current
 export const ETIQUETA_ROL_INSTITUCIONAL: Record<RolInstitucional, string> = {
   HOSPITAL_PATIENT_VIEWER: 'Consulta de pacientes',
   HOSPITAL_SCHEDULER: 'Agenda hospitalaria',
+  HOSPITAL_ACCESS_REVIEWER: 'Revisión de solicitudes de acceso',
   MUNICIPAL_VIEWER: 'Consulta municipal agregada',
 };
 

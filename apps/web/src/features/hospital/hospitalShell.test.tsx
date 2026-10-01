@@ -12,7 +12,7 @@ import { HospitalSessionActions } from './HospitalTopbar';
 import { HOSPITAL_NAV_ITEMS, hospitalShellDemo } from './hospitalConfig';
 import type { HospitalInstitution, HospitalShellConfig } from './hospitalConfig';
 import type { HospitalSesionDto } from './hospitalInstitutionClient';
-import { SESION_INSTITUCIONAL_FICTICIA, texto } from './hospitalTestUtils';
+import { SESION_INSTITUCIONAL_FICTICIA, apariciones, texto } from './hospitalTestUtils';
 import type { HospitalVisitaMaterializadaDto } from './hospitalVisitsClient';
 
 const DIRECTORIO_SHELL = fileURLToPath(new URL('.', import.meta.url));
@@ -101,6 +101,13 @@ const DATOS_DEMOSTRATIVOS: readonly string[] = [
   'Buscar paciente, documento, profesional, cita, atención o municipio',
 ];
 
+const SESION_REVISORA: HospitalSesionDto = {
+  role: 'HOSPITAL_ACCESS_REVIEWER',
+  expiresAt: '2026-09-30T20:00:00.000Z',
+  institution: { name: 'Hospital ficticio de revisión' },
+  actorDisplay: 'Acceso institucional',
+};
+
 /**
  * Comprobaciones comunes del MARCO NEUTRAL (H-FID-A).
  *
@@ -182,6 +189,25 @@ describe('T-01 — Estructura del shell', () => {
   });
 });
 
+describe('SPEC 038 MP03-C2 — acceso por rol a la bandeja', () => {
+  it('el revisor entra directo a solicitudes y solo recibe Configuración en el menú', () => {
+    const html = renderToStaticMarkup(<HospitalShell sesionInicial={SESION_REVISORA} />);
+    const navigation = navDe(html);
+    expect(html).toContain('data-hospital-content="administracion"');
+    expect(html).toContain('data-hospital-admin="Solicitudes de acceso"');
+    expect(html).toContain('Revisión de solicitudes de acceso');
+    expect(navigation).toContain('Configuración');
+    expect(navigation).not.toContain('Pacientes');
+    expect(navigation).not.toContain('Agenda y citas');
+  });
+
+  it('el visor de pacientes no monta ni ofrece la bandeja de revisión', () => {
+    const html = shell();
+    expect(html).not.toContain('data-hospital-admin="Solicitudes de acceso"');
+    expect(html).not.toContain('Datos ficticios de prueba');
+  });
+});
+
 describe('T-02 — Menú completo', () => {
   const etiquetas = HOSPITAL_NAV_ITEMS.map((item) => item.etiqueta);
 
@@ -249,15 +275,44 @@ describe('T-02 — Menú completo', () => {
 
   it('cada elemento dibuja su icono SVG de trazo, no un emoji', () => {
     const html = envolventeDe(shell());
-    const iconos = html.match(/<svg[^>]*viewBox="0 0 24 24"[^>]*fill="none"/gu) ?? [];
 
     /*
-     * Doce iconos del menú, el del buscador y el del avatar institucional, que
-     * sustituye a las iniciales de la persona demostrativa. H-FID-B retiró el
-     * icono de la campana junto con su conteo sin fuente.
+     * Sin conteo global: cada opción del menú es un botón real dentro del
+     * `<nav>` con exactamente un icono SVG de trazo, en el mismo sistema visual
+     * aprobado (§4.3, FR-05). El trazo (`fill="none"` + `stroke="currentColor"`)
+     * es la garantía semántica de que no se sustituye por emoji ni relleno.
      */
-    expect(iconos.length).toBe(HOSPITAL_NAV_ITEMS.length + 2);
-    expect(html).toContain('stroke="currentColor"');
+    const botonesNav =
+      navDe(html).match(/<button[^>]*type="button"[^>]*>[\s\S]*?<\/button>/gu) ?? [];
+
+    expect(botonesNav).toHaveLength(HOSPITAL_NAV_ITEMS.length);
+    for (const boton of botonesNav) {
+      expect(apariciones(boton, /<svg\b/gu)).toBe(1);
+      expect(boton).toMatch(
+        /<svg[^>]*viewBox="0 0 24 24"[^>]*fill="none"[^>]*stroke="currentColor"/u,
+      );
+    }
+
+    /*
+     * Los controles de la envolvente —hamburguesa de la topbar y cierre del
+     * menú móvil del sidebar— dibujan del mismo modo y quedan enlazados con el
+     * panel lateral (H-FID-A). No dependen de un conteo externo.
+     */
+    const hamburguesa =
+      /<button[^>]*aria-label="Abrir menú de navegación"[^>]*>[\s\S]*?<\/button>/u.exec(html)?.[0] ?? '';
+    const cierre =
+      /<button[^>]*aria-label="Cerrar menú de navegación"[^>]*>[\s\S]*?<\/button>/u.exec(html)?.[0] ?? '';
+
+    expect(hamburguesa).not.toBe('');
+    expect(cierre).not.toBe('');
+    expect(hamburguesa).toContain('aria-controls="hospital-sidebar"');
+    expect(hamburguesa).toContain('aria-expanded="false"');
+    expect(hamburguesa).toMatch(
+      /<svg[^>]*viewBox="0 0 24 24"[^>]*fill="none"[^>]*stroke="currentColor"/u,
+    );
+    expect(cierre).toMatch(
+      /<svg[^>]*viewBox="0 0 24 24"[^>]*fill="none"[^>]*stroke="currentColor"/u,
+    );
   });
 });
 
@@ -621,6 +676,23 @@ describe('T-H12 — Sin sesión resuelta se muestra el acceso, no la demostraci�
   it('declara que la credencial es institucional y compartida', () => {
     // No debe hacerse pasar por una cuenta personal de quien la escribe.
     expect(html).toContain('no identifica a ninguna persona trabajadora');
+  });
+
+  it('no ofrece acceso demo cuando el servidor no lo habilitó', () => {
+    expect(html).not.toContain('Acceso demo');
+  });
+
+  it('ofrece acceso demo solo con las credenciales ficticias entregadas por el servidor', () => {
+    const htmlDemo = renderToStaticMarkup(
+      <HospitalShell
+        accesoDemo={{ codigo: 'hospital-demo-ficticio', credencial: 'credencial-demo-ficticia' }}
+        sesionInicial="sin-sesion"
+      />,
+    );
+
+    expect(htmlDemo).toContain('Acceso demo');
+    expect(htmlDemo).not.toContain('hospital-demo-ficticio');
+    expect(htmlDemo).not.toContain('credencial-demo-ficticia');
   });
 });
 

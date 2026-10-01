@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { AccessRequestsModule } from './access-requests/access-request.module';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { HospitalModule } from './hospital/hospital.module';
@@ -52,6 +53,12 @@ import { VisitsModule } from './visits/visits.module';
  * ni de profesional: reutiliza la sesión humana, `resolvePatient` y la auditoría
  * ya existentes.
  *
+ * SPEC 038 MP02-C1 añade el registro público de interés: `POST
+ * /api/v1/access-requests` crea o recupera de forma idempotente una persona
+ * ficticia del tenant del servidor y una solicitud `PENDING`, y devuelve solo
+ * una referencia opaca. NO crea paciente, cuenta, sesión, perfil, vínculo ni
+ * asignación, y no otorga acceso a ningún servicio.
+ *
  * Los demás módulos de dominio (personal de cuidado, programas, evidencias,
  * finanzas, indicadores, Hub institucional, integraciones) se incorporarán
  * mediante Task Specifications aprobadas posteriores.
@@ -69,6 +76,7 @@ import { VisitsModule } from './visits/visits.module';
     HumanAuthModule,
     VisitsModule,
     PatientSelfModule,
+    AccessRequestsModule,
   ],
 })
 export class AppModule {}

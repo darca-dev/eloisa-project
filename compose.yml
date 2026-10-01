@@ -78,6 +78,19 @@ services:
       MERDN_HUMAN_AUTH_CLIENT_ID: ${MERDN_HUMAN_AUTH_CLIENT_ID:-}
       MERDN_HUMAN_AUTH_CALLBACK_URI: ${MERDN_HUMAN_AUTH_CALLBACK_URI:-}
       MERDN_HUMAN_AUTH_ATTEMPT_KEY: ${MERDN_HUMAN_AUTH_ATTEMPT_KEY:-}
+      # ---------------------------------------------------------------------
+      # Provision de cuentas (SPEC 038, MP04).
+      #
+      # Se pasan SIN valor por defecto y con expansion a cadena vacia: si `.env`
+      # no las define, la provision queda AUSENTE y la API arranca sin poder
+      # aprovisionar cuentas. Si `.env` define ALGUNA pero no las tres, la API
+      # DETIENE EL ARRANQUE, igual que en el anfitrion: no existe configuracion
+      # parcial. Ninguna es un secreto versionado: las tres viven en `.env`,
+      # ignorado por Git, y la contrasena jamas se registra ni se devuelve.
+      # ---------------------------------------------------------------------
+      MERDN_ACCESS_PROVISIONING_ISSUER: ${MERDN_ACCESS_PROVISIONING_ISSUER:-}
+      MERDN_ACCESS_PROVISIONING_CLIENT_ID: ${MERDN_ACCESS_PROVISIONING_CLIENT_ID:-}
+      MERDN_ACCESS_PROVISIONING_CLIENT_SECRET: ${MERDN_ACCESS_PROVISIONING_CLIENT_SECRET:-}
     ports:
       - '127.0.0.1:${API_PORT:-3001}:3001'
     # `host.docker.internal` es el host canonico del proveedor OIDC local.
@@ -116,8 +129,14 @@ services:
       HOSTNAME: '0.0.0.0'
       # URL interna de la API para tareas posteriores. No es un secreto.
       MERDN_API_BASE_URL: http://api:3001
+      # Atajos de recorrido LOCAL con datos ficticios. Cerrados por defecto y
+      # resueltos por el servidor: no existe activación desde la URL.
+      MERDN_HOSPITAL_DEMO_LOCAL: ${MERDN_HOSPITAL_DEMO_LOCAL:-false}
+      MERDN_MUNICIPALITY_DEMO_LOCAL: ${MERDN_MUNICIPALITY_DEMO_LOCAL:-false}
+      MERDN_HUMAN_ACCESS_DEMO_LOCAL: ${MERDN_HUMAN_ACCESS_DEMO_LOCAL:-false}
     ports:
-      - '127.0.0.1:${WEB_PORT:-3000}:3000'
+      - '${WEB_PORT:-3000}:3000'
+
     depends_on:
       api:
         condition: service_healthy
@@ -172,6 +191,12 @@ services:
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${MERDN_OIDC_LOCAL_ADMIN_PASSWORD:?defina MERDN_OIDC_LOCAL_ADMIN_PASSWORD en .env (valor local ficticio)}
       # Contraseña de las personas ficticias del realm. La sustituye el import.
       MERDN_OIDC_LOCAL_TEST_PASSWORD: ${MERDN_OIDC_LOCAL_TEST_PASSWORD:?defina MERDN_OIDC_LOCAL_TEST_PASSWORD en .env (valor local ficticio)}
+      # Secreto del cliente CONFIDENCIAL de provision (SPEC 038, MP04). Es el
+      # MISMO valor que recibe el servicio `api`: los dos lados deben coincidir,
+      # o la saga de aprovisionacion falla en el paso de token y lo deja
+      # asentado. Keycloak deja el marcador literal si la variable no llega, de
+      # modo que aqui tampoco puede haber valor por defecto.
+      MERDN_ACCESS_PROVISIONING_CLIENT_SECRET: ${MERDN_ACCESS_PROVISIONING_CLIENT_SECRET:?defina MERDN_ACCESS_PROVISIONING_CLIENT_SECRET en .env (valor local ficticio)}
       # Emisor CANÓNICO: Keycloak lo anuncia igual venga de donde venga la
       # petición, para que navegador y API comparen el mismo `iss`.
       KC_HOSTNAME: http://host.docker.internal:${OIDC_LOCAL_PORT:-8081}
@@ -184,6 +209,7 @@ services:
     volumes:
       - ./infra/local-oidc/realm-merdn-local.json:/opt/keycloak/data/import/realm-merdn-local.json:ro
       - ./infra/local-oidc/realm-merdn-patient.json:/opt/keycloak/data/import/realm-merdn-patient.json:ro
+      - ./infra/local-oidc/themes:/opt/keycloak/themes:ro
     networks:
       - merdn-internal
     healthcheck:

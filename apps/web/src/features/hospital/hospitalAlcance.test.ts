@@ -58,6 +58,26 @@ const FUENTES = readdirSync(DIRECTORIO)
   .map((archivo) => ({ archivo, codigo: readFileSync(`${DIRECTORIO}${archivo}`, 'utf8') }));
 
 /**
+ * Quita los comentarios de bloque y de linea del codigo antes de evaluar
+ * los patrones de alcance.
+ *
+ * Los patrones comprueban código FUENTE, no documentación: una mención de
+ * `fetch` en un comentario explicativo no es una referencia de red, y un texto
+ * que describe una fecha no es una lectura del reloj. Evaluar siempre sobre
+ * código sin comentarios evita falsos positivos y mantiene el gate estable
+ * ante cambios de redacción.
+ */
+function codigoSinComentarios(codigo: string): string {
+  return codigo.replace(/\/\*[\s\S]*?\*\//gu, '').replace(/^\s*\/\/.*$/gmu, '');
+}
+
+/** Código de producción del módulo, sin comentarios. */
+const CODIGO_SIN_COMENTARIOS = FUENTES.map(({ archivo, codigo }) => ({
+  archivo,
+  codigo: codigoSinComentarios(codigo),
+}));
+
+/**
  * Los CUATRO únicos archivos de Hospital que TASK-HOSPITAL-CORE-02 y
  * HOSPITAL-VISITS-01 autorizan a conectarse DIRECTAMENTE.
  *
@@ -74,6 +94,7 @@ const FUENTES = readdirSync(DIRECTORIO)
  * fachadas tienen su propia lista cerrada, más abajo.
  */
 const CLIENTES_AUTORIZADOS: readonly string[] = [
+  'hospitalAccessRequestsClient.ts',
   'hospitalAgendaClient.ts',
   'hospitalPatientsClient.ts',
   'hospitalProfessionalsClient.ts',
@@ -180,24 +201,44 @@ const REFERENCIA_A_RED = /\bfetch\b/u;
 /**
  * Archivos que pueden NOMBRAR `fetch` sin llamarlo.
  *
- * Son los CINCO puntos de inyección: cada vista conectada y el shell declaran
- * el parámetro y se lo pasan a su cliente, que es quien conecta. La lista es
- * cerrada por el mismo motivo que la de clientes: un consumidor nuevo debe
- * fallar aquí.
+ * Son los puntos de inyección autorizados: cada vista conectada y el shell
+ * declaran el parámetro y se lo pasan a su cliente, que es quien conecta.
+ * La lista es cerrada: un consumidor nuevo debe fallar aquí.
  *
  * HOSPITAL-VISITS-01 packet B añade `HospitalHomeVisits.tsx`: la vista de
  * Visitas deja de ser demostrativa y pasa a consultar y transicionar la visita
  * REAL a través de `hospitalVisitsClient.ts`. Declararlo aquí NO concede
  * permiso alguno: cada acción sigue exigiendo en el servidor la sesión que le
  * corresponde, y la institucional no sustituye a la profesional.
+ *
+ * Las vistas demo locales (`HospitalAgendaDemo.tsx`, `HospitalHomeVisitsDemo.tsx`)
+ * NO están aquí: solo mencionan `fetch` en comentarios explicativos, y el
+ * escaneo se hace sobre código sin comentarios. `hospitalDemoLocal.ts` tampoco:
+ * es un adaptador en memoria que nunca delega a la red y se comprueba aparte.
  */
 const INYECCION_AUTORIZADA: readonly string[] = [
+  'HospitalAccessRequests.tsx',
+  'HospitalAdministration.tsx',
   'HospitalAgenda.tsx',
   'HospitalHomeVisits.tsx',
   'HospitalPatients.tsx',
   'HospitalProfessionals.tsx',
   'HospitalShell.tsx',
 ];
+
+/**
+ * Adaptadores demo locales: clientes en memoria que nunca tocan la red.
+ *
+ * `hospitalDemoLocal.ts` expone un adaptador que replica la firma de `fetch`
+ * (`typeof fetch`) para que las vistas demo reciban un cliente que nunca
+ * consulta una URL real: todos sus `Response` se construyen en memoria sobre
+ * fixtures ficticios. NOMBRA `fetch` por compatibilidad de tipo, pero NO lo
+ * llama.
+ *
+ * La lista es cerrada: un adaptador nuevo debe declararse aquí con su propia
+ * prueba de que nunca delega.
+ */
+const ADAPTADORES_DEMO: readonly string[] = ['hospitalDemoLocal.ts'];
 
 /**
  * Reloj del sistema leído por atajo. Prohibido en todo el módulo: el único
@@ -231,14 +272,17 @@ const IMPORTS_AUTORIZADOS = /^(?:react|@\/[\w./-]+|\.{1,2}\/[\w./-]+)$/u;
 
 /** Archivos del módulo que satisfacen un patrón, en orden estable. */
 function infractores(patron: RegExp): readonly string[] {
-  return FUENTES.filter(({ codigo }) => patron.test(codigo))
+  return CODIGO_SIN_COMENTARIOS.filter(({ codigo }) => patron.test(codigo))
     .map(({ archivo }) => archivo)
     .sort((a, b) => a.localeCompare(b, 'es-CO'));
 }
 
 /** Veces que un patrón global aparece en todo el código de producción. */
 function ocurrencias(patron: RegExp): number {
-  return FUENTES.reduce((total, { codigo }) => total + [...codigo.matchAll(patron)].length, 0);
+  return CODIGO_SIN_COMENTARIOS.reduce(
+    (total, { codigo }) => total + [...codigo.matchAll(patron)].length,
+    0,
+  );
 }
 
 describe('T-06 — Alcance del módulo Hospital', () => {
@@ -306,7 +350,7 @@ describe('T-06B — Conexión autorizada: sesión, Pacientes, Profesionales, Age
      * módulos sería confundir las dos sesiones.
      */
     for (const { archivo, compartido } of FACHADAS_AUTORIZADAS) {
-      const fuente = FUENTES.find((entrada) => entrada.archivo === archivo);
+      const fuente = CODIGO_SIN_COMENTARIOS.find((entrada) => entrada.archivo === archivo);
       const otros = FACHADAS_AUTORIZADAS.filter(
         (fachada) => fachada.compartido !== compartido,
       );
@@ -329,7 +373,7 @@ describe('T-06B — Conexión autorizada: sesión, Pacientes, Profesionales, Age
      * sin que nadie lo note.
      */
     for (const { archivo, nombraRed } of FACHADAS_AUTORIZADAS) {
-      const fuente = FUENTES.find((entrada) => entrada.archivo === archivo);
+      const fuente = CODIGO_SIN_COMENTARIOS.find((entrada) => entrada.archivo === archivo);
 
       expect(`${archivo}: ${String(REFERENCIA_A_RED.test(fuente?.codigo ?? ''))}`).toBe(
         `${archivo}: ${String(nombraRed)}`,
@@ -337,13 +381,16 @@ describe('T-06B — Conexión autorizada: sesión, Pacientes, Profesionales, Age
     }
   });
 
-  it('solo las vistas conectadas, el shell y la fachada pueden nombrar `fetch` sin llamarlo', () => {
+  it('solo las vistas conectadas, el shell, la fachada y los adaptadores demo pueden nombrar `fetch` sin llamarlo', () => {
     /*
      * Cierra la vía por la que un consumidor nuevo podría conectarse sin que el
      * patrón de invocación lo viera: recibir la implementación inyectada y
      * pasarla a otra parte. Los únicos autorizados a hacerlo son los cinco
-     * puntos de inyección ya aprobados y la fachada de §17.D-3, que recibe
-     * `fetchImpl` para trasladarlo al módulo compartido.
+     * puntos de inyección ya aprobados, la fachada de §17.D-3, que recibe
+     * `fetchImpl` para trasladarlo al módulo compartido, y los adaptadores demo
+     * que replican la firma para servirse desde una memoria local. El escaneo
+     * ignora comentarios: las vistas demo que solo MENCIONAN `fetch` en un
+     * comentario no entran aquí.
      */
     const esperado = [
       ...CLIENTES_AUTORIZADOS,
@@ -351,16 +398,37 @@ describe('T-06B — Conexión autorizada: sesión, Pacientes, Profesionales, Age
         ({ archivo }) => archivo,
       ),
       ...INYECCION_AUTORIZADA,
+      ...ADAPTADORES_DEMO,
     ].sort((a, b) => a.localeCompare(b, 'es-CO'));
 
     expect(infractores(REFERENCIA_A_RED)).toEqual(esperado);
   });
 
-  it('los clientes y las fachadas autorizados existen realmente en el módulo', () => {
+  it('los clientes, las fachadas y los adaptadores demo autorizados existen realmente en el módulo', () => {
     const presentes = FUENTES.map(({ archivo }) => archivo);
 
-    for (const archivo of [...CLIENTES_AUTORIZADOS, ...ARCHIVOS_FACHADA]) {
+    for (const archivo of [...CLIENTES_AUTORIZADOS, ...ARCHIVOS_FACHADA, ...ADAPTADORES_DEMO]) {
       expect(presentes).toContain(archivo);
+    }
+  });
+
+  it('los adaptadores demo son clientes en memoria: NUNCA delegan a la red', () => {
+    /*
+     * `hospitalDemoLocal.ts` replica la firma de `fetch` para poder servirse en
+     * modo demo, pero eso es solo la forma: su cuerpo construye `Response` en
+     * memoria sobre fixtures ficticios y no invoca ninguna implementación real.
+     * Cada adaptador de la lista cerrada debe:
+     * 1. nombrar `fetch` únicamente como tipo de su firma (sin llamarlo), y
+     * 2. construir todas sus respuestas con `new Response(...)` local.
+     */
+    for (const archivo of ADAPTADORES_DEMO) {
+      const fuente = CODIGO_SIN_COMENTARIOS.find((entrada) => entrada.archivo === archivo);
+
+      expect(fuente?.archivo).toBe(archivo);
+      expect(fuente?.codigo).not.toMatch(/\bfetch\s*\(/u);
+      expect(fuente?.codigo).not.toMatch(/\bwindow\s*\.\s*fetch\b/u);
+      expect(fuente?.codigo).toContain('new Response(');
+      expect(fuente?.codigo).toContain('typeof fetch');
     }
   });
 
@@ -371,7 +439,7 @@ describe('T-06B — Conexión autorizada: sesión, Pacientes, Profesionales, Age
 
     expect(solapamiento).toEqual([]);
     // Ambas siguen siendo CERRADAS, con su cardinalidad declarada.
-    expect(CLIENTES_AUTORIZADOS).toHaveLength(4);
+    expect(CLIENTES_AUTORIZADOS).toHaveLength(5);
     expect(FACHADAS_AUTORIZADAS).toHaveLength(2);
   });
 
@@ -385,7 +453,7 @@ describe('T-06B — Conexión autorizada: sesión, Pacientes, Profesionales, Age
      * allowlists exactas de arriba.
      */
     const modulos = FUENTES.filter(({ archivo }) =>
-      /^Hospital(?:VirtualConsultations|FinancialManagement|Reports|Alerts|Administration)/u.test(
+      /^Hospital(?:VirtualConsultations|FinancialManagement|Reports|Alerts)/u.test(
         archivo,
       ),
     );
@@ -393,7 +461,9 @@ describe('T-06B — Conexión autorizada: sesión, Pacientes, Profesionales, Age
     expect(modulos.length).toBeGreaterThan(0);
 
     for (const { archivo, codigo } of modulos) {
-      expect(`${archivo}: ${String(REFERENCIA_A_RED.test(codigo))}`).toBe(`${archivo}: false`);
+      expect(`${archivo}: ${String(REFERENCIA_A_RED.test(codigoSinComentarios(codigo)))}`).toBe(
+        `${archivo}: false`,
+      );
     }
   });
 });
@@ -419,19 +489,24 @@ describe('T-06C — Fecha y reloj: un único instante actual, bajo control', () 
     /*
      * `HospitalAgenda.tsx` recibe el reloj por parámetro para poder probarse
      * con un instante fijo; su default es la única lectura de «ahora» del
-     * módulo. Se comprueban archivo y CANTIDAD: dos defaults en el mismo
-     * archivo también serían dos relojes.
+     * módulo. El Dashboard NO lee el reloj: su fecha es un valor de
+     * presentación fijo de la configuración. Se comprueban archivo y CANTIDAD:
+     * dos defaults en el mismo archivo también serían dos relojes.
      */
     expect(infractores(RELOJ_ACTUAL)).toEqual(['HospitalAgenda.tsx']);
     expect(ocurrencias(RELOJ_ACTUAL_GLOBAL)).toBe(1);
   });
 
-  it('las construcciones deterministas de fecha viven solo en el cliente de Agenda', () => {
+  it('las construcciones deterministas de fecha solo transforman valores recibidos', () => {
     /*
      * `hospitalAgendaClient.ts` valida y transforma fechas ya explícitas
      * (ventana por escala, normalización ISO). No lee el reloj: parte siempre
      * de un valor recibido. Ningún otro archivo puede construir fechas.
      */
-    expect(infractores(FECHA_DETERMINISTA)).toEqual(['hospitalAgendaClient.ts']);
+    expect(infractores(FECHA_DETERMINISTA)).toEqual([
+      'HospitalAccessRequests.tsx',
+      'hospitalAccessRequestsClient.ts',
+      'hospitalAgendaClient.ts',
+    ]);
   });
 });

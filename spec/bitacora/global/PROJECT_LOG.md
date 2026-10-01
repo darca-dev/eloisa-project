@@ -531,3 +531,44 @@ petición, cambios SQL y alteración de valores demo municipales.
 
 Consentimiento registrado por spec en `.sdd/user-consent.log`. No se implementó
 código en este acto y Claude no queda autorizado a commit, push, merge o deploy.
+
+# 2026-09-24 — Spec 038 aprobada; consentimiento pendiente
+
+El Product Owner aprobó formalmente
+`038-demo-funcional-accesos-ficticios` y adoptó OD-01 a OD-12 como decisiones de
+producto. La spec define la vertical persistente de registro, revisión
+hospitalaria, provisión OIDC y acceso demo de Paciente, Cuidador y Personal de
+terreno con datos ficticios, separación de relaciones/asignaciones, aislamiento
+por tenant, auditoría, reset y pruebas verificables.
+
+La aprobación quedó registrada en la spec, su historial, el índice y la
+bitácora de decisiones. T00.1 quedó completada. El consentimiento SDD específico
+de la spec 038 todavía no está registrado, por lo que su implementación sigue
+bloqueada. Este acto no autoriza commit, merge, push, pull request, release ni
+despliegue.
+
+## Consentimiento posterior
+
+El Product Owner registró personalmente el consentimiento SDD específico de la
+spec 038 el 2026-09-24 a las 22:34:29 -0600. La compuerta confirmó la spec como
+aprobada y consentida con cero errores. Queda habilitado `MP00` mediante el
+handoff canónico, sin autorización para commit, merge, push, pull request,
+release ni despliegue.
+
+## Auditoría Codex de MP00
+
+Codex rechazó el cierre de MP00 con veredicto `FAIL — CHANGES REQUIRED`.
+Aunque build, typecheck web y 1700 pruebas web pasan, la implementación continuó
+en la rama contraria a OD-01, dejó `/acceso` sin `CentralAccess`, mantuvo el
+bypass demo incondicional de `/hospital`, no reconcilió 027 y relajó fronteras
+de branding, red y reloj. La suite API conserva cinco fallos y no hubo evidencia
+DB. `MP00-C1` y `MP01` permanecen cerrados hasta resolver la transición Git y
+publicar un nuevo handoff.
+
+## Transición Git y MP00-C1
+
+El Product Owner autorizó los once commits demo existentes. Codex creó y activó
+`feat/038-demo-funcional-accesos-ficticios` en el mismo HEAD `530a722`, con
+merge-base `develop` en `ad7a18c`, preservando todos los cambios sin commit. No
+hubo commit, merge, rebase, cherry-pick, push, PR ni despliegue. Se publicó el
+handoff correctivo MP00-C1; MP01 sigue cerrado.

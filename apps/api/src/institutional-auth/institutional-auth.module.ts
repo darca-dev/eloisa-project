@@ -32,6 +32,12 @@ import { MunicipalViewerGuard } from './municipal-viewer.guard';
  * - `InstitutionalSameOriginGuard`, que comprueba el origen declarado en las
  *   dos operaciones que cambian estado —abrir y cerrar la sesión—.
  *
+ * SPEC 038 / MP03-C1 reutiliza `InstitutionalSameOriginGuard` para la ÚNICA
+ * mutación nueva —decidir una solicitud de acceso— y por eso se exporta. No se
+ * crea una segunda comprobación de origen: la allowlist de orígenes permitidos es
+ * una sola, la del entorno, y duplicarla permitiría que dos superficies
+ * aceptaran conjuntos de orígenes distintos.
+ *
  * Ninguno de los dos concede acceso a datos: la autorización de Hospital, de
  * Municipality y de las relaciones de cuidado sigue en sus guards de rol.
  */
@@ -49,6 +55,7 @@ import { MunicipalViewerGuard } from './municipal-viewer.guard';
   exports: [
     InstitutionalAuditService,
     InstitutionalAuthService,
+    InstitutionalSameOriginGuard,
     MunicipalViewerGuard,
     HospitalPatientViewerGuard,
   ],

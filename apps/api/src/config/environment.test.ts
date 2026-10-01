@@ -67,6 +67,8 @@ describe('loadApiEnvironment', () => {
         maxRequests: DEFAULT_ENROLLMENT_RATE_LIMIT_MAX,
         windowSeconds: DEFAULT_ENROLLMENT_RATE_LIMIT_WINDOW_SECONDS,
       },
+      keycloakPatient: undefined,
+      accessProvisioning: undefined,
     });
   });
 
@@ -353,5 +355,167 @@ describe('loadApiEnvironment', () => {
         MERDN_ACTIVE_TENANT_ID: '  0000000A-0000-4000-8000-00000000000B  ',
       }).activeTenantId,
     ).toBe('0000000a-0000-4000-8000-00000000000b');
+  });
+
+  /* ------------- Provision OIDC administrativa (SPEC 038, MP04) ------------ */
+
+  describe('configuracion administrativa de provision de cuentas', () => {
+    const HUMAN_ISSUER = 'http://host.docker.internal:8081/realms/merdn-local';
+
+    const COMPLETE = {
+      MERDN_ACCESS_PROVISIONING_ISSUER: HUMAN_ISSUER,
+      MERDN_ACCESS_PROVISIONING_CLIENT_ID: 'merdn-access-provisioning',
+      MERDN_ACCESS_PROVISIONING_CLIENT_SECRET: 'secreto-centinela-mp04',
+      MERDN_HUMAN_AUTH_ISSUER: HUMAN_ISSUER,
+    } as const;
+
+    it('permanece ausente cuando ninguna variable se declara', () => {
+      expect(loadApiEnvironment({ ...BASE }).accessProvisioning).toBeUndefined();
+    });
+
+    it('deriva adminUrl y fija el realm cuando la configuracion es completa', () => {
+      const config = loadApiEnvironment({ ...BASE, ...COMPLETE }).accessProvisioning;
+
+      expect(config).toStrictEqual({
+        issuer: HUMAN_ISSUER,
+        adminUrl: 'http://host.docker.internal:8081',
+        realm: 'merdn-local',
+        clientId: 'merdn-access-provisioning',
+        clientSecret: 'secreto-centinela-mp04',
+      });
+    });
+
+    it('normaliza la barra final del issuer antes de compararlo', () => {
+      const config = loadApiEnvironment({
+        ...BASE,
+        ...COMPLETE,
+        MERDN_ACCESS_PROVISIONING_ISSUER: `${HUMAN_ISSUER}/`,
+      }).accessProvisioning;
+
+      expect(config?.issuer).toBe(HUMAN_ISSUER);
+      expect(config?.adminUrl).toBe('http://host.docker.internal:8081');
+    });
+
+    it('rechaza una configuracion PARCIAL sin revelar ningun valor', () => {
+      const { MERDN_ACCESS_PROVISIONING_CLIENT_SECRET: _omit, ...parcial } = COMPLETE;
+
+      expect(() => loadApiEnvironment({ ...BASE, ...parcial })).toThrowError(
+        /MERDN_ACCESS_PROVISIONING_\*/,
+      );
+
+      try {
+        loadApiEnvironment({ ...BASE, ...parcial });
+      } catch (error) {
+        const message = (error as Error).message;
+        expect(message).not.toContain('merdn-access-provisioning');
+        expect(message).not.toContain(HUMAN_ISSUER);
+      }
+    });
+
+    it('impide el arranque cuando la provision se declara en mvp', () => {
+      expect(() =>
+        loadApiEnvironment({ ...BASE, ...COMPLETE, MERDN_ENVIRONMENT: 'mvp' }),
+      ).toThrowError(/MERDN_ACCESS_PROVISIONING_ISSUER/);
+
+      expect(() =>
+        loadApiEnvironment({ ...BASE, ...COMPLETE, MERDN_ENVIRONMENT: 'mvp' }),
+      ).toThrowError(/mvp/);
+    });
+
+    it('exige el realm local EXACTO, no una subcadena', () => {
+      expect(() =>
+        loadApiEnvironment({
+          ...BASE,
+          ...COMPLETE,
+          MERDN_ACCESS_PROVISIONING_ISSUER:
+            'http://host.docker.internal:8081/realms/otro-realm',
+        }),
+      ).toThrowError(/merdn-local/);
+
+      expect(() =>
+        loadApiEnvironment({
+          ...BASE,
+          ...COMPLETE,
+          MERDN_ACCESS_PROVISIONING_ISSUER:
+            'http://localhost/merdn-local/realms/merdn-local',
+        }),
+      ).toThrowError(/merdn-local/);
+    });
+
+    it('rechaza un issuer con otra forma de path', () => {
+      expect(() =>
+        loadApiEnvironment({
+          ...BASE,
+          ...COMPLETE,
+          MERDN_ACCESS_PROVISIONING_ISSUER: 'http://localhost:8081/auth/realms/merdn-local',
+        }),
+      ).toThrowError(/merdn-local/);
+    });
+
+    it('exige un host local aprobado', () => {
+      expect(() =>
+        loadApiEnvironment({
+          ...BASE,
+          ...COMPLETE,
+          MERDN_ACCESS_PROVISIONING_ISSUER: 'https://id.ejemplo.com/realms/merdn-local',
+          MERDN_HUMAN_AUTH_ISSUER: 'https://id.ejemplo.com/realms/merdn-local',
+        }),
+      ).toThrowError(/MERDN_ACCESS_PROVISIONING_ISSUER/);
+    });
+
+    it('exige que el issuer sea exactamente el de la autenticacion humana', () => {
+      expect(() =>
+        loadApiEnvironment({
+          ...COMPLETE,
+          ...BASE,
+          MERDN_HUMAN_AUTH_ISSUER: 'http://127.0.0.1:8081/realms/merdn-local',
+        }),
+      ).toThrowError(/MERDN_HUMAN_AUTH_ISSUER/);
+    });
+
+    it('exige que la autenticacion humana este aprovisionada', () => {
+      const { MERDN_HUMAN_AUTH_ISSUER: _sinHumano, ...sinHumano } = COMPLETE;
+
+      expect(() => loadApiEnvironment({ ...BASE, ...sinHumano })).toThrowError(
+        /MERDN_HUMAN_AUTH_ISSUER/,
+      );
+    });
+
+    it('rechaza credenciales, consulta y fragmento en el issuer', () => {
+      expect(() =>
+        loadApiEnvironment({
+          ...COMPLETE,
+          ...BASE,
+          MERDN_ACCESS_PROVISIONING_ISSUER:
+            'http://user:pass@localhost:8081/realms/merdn-local',
+          MERDN_HUMAN_AUTH_ISSUER: 'http://user:pass@localhost:8081/realms/merdn-local',
+        }),
+      ).toThrowError(/MERDN_ACCESS_PROVISIONING_ISSUER/);
+
+      expect(() =>
+        loadApiEnvironment({
+          ...COMPLETE,
+          ...BASE,
+          MERDN_ACCESS_PROVISIONING_ISSUER:
+            'http://localhost:8081/realms/merdn-local?scope=admin',
+        }),
+      ).toThrowError(/cadena de consulta/);
+    });
+
+    it('nunca incorpora el secreto al mensaje de error', () => {
+      try {
+        loadApiEnvironment({
+          ...BASE,
+          ...COMPLETE,
+          MERDN_ENVIRONMENT: 'mvp',
+        });
+        expect.unreachable('debia lanzar EnvironmentValidationError');
+      } catch (error) {
+        expect(error).toBeInstanceOf(EnvironmentValidationError);
+        expect((error as Error).message).not.toContain(
+          'secreto-centinela-mp04',
+        );
+      }
+    });
   });
 });

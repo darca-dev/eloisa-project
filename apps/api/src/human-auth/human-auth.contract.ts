@@ -68,14 +68,20 @@ export const HUMAN_CONTEXTS = ['PATIENT', 'PROFESSIONAL', 'CAREGIVER'] as const;
 export type HumanContext = (typeof HUMAN_CONTEXTS)[number];
 
 /**
- * Allowlist CERRADA de destinos posteriores al login (§4.3).
+ * Allowlist CERRADA de destinos posteriores al login (§4.3; MP04 añade `/acceso`).
  *
  * Es una LISTA literal, no una forma. Una expresión permisiva —«toda ruta que
  * empiece por `/`»— acabaría aceptando `//host-ajeno` o `/\host-ajeno`, que los
  * navegadores tratan como destino externo. La lista también vive como CHECK en
- * la base, de modo que ampliarla exige una migración.
+ * la base, de modo que ampliarla exige una migración: `20260930170000_access_
+ * provisioning` es la que la extendió.
+ *
+ * `/acceso` es el selector de experiencias de MP04. Ampliar esta lista es
+ * ampliar HACIA DÓNDE puede caer el navegador tras autenticarse, que es una
+ * superficie de redirección; por eso se escribe aquí y no se deriva de un query
+ * param libre.
  */
-export const HUMAN_AUTH_RETURN_TARGETS = ['/'] as const;
+export const HUMAN_AUTH_RETURN_TARGETS = ['/', '/acceso'] as const;
 
 export type HumanAuthReturnTarget = (typeof HUMAN_AUTH_RETURN_TARGETS)[number];
 

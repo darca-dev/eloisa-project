@@ -15,6 +15,7 @@ import { nombreDepartamento, nombreMunicipio } from '@/data/divipola';
 
 import { alternarEnLista, edadEnAnios, nombreCompleto, textoEdad } from '../inscripcionFlow';
 import type { DatosCuidador } from '../inscripcionFlow';
+import { CUIDADORES_DEMO } from '../otherDemoFixtures';
 import styles from '../inscripcion.module.css';
 import {
   AccionDemostrativa,
@@ -108,6 +109,18 @@ export function PasosCuidador({
         <EliSpeech intencion="guia">
           Primero tú como persona. Después vinculamos al paciente o pacientes que cuidas.
         </EliSpeech>
+
+        <section className={styles.demoProfiles} aria-labelledby="cuidadores-demo-title">
+          <p id="cuidadores-demo-title" className={styles.eyebrow}>CUIDADORES DEMO</p>
+          <p className={styles.demoProfilesText}>Cargue datos ficticios para recorrer este formulario sin rellenarlo a mano. Esta ruta guiada todavía no envía la solicitud al Hospital.</p>
+          <div className={styles.demoProfilesActions}>
+            {CUIDADORES_DEMO.map((cuidador) => (
+              <Button key={cuidador.id} variant="outline" onClick={() => actualizar(cuidador.valores)}>
+                {cuidador.etiqueta}
+              </Button>
+            ))}
+          </div>
+        </section>
 
         <RequiredLegend />
 

@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
-import { formatearFechaOperativaActual, HospitalDashboard } from './HospitalDashboard';
+import { HospitalDashboard } from './HospitalDashboard';
 import { HospitalDashboardHeader } from './HospitalDashboardHeader';
 import { HospitalKpiCard } from './HospitalKpiCard';
 import { branding } from '@/config/branding';
@@ -594,13 +594,11 @@ describe('T-13/T-14 — Semántica, foco y estados con texto', () => {
     expect(html).not.toContain('Lunes 17 de agosto de 2026');
   });
 
-  it('formatea la fecha operativa actual en español y en la hora local', () => {
-    expect(formatearFechaOperativaActual(new Date(2026, 8, 21, 9, 5))).toBe(
-      'Lunes 21 de septiembre de 2026 · 9:05 a. m.',
-    );
-    expect(formatearFechaOperativaActual(new Date(2026, 8, 21, 15, 5))).toBe(
-      'Lunes 21 de septiembre de 2026 · 3:05 p. m.',
-    );
+  it('el encabezado del Dashboard conserva la fecha determinista de la configuración', () => {
+    const html = inicio();
+
+    expect(html).toContain('Lunes 17 de agosto de 2026');
+    expect(html).not.toContain('Actualizando fecha y hora');
   });
 
   it('los iconos son decorativos, ocultos y no enfocables', () => {

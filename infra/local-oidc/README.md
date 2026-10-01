@@ -9,21 +9,34 @@ hay endurecimiento y no hay datos reales.
 
 ## Qué contiene
 
-- `realm-merdn-local.json` — realm `merdn-local` con un cliente **público** con
-  PKCE S256 obligatorio y dos personas **ficticias**.
+- `realm-merdn-local.json` — realm `merdn-local` con:
 
-Sin secretos versionados: el cliente es público y no tiene secreto, y la única
-contraseña se sustituye en el arranque desde `.env`, que Git ignora.
+  - el cliente **público** `merdn-human-web`, con PKCE S256 obligatorio, sin
+    comodines en redirect ni en origen web, y con Direct Access Grants
+    desactivados: el único camino de una persona es Authorization Code;
+  - el cliente **confidencial** `merdn-access-provisioning` (SPEC 038, MP04),
+    con service account y rol `manage-users` de `realm-management`;
+  - dos personas **ficticias** con `sub` estable.
+
+- `realm-merdn-patient.json` — realm `merdn-patient` separado (Spec 027).
+
+Sin secretos versionados: el cliente humano es público y no tiene secreto, y
+las contraseñas se sustituyen en el arranque desde `.env`, que Git ignora. El
+único secreto del cliente de provision **también** vive en `.env` y se entrega
+por interpolación, igual que las contraseñas.
 
 ## Arranque
 
 El servicio es **opt-in**: no se levanta con `docker compose up` normal.
 
 ```bash
-# 1. Defina en `.env` (ignorado por Git) los dos valores locales ficticios:
+# 1. Defina en `.env` (ignorado por Git) los TRES valores locales ficticios:
 #      MERDN_OIDC_LOCAL_ADMIN_PASSWORD=...
 #      MERDN_OIDC_LOCAL_TEST_PASSWORD=...
+#      MERDN_ACCESS_PROVISIONING_CLIENT_SECRET=...
 #    Ninguno es un secreto real y ninguno debe reutilizarse fuera de local.
+#    El tercero lo exigen a la vez el perfil `oidc-local` y el servicio `api`:
+#    deben recibir el MISMO valor.
 
 # 2. Levante el proveedor con su perfil.
 docker compose --profile oidc-local up -d oidc-local
@@ -33,6 +46,12 @@ curl -s http://host.docker.internal:8081/realms/merdn-local/.well-known/openid-c
 ```
 
 Para retirarlo: `docker compose --profile oidc-local down`.
+
+> El realm se importa **solo en la primera creación** del contenedor. Si edita
+> `realm-merdn-local.json`, haga `docker compose --profile oidc-local up -d
+> --force-recreate oidc-local` para que vuelva a importar: el arranque usa la
+> base efímera de `start-dev`, de modo que recrear el contenedor no conserva
+> nada.
 
 ## Topología y emisor canónico
 
@@ -100,7 +119,7 @@ curl -s -o /dev/null -w '%{http_code}' http://host.docker.internal:8081/realms/m
 | Usuario                | `sub` (estable)                        | Para qué |
 | ---------------------- | -------------------------------------- | -------- |
 | `persona.ficticia`     | `00000000-0000-4000-8000-00000000f1c7` | Persona **vinculada** por el provisioning. |
-| `persona.sin.vinculo`  | `00000000-0000-4000-8000-00000000f1c8` | Persona **no aprovisionada**: comprueba que un `subject` verificado sin vínculo no crea cuenta. |
+| `persona.sin.vinculo`  | `00000000-0000-4000-8000-00000000f1c8` | Persona **no aprovisionada**: comprueba que un `sub` verificado sin vínculo no crea cuenta. |
 
 Los dos `sub` son fijos para que el provisioning pueda vincularlos de forma
 reproducible entre arranques.
@@ -109,6 +128,56 @@ reproducible entre arranques.
 devuelve exclusivamente `issuer` y `subject`. Cambiar aquí el correo, el nombre
 o el usuario no cambia el vínculo ni la identidad en MERDN, que es exactamente
 la propiedad que AD-02 busca.
+
+## Cliente de provision (SPEC 038, MP04)
+
+`merdn-access-provisioning` es un cliente **confidencial de servicio**: la API
+pide un token administrativo con `client_credentials` y con él prepara y
+aprovisiona cuentas ficticias de personas.
+
+| Propiedad | Valor | Por qué |
+| --- | --- | --- |
+| `publicClient` | `false` | Lleva secreto. |
+| `serviceAccountsEnabled` | `true` | Es la única fuente de token. |
+| `standardFlowEnabled` | `false` | No inicia sesión ninguna persona. |
+| `directAccessGrantsEnabled` | `false` | Prohibido por contrato. |
+| `redirectUris` / `webOrigins` | `[]` | No es una aplicación con navegador. |
+| `secret` | `${MERDN_ACCESS_PROVISIONING_CLIENT_SECRET}` | Mismo valor que recibe el servicio `api`. |
+
+El rol `manage-users` de `realm-management` se declara de forma **imperativa** en
+el bloque `users` del realm:
+
+```json
+{
+  "username": "service-account-merdn-access-provisioning",
+  "serviceAccountClientId": "merdn-access-provisioning",
+  "clientRoles": { "realm-management": ["manage-users"] }
+}
+```
+
+Keycloak crea la cuenta de servicio al crear el cliente y aplica el rol sobre
+esa misma cuenta: el `id` declarado es el que queda en base. **Verificado sobre
+Keycloak 26.7.1**: el import crea el cliente, enlaza el rol y el token de
+`client_credentials` resultante administra el realm (búsqueda, creación,
+`reset-password`, actualización de `enabled`).
+
+Los límites que este archivo debe respetar:
+
+- `description` de un cliente admite **255 caracteres** como máximo. Un texto
+  más largo rompe el import con `Value too long for column "DESCRIPTION"`.
+- Keycloak **no** sustituye un marcador `VAR` que no llega en el entorno: deja
+  el texto literal `${VAR}` como secreto. Por eso `compose.yml` exige
+  `MERDN_ACCESS_PROVISIONING_CLIENT_SECRET` con `:?` en vez de dejarla ausente.
+
+Comprobación de que el rol quedó asignado (reproduce la verificación hecha):
+
+```bash
+docker compose --profile oidc-local up -d oidc-local
+# Con el token de admin de .env:
+#   GET /admin/realms/merdn-local/clients?clientId=merdn-access-provisioning
+#   GET /admin/realms/merdn-local/clients/{id}/service-account-user
+#   GET /admin/realms/merdn-local/users/{saId}/role-mappings/clients/{realmManagementId}
+```
 
 ## Límites declarados
 
@@ -121,5 +190,5 @@ la propiedad que AD-02 busca.
   con otro emisor, otro cliente y otra configuración, sin cambiar dominio,
   sesión ni autorización.
 - La consola administrativa queda en el mismo puerto de bucle local y no se
-  publica fuera de él. No hay ningún dato real que proteger en ella, pero
+  publica fuera de ella. No hay ningún dato real que proteger en ella, pero
   tampoco hay razón para exponerla.

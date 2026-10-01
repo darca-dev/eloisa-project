@@ -11,32 +11,53 @@ const markupHub = (): string => renderToStaticMarkup(<HomePage />);
 const markupInscripcion = (): string => renderToStaticMarkup(<InscripcionPage />);
 
 describe('Portal Central de Acceso (Página Raíz /)', () => {
-  it('monta el Hub Central con los módulos institucionales destacados', () => {
+  it('presenta las tres puertas de acceso sin montar sus paneles', () => {
     const html = markupHub();
 
-    expect(html).toContain('Portal Central de Acceso');
-    expect(html).toContain('Alcaldía de Soacha');
-    expect(html).toContain('/municipality');
-    expect(html).toContain('Hospital (ESE)');
-    expect(html).toContain('/hospital');
-  });
-
-  it('destaca a los Profesionales de la Salud en terreno y clínicos', () => {
-    const html = markupHub();
-
-    expect(html).toContain('Profesionales de la Salud');
-    expect(html).toContain('Personal de Terreno / Visitadores');
-    expect(html).toContain('/profesional');
-    expect(html).toContain('Teleconsulta');
-  });
-
-  it('unifica la atención domiciliaria de Paciente y Cuidador con botón de certificación', () => {
-    const html = markupHub();
-
+    expect(html).toContain('Portal Eloisa');
     expect(html).toContain('Atención Domiciliaria');
+    expect(html).toContain('/acceso');
+    expect(html).toContain('Hospital');
+    expect(html).toContain('/hospital');
+    expect(html).toContain('Alcaldía');
+    expect(html).toContain('/municipality');
     expect(html).toContain('Paciente');
     expect(html).toContain('Cuidador');
-    expect(html).toContain('Certificarse como Cuidador');
+    expect(html).toContain('Visitador médico');
+    expect(html).toContain('Iniciar sesión');
+    expect(html).not.toContain('data-hospital-content');
+    expect(html).not.toContain('data-municipality-content');
+  });
+
+  it('la tarjeta de Atencion Domiciliaria ofrece exactamente Iniciar sesion y Registrate (MP04-C1)', () => {
+    const html = markupHub();
+
+    // Destinos exactos de las dos unicas acciones.
+    expect(html).toContain('href="/acceso"');
+    expect(html).toContain('href="/acceso?accion=registro"');
+    expect(html).toContain('>Iniciar sesión<');
+    expect(html).toContain('>Regístrate<');
+
+    // Inicio y Registro pasan por /acceso; el primero abre el selector demo
+    // cuando está habilitado y el segundo abre el registro guiado.
+    const enlacesAcceso = html.match(/href="\/acceso[^"]*"/gu) ?? [];
+    expect(enlacesAcceso).toHaveLength(2);
+
+    // Vocabulario retirado de esta superficie (MP04-C1).
+    for (const retirado of [
+      'Solicitar acceso',
+      'Registro guiado',
+      'registro guiado',
+      'Registrarme / solicitar acceso',
+      'Ver o registrar una solicitud',
+      'Abrir registro guiado',
+    ]) {
+      expect(html).not.toContain(retirado);
+    }
+
+    // Hospital y Alcaldia conservan su unico acceso.
+    expect(html).toContain('href="/hospital"');
+    expect(html).toContain('href="/municipality"');
   });
 
   it('conserva el branding institucional y el logotipo', () => {
