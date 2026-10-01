@@ -1,0 +1,31 @@
+.stage {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  gap: 16px;
+  padding: 28px 16px 40px;
+  background: var(--b-lienzo, #f4f9fb);
+}
+
+.notice {
+  width: min(390px, 100%);
+  margin: 0;
+  padding: 10px 14px;
+  color: #23576a;
+  background: #e5f5fa;
+  border: 1px solid #acd6e3;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.screenReaderNote {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

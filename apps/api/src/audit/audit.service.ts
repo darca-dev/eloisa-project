@@ -82,6 +82,50 @@ export class AuditService {
     return event.id;
   }
 
+  /**
+   * Spec 038 (MP04-C3-C1): reintento materialmente distinto sobre una solicitud
+   * abierta, respondido con `409`, dentro de su misma transacción de detección.
+   *
+   * Representa UNICAMENTE el intento conflictivo: no reutiliza `CREATED`
+   * (nada se creó), `REJECTED` (nada se decidió), `VIEWED` (exige revisor
+   * institucional) ni `LIST_DENIED` (es otra superficie) con semántica falsa.
+   * Si esta escritura falla, la transacción se aborta y la llamada falla
+   * cerrada: nunca se devuelve un `409` falsamente auditado.
+   *
+   * NO copia documento, nombres, contacto, expediente, password, referencia
+   * pública, tenant recibido del cliente ni diferencias del cuerpo. `resourceId`
+   * es el identificador interno de la fila existente y `correlationId` un UUID
+   * generado por el servidor.
+   */
+  public async recordAccessRequestReplayConflictWithin(
+    tx: PrismaTransaction,
+    input: {
+      readonly tenantId: string;
+      readonly accessRequestId: string;
+      readonly endpoint: string;
+      readonly correlationId: string;
+    },
+    occurredAt: Date,
+  ): Promise<string> {
+    const event = await tx.auditEvent.create({
+      data: {
+        tenantId: input.tenantId,
+        eventType: 'ACCESS_REQUEST_REPLAY_CONFLICT',
+        actorType: 'PUBLIC_SELF_ENROLLMENT',
+        actorUserId: null,
+        resourceType: 'AccessRequest',
+        resourceId: input.accessRequestId,
+        outcome: 'DENIED',
+        endpoint: input.endpoint,
+        correlationId: input.correlationId,
+        occurredAt,
+      },
+      select: { id: true },
+    });
+
+    return event.id;
+  }
+
   /*
    * -------------------------------------------------------------------------
    * REVISIÓN HOSPITALARIA DE SOLICITUDES DE ACCESO — SPEC 038, MP03-C1.

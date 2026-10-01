@@ -316,6 +316,34 @@ function buildTransaction(store: Store) {
         return pick(row, args.select);
       },
     },
+
+    /*
+     * SQL crudo acotado al expediente (MP04-C3). Igual que en la prueba del
+     * registro: solo entiende la lectura con marcador del servicio.
+     */
+    $queryRawUnsafe: async (sql: string, ...params: unknown[]) => {
+      store.queries.push('$queryRawUnsafe');
+
+      if (typeof sql === 'string' && sql.includes('access-request snapshot read')) {
+        const [id, tenantId] = params as [string, string];
+        const found = store.accessRequests.find(
+          (row) => row['id'] === id && row['tenantId'] === tenantId,
+        );
+
+        if (found === undefined) {
+          return [];
+        }
+
+        return [
+          {
+            registrationSchemaVersion: found['registrationSchemaVersion'] ?? null,
+            registrationData: found['registrationData'] ?? null,
+          },
+        ];
+      }
+
+      throw new Error('SQL no reconocido por la doble de revisión');
+    },
   };
 }
 
@@ -382,6 +410,8 @@ interface Seed {
   readonly decidedAt?: string | null;
   readonly decisionReasonCode?: string | null;
   readonly reviewedBy?: string | null;
+  /** Expediente ficticio de la rama (MP04-C3). Ausente equivale a sin expediente. */
+  readonly expediente?: Record<string, unknown> | null;
 }
 
 function sembrar(store: Store, semillas: readonly Seed[]): void {
@@ -458,6 +488,9 @@ function sembrar(store: Store, semillas: readonly Seed[]): void {
       createdAt: new Date(semilla.submittedAt),
       updatedAt: new Date(semilla.submittedAt),
       person: structuredClone(store.people[store.people.length - 1]),
+      ...(semilla.expediente === undefined || semilla.expediente === null
+        ? {}
+        : { registrationSchemaVersion: 1, registrationData: semilla.expediente }),
     });
   }
 }
@@ -497,6 +530,20 @@ const SEMILLAS_A: readonly Seed[] = [
     familyNames: 'Restrepo Fiction',
     documentNumber: 'CC 2.222.222',
     documentNumberNormalized: '2222222',
+    expediente: {
+      tipoCuidador: 'FAMILIAR',
+      tieneFormacion: 'NO',
+      viveConPaciente: 'SI',
+      horarios: ['MANANA'],
+      pacienteRegistrado: 'NO_SABE',
+      relacionPaciente: 'MADRE',
+      vecinoNombre: 'Rosa Ficticia',
+      vecinoTelefono: '312 778 4410',
+      vecinoRelacion: 'VECINO',
+      vecinoDireccion: 'Casa de al lado',
+      vecinoAutorizado: true,
+      autorizaDatos: true,
+    },
   },
   {
     id: 'aaaaaaa1-0000-4000-8000-000000000003',
@@ -1362,6 +1409,8 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
       'provisioningErrorCode',
       'provisioningStatus',
       'reference',
+      'registration',
+      'registrationSchemaVersion',
       'requestId',
       'requestedProfile',
       'sexGenderCode',
@@ -1377,6 +1426,8 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     expect(respuesta.body.provisioningErrorCode).toBeNull();
     expect(respuesta.body.decidedAt).toBeNull();
     expect(respuesta.body.decisionReasonCode).toBeNull();
+    expect(respuesta.body.registrationSchemaVersion).toBeNull();
+    expect(respuesta.body.registration).toBeNull();
 
     const serializado = JSON.stringify(respuesta.body);
     expect(serializado).not.toContain(TENANT_A);
@@ -1395,6 +1446,44 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     expect(vistos[0]?.['resourceId']).toBe(SEMILLAS_A[1]!.id);
     expect(vistos[0]?.['endpoint']).toBe('GET /api/v1/hospital/access-requests/:requestId');
     expect(JSON.stringify(vistos[0])).not.toContain('Restrepo');
+  });
+
+  it('el detalle con expediente devuelve version y datos sin exponer password', async () => {
+    const respuesta = await detalle(TOKEN_REVISOR_A, SEMILLAS_A[1]!.id).expect(200);
+
+    expect(respuesta.body.registrationSchemaVersion).toBe(1);
+    expect(respuesta.body.registration).toStrictEqual({
+      tipoCuidador: 'FAMILIAR',
+      tieneFormacion: 'NO',
+      viveConPaciente: 'SI',
+      horarios: ['MANANA'],
+      pacienteRegistrado: 'NO_SABE',
+      relacionPaciente: 'MADRE',
+      vecinoNombre: 'Rosa Ficticia',
+      vecinoTelefono: '312 778 4410',
+      vecinoRelacion: 'VECINO',
+      vecinoDireccion: 'Casa de al lado',
+      vecinoAutorizado: true,
+      autorizaDatos: true,
+    });
+
+    const serializado = JSON.stringify(respuesta.body);
+    expect(serializado).not.toContain('password');
+    expect(serializado).not.toContain('tenantId');
+  });
+
+  it('el listado no incluye el expediente aunque la fila lo tenga', async () => {
+    const respuesta = await como(TOKEN_REVISOR_A)(
+      server().get('/api/v1/hospital/access-requests'),
+    ).expect(200);
+
+    const bruno = (respuesta.body.items as Array<Record<string, unknown>>).find(
+      (item) => item['reference'] === 'AR-BBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    );
+
+    expect(bruno).toBeDefined();
+    expect('registration' in (bruno as Record<string, unknown>)).toBe(false);
+    expect('registrationSchemaVersion' in (bruno as Record<string, unknown>)).toBe(false);
   });
 
   it('404 idéntico para un identificador ajeno y para uno inexistente', async () => {

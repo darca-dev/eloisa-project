@@ -88,11 +88,12 @@ export const BASELINE_STAGES = Object.freeze([
     'db/visits-db-foundation.db.test.ts',
     'db/visits-materialization.db.test.ts',
     'db/visits-professional-transitions.db.test.ts',
+    'db/access-request-registration.db.test.ts',
   ]),
   'cleanup',
 ]);
 
-/** Las 22 exactas de SPEC 025 sec. 9. El `+1` de OpenAPI es su propia etapa. */
+/** Las 23 exactas de SPEC 025 sec. 9 más el expediente MP04-C3. El `+1` de OpenAPI es su propia etapa. */
 export const DB_GATED_STAGES = Object.freeze(BASELINE_STAGES.filter((stage) => stage.startsWith('db/')));
 
 /**

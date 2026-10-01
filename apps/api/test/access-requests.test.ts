@@ -132,6 +132,8 @@ interface Store {
   failNextAccessRequestCreate: { readonly reference: string } | null;
   /** Falla toda escritura, para probar el `503` opaco. */
   failEveryWrite: boolean;
+  /** Cuando está armado, la próxima escritura de auditoría falla. */
+  failNextAudit: boolean;
 }
 
 function createStore(): Store {
@@ -142,6 +144,7 @@ function createStore(): Store {
     queries: [],
     failNextAccessRequestCreate: null,
     failEveryWrite: false,
+    failNextAudit: false,
   };
 }
 
@@ -270,10 +273,71 @@ function buildTransaction(store: Store, nextId: () => string) {
           throw new Error('escritura no disponible');
         }
 
+        if (store.failNextAudit) {
+          store.failNextAudit = false;
+          throw new Error('auditoría no disponible');
+        }
+
         const row: Row = { id: nextId(), ...args.data };
         store.auditEvents.push(row);
         return pick(row, args.select);
       },
+    },
+
+    /*
+     * SQL crudo acotado a las columnas del expediente (MP04-C3). La doble solo
+     * entiende los dos enunciados con marcador que el servicio emite: cualquier
+     * otro SQL falla, de modo que una lectura o escritura fuera de alcance no
+     * pasaría en silencio.
+     */
+    $queryRawUnsafe: async (sql: string, ...params: unknown[]) => {
+      store.queries.push('$queryRawUnsafe');
+
+      if (typeof sql === 'string' && sql.includes('access-request snapshot read')) {
+        const [id, tenantId] = params as [string, string];
+        const found = store.accessRequests.find(
+          (row) => row['id'] === id && row['tenantId'] === tenantId,
+        );
+
+        if (found === undefined) {
+          return [];
+        }
+
+        return [
+          {
+            registrationSchemaVersion: found['registrationSchemaVersion'] ?? null,
+            registrationData: found['registrationData'] ?? null,
+          },
+        ];
+      }
+
+      throw new Error('SQL no reconocido por la doble de persistencia');
+    },
+
+    $executeRawUnsafe: async (sql: string, ...params: unknown[]) => {
+      store.queries.push('$executeRawUnsafe');
+
+      if (typeof sql === 'string' && sql.includes('access-request snapshot write')) {
+        if (store.failEveryWrite) {
+          throw new Error('escritura no disponible');
+        }
+
+        const [data, id, tenantId] = params as [string, string, string];
+        const found = store.accessRequests.find(
+          (row) => row['id'] === id && row['tenantId'] === tenantId,
+        );
+
+        if (found === undefined) {
+          throw new Error('fila de solicitud inexistente');
+        }
+
+        found['registrationSchemaVersion'] = 1;
+        found['registrationData'] = JSON.parse(data) as unknown;
+
+        return 1;
+      }
+
+      throw new Error('SQL no reconocido por la doble de persistencia');
     },
   };
 }
@@ -717,6 +781,280 @@ describe('POST /api/v1/access-requests', () => {
     expect(serializado).not.toContain('escritura no disponible');
     expect(serializado).not.toContain(TENANT_ID);
     expect(serializado).not.toContain('P2002');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Expediente registration (SPEC 038, MP04-C3)
+// ---------------------------------------------------------------------------
+
+/** Expediente válido de Paciente. Todos los datos son ficticios. */
+function validPatientRegistration(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    necesitaApoyo: 'SI',
+    apoyos: ['MOVILIZARSE', 'ACOMPANAMIENTO'],
+    condiciones: ['NINGUNA'],
+    zona: 'URBANA',
+    eps: 'NUEVA_EPS',
+    direccion: 'Cra 45 # 32-16',
+    contactoNombre: 'Carlos Ejemplo',
+    contactoParentesco: 'Hijo',
+    contactoTelefono: '311 220 3355',
+    vecinoNombre: 'Rosa Ficticia',
+    vecinoTelefono: '312 778 4410',
+    vecinoAutorizado: true,
+    autorizaDatos: true,
+    ...overrides,
+  };
+}
+
+/** Expediente válido de Cuidador. Todos los datos son ficticios. */
+function validCaregiverRegistration(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    tipoCuidador: 'FAMILIAR',
+    tieneFormacion: 'NO',
+    viveConPaciente: 'SI',
+    horarios: ['MANANA', 'NOCHE'],
+    pacienteRegistrado: 'NO_SABE',
+    relacionPaciente: 'MADRE',
+    vecinoNombre: 'Rosa Ficticia',
+    vecinoTelefono: '312 778 4410',
+    vecinoRelacion: 'VECINO',
+    vecinoDireccion: 'Casa de al lado',
+    vecinoAutorizado: true,
+    autorizaDatos: true,
+    ...overrides,
+  };
+}
+
+/** Expediente válido de Visitador médico. Todos los datos son ficticios. */
+function validProfessionalRegistration(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    profesion: 'MEDICO',
+    tiposAtencion: ['VISITA_MEDICA'],
+    eps: 'NUEVA_EPS',
+    institucionDepartamento: 'Cundinamarca',
+    institucionMunicipio: 'Soacha',
+    zonaDepartamento: 'Cundinamarca',
+    zonaMunicipio: 'Soacha',
+    zonas: ['COMUNA_URBANA'],
+    autorizaDatos: true,
+    ...overrides,
+  };
+}
+
+describe('expediente registration de POST /api/v1/access-requests (MP04-C3)', () => {
+  let harness: Harness;
+
+  beforeEach(async () => {
+    harness = await createHarness(1000);
+  });
+
+  afterEach(async () => {
+    await harness.app.close();
+  });
+
+  const enviar = (body: unknown) =>
+    request(harness.app.getHttpServer())
+      .post('/api/v1/access-requests')
+      .set('Origin', ALLOWED_ORIGIN)
+      .send(body as object);
+
+  it('acepta el expediente y responde el 202 exacto de tres claves', async () => {
+    const respuesta = await enviar(
+      validBody({ registration: validPatientRegistration() }),
+    ).expect(202);
+
+    expect(Object.keys(respuesta.body).sort()).toEqual(['reference', 'source', 'status']);
+    expect(respuesta.body.status).toBe('PENDING');
+    expect(respuesta.body.source).toBe('TEST_DATA');
+  });
+
+  it('persiste version 1 y datos sin password en la misma transaccion', async () => {
+    await enviar(validBody({ registration: validPatientRegistration() })).expect(202);
+
+    const fila = harness.store.accessRequests[0]!;
+    expect(fila['registrationSchemaVersion']).toBe(1);
+
+    const datos = fila['registrationData'] as Record<string, unknown>;
+    expect(datos['necesitaApoyo']).toBe('SI');
+    expect(datos['condiciones']).toEqual(['NINGUNA']);
+    expect(JSON.stringify(datos)).not.toContain('claveFicticia7');
+    expect('password' in datos).toBe(false);
+  });
+
+  it('no copia el expediente ni la clave a la auditoria', async () => {
+    await enviar(validBody({ registration: validPatientRegistration() })).expect(202);
+
+    const serializado = JSON.stringify(harness.store.auditEvents);
+    expect(serializado).not.toContain('claveFicticia7');
+    expect(serializado).not.toContain('MOVILIZARSE');
+    expect(serializado).not.toContain('Cra 45');
+  });
+
+  it('acepta las tres ramas con sus formas propias', async () => {
+    await enviar(
+      validBody({ requestedProfile: 'CAREGIVER', registration: validCaregiverRegistration() }),
+    ).expect(202);
+    await enviar(
+      validBody({
+        requestedProfile: 'FIELD_PROFESSIONAL',
+        documentNumber: '900000002',
+        registration: validProfessionalRegistration(),
+      }),
+    ).expect(202);
+
+    expect(harness.store.accessRequests).toHaveLength(2);
+  });
+
+  const EXPEDIENTES_INVALIDOS: ReadonlyArray<readonly [string, Record<string, unknown>]> = [
+    ['no es un objeto', { registration: 'texto' }],
+    ['clave extra', { registration: validPatientRegistration({ otraClave: 1 }) }],
+    ['clave de otra rama', { registration: validPatientRegistration({ tipoCuidador: 'FAMILIAR' }) }],
+    [
+      'password infiltrada',
+      { registration: validPatientRegistration({ password: 'claveFicticia7' }) },
+    ],
+    ['apoyos sin necesidad declarada', { registration: validPatientRegistration({ necesitaApoyo: 'NO' }) }],
+    ['apoyos vacios con necesidad', { registration: validPatientRegistration({ apoyos: [] }) }],
+    [
+      'NINGUNA con otras condiciones',
+      { registration: validPatientRegistration({ condiciones: ['NINGUNA', 'DIABETES'] }) },
+    ],
+    ['zona fuera de catalogo', { registration: validPatientRegistration({ zona: 'SELVA' }) }],
+    ['direccion demasiado larga', { registration: validPatientRegistration({ direccion: 'C'.repeat(121) }) }],
+    ['arreglo con duplicados', { registration: validPatientRegistration({ apoyos: ['MOVILIZARSE', 'MOVILIZARSE'] }) }],
+    [
+      'formacion sin institucion',
+      {
+        requestedProfile: 'CAREGIVER',
+        registration: validCaregiverRegistration({ tieneFormacion: 'SI' }),
+      },
+    ],
+    [
+      'institucion sin formacion',
+      {
+        requestedProfile: 'CAREGIVER',
+        registration: validCaregiverRegistration({
+          tieneFormacion: 'NO',
+          institucionFormacion: 'SENA',
+        }),
+      },
+    ],
+    [
+      'otra EPS sin nombre',
+      {
+        requestedProfile: 'FIELD_PROFESSIONAL',
+        documentNumber: '900000003',
+        registration: validProfessionalRegistration({ eps: 'OTRA_EPS' }),
+      },
+    ],
+    [
+      'nombre de otra EPS sin marca',
+      {
+        requestedProfile: 'FIELD_PROFESSIONAL',
+        documentNumber: '900000004',
+        registration: validProfessionalRegistration({ otraEps: 'EPS Ficticia' }),
+      },
+    ],
+  ];
+
+  it.each(EXPEDIENTES_INVALIDOS)('rechaza con 400 el expediente inválido: %s', async (_etiqueta, extra) => {
+    const respuesta = await enviar(validBody(extra)).expect(400);
+
+    expect(respuesta.body.code).toBe('ACCESS_REQUEST_INVALID_BODY');
+    expect(Array.isArray(respuesta.body.fields)).toBe(true);
+    expect(JSON.stringify(respuesta.body)).not.toContain('claveFicticia7');
+    expect(harness.store.accessRequests).toHaveLength(0);
+    expect(harness.store.auditEvents).toHaveLength(0);
+  });
+
+  it('devuelve la misma referencia al repetir el expediente identico', async () => {
+    const cuerpo = validBody({ registration: validPatientRegistration() });
+    const primera = await enviar(cuerpo).expect(202);
+    const segunda = await enviar(cuerpo).expect(202);
+
+    expect(segunda.body.reference).toBe(primera.body.reference);
+    expect(harness.store.accessRequests).toHaveLength(1);
+    expect(harness.store.auditEvents).toHaveLength(1);
+
+    // Un solo CREATED y ningún evento de conflicto en la repetición idéntica.
+    const tipos = harness.store.auditEvents.map((evento) => evento['eventType']);
+    expect(tipos).toEqual(['ACCESS_REQUEST_CREATED']);
+  });
+
+  it('responde 409 opaco ante un expediente materialmente distinto', async () => {
+    const primera = await enviar(
+      validBody({ registration: validPatientRegistration() }),
+    ).expect(202);
+
+    const respuesta = await enviar(
+      validBody({ registration: validPatientRegistration({ apoyos: ['HIGIENE'] }) }),
+    ).expect(409);
+
+    expect(respuesta.body.code).toBe('ACCESS_REQUEST_REPLAY_CONFLICT');
+    expect(JSON.stringify(respuesta.body)).not.toContain(primera.body.reference);
+    expect(JSON.stringify(respuesta.body)).not.toContain('Ana María');
+    expect(respuesta.body.fields).toEqual([]);
+
+    // Ni otra fila, ni expediente sobrescrito.
+    expect(harness.store.accessRequests).toHaveLength(1);
+    const datos = harness.store.accessRequests[0]?.['registrationData'] as Record<string, unknown>;
+    expect(datos['apoyos']).toEqual(['MOVILIZARSE', 'ACOMPANAMIENTO']);
+  });
+
+  it('el conflicto agrega exactamente un evento sin PII y conserva el de creacion', async () => {
+    await enviar(validBody({ registration: validPatientRegistration() })).expect(202);
+    await enviar(
+      validBody({ registration: validPatientRegistration({ zona: 'RURAL' }) }),
+    ).expect(409);
+
+    const tipos = harness.store.auditEvents.map((evento) => evento['eventType']);
+    expect(tipos).toEqual(['ACCESS_REQUEST_CREATED', 'ACCESS_REQUEST_REPLAY_CONFLICT']);
+
+    const conflicto = harness.store.auditEvents[1]!;
+    expect(conflicto['outcome']).toBe('DENIED');
+    expect(conflicto['actorType']).toBe('PUBLIC_SELF_ENROLLMENT');
+    expect(conflicto['resourceType']).toBe('AccessRequest');
+    expect(conflicto['resourceId']).toBe(harness.store.accessRequests[0]?.['id']);
+
+    const serializado = JSON.stringify(conflicto);
+    expect(serializado).not.toContain('Ana María');
+    expect(serializado).not.toContain('900000001');
+    expect(serializado).not.toContain('MOVILIZARSE');
+    expect(serializado).not.toContain('claveFicticia7');
+    expect(serializado).not.toContain('RURAL');
+  });
+
+  it('si la auditoria del conflicto falla, la llamada falla cerrada sin 409', async () => {
+    await enviar(validBody({ registration: validPatientRegistration() })).expect(202);
+
+    harness.store.failNextAudit = true;
+
+    const respuesta = await enviar(
+      validBody({ registration: validPatientRegistration({ zona: 'RURAL' }) }),
+    ).expect(503);
+
+    expect(respuesta.body.code).toBe('ACCESS_REQUEST_UNAVAILABLE');
+    expect(JSON.stringify(respuesta.body)).not.toContain('REPLAY_CONFLICT');
+    expect(harness.store.accessRequests).toHaveLength(1);
+    expect(
+      harness.store.auditEvents.filter(
+        (evento) => evento['eventType'] === 'ACCESS_REQUEST_REPLAY_CONFLICT',
+      ),
+    ).toHaveLength(0);
+  });
+
+  it('responde 409 cuando el reintento agrega un expediente inexistente', async () => {
+    await enviar(validBody()).expect(202);
+
+    await enviar(validBody({ registration: validPatientRegistration() })).expect(409);
+
+    expect(harness.store.accessRequests).toHaveLength(1);
   });
 });
 

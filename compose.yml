@@ -129,6 +129,11 @@ services:
       HOSTNAME: '0.0.0.0'
       # URL interna de la API para tareas posteriores. No es un secreto.
       MERDN_API_BASE_URL: http://api:3001
+      # Atajos de recorrido LOCAL con datos ficticios. Cerrados por defecto y
+      # resueltos por el servidor: no existe activación desde la URL.
+      MERDN_HOSPITAL_DEMO_LOCAL: ${MERDN_HOSPITAL_DEMO_LOCAL:-false}
+      MERDN_MUNICIPALITY_DEMO_LOCAL: ${MERDN_MUNICIPALITY_DEMO_LOCAL:-false}
+      MERDN_HUMAN_ACCESS_DEMO_LOCAL: ${MERDN_HUMAN_ACCESS_DEMO_LOCAL:-false}
     ports:
       - '${WEB_PORT:-3000}:3000'
 
@@ -204,6 +209,7 @@ services:
     volumes:
       - ./infra/local-oidc/realm-merdn-local.json:/opt/keycloak/data/import/realm-merdn-local.json:ro
       - ./infra/local-oidc/realm-merdn-patient.json:/opt/keycloak/data/import/realm-merdn-patient.json:ro
+      - ./infra/local-oidc/themes:/opt/keycloak/themes:ro
     networks:
       - merdn-internal
     healthcheck:

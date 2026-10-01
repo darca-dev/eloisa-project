@@ -32,6 +32,11 @@
 .detailGrid dd { margin: .25rem 0 0; overflow-wrap: anywhere; color: #193644; }
 .confirmation { display: grid; gap: .65rem; padding: .85rem; border-left: 4px solid #c58a12; border-radius: .5rem; background: #fff8e8; }
 .confirmation p { margin: 0; line-height: 1.5; }
+.expediente { display: grid; gap: .75rem; padding: .85rem; border: 1px solid #b9d8e2; border-radius: .65rem; background: #fff; }
+.expedienteTitulo { margin: 0; color: #19566b; font-size: 1.02rem; }
+.expedienteNota { margin: 0; padding: .7rem; border-left: 4px solid #176f89; border-radius: .4rem; background: #edf8fb; color: #315968; line-height: 1.5; }
+.expedienteSeccion { display: grid; gap: .5rem; }
+.expedienteSubtitulo { margin: 0; color: #4b636e; font-size: .92rem; }
 
 @media (max-width: 760px) {
   .heading, .detailHeading { display: grid; }

@@ -39,35 +39,89 @@ test('registra con credencial efímera, bloquea el doble envío y limpia la cont
   });
 
   await page.goto(`${BASE}/acceso?accion=registro`);
+  await expect(page.getByRole('heading', { name: '¿Cómo se va a registrar?' })).toBeVisible();
+  await page.getByRole('button', { name: /^Paciente /u }).click();
+  await expect(page.getByText('INSCRIPCIÓN COMO PACIENTE')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Cuidador demo 1' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Paciente demo 1' }).click();
+
+  for (const titulo of ['Condición y necesidades', 'Ubicación y EPS', 'Contactos', 'Confirmación']) {
+    await expect(page.locator('#registro-password')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    await expect(page.getByRole('heading', { name: titulo })).toBeVisible();
+  }
+
   const password = page.getByLabel('Contraseña de prueba');
   await password.fill('ClaveDemo123');
   await page.getByRole('button', { name: 'Mostrar contraseña' }).focus();
   await page.keyboard.press('Enter');
   await expect(password).toHaveAttribute('type', 'text');
   await page.getByRole('button', { name: 'Ocultar contraseña' }).click();
+  await page.getByRole('checkbox', { name: /Autorizo el tratamiento/u }).check();
 
   await page.evaluate(() => {
-    const form = document.querySelector('form');
-    if (!(form instanceof HTMLFormElement)) throw new Error('Formulario ausente');
-    form.requestSubmit();
-    form.requestSubmit();
+    const boton = [...document.querySelectorAll('button')].find(
+      (nodo) => nodo.textContent === 'Registrarme',
+    );
+    if (!(boton instanceof HTMLButtonElement)) throw new Error('Registrarme ausente');
+    boton.click();
+    boton.click();
   });
 
   await expect(page.getByText(REFERENCE)).toBeVisible();
   expect(calls).toBe(1);
   expect(body['password']).toBe('ClaveDemo123');
   expect(body['requestedProfile']).toBe('PATIENT');
-  await expect(password).toHaveValue('');
+  await expect(password).toHaveCount(0);
   await expect(page.getByText(/Todavía NO puede iniciar sesión/u)).toBeVisible();
+  await expect(page.getByText(/Hospital debe aprobar/u)).toBeVisible();
 });
 
-test('antes de la aprobación muestra el login OIDC con retorno cerrado a /acceso', async ({ page }) => {
+test('la portada ofrece solo Iniciar sesión y Regístrate en Atención Domiciliaria', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 720 });
+  await page.goto(`${BASE}/`);
+  const titulo = page.getByRole('heading', { name: 'Atención Domiciliaria' });
+  await expect(titulo).toBeVisible();
+  const tarjeta = page.locator('article', { has: titulo });
+  await expect(tarjeta.getByRole('link')).toHaveCount(2);
+  await expect(tarjeta.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute(
+    'href',
+    'http://127.0.0.1:3001/api/v1/human-auth/login?returnTo=/acceso',
+  );
+  const registro = tarjeta.getByRole('link', { name: 'Regístrate' });
+  await expect(registro).toHaveAttribute('href', '/acceso?accion=registro');
+  await expect(tarjeta.getByText('Solicitar acceso')).toHaveCount(0);
+  await expect(tarjeta.getByText('Registro guiado')).toHaveCount(0);
+
+  const portada = await new AxeBuilder({ page }).include('main').analyze();
+  expect(portada.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')).toEqual([]);
+
+  // Teclado: enfocar Regístrate y entrar con Enter abre la rama de registro.
+  await registro.focus();
+  await expect(registro).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/acceso\?accion=registro$/u);
+  await expect(page.getByRole('heading', { name: '¿Cómo se va a registrar?' })).toBeVisible();
+});
+
+test('sin sesión abre directamente el formulario OIDC sin repetir las acciones', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 720 });
   await experiences(page, [], 401);
+  await page.route('**/api/v1/human-auth/login?**', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Acceso OIDC</h1>' });
+  });
   await page.goto(`${BASE}/acceso`);
-  const login = page.getByRole('link', { name: 'Iniciar sesión' });
-  await expect(login).toBeVisible();
-  await expect(login).toHaveAttribute('href', /\/api\/v1\/human-auth\/login\?returnTo=\/acceso$/u);
+  await expect(page).toHaveURL(/\/api\/v1\/human-auth\/login\?returnTo=\/acceso$/u);
+  await expect(page.getByRole('heading', { name: 'Acceso OIDC' })).toBeVisible();
+});
+
+test('antes de la aprobación navega al login OIDC con retorno cerrado a /acceso', async ({ page }) => {
+  await experiences(page, [], 401);
+  await page.route('**/api/v1/human-auth/login?**', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Acceso OIDC</h1>' });
+  });
+  await page.goto(`${BASE}/acceso`);
+  await expect(page).toHaveURL(/\/api\/v1\/human-auth\/login\?returnTo=\/acceso$/u);
 });
 
 test('una experiencia aprobada abre la portada del paciente', async ({ page }) => {

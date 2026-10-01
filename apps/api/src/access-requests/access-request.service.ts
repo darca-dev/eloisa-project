@@ -36,7 +36,7 @@
  * clínica, que es exactamente lo que la especificación prohíbe.
  */
 
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { randomBytes, randomUUID } from 'node:crypto';
 
 /*
@@ -58,6 +58,11 @@ import {
   OPEN_ACCESS_REQUEST_STATUSES,
   type AccessRequestResultDto,
 } from './access-request.contract';
+import {
+  ACCESS_REQUEST_REGISTRATION_REPLAY_CONFLICT,
+  ACCESS_REQUEST_REGISTRATION_SCHEMA_VERSION,
+  canonicalRegistration,
+} from './access-request-registration.contract';
 import { validateAccessRequestBody, type ValidatedAccessRequest } from './access-request.validation';
 import { AccessProvisioningService } from './access-provisioning.service';
 
@@ -95,6 +100,64 @@ const PRISMA_UNIQUE_VIOLATION = 'P2002';
 /** Ruta del endpoint, para trazabilidad del evento de auditoría. */
 const ENDPOINT = '/api/v1/access-requests';
 
+/**
+ * Lectura de la instantánea del expediente por SQL crudo.
+ *
+ * Las columnas `registrationSchemaVersion`/`registrationData` existen en el
+ * esquema y en la migración, pero el cliente Prisma versionado aún no las
+ * declara en sus tipos (regenerarlo modificaría `src/generated/prisma`, fuera
+ * del alcance de este paquete). El SQL nombra solo esas dos columnas y filtra
+ * por `(id, tenantId)`: respeta RLS dentro de la transacción con tenant y no
+ * toca ningún dato personal.
+ */
+const SNAPSHOT_READ_SQL = [
+  '-- access-request snapshot read',
+  'SELECT "registrationSchemaVersion", "registrationData"',
+  'FROM "access_request"',
+  'WHERE "id" = $1 AND "tenantId" = $2',
+].join(' ');
+
+/**
+ * Escritura de la instantánea en la MISMA transacción de creación.
+ *
+ * Mismo motivo que la lectura: SQL crudo acotado a las dos columnas nuevas,
+ * con la versión fijada por el servidor (no por el cliente) y los datos ya
+ * normalizados por la validación. La credencial nunca llega aquí: no forma
+ * parte del objeto validado y la columna además la prohíbe por CHECK.
+ */
+const SNAPSHOT_WRITE_SQL = [
+  '-- access-request snapshot write',
+  'UPDATE "access_request"',
+  `SET "registrationSchemaVersion" = ${ACCESS_REQUEST_REGISTRATION_SCHEMA_VERSION}, "registrationData" = CAST($1 AS jsonb)`,
+  'WHERE "id" = $2 AND "tenantId" = $3',
+].join(' ');
+
+interface StoredSnapshot {
+  readonly registrationSchemaVersion: number | null;
+  readonly registrationData: unknown;
+}
+
+/**
+ * Lee la instantánea del expediente de una solicitud del tenant.
+ *
+ * Exportada para la bandeja de revisión: el detalle protegido es el ÚNICO
+ * lector del expediente además de la comparación de reintento. El listado no
+ * la toca y ningún otro dominio la consulta.
+ */
+export async function readAccessRequestSnapshot(
+  tx: PrismaTransaction,
+  tenantId: string,
+  accessRequestId: string,
+): Promise<StoredSnapshot | null> {
+  const filas = await tx.$queryRawUnsafe<StoredSnapshot[]>(SNAPSHOT_READ_SQL, accessRequestId, tenantId);
+
+  if (!Array.isArray(filas) || filas.length === 0) {
+    return null;
+  }
+
+  return filas[0] as StoredSnapshot;
+}
+
 export type AccessRequestFailureKind = 'INVALID_BODY' | 'UNAVAILABLE';
 
 export interface AccessRequestFailure {
@@ -123,6 +186,20 @@ interface AccessRequestPersistResult {
   readonly personId: string;
   readonly accessRequestId: string;
   readonly reference: string;
+}
+
+/**
+ * Reutilización con expediente materialmente distinto.
+ *
+ * NO es un `AccessRequestSubmission`: el controlador solo distingue
+ * `INVALID_BODY` (400) de todo lo demás (503), de modo que devolverlo como
+ * fallo terminaría en `503` y ocultaría el conflicto. El `submit` lo traduce
+ * a `ConflictException`, que el controlador deja pasar sin tocarla.
+ */
+interface AccessRequestReplayConflict {
+  readonly conflict: true;
+  readonly tenantId: string;
+  readonly accessRequestId: string;
 }
 
 /**
@@ -195,7 +272,7 @@ export class AccessRequestsService {
     // transacción. El cliente no puede elegirlo ni insistir con otro.
     const { tenantId } = await this.tenants.resolveActiveTenant();
 
-    let persistido: AccessRequestPersistResult | null = null;
+    let persistido: AccessRequestPersistResult | AccessRequestReplayConflict | null = null;
 
     for (let attempt = 1; attempt <= MAX_UNIQUE_RACE_ATTEMPTS; attempt += 1) {
       try {
@@ -221,6 +298,20 @@ export class AccessRequestsService {
     if (persistido === null) {
       /* Inalcanzable: el bucle retorna, asigna o lanza en cada iteración. */
       throw new Error('bucle de registro de solicitud de acceso agotado sin resultado');
+    }
+
+    if ('conflict' in persistido) {
+      /*
+       * Cuerpo materialmente distinto sobre una solicitud abierta: ni se crea
+       * otra fila (el índice parcial lo impediría) ni se pisa el expediente.
+       * Respuesta opaca sin PII, sin referencia y sin existencia revelada más
+       * allá del propio conflicto.
+       */
+      throw new ConflictException({
+        code: ACCESS_REQUEST_REGISTRATION_REPLAY_CONFLICT,
+        message: 'La solicitud no puede registrarse con estos datos.',
+        fields: [],
+      });
     }
 
     if (!persistido.submission.ok) {
@@ -266,7 +357,7 @@ export class AccessRequestsService {
       readonly input: ValidatedAccessRequest;
       readonly now: Date;
     },
-  ): Promise<AccessRequestPersistResult> {
+  ): Promise<AccessRequestPersistResult | AccessRequestReplayConflict> {
     const { tenantId, input, now } = context;
 
     const person = await this.resolvePerson(tx, tenantId, input);
@@ -282,6 +373,40 @@ export class AccessRequestsService {
     });
 
     if (open !== null) {
+      /*
+       * Comparación material del expediente. La identidad (documento, nombres,
+       * contacto) conserva el comportamiento histórico: repetir con otros
+       * nombres devuelve la misma referencia sin corregir nada. El EXPEDIENTE
+       * sí se compara: ausente contra ausente es idéntico; cualquier otra
+       * diferencia —incluido presente contra ausente— es material y no puede
+       * resolverse ni creando (índice parcial) ni sobrescribiendo en silencio.
+       */
+      const stored = await readAccessRequestSnapshot(tx, tenantId, open.id);
+      const entrante = canonicalRegistration(input.registration);
+      const existente = canonicalRegistration(stored === null ? null : stored.registrationData);
+
+      if (entrante !== existente) {
+        /*
+         * Auditoría atómica del conflicto, en la MISMA transacción que lo
+         * detecta y antes de devolver el marcador. Si esta escritura falla, la
+         * transacción se aborta y la llamada falla cerrada: nunca se devuelve
+         * un `409` falsamente auditado. El expediente y la solicitud existente
+         * nunca se sobrescriben.
+         */
+        await this.audit.recordAccessRequestReplayConflictWithin(
+          tx,
+          {
+            tenantId,
+            accessRequestId: open.id,
+            endpoint: ENDPOINT,
+            correlationId: randomUUID(),
+          },
+          now,
+        );
+
+        return { conflict: true, tenantId, accessRequestId: open.id };
+      }
+
       return {
         submission: {
           ok: true,
@@ -338,6 +463,21 @@ export class AccessRequestsService {
       },
       now,
     );
+
+    /*
+     * Instantánea del expediente en la MISMA transacción: Person, solicitud,
+     * expediente y auditoría confirman juntos o revierten juntos. Sin
+     * expediente no hay escritura adicional y el camino histórico queda
+     * intacto.
+     */
+    if (input.registration !== undefined) {
+      await tx.$executeRawUnsafe(
+        SNAPSHOT_WRITE_SQL,
+        JSON.stringify(input.registration),
+        created.id,
+        tenantId,
+      );
+    }
 
     return {
       submission: {

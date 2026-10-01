@@ -395,6 +395,17 @@ export interface AccessRequestReviewDetailDto extends AccessRequestReviewListIte
   readonly decidedAt: string | null;
   /** `null` mientras la solicitud no tenga decisión. */
   readonly decisionReasonCode: string | null;
+  /**
+   * Versión del esquema del expediente ficticio. `null` en solicitudes sin
+   * expediente. Solo el detalle protegido la devuelve; el listado no.
+   */
+  readonly registrationSchemaVersion: number | null;
+  /**
+   * Expediente ficticio declarado. Solo el detalle protegido lo devuelve, por
+   * secciones en la bandeja y nunca como JSON crudo. Son declaraciones, no
+   * diagnósticos validados. `null` sin expediente.
+   */
+  readonly registration: Record<string, unknown> | null;
 }
 
 /** Respuesta de una decisión aplicada. Devuelve el estado vigente resultante. */

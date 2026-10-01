@@ -194,6 +194,34 @@ export class AccessRequestReviewDetailDto extends AccessRequestReviewListItemDto
     example: 'DEMO_ELIGIBLE',
   })
   public decisionReasonCode!: string | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Versión del esquema del expediente ficticio de la solicitud. `null` en ' +
+      'solicitudes registradas antes del flujo guiado. Este paquete solo emite 1.',
+    nullable: true,
+    example: 1,
+  })
+  public registrationSchemaVersion!: number | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Expediente ficticio declarado en el flujo guiado: datos adicionales de ' +
+      'los pasos intermedios y consentimientos. Solo en el detalle protegido; ' +
+      'nunca en el listado. Son declaraciones, no diagnósticos validados ni ' +
+      'reglas clínicas, y nunca incluye contraseña. `null` sin expediente.',
+    nullable: true,
+    type: Object,
+    example: {
+      necesitaApoyo: 'SI',
+      apoyos: ['MOVILIZARSE'],
+      condiciones: ['NINGUNA'],
+      zona: 'URBANA',
+      eps: 'NUEVA_EPS',
+      autorizaDatos: true,
+    },
+  })
+  public registration!: Record<string, unknown> | null;
 }
 
 /** Cuerpo de la decisión. Exactamente estas claves, sin texto libre. */

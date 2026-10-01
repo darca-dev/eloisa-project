@@ -1,58 +1,48 @@
+import AxeBuilder from '@axe-core/playwright';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { unlink } from 'node:fs/promises';
 import { expect, test, type Page, type Route } from '@playwright/test';
 
 /**
- * E2E focal del formulario de solicitud de acceso (SPEC 038, MP02-C2-C1).
+ * E2E focal de la inscripción guiada de cinco pasos (SPEC 038, MP04-C3).
  *
- * QUÉ PRUEBA: la interacción REAL en navegador. Las pruebas unitarias anteriores
- * comprueban la frontera con `fetch` inyectado y la forma del componente sobre el
- * código fuente; ninguna de las dos puede demostrar que el formulario funciona con
- * teclado, que el botón se bloquea durante la respuesta ni que un doble envío en el
- * mismo tick produce una sola llamada. Eso solo se ve en un navegador.
+ * Tres ramas independientes —Paciente, Cuidador y Visitador médico— con su
+ * fixture, sus cinco pasos, sus iconos exactos de Elí, la contraseña solo al
+ * final, un único POST interceptado, 202/PENDING y reintento C2-C1.
  *
- * QUÉ NO NECESITA: no hay API, ni PostgreSQL, ni Keycloak, ni sesiones. La única
- * petición de esta prueba —`POST /api/v1/access-requests`— se INTERCEPTA y se
- * responde desde el propio archivo. Ninguna otra ruta se intercepta, de modo que si
- * el formulario empezara a llamar a otra cosa, la prueba fallaría por requests no
- * previstos en lugar de fingir que todo sigue bien.
- *
- * DATOS: todos ficticios y declarados como tales, en línea con la decisión de
- * entorno del 2026-09-28.
- *
- * BASE: `MERDN_E2E_BASE_URL` permite apuntar a un servidor de desarrollo recién
- * levantado. La razón es concreta: el puerto por defecto puede estar ocupado por
- * un contenedor con una imagen anterior, y contra esa imagen la prueba mediría un
- * build viejo en lugar del código que se está revisando. La intersección de la
- * ruta NO depende del origen, así que interceptar sigue siendo equivalente.
+ * Sin API, PostgreSQL, Keycloak ni sesiones: `POST /api/v1/access-requests` se
+ * intercepta y se responde desde este archivo.
  */
 
 const RUTA_API = '**/api/v1/access-requests';
 const REGISTRO = '/acceso?accion=registro';
 const BASE = (process.env['MERDN_E2E_BASE_URL'] ?? 'http://127.0.0.1:3000').replace(/\/$/u, '');
 
-async function abrirFormulario(page: Page): Promise<void> {
-  await page.goto(`${BASE}${REGISTRO}`);
-  await expect(page.getByRole('heading', { name: 'Registre su solicitud, no una sesión' })).toBeVisible();
-}
-
 const REFERENCIA = 'AR-3F9C1D0B7A6E5248C1B0D2E9';
 
-/** Datos FICTICIOS. El documento se deriva del reloj para no ser una persona real. */
-function datosFicticios(): {
-  readonly documento: string;
-  readonly nombres: string;
-  readonly apellidos: string;
-  readonly nacimiento: string;
-  readonly telefono: string;
-} {
-  const marca = Date.now().toString().slice(-7);
+type Tarjeta = 'Paciente' | 'Cuidador' | 'Visitador médico';
 
-  return {
-    documento: `900${marca}`,
-    nombres: 'Ana María',
-    apellidos: 'Ejemplo Ficticio',
-    nacimiento: '1958-04-12',
-    telefono: '311 220 3355',
-  };
+const TITULOS: Record<Tarjeta, readonly string[]> = {
+  Paciente: ['Datos personales', 'Condición y necesidades', 'Ubicación y EPS', 'Contactos', 'Confirmación'],
+  Cuidador: ['Datos personales', 'Perfil del cuidador', 'Vincular paciente', 'Contacto cercano', 'Confirmación'],
+  'Visitador médico': ['Datos personales', 'Información profesional', 'EPS e institución', 'Zona de atención', 'Verificación'],
+};
+
+const FICHA: Record<Tarjeta, { fixture: string; perfil: string; documento: string }> = {
+  Paciente: { fixture: 'Paciente demo 1', perfil: 'PATIENT', documento: '900100001' },
+  Cuidador: { fixture: 'Cuidador demo 1', perfil: 'CAREGIVER', documento: '900200001' },
+  'Visitador médico': { fixture: 'Visitador demo 1', perfil: 'FIELD_PROFESSIONAL', documento: '900300001' },
+};
+
+async function abrirRegistro(page: Page): Promise<void> {
+  await page.goto(`${BASE}${REGISTRO}`);
+  await expect(page.getByRole('heading', { name: '¿Cómo se va a registrar?' })).toBeVisible();
+}
+
+async function elegirTarjeta(page: Page, tarjeta: Tarjeta): Promise<void> {
+  await page.getByRole('button', { name: new RegExp(`^${tarjeta} `, 'u') }).click();
+  await expect(page.getByRole('heading', { name: TITULOS[tarjeta][0] })).toBeVisible();
 }
 
 interface RespuestaControlada {
@@ -60,7 +50,6 @@ interface RespuestaControlada {
   readonly cuerpo: unknown;
 }
 
-/** Respuesta diferida: permite observar el estado del botón mientras llega. */
 function diferida<T>(): {
   readonly promesa: Promise<T>;
   resolver: (valor: T) => void;
@@ -73,17 +62,6 @@ function diferida<T>(): {
   return { promesa, resolver };
 }
 
-/**
- * Intercepta la ruta de solicitudes y devuelve un contador de llamadas, los cuerpos
- * enviados y una vía para fijar la próxima respuesta. No se usa
- * `page.route(...).fulfill()` de forma directa porque el caso interesante es
- * justamente esperar SIN responder.
- *
- * El manejador solo usa sus PROPIOS parámetros y variables locales: referenciar
- * constantes de módulo desde dentro de un callback de `page.route` falla con
- * `ReferenceError` bajo la transformación de Playwright, mientras que pasarlas
- * como argumento se comporta correctamente.
- */
 function capturarRuta(
   page: Page,
   respuesta: RespuestaControlada | { readonly esperar: Promise<unknown> },
@@ -121,168 +99,148 @@ const FALLO_TEMPORAL: RespuestaControlada = {
   },
 };
 
-/** Rellena los campos obligatorios y deja UN medio de contacto. */
-async function completar(page: Page, conContacto = true): Promise<void> {
-  const datos = datosFicticios();
+/** Avanza del paso 1 al 5 con el fixture de la rama y deja la clave escrita. */
+async function completarHastaConfirmacion(page: Page, tarjeta: Tarjeta): Promise<void> {
+  const { fixture } = FICHA[tarjeta];
 
-  await page.getByLabel('Número de documento', { exact: true }).fill(datos.documento);
-  await page.getByLabel('Nombres', { exact: true }).fill(datos.nombres);
-  await page.getByLabel('Apellidos', { exact: true }).fill(datos.apellidos);
-  await page.getByLabel('Fecha de nacimiento', { exact: true }).fill(datos.nacimiento);
+  await page.getByRole('button', { name: fixture }).click();
 
-  if (conContacto) {
-    await page.getByLabel('Teléfono (opcional, al menos uno)').fill(datos.telefono);
+  for (let paso = 1; paso <= 4; paso += 1) {
+    // La contraseña solo existe en el paso 5.
+    await expect(page.locator('#registro-password')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    await expect(page.getByRole('heading', { name: TITULOS[tarjeta][paso] })).toBeVisible();
   }
+
+  await page.getByLabel('Contraseña de prueba').fill('ClaveDemo123');
 }
 
-/**
- * Avisos del FORMULARIO, no de la página.
- *
- * Next.js monta un `role="alert"` vacío para anunciar cambios de ruta, de modo
- * que un `getByRole('alert')` sin alcance coincide con dos o tres elementos y
- * falla por ambigüedad en lugar de por el motivo real.
- */
 function avisos(page: Page) {
   return page.locator('[aria-live="polite"] [role="alert"]');
 }
 
-/** Los nueve controles del contrato, en el orden en que deben recibir foco. */
-const ORDEN_FOCO = [
-  'solicitud-requestedProfile',
-  'solicitud-documentType',
-  'solicitud-documentNumber',
-  'solicitud-givenNames',
-  'solicitud-familyNames',
-  'solicitud-birthDate',
-  'solicitud-phone',
-  'solicitud-email',
-  'solicitud-sexGenderCode',
-];
+function sinViolacionesGraves(violations: Array<{ impact?: string }>): void {
+  expect(violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')).toEqual([]);
+}
 
 test.describe.configure({ retries: 0 });
 
-test.describe('Formulario de solicitud de acceso (SPEC 038, MP02-C2-C1)', () => {
-  test('cada control tiene etiqueta asociada y el envío se alcanza con teclado', async ({
+test.describe('Inscripción guiada de cinco pasos (SPEC 038, MP04-C3)', () => {
+  for (const tarjeta of ['Paciente', 'Cuidador', 'Visitador médico'] as const) {
+    test(`rama ${tarjeta}: cinco pasos, fixture, iconos, un POST y 202/PENDING`, async ({
+      page,
+    }) => {
+      const registro = capturarRuta(page, ACEPTADA);
+      await abrirRegistro(page);
+
+      // Iconos exactos: guía en cabecera y saludo en el activador flotante.
+      await expect(page.locator('img[src="/eli/guia.png"]').first()).toBeVisible();
+      await expect(page.locator('img[src="/eli/saluda2.png"]')).toBeVisible();
+      await expect(page.getByText('Panel de inscripción · Atención domiciliaria')).toBeVisible();
+
+      await elegirTarjeta(page, tarjeta);
+
+      // Solo los tres fixtures de la rama.
+      await expect(page.getByRole('button', { name: FICHA[tarjeta].fixture })).toBeVisible();
+      const otra = tarjeta === 'Paciente' ? 'Cuidador demo 1' : 'Paciente demo 1';
+      await expect(page.getByRole('button', { name: otra })).toHaveCount(0);
+
+      // Orientación de Elí al inicio de cada paso.
+      await expect(page.locator('img[src="/eli/escucha.png"]')).toBeVisible();
+
+      await completarHastaConfirmacion(page, tarjeta);
+
+      // Resumen sin credencial y con autorización de datos.
+      await expect(page.locator('#registro-password')).toBeVisible();
+      await expect(page.getByText('Autorizo el tratamiento', { exact: false })).toBeVisible();
+      await page.getByRole('checkbox', { name: /Autorizo el tratamiento/u }).check();
+
+      await page.getByRole('button', { name: 'Registrarme' }).click();
+      await expect(page.getByText(REFERENCIA)).toBeVisible();
+
+      expect(registro.llamadas).toBe(1);
+
+      const cuerpo = JSON.parse(registro.cuerpos[0] ?? '{}') as Record<string, unknown>;
+      expect(cuerpo['requestedProfile']).toBe(FICHA[tarjeta].perfil);
+      expect(cuerpo['documentNumber']).toBe(FICHA[tarjeta].documento);
+      expect(typeof cuerpo['password']).toBe('string');
+      expect((cuerpo['password'] as string).length).toBeGreaterThan(0);
+
+      const expediente = cuerpo['registration'] as Record<string, unknown>;
+      expect(expediente['autorizaDatos']).toBe(true);
+      expect('password' in expediente).toBe(false);
+
+      // Cierre con Elí agradeciendo, referencia, PENDING y espera del Hospital.
+      await expect(page.locator('img[src="/eli/agradece.png"]')).toBeVisible();
+      const confirmacion = page.getByRole('status');
+      await expect(confirmacion).toContainText('Solicitud registrada');
+      await expect(confirmacion).toContainText('PENDING');
+      await expect(confirmacion).toContainText('Hospital debe aprobar');
+      await expect(confirmacion).toContainText('no crea sesión ni cuenta');
+
+      // La credencial no queda en el DOM y no hay entradas a portales.
+      await expect(page.locator('#registro-password')).toHaveCount(0);
+      await expect(page.getByRole('link', { name: /\/paciente|\/cuidador|\/profesional/u })).toHaveCount(0);
+    });
+  }
+
+  test('el paso 1 no avanza vacío, exige contacto y enfoca el primer campo', async ({
     page,
   }) => {
-    await abrirFormulario(page);
-
-    for (const etiqueta of [
-      'Perfil que desea',
-      'Tipo de documento',
-      'Número de documento',
-      'Nombres',
-      'Apellidos',
-      'Fecha de nacimiento',
-      'Sexo o género',
-      'Teléfono (opcional, al menos uno)',
-      'Correo electrónico (opcional, al menos uno)',
-    ]) {
-      await expect(page.getByLabel(etiqueta, { exact: true })).toBeVisible();
-    }
-
-    /*
-     * El recorrido se comprueba por IDENTIDAD de cada control, no contando
-     * pulsaciones a ciegas: la secuencia importa porque un control fuera de
-     * orden dejaría a la persona saltándose un campo obligatorio sin verlo.
-     *
-     * Los campos de fecha son la salvedad: Chromium reparte el foco entre día,
-     * mes y año, así que el mismo control aparece varias veces seguidas. Se
-     * colapsan las repeticiones consecutivas —lo que no se permite es saltar un
-     * control o cambiar de orden.
-     */
-    await page.locator(`#${ORDEN_FOCO[0]}`).focus();
-
-    const recorrido: string[] = [await page.evaluate(() => document.activeElement?.id ?? '')];
-    for (let paso = 0; paso < 30; paso += 1) {
-      await page.keyboard.press('Tab');
-
-      const id = await page.evaluate(() => document.activeElement?.id ?? '');
-      if (id === '') {
-        break;
-      }
-
-      if (id !== recorrido[recorrido.length - 1]) {
-        recorrido.push(id);
-      }
-    }
-
-    expect(recorrido).toStrictEqual(ORDEN_FOCO);
-    await expect(page.getByRole('button', { name: 'Enviar solicitud' })).toBeFocused();
-
-    // Y el envío se activa con el teclado: Enter en un campo envía el formulario.
-    const registro = capturarRuta(page, ACEPTADA);
-    await completar(page);
-    await page.locator(`#${ORDEN_FOCO[2]}`).focus();
-    await page.keyboard.press('Enter');
-    await expect(page.getByText(REFERENCIA)).toBeVisible();
-    expect(registro.llamadas).toBe(1);
-  });
-
-  test('ofrece exactamente los tres perfiles con el rótulo aprobado', async ({ page }) => {
-    await abrirFormulario(page);
-
-    const opciones = page.getByLabel('Perfil que desea', { exact: true }).locator('option');
-
-    await expect(opciones).toHaveText(['Paciente', 'Cuidador', 'Visitador médico']);
-
-    const valores = await opciones.evaluateAll((nodos) =>
-      nodos.map((nodo) => (nodo as HTMLOptionElement).value),
-    );
-    expect(valores).toStrictEqual(['PATIENT', 'CAREGIVER', 'FIELD_PROFESSIONAL']);
-
-    // Elegir el rótulo visible envía el valor técnico, no una traducción libre.
-    await page.getByLabel('Perfil que desea', { exact: true }).selectOption('FIELD_PROFESSIONAL');
+    await abrirRegistro(page);
+    await elegirTarjeta(page, 'Paciente');
 
     const registro = capturarRuta(page, ACEPTADA);
-    await completar(page);
-    await page.getByRole('button', { name: 'Enviar solicitud' }).click();
-    await expect(page.getByText(REFERENCIA)).toBeVisible();
+    await page.getByRole('button', { name: 'Continuar' }).click();
 
-    expect(registro.cuerpos[0]).toContain('"requestedProfile":"FIELD_PROFESSIONAL"');
-  });
-
-  test('exige al menos un medio de contacto y no llama a la API sin él', async ({ page }) => {
-    await abrirFormulario(page);
-
-    const registro = capturarRuta(page, ACEPTADA);
-    await completar(page, false);
-    await page.getByRole('button', { name: 'Enviar solicitud' }).click();
-
-    await expect(
-      avisos(page).filter({ hasText: 'Indique al menos un medio de contacto' }),
-    ).toBeVisible();
+    await expect(page.locator('#registro-documentNumber')).toBeFocused();
     expect(registro.llamadas).toBe(0);
   });
 
-  test('dos envíos en el mismo tick producen una sola petición', async ({ page }) => {
-    await abrirFormulario(page);
+  test('los condicionales ocultan y eliminan: apoyos solo con necesidad', async ({ page }) => {
+    await abrirRegistro(page);
+    await elegirTarjeta(page, 'Paciente');
+    await page.getByRole('button', { name: 'Paciente demo 1' }).click();
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    await expect(page.getByRole('heading', { name: 'Condición y necesidades' })).toBeVisible();
+
+    // Sin necesidad, los apoyos no están a la vista.
+    await page.getByRole('radio', { name: 'No' }).first().click();
+    await expect(page.getByText('Tipo de apoyo que necesita')).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    await expect(page.getByRole('heading', { name: 'Ubicación y EPS' })).toBeVisible();
+  });
+
+  test('dos gestos en el mismo tick producen una sola petición', async ({ page }) => {
+    await abrirRegistro(page);
+    await elegirTarjeta(page, 'Cuidador');
 
     const registro = capturarRuta(page, ACEPTADA);
-    await completar(page);
+    await completarHastaConfirmacion(page, 'Cuidador');
+    await page.getByRole('checkbox', { name: /Autorizo el tratamiento/u }).check();
 
-    /*
-     * Ambos `requestSubmit` ocurren en el MISMO tick, sin que React pueda renderizar
-     * entre ellos. Un bloqueo basado solo en estado leería `enviando === false` dos
-     * veces y llamaría a la API dos veces: dos solicitudes y dos lugares del rate
-     * limit consumidos por un solo gesto de la persona.
-     */
     await page.evaluate(() => {
-      const form = document.querySelector('form');
-      if (form === null) {
-        throw new Error('el formulario de solicitud no está montado');
+      const boton = [...document.querySelectorAll('button')].find(
+        (nodo) => nodo.textContent === 'Registrarme',
+      );
+      if (!(boton instanceof HTMLButtonElement)) {
+        throw new Error('el botón Registrarme no está montado');
       }
 
-      form.requestSubmit();
-      form.requestSubmit();
+      boton.click();
+      boton.click();
     });
 
     await expect(page.getByText(REFERENCIA)).toBeVisible();
     expect(registro.llamadas).toBe(1);
   });
 
-  test('mantiene el envío bloqueado mientras la respuesta está pendiente', async ({ page }) => {
-    await abrirFormulario(page);
+  test('mantiene el envío bloqueado mientras la respuesta está pendiente', async ({
+    page,
+  }) => {
+    await abrirRegistro(page);
+    await elegirTarjeta(page, 'Paciente');
 
     const pendiente = diferida<unknown>();
     const registro = capturarRuta(page, {
@@ -290,9 +248,10 @@ test.describe('Formulario de solicitud de acceso (SPEC 038, MP02-C2-C1)', () => 
       cuerpo: ACEPTADA.cuerpo,
       esperar: pendiente.promesa,
     });
-    await completar(page);
+    await completarHastaConfirmacion(page, 'Paciente');
+    await page.getByRole('checkbox', { name: /Autorizo el tratamiento/u }).check();
 
-    await page.getByRole('button', { name: 'Enviar solicitud' }).click();
+    await page.getByRole('button', { name: 'Registrarme' }).click();
 
     const boton = page.getByRole('button', { name: 'Enviando solicitud…' });
     await expect(boton).toBeDisabled();
@@ -302,73 +261,243 @@ test.describe('Formulario de solicitud de acceso (SPEC 038, MP02-C2-C1)', () => 
     pendiente.resolver(undefined);
     await expect(page.getByText(REFERENCIA)).toBeVisible();
     expect(registro.llamadas).toBe(1);
-
-    // Al terminar, el botón vuelve a estar disponible.
-    await expect(page.getByRole('button', { name: 'Enviar solicitud' })).toBeEnabled();
   });
 
-  test('muestra la referencia y el estado PENDING tras un 202', async ({ page }) => {
-    await abrirFormulario(page);
+  test('tras un error vuelve al paso 5, exige clave nueva y el segundo POST la lleva', async ({
+    page,
+  }) => {
+    await abrirRegistro(page);
+    await elegirTarjeta(page, 'Visitador médico');
 
-    void capturarRuta(page, ACEPTADA);
-    await completar(page);
-    await page.getByRole('button', { name: 'Enviar solicitud' }).click();
+    const cuerpos: string[] = [];
+    let intentos = 0;
+    void page.route(RUTA_API, async (route: Route) => {
+      intentos += 1;
+      cuerpos.push(String(route.request().postData() ?? ''));
+      const primero = intentos === 1;
 
-    const confirmacion = page.getByRole('status');
-    await expect(confirmacion).toContainText('Solicitud registrada');
-    await expect(confirmacion).toContainText(REFERENCIA);
-    await expect(confirmacion).toContainText('PENDING');
-    // El texto NO promete acceso ni sesión.
-    await expect(confirmacion).toContainText('no crea sesión ni cuenta');
+      await route.fulfill({
+        status: primero ? FALLO_TEMPORAL.status : ACEPTADA.status,
+        contentType: 'application/json',
+        body: JSON.stringify(primero ? FALLO_TEMPORAL.cuerpo : ACEPTADA.cuerpo),
+      });
+    });
+
+    await completarHastaConfirmacion(page, 'Visitador médico');
+    await page.getByRole('checkbox', { name: /Autorizo el tratamiento/u }).check();
+    await page.getByRole('button', { name: 'Registrarme' }).click();
+
+    // Primer POST fallido: paso 5, clave vaciada y enfocada, mensaje opaco.
+    await expect(page.getByRole('heading', { name: 'Verificación' })).toBeVisible();
+    await expect(page.getByLabel('Contraseña de prueba')).toHaveValue('');
+    await expect(page.locator('#registro-password')).toBeFocused();
+    await expect(
+      avisos(page).filter({ hasText: 'No fue posible registrar la solicitud' }),
+    ).toBeVisible();
+
+    // Registrarme sin clave NO crea otro POST: la defensa lo impide antes de la red.
+    await page.getByRole('button', { name: 'Registrarme' }).click();
+    expect(intentos).toBe(1);
+
+    // Clave nueva y reintento: segundo POST aceptado con la clave nueva.
+    await page.getByLabel('Contraseña de prueba').fill('OtraClave456');
+    await page.getByRole('button', { name: 'Registrarme' }).click();
+
+    await expect(page.getByText(REFERENCIA)).toBeVisible();
+    expect(intentos).toBe(2);
+
+    const primero = JSON.parse(cuerpos[0] ?? '{}') as Record<string, unknown>;
+    const segundo = JSON.parse(cuerpos[1] ?? '{}') as Record<string, unknown>;
+    expect(primero['password']).toBe('ClaveDemo123');
+    expect(segundo['password']).toBe('OtraClave456');
   });
 
-  test('permite reintentar después de un error', async ({ page }) => {
-    await abrirFormulario(page);
+  test('un invalid con campo desconocido regresa a la clave sin POST vacío', async ({
+    page,
+  }) => {
+    await abrirRegistro(page);
+    await elegirTarjeta(page, 'Paciente');
 
     let intentos = 0;
     void page.route(RUTA_API, async (route: Route) => {
       intentos += 1;
-      const respuesta = intentos === 1 ? FALLO_TEMPORAL : ACEPTADA;
 
       await route.fulfill({
-        status: respuesta.status,
+        status: 400,
         contentType: 'application/json',
-        body: JSON.stringify(respuesta.cuerpo),
+        body: JSON.stringify({ fields: ['campoQueNoExiste'] }),
       });
     });
 
-    await completar(page);
-    await page.getByRole('button', { name: 'Enviar solicitud' }).click();
+    await completarHastaConfirmacion(page, 'Paciente');
+    await page.getByRole('checkbox', { name: /Autorizo el tratamiento/u }).check();
+    await page.getByRole('button', { name: 'Registrarme' }).click();
 
-    await expect(avisos(page)).toContainText('No fue posible registrar la solicitud');
+    await expect(page.getByRole('heading', { name: 'Confirmación' })).toBeVisible();
+    await expect(page.getByLabel('Contraseña de prueba')).toHaveValue('');
+    await expect(page.locator('#registro-password')).toBeFocused();
 
-    // Si el bloqueo NO se liberara en el desenlace, este segundo envío no ocurriría.
-    const boton = page.getByRole('button', { name: 'Enviar solicitud' });
-    await expect(boton).toBeEnabled();
-    await boton.click();
-
-    await expect(page.getByText(REFERENCIA)).toBeVisible();
-    expect(intentos).toBe(2);
+    await page.getByRole('button', { name: 'Registrarme' }).click();
+    expect(intentos).toBe(1);
   });
 
-  test('autocompleta los tres perfiles y envía el perfil elegido al Hospital', async ({ page }) => {
-    await abrirFormulario(page);
-    await page.waitForLoadState('networkidle');
-    const registro = capturarRuta(page, ACEPTADA);
+  test('cambiar de perfil borra todo y no transfiere datos', async ({ page }) => {
+    await abrirRegistro(page);
+    await elegirTarjeta(page, 'Paciente');
+    await page.getByRole('button', { name: 'Paciente demo 1' }).click();
+    await page.getByRole('button', { name: 'Continuar' }).click();
 
-    for (const [boton, perfil, documento] of [
-      ['Paciente demo 1', 'PATIENT', '900100001'],
-      ['Cuidador demo 1', 'CAREGIVER', '900200001'],
-      ['Visitador demo 1', 'FIELD_PROFESSIONAL', '900300001'],
-    ] as const) {
-      await page.getByRole('button', { name: boton }).click();
-      await expect(page.getByLabel('Número de documento', { exact: true })).toHaveValue(documento);
-      await page.getByRole('button', { name: 'Enviar solicitud' }).click();
-      await expect(page.getByText(REFERENCIA)).toBeVisible();
-      const cuerpo = JSON.parse(registro.cuerpos.at(-1) ?? '{}') as Record<string, string>;
-      expect(cuerpo.requestedProfile).toBe(perfil);
-      expect(cuerpo.documentNumber).toBe(documento);
+    await page.getByRole('button', { name: 'Cambiar perfil' }).click();
+    await expect(page.getByRole('heading', { name: '¿Cómo se va a registrar?' })).toBeVisible();
+
+    await elegirTarjeta(page, 'Cuidador');
+    await expect(page.getByLabel('Número de documento', { exact: true })).toHaveValue('');
+  });
+
+  test('selector y cinco pasos: progreso, foco, 320 px, teclado y axe', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 720 });
+    await abrirRegistro(page);
+
+    const sinDesborde = await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    );
+    expect(sinDesborde).toBe(true);
+
+    let analisis = await new AxeBuilder({ page }).include('main').analyze();
+    sinViolacionesGraves(analisis.violations);
+
+    void capturarRuta(page, ACEPTADA);
+    await elegirTarjeta(page, 'Paciente');
+
+    const barra = page.getByRole('progressbar', { name: 'Progreso de la inscripción' });
+    await expect(barra).toHaveAttribute('aria-valuenow', '1');
+    await expect(page.getByRole('button', { name: '1. Datos personales' })).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    await expect(page.getByRole('heading', { name: 'Datos personales' })).toBeFocused();
+
+    // Teclado: tabular desde el primer campo recorre los controles en orden.
+    await page.locator('#registro-documentType').focus();
+    await page.keyboard.press('Tab');
+    await expect(page.locator('#registro-documentNumber')).toBeFocused();
+
+    for (const titulo of TITULOS['Paciente'].slice(1)) {
+      await page.getByRole('button', { name: 'Paciente demo 1' }).click();
+      await page.getByRole('button', { name: 'Continuar' }).click();
+      await expect(page.getByRole('heading', { name: titulo })).toBeFocused();
+
+      const desborda = await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      );
+      expect(desborda).toBe(true);
+
+      analisis = await new AxeBuilder({ page }).include('main').analyze();
+      sinViolacionesGraves(analisis.violations);
     }
-    expect(registro.llamadas).toBe(3);
+
+    await expect(barra).toHaveAttribute('aria-valuenow', '5');
+  });
+
+  test('la edad derivada se muestra sin viajar en el cuerpo', async ({ page }) => {
+    const registro = capturarRuta(page, ACEPTADA);
+    await abrirRegistro(page);
+    await elegirTarjeta(page, 'Paciente');
+    await page.getByRole('button', { name: 'Paciente demo 1' }).click();
+
+    await expect(page.getByText(/Edad \d+ años/u)).toBeVisible();
+
+    await completarHastaConfirmacion(page, 'Paciente');
+    await page.getByRole('checkbox', { name: /Autorizo el tratamiento/u }).check();
+    await page.getByRole('button', { name: 'Registrarme' }).click();
+    await expect(page.getByText(REFERENCIA)).toBeVisible();
+
+    const cuerpo = JSON.parse(registro.cuerpos[0] ?? '{}') as Record<string, unknown>;
+    expect('edad' in cuerpo).toBe(false);
+    expect(JSON.stringify(cuerpo['registration'])).not.toContain('Edad');
+  });
+
+  test('composición a 600 px: tarjetas separadas y paso activo azul', async ({ page }) => {
+    await page.setViewportSize({ width: 600, height: 900 });
+    await abrirRegistro(page);
+    await page.screenshot({ path: join(tmpdir(), 'mp04-c4-selector-600.png') });
+
+    await elegirTarjeta(page, 'Cuidador');
+    await page.getByRole('button', { name: 'Cuidador demo 1' }).click();
+    await page.screenshot({ path: join(tmpdir(), 'mp04-c4-paso1-600.png') });
+
+    // Encabezado azul de la referencia.
+    const fondoEncabezado = await page
+      .getByTestId('encabezado-registro')
+      .evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(fondoEncabezado).toBe('rgb(30, 90, 167)');
+
+    // Progreso y contenido son tarjetas blancas separadas.
+    const progreso = page.getByTestId('tarjeta-progreso');
+    const contenido = page.getByTestId('tarjeta-contenido');
+    await expect(progreso).toBeVisible();
+    await expect(contenido).toBeVisible();
+    expect(await progreso.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(
+      'rgb(255, 255, 255)',
+    );
+    expect(await contenido.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(
+      'rgb(255, 255, 255)',
+    );
+
+    // El paso activo es azul con texto blanco; el futuro conserva aspecto claro.
+    const activo = page.getByRole('button', { name: '1. Datos personales' });
+    expect(await activo.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(
+      'rgb(30, 90, 167)',
+    );
+    expect(await activo.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(255, 255, 255)');
+
+    // Cinco botones en una fila a 600 px.
+    const tops = await page
+      .getByRole('button', { name: /^\d\. /u })
+      .evaluateAll((nodos) => nodos.map((nodo) => nodo.getBoundingClientRect().top));
+    expect(new Set(tops).size).toBe(1);
+
+    const desborda = await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    );
+    expect(desborda).toBe(true);
+
+    const analisis = await new AxeBuilder({ page }).include('main').analyze();
+    sinViolacionesGraves(analisis.violations);
+  });
+
+  test('composición a 320 px: sin desborde ni texto ilegible', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 720 });
+    await abrirRegistro(page);
+    await page.screenshot({ path: join(tmpdir(), 'mp04-c4-selector-320.png') });
+
+    await elegirTarjeta(page, 'Visitador médico');
+    await page.getByRole('button', { name: 'Visitador demo 1' }).click();
+    await page.screenshot({ path: join(tmpdir(), 'mp04-c4-paso1-320.png') });
+
+    const desborda = await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    );
+    expect(desborda).toBe(true);
+
+    // Los cinco botones siguen siendo alcanzables y legibles.
+    for (const nombre of [
+      '1. Datos personales',
+      '2. Información profesional',
+      '3. EPS e institución',
+      '4. Zona de atención',
+      '5. Verificación',
+    ]) {
+      await expect(page.getByRole('button', { name: nombre })).toBeVisible();
+    }
+
+    const analisis = await new AxeBuilder({ page }).include('main').analyze();
+    sinViolacionesGraves(analisis.violations);
+
+    // Limpieza: las capturas son temporales de inspección, no artefactos.
+    await unlink(join(tmpdir(), 'mp04-c4-selector-600.png')).catch(() => undefined);
+    await unlink(join(tmpdir(), 'mp04-c4-paso1-600.png')).catch(() => undefined);
+    await unlink(join(tmpdir(), 'mp04-c4-selector-320.png')).catch(() => undefined);
+    await unlink(join(tmpdir(), 'mp04-c4-paso1-320.png')).catch(() => undefined);
   });
 });

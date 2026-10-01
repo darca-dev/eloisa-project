@@ -1,0 +1,137 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: clamp(20px, 4vw, 52px) 16px;
+  background: radial-gradient(circle at 12% 18%, rgb(255 255 255 / 88%) 0 9%, transparent 28%), linear-gradient(145deg, #edf8ff 0%, #f7fbff 52%, #eefaf7 100%);
+  color: #183044;
+}
+
+.card {
+  width: min(100%, 1080px);
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #d3e3ec;
+  border-radius: 28px;
+  box-shadow: 0 28px 72px rgb(28 70 102 / 16%);
+}
+
+.brandHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 86px;
+  padding: 18px clamp(24px, 5vw, 54px);
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(112deg, #125b9f 0%, #087bb3 58%, #1389ae 100%);
+}
+
+.brandHeader::after, .headerAccent {
+  position: absolute;
+  border: 30px solid rgb(255 255 255 / 7%);
+  border-radius: 50%;
+  content: '';
+}
+
+.brandHeader::after { top: -75px; right: -30px; width: 260px; height: 190px; }
+.headerAccent { top: -26px; right: 72px; width: 150px; height: 150px; }
+.brand { position: relative; z-index: 1; display: flex; align-items: center; gap: 15px; }
+.brand img { width: 54px; height: 54px; padding: 5px; background: #fff; border-radius: 16px; box-shadow: 0 7px 18px rgb(0 37 73 / 18%); }
+.brand strong, .brand span { display: block; }
+.brand strong { font-size: 1.32rem; }
+.brand span { margin-top: 3px; color: rgb(255 255 255 / 88%); font-size: .92rem; }
+
+.accessGrid { display: grid; grid-template-columns: minmax(320px, .88fr) minmax(440px, 1.25fr); min-height: 590px; }
+.eliPanel { display: flex; flex-direction: column; align-items: center; padding: 30px clamp(24px, 4vw, 46px) 44px; background: linear-gradient(155deg, #f9fdff, #edf8fc); border-right: 1px solid #dce9ef; }
+.back { align-self: flex-start; margin-bottom: 22px; color: #245f7c; font-size: .94rem; font-weight: 700; text-underline-offset: 3px; }
+
+.eliHalo {
+  display: grid;
+  width: min(260px, 100%);
+  aspect-ratio: 1;
+  place-items: center;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 42%, #fff 0 20%, transparent 21%), linear-gradient(145deg, #d8f2fb, #c6e8f4);
+  border: 8px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 18px 38px rgb(31 102 135 / 16%);
+}
+
+.eliSaluda { max-width: 100%; height: auto !important; object-fit: contain; transform: translateY(8px) scale(1.03); }
+.roleList { display: grid; width: min(300px, 100%); gap: 10px; margin-top: 27px; }
+.roleChip { display: flex; align-items: center; gap: 11px; width: 100%; min-height: 48px; box-sizing: border-box; padding: 9px 14px; background: #fff; border: 1px solid #d8e7ed; border-radius: 13px; box-shadow: 0 6px 15px rgb(41 91 112 / 7%); color: #29485b; font: inherit; font-size: .93rem; text-align: left; }
+.roleChip:not(:disabled) { cursor: pointer; }
+.roleChip:disabled { cursor: default; }
+.roleChipSelected { border-color: #147795; box-shadow: 0 0 0 3px rgb(20 119 149 / 19%), 0 6px 15px rgb(41 91 112 / 7%); }
+.roleChip span { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; font-size: .78rem; font-weight: 800; }
+.patientChip { background: #edf7ff; border-color: #d7eaf9; }
+.caregiverChip { background: #fff0fa; border-color: #f5d9ed; }
+.visitorChip { background: #edfaf3; border-color: #d8efdf; }
+.patientChip span { color: #b32d75; background: #ffe4f1; }
+.caregiverChip span { color: #186b8e; background: #dff3fb; }
+.visitorChip span { color: #287348; background: #e2f5e9; }
+
+.loginPanel { display: flex; flex-direction: column; justify-content: center; padding: 48px clamp(32px, 6vw, 72px) 52px; }
+.eyebrow { margin: 0 0 13px; color: #147795 !important; font-size: .78rem; font-weight: 800; letter-spacing: .13em; }
+.loginPanel h1 { margin: 0; color: #15344a; font-size: clamp(2.45rem, 6vw, 3.55rem); line-height: 1.02; letter-spacing: -.04em; }
+.loginPanel h2 { margin: 13px 0 0; color: #1d3c50; font-size: clamp(1.3rem, 3vw, 1.75rem); line-height: 1.25; }
+.loginPanel p { color: #526b79; line-height: 1.55; }
+.lead { margin: 15px 0 0; font-size: 1.02rem; }
+
+.approvalNotice { display: flex; align-items: flex-start; gap: 12px; margin-top: 26px; padding: 15px 17px; background: #fff3f9; border: 1px solid #f5c8dd; border-radius: 13px; }
+.approvalNotice p { margin: 0; color: #75405a; font-size: .94rem; font-weight: 650; }
+.approvalIcon { display: grid; flex: 0 0 27px; width: 27px; height: 27px; place-items: center; color: #fff; background: #df4594; border-radius: 50%; font-size: .86rem; font-weight: 900; }
+.actions { display: grid; gap: 12px; margin-top: 26px; }
+
+.primary, .secondary { display: grid; min-height: 52px; box-sizing: border-box; place-items: center; padding: 13px 20px; border-radius: 11px; font: inherit; font-weight: 800; text-align: center; text-decoration: none; cursor: pointer; }
+.primary { color: #fff; background: linear-gradient(105deg, #075b91, #087ca5); border: 1px solid #075b91; box-shadow: 0 10px 22px rgb(7 91 145 / 22%); }
+.secondary { color: #126385; background: #fff; border: 1.5px solid #3284a5; }
+.primary:hover:not(:disabled) { background: linear-gradient(105deg, #064c7a, #076b90); }
+.primary:disabled { cursor: not-allowed; opacity: .55; }
+.secondary:hover { background: #f0f9fc; }
+.securityNote { display: flex; align-items: flex-start; gap: 9px; margin: 21px 4px 0; color: #71848e !important; font-size: .84rem; }
+.securityNote span { color: #23819b; font-size: .72rem; transform: translateY(4px); }
+.liveRegion {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.statusPanel { margin-top: 24px; padding: 18px; background: #f0f8fb; border: 1px solid #cde1e9; border-radius: 12px; color: #315563; }
+.choices { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); margin-top: 20px; }
+.roleCard { display: grid; min-height: 88px; box-sizing: border-box; gap: 6px; padding: 16px; color: #183044; background: #fbfefe; border: 1px solid #bcd0d8; border-radius: 12px; text-align: left; text-decoration: none; }
+.roleCard:hover { background: #f0f9fb; border-color: #176e89; }
+.roleCard span { color: #526974; font-size: .92rem; line-height: 1.4; }
+.errorMessage { margin: 20px 0 0; padding: 14px; color: #8c2022 !important; background: #fdecec; border-radius: 9px; }
+.textLink { display: inline-block; margin-top: 18px; color: #0b627c; font-weight: 700; }
+
+.primary:focus-visible, .secondary:focus-visible, .roleChip:focus-visible, .roleCard:focus-visible, .back:focus-visible, .textLink:focus-visible, .statusPanel:focus-visible, .choices:focus-visible { outline: 3px solid #df4594; outline-offset: 3px; }
+
+@media (max-width: 780px) {
+  .card { border-radius: 21px; }
+  .accessGrid { grid-template-columns: 1fr; }
+  .eliPanel { padding-bottom: 32px; border-right: 0; border-bottom: 1px solid #dce9ef; }
+  .eliHalo { width: min(220px, 72vw); }
+  .roleList { grid-template-columns: repeat(3, 1fr); width: 100%; }
+  .roleChip { justify-content: center; padding-inline: 8px; }
+  .roleChip span { display: none; }
+  .loginPanel { padding-top: 38px; }
+}
+
+@media (max-width: 520px) {
+  .page { padding: 0; place-items: stretch; }
+  .card { min-height: 100vh; border: 0; border-radius: 0; }
+  .brandHeader { min-height: 74px; padding: 14px 20px; }
+  .brand img { width: 46px; height: 46px; }
+  .eliPanel { padding: 24px 20px 28px; }
+  .eliHalo { width: 190px; }
+  .roleList { grid-template-columns: 1fr; width: min(280px, 100%); }
+  .roleChip { justify-content: flex-start; padding-inline: 14px; }
+  .roleChip span { display: grid; }
+  .loginPanel { padding: 34px 22px 44px; }
+}

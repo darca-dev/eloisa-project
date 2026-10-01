@@ -1240,6 +1240,30 @@
   border-color: var(--b-gris-inactivo);
 }
 
+.ingresoBotonDemo {
+  font: inherit;
+  font-size: 14px;
+  font-weight: var(--b-peso-maximo);
+  color: var(--b-azul);
+  background: var(--b-blanco);
+  border: 1.5px solid var(--b-azul);
+  border-radius: var(--b-radio-boton);
+  padding: 11px 18px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.ingresoBotonDemo:focus-visible {
+  outline: 3px solid var(--b-foco);
+  outline-offset: 2px;
+}
+
+.ingresoBotonDemo:disabled {
+  cursor: progress;
+  color: var(--b-gris);
+  border-color: var(--b-gris-inactivo);
+}
+
 /*
  * Región viva permanente. Vacía no ocupa ni anuncia nada; con texto se dibuja
  * como aviso. El estado NO se comunica solo con color: el aviso siempre es

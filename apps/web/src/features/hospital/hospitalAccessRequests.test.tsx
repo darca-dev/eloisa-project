@@ -65,6 +65,33 @@ describe('HospitalAccessRequests', () => {
     expect(source).toContain('status: statusDraft');
   });
 
+  it('el detalle pinta el expediente por secciones traducidas, nunca como JSON crudo', () => {
+    const source = readFileSync(`${DIRECTORY}HospitalAccessRequests.tsx`, 'utf8');
+
+    // Cinco encabezados reconocibles: datos personales + cuatro del expediente.
+    expect(source).toContain('id="access-request-datos-title">Datos personales</h4>');
+    expect(source).toContain('aria-labelledby="access-request-datos-title"');
+    expect(source).toContain('EXPEDIENTE_SECCIONES[detail.requestedProfile]');
+    expect(source).toContain('Expediente de solicitud · versión');
+    expect(source).toContain('Son declaraciones de la persona solicitante');
+    expect(source).toContain('valorExpediente(');
+    expect(source).toContain('etiquetaDe(fila.catalogo, item)');
+    expect(source).toContain('Sin expediente: solicitud registrada antes del flujo guiado.');
+
+    // Cinco encabezados por rama: título + nota + cuatro secciones.
+    for (const seccion of [
+      'Condición y necesidades declaradas',
+      'Perfil del cuidador declarado',
+      'Información profesional declarada',
+      'Consentimientos registrados',
+    ]) {
+      expect(source).toContain(seccion);
+    }
+
+    // Sin volcado crudo del objeto en el marcado.
+    expect(source).not.toContain('JSON.stringify(detail.registration');
+  });
+
   it('cada confirmación nombra un efecto técnico y nunca a la persona', () => {
     const source = readFileSync(`${DIRECTORY}HospitalAccessRequests.tsx`, 'utf8');
     const confirmaciones = source.slice(

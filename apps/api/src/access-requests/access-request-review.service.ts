@@ -66,6 +66,7 @@ import {
   AccessProvisioningService,
   type AccessProvisioningDeactivationResult,
 } from './access-provisioning.service';
+import { readAccessRequestSnapshot } from './access-request.service';
 
 /** Rutas lógicas de la superficie, para la traza. Sin identificadores. */
 const ENDPOINT_LISTA = 'GET /api/v1/hospital/access-requests';
@@ -288,7 +289,14 @@ export class AccessRequestReviewService {
         now,
       );
 
-      return { ok: true, value: aDetailDto(fila) };
+      /*
+       * El expediente sale SOLO aquí: lectura acotada a sus dos columnas, en
+       * la misma transacción con tenant y bajo la misma auditoría de consulta.
+       * El listado no lo toca y una fila sin expediente devuelve nulos.
+       */
+      const expediente = await readAccessRequestSnapshot(tx, tenantId, fila.id);
+
+      return { ok: true, value: aDetailDto(fila, expediente) };
     });
   }
 
@@ -758,7 +766,23 @@ function aDetailDto(fila: {
     readonly phone: string | null;
     readonly email: string | null;
   };
-}): AccessRequestReviewDetailDto {
+}, expediente: {
+  readonly registrationSchemaVersion: number | null;
+  readonly registrationData: unknown;
+} | null): AccessRequestReviewDetailDto {
+  /*
+   * Defensa residual: el CHECK de la columna solo admite objetos, pero un
+   * lector no debe confiar en que la base cumpla lo que el lector no verifica.
+   * Lo que no sea un objeto plano se sirve como `null`, igual que la ausencia.
+   */
+  const expedientePlano =
+    expediente !== null &&
+    typeof expediente.registrationData === 'object' &&
+    expediente.registrationData !== null &&
+    !Array.isArray(expediente.registrationData)
+      ? (expediente.registrationData as Record<string, unknown>)
+      : null;
+
   return {
     ...aListItem(fila),
     documentType: fila.person.documentType,
@@ -772,5 +796,8 @@ function aDetailDto(fila: {
     provisioningErrorCode: fila.provisioningErrorCode,
     decidedAt: fila.decidedAt === null ? null : fila.decidedAt.toISOString(),
     decisionReasonCode: fila.decisionReasonCode,
+    registrationSchemaVersion:
+      expedientePlano === null ? null : (expediente?.registrationSchemaVersion ?? null),
+    registration: expedientePlano,
   };
 }

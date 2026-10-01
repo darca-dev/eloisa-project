@@ -70,7 +70,8 @@ export interface AccessRequestSubmission {
 }
 
 /**
- * El cuerpo que SÍ viaja: borrador + credencial ficticia. Diez claves.
+ * El cuerpo que SÍ viaja: borrador + credencial ficticia + expediente. Once
+ * claves cuando el flujo guiado aporta `registration`.
  *
  * `password` es obligatoria desde MP04 (OD-11). El servidor la conserva
  * únicamente durante la llamada que crea el usuario deshabilitado en el
@@ -78,9 +79,13 @@ export interface AccessRequestSubmission {
  * incorpora a ningún error. Aquí se valida ANTES de serializar para que un fallo
  * local no viaje, y para que la interfaz pueda señalar el campo sin mostrar el
  * valor.
+ *
+ * `registration` es el expediente ficticio de la rama, ya normalizado. Nunca
+ * incluye la credencial: viaja como propiedad hermana, no anidada.
  */
 export interface AccessRequestWithCredential extends AccessRequestSubmission {
   readonly password: string;
+  readonly registration?: Record<string, unknown>;
 }
 
 /**

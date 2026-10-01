@@ -21,12 +21,12 @@ function codigoRuta(): string {
 }
 
 describe('/cuidador — portada protegida del cuidador (MP04 §12)', () => {
-  it('monta la envoltura protegida y nunca la muestra visual directamente', () => {
+  it('mantiene la envoltura protegida y reserva la muestra para la bandera local', () => {
     const codigo = codigoRuta();
 
     expect(codigo).toContain('<CaregiverAccessPortal />');
-    expect(codigo).not.toContain('CaregiverLiquidationsDemo');
-    expect(codigo).not.toContain('LiquidationsDemo');
+    expect(codigo).toContain('humanAccessDemoLocalEnabled()');
+    expect(codigo).toContain('<CaregiverLiquidationsDemo />');
   });
 
   it('no acepta ningún atajo por URL ni inyecta sesión ni datos', () => {

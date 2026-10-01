@@ -18,6 +18,9 @@ Use `/sdd:decision` to capture one interactively. / Usa `/sdd:decision` para cap
 
 | Date / Fecha | Decision / Decisión | File / Archivo |
 |---|---|---|
+| 2026-10-01 | Fidelidad visual de la inscripción con marca Eloisa | `2026-10-01-fidelidad-visual-inscripcion-eloisa.md` |
+| 2026-09-30 | Inscripcion de cinco pasos e iconografia de Eli | `2026-09-30-inscripcion-cinco-pasos-e-iconos-eli.md` |
+| 2026-09-30 | Inscripcion guiada y amistosa por perfil | `2026-09-30-inscripcion-guiada-por-perfil.md` |
 | 2026-08-25 | Adopción del sidecar SDD y congelado de `tasks/` y `reviews/` | `2026-08-25-adopcion-sdd-sidecar.md` |
 | 2026-08-25 | No aplicar `sdd-mcp upgrade` sobre `specs/_template/spec.md` | `2026-08-25-no-aplicar-upgrade-spec-template.md` |
 | 2026-08-25 | Estado de ramas tras la auditoría Git y qué NO se hace todavía | `2026-08-25-auditoria-git-y-estado-de-ramas.md` |
@@ -27,3 +30,4 @@ Use `/sdd:decision` to capture one interactively. / Usa `/sdd:decision` para cap
 | 2026-09-26 | Baseline aislada con 14 migraciones y owner test sin bypass | `2026-09-26-baseline-aislada-migraciones-y-owner-test.md` |
 | 2026-09-28 | Entorno funcional con datos de prueba y prioridad de SPEC 038 | `2026-09-28-entorno-funcional-datos-prueba-y-prioridad-038.md` |
 | 2026-09-30 | Aceptación de MP03-C2 y autorización de MP04 | `2026-09-30-aceptacion-mp03-c2-y-autorizacion-mp04.md` |
+| 2026-09-30 | Atención Domiciliaria con solo Iniciar sesión y Regístrate | `2026-09-30-atencion-domiciliaria-dos-acciones.md` |

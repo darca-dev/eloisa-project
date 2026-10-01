@@ -68,6 +68,17 @@ siguiente.
 - [ ] T04.7 Implementar suspensión/revocación y OD-04.
 - [ ] T04.8 Probar login antes/después, fallo OIDC, relación y asignación.
 
+## MP04-C1 — Entrada domiciliaria con dos acciones
+
+- [ ] T04.C1.1 Dejar en la tarjeta domiciliaria solo `Iniciar sesión` y `Regístrate`.
+- [ ] T04.C1.2 Dejar en `/acceso` sin sesión las mismas dos acciones.
+- [ ] T04.C1.3 Hacer que `Regístrate` abra el formulario persistente y que su
+  envío cree automáticamente la solicitud Hospital existente.
+- [ ] T04.C1.4 Retirar de estas superficies los CTA `Solicitar acceso` y
+  `Registro guiado`, sin eliminar la ruta histórica `/inscripcion`.
+- [ ] T04.C1.5 Verificar teclado, 320 px, una sola petición y confirmación
+  `PENDING` previa a aprobación.
+
 ## MP05 — Seed, reset y operación
 
 - [ ] T05.1 Aprobar dataset ficticio exacto.
@@ -90,6 +101,44 @@ siguiente.
 - [ ] T06.8 Ensayar guion y recuperación desde runbook.
 - [ ] T06.9 Entregar evidencia para auditoría Codex.
 - [ ] T06.10 Codex audita; Product Owner acepta o rechaza.
+
+## MP04-C2 - Inscripcion guiada por perfil
+
+- [ ] T04.C2.1 Presentar selector accesible de Paciente, Cuidador y Visitador medico.
+- [ ] T04.C2.2 Crear pasos de datos personales, contacto/credencial y revision.
+- [ ] T04.C2.3 Mostrar solo los tres fixtures demo del perfil seleccionado.
+- [ ] T04.C2.4 Reiniciar la rama al cambiar perfil y conservarla al retroceder.
+- [ ] T04.C2.5 Enviar un unico access request sin ampliar el cuerpo ni persistir password.
+- [ ] T04.C2.6 Mostrar referencia, `PENDING` y espera de aprobacion Hospital.
+- [ ] T04.C2.7 Verificar las tres ramas, validacion, teclado, foco, axe y 320 px.
+
+## MP04-C3 - Cinco pasos e iconos de Eli
+
+- [ ] T04.C3.1 Agregar instantanea versionada de registro a AccessRequest.
+- [ ] T04.C3.2 Validar cuerpos cerrados y discriminados de los tres perfiles.
+- [ ] T04.C3.3 Persistir atomica y tenant-scoped sin password ni PII en logs.
+- [ ] T04.C3.4 Exponerla solo en detalle Hospital autorizado y auditado.
+- [ ] T04.C3.5 Implementar cinco pasos exactos para Paciente.
+- [ ] T04.C3.6 Implementar cinco pasos exactos para Cuidador.
+- [ ] T04.C3.7 Implementar cinco pasos exactos para Visitador medico.
+- [ ] T04.C3.8 Restaurar `guia`, `escucha`, `agradece` y `saluda2` en su lugar.
+- [ ] T04.C3.9 Enriquecer los nueve fixtures ficticios sin credenciales embebidas.
+- [ ] T04.C3.10 Verificar API, DB aislada, Hospital, E2E, axe, 320 px y regresion.
+
+## MP04-C3-C1 - Cierre de auditoria, DB y cinco secciones Hospital
+
+- [ ] T04.C3.C1.1 Auditar atomicamente el conflicto 409 sin PII.
+- [ ] T04.C3.C1.2 Probar snapshot, dos tenants, RLS y rollback en PostgreSQL aislado sin skips.
+- [ ] T04.C3.C1.3 Presentar Datos personales y las otras cuatro secciones en el detalle Hospital.
+- [ ] T04.C3.C1.4 Verificar focales, tipos, lint, builds, Prisma y compuertas SDD.
+
+## MP04-C4 - Fidelidad visual de la inscripción Eloisa
+
+- [ ] T04.C4.1 Separar encabezado, tarjeta de progreso y tarjeta del contenido.
+- [ ] T04.C4.2 Homologar tipografía, medidas, colores, radios y estados de los cinco pasos.
+- [ ] T04.C4.3 Homologar guía de Elí, secciones, filas de campos y controles responsivos.
+- [ ] T04.C4.4 Integrar los tres fixtures de cada rama sin alterar datos ni envío.
+- [ ] T04.C4.5 Verificar comparación visual, teclado, foco, axe, 320 px y regresión funcional.
 
 ## Prohibiciones operativas
 

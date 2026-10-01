@@ -119,6 +119,31 @@ negocio.
 - Un fallo OIDC no deja estado `APPROVED` utilizable.
 - Cuidador sin relación y profesional sin asignación no ven datos nominales.
 
+## MP04-C1 — Simplificación de la entrada domiciliaria
+
+### Objetivo
+
+Presentar el registro como una sola acción ciudadana que genera automáticamente
+la solicitud Hospital existente.
+
+### Trabajo
+
+- Reducir la tarjeta Atención Domiciliaria y el estado sin sesión de `/acceso`
+  a `Iniciar sesión` y `Regístrate`.
+- Dirigir `Regístrate` al formulario persistente `accion=registro`.
+- Retirar de estas superficies `Solicitar acceso` y `Registro guiado` como
+  acciones independientes.
+- Ajustar el encabezado y el envío del formulario para explicar que registrarse
+  genera automáticamente una solicitud `PENDING` para Hospital.
+- Actualizar pruebas focales y E2E sin cambiar API, persistencia ni autorización.
+
+### Salida verificable
+
+- Las dos superficies muestran exactamente las dos acciones aprobadas.
+- Un registro produce una sola llamada al endpoint de solicitudes.
+- La confirmación conserva referencia, estado pendiente y bloqueo previo a la
+  aprobación Hospital.
+
 ## MP05 — Dataset, reset y runbook
 
 ### Objetivo
@@ -158,6 +183,88 @@ Demostrar el flujo completo como lo recorrerá la clienta.
 - Criterios de `spec.md` mapeados a evidencia.
 - Build y suites completas verdes.
 - Handoff de Claude Code listo para auditoría Codex.
+
+## MP04-C2 - Inscripcion guiada por perfil
+
+### Objetivo
+
+Sustituir el formulario tecnico de una sola pagina por una experiencia amistosa
+por perfil, sin cambiar el contrato persistente ni el control Hospital.
+
+### Trabajo
+
+- Presentar primero tres tarjetas: Paciente, Cuidador y Visitador medico.
+- Mostrar despues un asistente de datos personales, contacto/credencial y
+  revision/envio, con encabezado azul, tarjetas, guia y progreso inspirados en
+  el prototipo protegido.
+- Filtrar los tres fixtures demo de la rama elegida y permitir precargarlos.
+- Conservar validacion, bloqueo sincrono de doble envio, limpieza de password,
+  POST unico, referencia y estado `PENDING`.
+- Reiniciar todos los datos al cambiar de perfil; conservarlos al retroceder
+  dentro de la misma rama.
+- Probar las tres ramas, teclado, foco, errores, 320 px y axe.
+
+### Salida verificable
+
+- Cada persona ve una inscripcion guiada propia y no los nueve fixtures juntos.
+- Ninguna contrasena aparece en el resumen, DOM de confirmacion, URL o storage.
+- Las tres ramas producen exactamente el cuerpo vigente y esperan aprobacion
+  Hospital antes del acceso.
+
+## MP04-C3 - Cinco pasos, iconos Eli y expediente de solicitud
+
+### Objetivo
+
+Reemplazar el wizard simplificado por las tres ramas completas de cinco pasos
+del prototipo y conservar sus datos ficticios en un expediente versionado que
+el Hospital pueda revisar antes de decidir.
+
+### Enfoque
+
+- Persistir en `AccessRequest` una instantanea JSONB cerrada, discriminada por
+  perfil y con version de esquema. Es evidencia declarada de la solicitud, no
+  fuente clinica ni modelo operativo.
+- Mantener identidad y contacto basicos en `Person`; la instantanea contiene
+  solo la informacion adicional de los pasos 2 a 4 y los consentimientos.
+- Excluir password y no duplicar secretos, tokens ni identificadores internos.
+- Exponer la instantanea solo en el detalle Hospital tenant-scoped y auditado;
+  mantener el listado minimizado y la respuesta publica exacta de tres claves.
+- Reproducir cinco pasos y los cuatro activos de Eli sin importar ni ejecutar
+  codigo de `prototype-claude/`.
+- Mantener la saga de aprobacion y sus limites: no crear relaciones cuidador-
+  paciente, asignaciones, acreditaciones ni reglas clinicas desde lo declarado.
+
+### Verificacion
+
+- Contratos cerrados por perfil, limites, catologos y rechazo de claves extra.
+- RLS/tenant, detalle autorizado, lista minimizada, auditoria sin PII.
+- Tres recorridos E2E completos con fixtures, cinco pasos e iconos exactos.
+- Migracion aditiva y rollback que se niega si existen expedientes dependientes.
+
+## MP04-C4 - Fidelidad visual de la inscripción Eloisa
+
+### Objetivo
+
+Homologar selector y cinco pasos de las tres ramas con la composición visual de
+`Eligeme-Inscripcion.dc.html`, sustituyendo únicamente la marca por `Eloisa` y
+preservando el comportamiento persistente ya aprobado.
+
+### Enfoque
+
+- Separar encabezado, progreso y contenido en las tres tarjetas de la referencia.
+- Reproducir medidas, radios, colores, pesos, estados de paso y filas de campos
+  mediante componentes productivos y CSS responsivo.
+- Integrar los tres fixtures de la rama dentro de la tarjeta de contenido sin
+  quitar labels, validación, navegación ni controles accesibles.
+- Mantener los mismos cinco pasos, cuerpos API, limpieza de password, iconos de
+  Elí, aprobación Hospital y aislamiento por tenant.
+
+### Verificación
+
+- Capturas comparables a 600 px y 320 px para selector y paso 1 de las tres ramas.
+- Cinco controles visibles, activo azul, progreso rosa y tarjetas separadas.
+- Teclado, foco, axe, labels y ausencia de desbordamiento horizontal.
+- Regresión del POST único, fixtures, retroceso, cambio de perfil y reintento.
 
 ## Dependencias y orden
 

@@ -677,6 +677,23 @@ describe('T-H12 — Sin sesión resuelta se muestra el acceso, no la demostraci�
     // No debe hacerse pasar por una cuenta personal de quien la escribe.
     expect(html).toContain('no identifica a ninguna persona trabajadora');
   });
+
+  it('no ofrece acceso demo cuando el servidor no lo habilitó', () => {
+    expect(html).not.toContain('Acceso demo');
+  });
+
+  it('ofrece acceso demo solo con las credenciales ficticias entregadas por el servidor', () => {
+    const htmlDemo = renderToStaticMarkup(
+      <HospitalShell
+        accesoDemo={{ codigo: 'hospital-demo-ficticio', credencial: 'credencial-demo-ficticia' }}
+        sesionInicial="sin-sesion"
+      />,
+    );
+
+    expect(htmlDemo).toContain('Acceso demo');
+    expect(htmlDemo).not.toContain('hospital-demo-ficticio');
+    expect(htmlDemo).not.toContain('credencial-demo-ficticia');
+  });
 });
 
 describe('T-H13 — Acción sobre la propia sesión', () => {

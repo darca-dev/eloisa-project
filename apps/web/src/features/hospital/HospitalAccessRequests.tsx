@@ -11,6 +11,25 @@ import {
 
 import styles from './hospitalAccessRequests.module.css';
 import {
+  APOYOS_OPCIONES,
+  CONDICIONES_OPCIONES,
+  EPS_PACIENTE_OPCIONES,
+  EPS_VISITADOR_OPCIONES,
+  HORARIOS_OPCIONES,
+  INSTITUCION_FORMACION_OPCIONES,
+  NECESITA_APOYO_OPCIONES,
+  PACIENTE_REGISTRADO_OPCIONES,
+  PROFESION_OPCIONES,
+  RELACION_PACIENTE_OPCIONES,
+  TIPO_CUIDADOR_OPCIONES,
+  TIPOS_ATENCION_OPCIONES,
+  VECINO_RELACION_OPCIONES,
+  ZONAS_COBERTURA_OPCIONES,
+  ZONA_OPCIONES,
+  etiquetaDe,
+  type CatalogOption,
+} from '@/features/access/accessRegistrationProfileData';
+import {
   ACCESS_PROVISIONING_MAX_ATTEMPTS,
   ACCESS_REQUEST_LIST_FILTER_STATUSES,
   ACCESS_REQUEST_PROFILES,
@@ -116,6 +135,180 @@ const ACTION_ANNOUNCEMENT: Record<AccessRequestAction, (reference: string) => st
     `Solicitud ${reference} reactivada y pendiente de creación de acceso.`,
   REVOKE: (reference) => `Solicitud ${reference} revocada; la cuenta quedó deshabilitada.`,
 };
+
+/**
+ * Expediente ficticio por secciones (SPEC 038, MP04-C3).
+ *
+ * Cada rama declara sus secciones con las etiquetas visibles del flujo. Los
+ * valores se muestran TRADUCIDOS por catálogo y nunca como JSON crudo: un
+ * código sin traducir sería un dato sin contexto para quien revisa. Lo
+ * ausente se lee como «Sin indicar», nunca como cadena vacía.
+ */
+interface ExpedienteFila {
+  readonly clave: string;
+  readonly etiqueta: string;
+  readonly catalogo?: readonly CatalogOption[];
+}
+
+interface ExpedienteSeccion {
+  readonly titulo: string;
+  readonly filas: readonly ExpedienteFila[];
+}
+
+const SI_NO_ETIQUETA: Readonly<Record<string, string>> = {
+  SI: 'Sí',
+  NO: 'No',
+  NO_SABE: 'No sabe',
+};
+
+const EXPEDIENTE_SECCIONES: Record<AccessRequestProfile, readonly ExpedienteSeccion[]> = {
+  PATIENT: [
+    {
+      titulo: 'Condición y necesidades declaradas',
+      filas: [
+        { clave: 'necesitaApoyo', etiqueta: 'Necesita apoyo', catalogo: NECESITA_APOYO_OPCIONES },
+        { clave: 'apoyos', etiqueta: 'Apoyos', catalogo: APOYOS_OPCIONES },
+        { clave: 'condiciones', etiqueta: 'Condiciones', catalogo: CONDICIONES_OPCIONES },
+      ],
+    },
+    {
+      titulo: 'Ubicación y EPS declaradas',
+      filas: [
+        { clave: 'zona', etiqueta: 'Zona', catalogo: ZONA_OPCIONES },
+        { clave: 'eps', etiqueta: 'EPS', catalogo: EPS_PACIENTE_OPCIONES },
+        { clave: 'direccion', etiqueta: 'Dirección' },
+      ],
+    },
+    {
+      titulo: 'Contactos declarados',
+      filas: [
+        { clave: 'contactoNombre', etiqueta: 'Contacto familiar' },
+        { clave: 'contactoParentesco', etiqueta: 'Parentesco' },
+        { clave: 'contactoTelefono', etiqueta: 'Teléfono familiar' },
+        { clave: 'vecinoNombre', etiqueta: 'Contacto cercano' },
+        { clave: 'vecinoTelefono', etiqueta: 'Teléfono cercano' },
+      ],
+    },
+    {
+      titulo: 'Consentimientos registrados',
+      filas: [
+        { clave: 'vecinoAutorizado', etiqueta: 'Autorización del contacto' },
+        { clave: 'autorizaDatos', etiqueta: 'Tratamiento de datos' },
+      ],
+    },
+  ],
+  CAREGIVER: [
+    {
+      titulo: 'Perfil del cuidador declarado',
+      filas: [
+        { clave: 'tipoCuidador', etiqueta: 'Tipo', catalogo: TIPO_CUIDADOR_OPCIONES },
+        { clave: 'tieneFormacion', etiqueta: 'Formación' },
+        { clave: 'institucionFormacion', etiqueta: 'Institución', catalogo: INSTITUCION_FORMACION_OPCIONES },
+        { clave: 'viveConPaciente', etiqueta: 'Vive con el paciente' },
+        { clave: 'horarios', etiqueta: 'Horarios', catalogo: HORARIOS_OPCIONES },
+      ],
+    },
+    {
+      titulo: 'Paciente declarado',
+      filas: [
+        { clave: 'pacienteRegistrado', etiqueta: 'Registrado', catalogo: PACIENTE_REGISTRADO_OPCIONES },
+        { clave: 'relacionPaciente', etiqueta: 'Relación', catalogo: RELACION_PACIENTE_OPCIONES },
+      ],
+    },
+    {
+      titulo: 'Contacto cercano declarado',
+      filas: [
+        { clave: 'vecinoNombre', etiqueta: 'Nombre' },
+        { clave: 'vecinoTelefono', etiqueta: 'Teléfono' },
+        { clave: 'vecinoRelacion', etiqueta: 'Relación', catalogo: VECINO_RELACION_OPCIONES },
+        { clave: 'vecinoDireccion', etiqueta: 'Dirección o referencia' },
+      ],
+    },
+    {
+      titulo: 'Consentimientos registrados',
+      filas: [
+        { clave: 'vecinoAutorizado', etiqueta: 'Autorización del contacto' },
+        { clave: 'autorizaDatos', etiqueta: 'Tratamiento de datos' },
+      ],
+    },
+  ],
+  FIELD_PROFESSIONAL: [
+    {
+      titulo: 'Información profesional declarada',
+      filas: [
+        { clave: 'profesion', etiqueta: 'Profesión', catalogo: PROFESION_OPCIONES },
+        { clave: 'tiposAtencion', etiqueta: 'Atención', catalogo: TIPOS_ATENCION_OPCIONES },
+      ],
+    },
+    {
+      titulo: 'EPS e institución declaradas',
+      filas: [
+        { clave: 'eps', etiqueta: 'EPS', catalogo: EPS_VISITADOR_OPCIONES },
+        { clave: 'otraEps', etiqueta: 'Otra EPS' },
+        { clave: 'institucion', etiqueta: 'Institución' },
+        { clave: 'institucionDepartamento', etiqueta: 'Departamento' },
+        { clave: 'institucionMunicipio', etiqueta: 'Municipio' },
+        { clave: 'cargo', etiqueta: 'Cargo' },
+      ],
+    },
+    {
+      titulo: 'Zona de atención declarada',
+      filas: [
+        { clave: 'zonaDepartamento', etiqueta: 'Departamento' },
+        { clave: 'zonaMunicipio', etiqueta: 'Municipio principal' },
+        { clave: 'zonas', etiqueta: 'Cobertura', catalogo: ZONAS_COBERTURA_OPCIONES },
+        { clave: 'sector', etiqueta: 'Sector' },
+      ],
+    },
+    {
+      titulo: 'Consentimientos registrados',
+      filas: [{ clave: 'autorizaDatos', etiqueta: 'Tratamiento de datos' }],
+    },
+  ],
+};
+
+function valorExpediente(
+  registro: Record<string, unknown>,
+  fila: ExpedienteFila,
+): string {
+  const crudo = registro[fila.clave];
+
+  if (typeof crudo === 'boolean') {
+    return crudo ? 'Sí' : 'No';
+  }
+
+  if (Array.isArray(crudo)) {
+    if (crudo.length === 0) {
+      return 'Ninguno';
+    }
+
+    return crudo
+      .map((item) =>
+        typeof item === 'string' && fila.catalogo !== undefined
+          ? etiquetaDe(fila.catalogo, item)
+          : String(item),
+      )
+      .join(' · ');
+  }
+
+  if (typeof crudo === 'string') {
+    if (crudo === '') {
+      return 'Sin indicar';
+    }
+
+    if (fila.catalogo !== undefined) {
+      return etiquetaDe(fila.catalogo, crudo);
+    }
+
+    if (crudo === 'SI' || crudo === 'NO' || crudo === 'NO_SABE') {
+      return SI_NO_ETIQUETA[crudo] ?? crudo;
+    }
+
+    return crudo;
+  }
+
+  return 'Sin indicar';
+}
 
 const EMPTY_FILTERS: AccessRequestListFilters = {};
 
@@ -474,7 +667,8 @@ export function HospitalAccessRequests({
             <div><p className={styles.eyebrow}>{detail.reference}</p><h3 id="access-request-detail-title">{`${detail.givenNames} ${detail.familyNames}`}</h3></div>
             <button ref={closeButton} type="button" onClick={closeDetail}>Cerrar detalle</button>
           </div>
-          <dl className={styles.detailGrid}>
+          <h4 className={styles.expedienteSubtitulo} id="access-request-datos-title">Datos personales</h4>
+          <dl className={styles.detailGrid} aria-labelledby="access-request-datos-title">
             <div><dt>Perfil</dt><dd>{PROFILE_LABEL[detail.requestedProfile]}</dd></div>
             <div><dt>Estado</dt><dd>{STATUS_LABEL[detail.status]}</dd></div>
             <div><dt>Documento</dt><dd>{`${detail.documentType}: ${detail.documentNumber}`}</dd></div>
@@ -492,6 +686,35 @@ export function HospitalAccessRequests({
             <div><dt>Decidida</dt><dd>{detail.decidedAt === null ? 'Sin decisión' : formatDate(detail.decidedAt)}</dd></div>
             <div><dt>Motivo de la decisión</dt><dd>{detail.decisionReasonCode ?? 'Sin motivo'}</dd></div>
           </dl>
+
+          {detail.registrationSchemaVersion === null || detail.registration === null ? (
+            <p className={styles.state}>
+              Sin expediente: solicitud registrada antes del flujo guiado.
+            </p>
+          ) : (
+            <section className={styles.expediente} aria-label="Expediente de solicitud">
+              <h4 className={styles.expedienteTitulo}>
+                {`Expediente de solicitud · versión ${String(detail.registrationSchemaVersion)}`}
+              </h4>
+              <p className={styles.expedienteNota}>
+                Son declaraciones de la persona solicitante, no diagnósticos validados ni
+                decisiones. El expediente no crea relaciones, asignaciones ni permisos.
+              </p>
+              {EXPEDIENTE_SECCIONES[detail.requestedProfile].map((seccion) => (
+                <section className={styles.expedienteSeccion} key={seccion.titulo}>
+                  <h5 className={styles.expedienteSubtitulo}>{seccion.titulo}</h5>
+                  <dl className={styles.detailGrid}>
+                    {seccion.filas.map((fila) => (
+                      <div key={fila.clave}>
+                        <dt>{fila.etiqueta}</dt>
+                        <dd>{valorExpediente(detail.registration as Record<string, unknown>, fila)}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              ))}
+            </section>
+          )}
 
           {(() => {
             const acciones = validActionsFor(detail.status, detail.provisioningAttempts);

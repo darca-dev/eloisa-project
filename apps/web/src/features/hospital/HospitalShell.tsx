@@ -245,10 +245,16 @@ function HospitalContenido({
  * endpoint de apertura.
  */
 function HospitalAccesoInstitucional({
+  accesoDemo,
   aviso,
   ocupado,
   onEntrar,
 }: {
+  /**
+   * Credenciales FICTICIAS que el servidor solo entrega en la demostración
+   * local explícitamente habilitada. Nunca existe en la ruta normal.
+   */
+  readonly accesoDemo?: { readonly codigo: string; readonly credencial: string };
   /** Aviso de validación, de fallo o de confirmación. `null` cuando no hay. */
   readonly aviso: string | null;
   readonly ocupado: boolean;
@@ -320,6 +326,19 @@ function HospitalAccesoInstitucional({
         <button className={styles.ingresoBoton} disabled={ocupado} type="submit">
           {ocupado ? 'Comprobando…' : 'Entrar'}
         </button>
+        {accesoDemo === undefined ? null : (
+          <button
+            className={styles.ingresoBotonDemo}
+            disabled={ocupado}
+            onClick={() => {
+              setCodigo(accesoDemo.codigo);
+              setCredencial(accesoDemo.credencial);
+            }}
+            type="button"
+          >
+            Acceso demo
+          </button>
+        )}
         {/*
          * Región viva PERMANENTE: existe desde el primer render para que un
          * lector de pantalla anuncie el aviso cuando aparezca, en lugar de
@@ -396,6 +415,7 @@ export function HospitalShell({
   filaFinancieraInicial = null,
   visitaInicial = null,
   sesionInicial = null,
+  accesoDemo,
   modoDemoLocal = false,
   fetchImpl,
 }: {
@@ -444,6 +464,11 @@ export function HospitalShell({
    *   servidor, y es el único que dispara la consulta al montar.
    */
   readonly sesionInicial?: HospitalSesionDto | 'sin-sesion' | null;
+  /**
+   * Solo lo entrega la página servidor cuando el demo local está habilitado y
+   * las credenciales ficticias se configuraron fuera del repositorio.
+   */
+  readonly accesoDemo?: { readonly codigo: string; readonly credencial: string };
   /** Solo `/hospital` lo activa: datos en memoria, sin API institucional. */
   readonly modoDemoLocal?: boolean;
   /** Implementación de `fetch` usada para consultar el contexto de sesión. */
@@ -715,6 +740,7 @@ export function HospitalShell({
     return (
       <HospitalMarcoNeutral etiquetaPlataforma={etiquetaPlataforma}>
         <HospitalAccesoInstitucional
+          accesoDemo={accesoDemo}
           aviso={aviso}
           ocupado={ocupado}
           onEntrar={(identityCode, accessSecret) => {

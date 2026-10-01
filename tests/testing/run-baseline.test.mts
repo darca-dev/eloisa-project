@@ -12,7 +12,7 @@
  * marcadores de redaccion.
  *
  * Cobertura exigida por el handoff v37: (1) parser cerrado y run-id, (2) matriz
- * de 28/22/cleanup final, (3) los seis ceros y conteos positivos en ambos
+ * de 29/23/cleanup final, (3) los seis ceros y conteos positivos en ambos
  * ordenes, (4) entorno infantil de seis claves de sistema y tres derivadas, (5)
  * captura saneada, (6) timeout del ejecutor, (7) parada al primer fallo, (8)
  * provision/preflight/executor con una sola limpieza y (9) cleanup final
@@ -210,11 +210,11 @@ describe('MP14 - parser cerrado y run-id', () => {
 });
 
 describe('MP14 - matriz de stages', () => {
-  test('28 etapas, 22 DB-gated y cleanup final', () => {
-    assert.equal(runner.BASELINE_STAGES.length, 28);
-    assert.equal(runner.DB_GATED_STAGES.length, 22);
+  test('29 etapas, 23 DB-gated y cleanup final', () => {
+    assert.equal(runner.BASELINE_STAGES.length, 29);
+    assert.equal(runner.DB_GATED_STAGES.length, 23);
     assert.equal(runner.BASELINE_STAGES[0], 'provision');
-    assert.equal(runner.BASELINE_STAGES[27], 'cleanup');
+    assert.equal(runner.BASELINE_STAGES[28], 'cleanup');
     assert.equal(runner.STAGE_MATRIX.filter((s) => s.kind === 'lifecycle').map((s) => s.id).join(','), 'provision,cleanup');
     assert.equal(runner.STAGE_MATRIX.find((s) => s.id === 'typecheck')?.kind, 'static');
   });
@@ -240,7 +240,7 @@ describe('MP14 - matriz de stages', () => {
     assert.throws(() => runner.assertMatrixComplete(['*']), /no autorizado/u);
     assert.throws(() => runner.resolveStageIds('db/inventada.test.ts'), /fuera de la matriz/u);
     assert.equal(runner.resolveStageIds('web').length, 1);
-    assert.equal(runner.resolveStageIds('all').length, 28);
+    assert.equal(runner.resolveStageIds('all').length, 29);
   });
 
   test('los comandos de typecheck cubren los tres proyectos y no emiten', () => {
@@ -415,13 +415,13 @@ describe('MP14 - ejecutor real con spawn simulado', () => {
 });
 
 describe('MP14 - ciclo completo con dobles inyectados', () => {
-  test('un ciclo sano recorre las 28 etapas, termina en cleanup y conserva el run-id', async () => {
+  test('un ciclo sano recorre las 29 etapas, termina en cleanup y conserva el run-id', async () => {
     const { resultado, conteo } = await correrStages({});
     assert.equal(resultado.ok, true);
     assert.equal(resultado.failedStage, null);
-    assert.equal(resultado.evidence.length, 28);
-    assert.equal(resultado.evidence[27].stage, 'cleanup');
-    assert.equal(resultado.evidence[27].outcome, 'pass');
+    assert.equal(resultado.evidence.length, 29);
+    assert.equal(resultado.evidence[28].stage, 'cleanup');
+    assert.equal(resultado.evidence[28].outcome, 'pass');
     assert.ok(resultado.evidence.every((e) => e.runId === RUN_ID));
     assert.equal(conteo.cleanup, 1);
     assert.equal(conteo.provision, 1);
@@ -478,8 +478,8 @@ describe('MP14 - ciclo completo con dobles inyectados', () => {
     assert.equal(invocaciones, 1);
     assert.equal(resultado.ok, false);
     assert.equal(resultado.failedStage, 'cleanup');
-    assert.equal(resultado.evidence[27].stage, 'cleanup');
-    assert.equal(resultado.evidence[27].outcome, 'fail');
+    assert.equal(resultado.evidence[28].stage, 'cleanup');
+    assert.equal(resultado.evidence[28].outcome, 'fail');
     assert.equal(resultado.cleanup?.cleaned, false);
   });
 

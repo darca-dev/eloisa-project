@@ -29,6 +29,36 @@ describe('Portal Central de Acceso (Página Raíz /)', () => {
     expect(html).not.toContain('data-municipality-content');
   });
 
+  it('la tarjeta de Atencion Domiciliaria ofrece exactamente Iniciar sesion y Registrate (MP04-C1)', () => {
+    const html = markupHub();
+
+    // Destinos exactos de las dos unicas acciones.
+    expect(html).toContain('href="http://127.0.0.1:3001/api/v1/human-auth/login?returnTo=/acceso"');
+    expect(html).toContain('href="/acceso?accion=registro"');
+    expect(html).toContain('>Iniciar sesión<');
+    expect(html).toContain('>Regístrate<');
+
+    // Solo Registro entra a /acceso; Inicio navega directamente al proveedor OIDC.
+    const enlacesAcceso = html.match(/href="\/acceso[^"]*"/gu) ?? [];
+    expect(enlacesAcceso).toHaveLength(1);
+
+    // Vocabulario retirado de esta superficie (MP04-C1).
+    for (const retirado of [
+      'Solicitar acceso',
+      'Registro guiado',
+      'registro guiado',
+      'Registrarme / solicitar acceso',
+      'Ver o registrar una solicitud',
+      'Abrir registro guiado',
+    ]) {
+      expect(html).not.toContain(retirado);
+    }
+
+    // Hospital y Alcaldia conservan su unico acceso.
+    expect(html).toContain('href="/hospital"');
+    expect(html).toContain('href="/municipality"');
+  });
+
   it('conserva el branding institucional y el logotipo', () => {
     const html = markupHub();
 

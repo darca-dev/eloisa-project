@@ -258,7 +258,7 @@ BEGIN
   --    proposito: MERDN no usa transacciones preparadas.
   SELECT array_agg(format('%s (propietario %s)', g.gid, g.owner) ORDER BY g.gid) INTO v_bad
   FROM pg_prepared_xacts g
-  WHERE g.database = (SELECT oid FROM pg_database WHERE datname = current_database());
+  WHERE g.database = current_database();
 
   IF v_bad IS NOT NULL THEN
     RAISE EXCEPTION 'MP04 preflight: hay transacciones preparadas que retienen locks: %',

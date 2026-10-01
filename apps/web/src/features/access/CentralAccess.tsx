@@ -1,28 +1,36 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
-import { branding } from '@/config/branding';
+import { branding } from "@/config/branding";
+import { EliFigure, eliAvatarAlt } from "@/components/ui/Eli";
 import {
   RUTAS_EXPERIENCIA,
   consultarExperienciasAprobadas,
   urlDeLoginHumano,
   type ExperienciaAprobada,
-} from '@/features/auth/humanSessionClient';
-import { AccessRequestForm } from './AccessRequestForm';
-import styles from './centralAccess.module.css';
+} from "@/features/auth/humanSessionClient";
+import { AccessRegistrationWizard } from "./AccessRegistrationWizard";
+import styles from "./centralAccessRedesign.module.css";
 
 /**
  * Acceso de pacientes, cuidadores y visitadores médicos (SPEC 038, MP04).
  *
  * DOS RAMAS y ninguna más:
  *
- * - `accion=registro` monta `AccessRequestForm`, que envía una solicitud de
- *   datos ficticios al endpoint persistente y muestra la referencia opaca que el
- *   servidor devuelve (MP02-C2, ampliada por OD-11 en MP04);
+ * - `accion=registro` monta `AccessRegistrationWizard`: inscripcion guiada por
+ *   perfil (selector, tres pasos, confirmacion) que envia la solicitud de datos
+ *   ficticios al endpoint persistente y muestra la referencia opaca que el
+ *   servidor devuelve;
  * - el resto es el SELECTOR de experiencias que MP04 exige. Al volver del flujo
  *   OIDC consulta `GET /api/v1/me/experiences` en el servidor —nunca en el
  *   navegador— y decide: una experiencia redirige, varias muestran un selector y
@@ -50,70 +58,80 @@ import styles from './centralAccess.module.css';
 
 /** Los CINCO estados del selector. Mutuamente excluyentes. */
 type Fase =
-  | 'consultando'
-  | 'sin-sesion'
-  | 'indisponible'
-  | 'denegado'
-  | 'selector'
-  | 'redirigiendo';
+  | "consultando"
+  | "sin-sesion"
+  | "indisponible"
+  | "denegado"
+  | "selector"
+  | "redirigiendo";
 
 const EXPERIENCIAS_LABEL: Readonly<Record<ExperienciaAprobada, string>> = {
-  PATIENT: 'Paciente',
-  CAREGIVER: 'Cuidador',
-  FIELD_PROFESSIONAL: 'Visitador médico',
+  PATIENT: "Paciente",
+  CAREGIVER: "Cuidador",
+  FIELD_PROFESSIONAL: "Visitador médico",
 };
 
 const AVISOS: Readonly<Record<Fase, string>> = {
-  consultando: 'Comprobando sus experiencias aprobadas…',
-  'sin-sesion': '',
-  indisponible: 'No fue posible comprobar sus experiencias en este momento.',
-  denegado: 'Su cuenta no tiene ninguna experiencia aprobada.',
-  selector: 'Varias experiencias están aprobadas. Elija cuál desea abrir.',
-  redirigiendo: 'Abriendo su espacio…',
+  consultando: "Comprobando sus experiencias aprobadas…",
+  "sin-sesion": "",
+  indisponible: "No fue posible comprobar sus experiencias en este momento.",
+  denegado: "Su cuenta no tiene ninguna experiencia aprobada.",
+  selector: "Varias experiencias están aprobadas. Elija cuál desea abrir.",
+  redirigiendo: "Abriendo su espacio…",
 };
 
-export function CentralAccess(): ReactNode {
+export interface CentralAccessProps {
+  /** Recorrido de presentación fijo, habilitado únicamente por el servidor local. */
+  readonly modoDemoLocal?: boolean;
+}
+
+export function CentralAccess({ modoDemoLocal = false }: CentralAccessProps): ReactNode {
   const search = useSearchParams();
-  const registration = search.get('accion') === 'registro';
+  const registration = search.get("accion") === "registro";
   const router = useRouter();
 
-  const [fase, setFase] = useState<Fase>('consultando');
-  const [experiencias, setExperiencias] = useState<readonly ExperienciaAprobada[]>([]);
+  const [fase, setFase] = useState<Fase>("consultando");
+  const [experiencias, setExperiencias] = useState<
+    readonly ExperienciaAprobada[]
+  >([]);
+  const [perfilDemo, setPerfilDemo] = useState<ExperienciaAprobada | null>(null);
   const bloqueRef = useRef<HTMLDivElement | null>(null);
 
   const consultar = useCallback(async (): Promise<void> => {
-    setFase('consultando');
+    setFase("consultando");
     setExperiencias([]);
 
     const desenlace = await consultarExperienciasAprobadas();
 
     switch (desenlace.kind) {
-      case 'sin-sesion':
+      case "sin-sesion":
         // Primera visita o sesión caducada: se muestra el acceso normal.
-        setFase('sin-sesion');
+        setFase("sin-sesion");
         return;
-      case 'ok':
+      case "ok":
         if (desenlace.experiencias.length === 0) {
           // Hay persona y ninguna aprobación: denegación neutral, sin motivo.
-          setFase('denegado');
+          setFase("denegado");
           return;
         }
 
         setExperiencias(desenlace.experiencias);
-        setFase(desenlace.experiencias.length === 1 ? 'redirigiendo' : 'selector');
+        setFase(
+          desenlace.experiencias.length === 1 ? "redirigiendo" : "selector",
+        );
         return;
       default:
-        setFase('indisponible');
+        setFase("indisponible");
     }
   }, []);
 
   useEffect(() => {
-    if (registration) {
+    if (registration || modoDemoLocal) {
       return;
     }
 
     void consultar();
-  }, [consultar, registration]);
+  }, [consultar, modoDemoLocal, registration]);
 
   /*
    * La redirección va en un EFECTO aparte y no dentro del `switch`: hacer
@@ -121,7 +139,7 @@ export function CentralAccess(): ReactNode {
    * navegación al render y deja la pantalla en un estado que ya no existe.
    */
   useEffect(() => {
-    if (fase !== 'redirigiendo' || experiencias.length !== 1) {
+    if (modoDemoLocal || fase !== "redirigiendo" || experiencias.length !== 1) {
       return;
     }
 
@@ -130,7 +148,14 @@ export function CentralAccess(): ReactNode {
     if (unica !== undefined) {
       router.replace(RUTAS_EXPERIENCIA[unica]);
     }
-  }, [fase, experiencias, router]);
+  }, [fase, experiencias, modoDemoLocal, router]);
+
+  /* El Portal Central ya separa iniciar sesión de registrarse. */
+  useEffect(() => {
+    if (!modoDemoLocal && fase === "sin-sesion") {
+      window.location.assign(urlDeLoginHumano());
+    }
+  }, [fase, modoDemoLocal]);
 
   /*
    * FOCO: cuando el selector cambia de una pantalla a otra, el foco se mueve al
@@ -139,123 +164,209 @@ export function CentralAccess(): ReactNode {
    * ahora hay una lista que elegir.
    */
   useEffect(() => {
-    if (fase === 'sin-sesion' || registration) {
+    if (modoDemoLocal || fase === "sin-sesion" || registration) {
       return;
     }
 
     bloqueRef.current?.focus();
-  }, [fase, registration]);
+  }, [fase, modoDemoLocal, registration]);
 
   if (registration) {
-    return (
-      <main className={styles.page}>
-        <section className={styles.card} aria-labelledby="solicitud-title">
-          <Link className={styles.back} href="/">← Volver al Portal Central</Link>
-          <div className={styles.brand}>
-            <Image src="/brand/corazon-check.png" alt={`Símbolo de ${branding.platformDisplayName}`} width={42} height={42} />
-            <div><strong>{branding.platformDisplayName}</strong><span>Solicitud de acceso</span></div>
-          </div>
-          <h1 id="solicitud-title">Registre su solicitud, no una sesión</h1>
-          <p>
-            Pacientes, cuidadores y personal de terreno solicitan acceso primero. El Hospital valida y aprueba
-            la solicitud antes de habilitar cualquier espacio de trabajo.
-          </p>
-          <AccessRequestForm />
-          <Link className={styles.textLink} href="/inscripcion">Ver el registro guiado por perfil</Link>
-          <aside className={styles.note}>
-            Una solicitud no concede acceso hasta la revisión institucional. Este formulario registra
-            datos ficticios de prueba y no crea paciente, cuenta, sesión, perfil ni permiso.
-          </aside>
-        </section>
-      </main>
-    );
+    return <AccessRegistrationWizard />;
   }
+
+  const iniciarDemo = (): void => {
+    if (perfilDemo !== null) {
+      router.push(RUTAS_EXPERIENCIA[perfilDemo]);
+    }
+  };
 
   return (
     <main className={styles.page}>
       <section className={styles.card} aria-labelledby="central-access-title">
-        <Link className={styles.back} href="/">← Volver al Portal Central</Link>
-        <div className={styles.brand}>
-          <Image src="/brand/corazon-check.png" alt={`Símbolo de ${branding.platformDisplayName}`} width={42} height={42} />
-          <div><strong>{branding.platformDisplayName}</strong><span>Atención Domiciliaria</span></div>
-        </div>
-        <h1 id="central-access-title">Iniciar sesión</h1>
-        <p className={styles.lead}>
-          Acceso para pacientes, cuidadores y visitadores médicos. Su experiencia aprobada determina
-          el espacio que podrá abrir.
-        </p>
-
-        <section className={styles.human} aria-labelledby="human-access-title">
-          <h2 id="human-access-title">Pacientes, cuidadores y visitadores médicos</h2>
-
-          <div className={styles.liveRegion} aria-live="polite">
-            {AVISOS[fase] === '' ? null : <p>{AVISOS[fase]}</p>}
+        <header className={styles.brandHeader}>
+          <div className={styles.brand}>
+            <Image
+              src="/brand/corazon-check.png"
+              alt={`Símbolo de ${branding.platformDisplayName}`}
+              width={54}
+              height={54}
+            />
+            <div>
+              <strong>{branding.platformDisplayName}</strong>
+              <span>Atención Domiciliaria</span>
+            </div>
           </div>
+          <span className={styles.headerAccent} aria-hidden="true" />
+        </header>
 
-          {fase === 'sin-sesion' ? (
-            <>
-              <p>
-                Entra con la referencia de tu solicitud. MERDN no guarda ni pide aquí ninguna
-                contraseña: el inicio de sesión ocurre en el proveedor de identidad.
-              </p>
-              <a className={styles.primary} href={urlDeLoginHumano()}>
-                Iniciar sesión
-              </a>
-              <Link className={styles.textLink} href="/acceso?accion=registro">
-                Registrarme / solicitar acceso
-              </Link>
-              <Link className={styles.textLink} href="/inscripcion">Abrir registro guiado</Link>
-            </>
-          ) : null}
+        <div className={styles.accessGrid}>
+          <aside
+            className={styles.eliPanel}
+            aria-label="Perfiles de Atención Domiciliaria"
+          >
+            <Link className={styles.back} href="/">
+              ← Volver al Portal Central
+            </Link>
 
-          {fase === 'consultando' ? (
-            <div ref={bloqueRef} tabIndex={-1}>
-              Comprobando sus experiencias aprobadas…
+            <div className={styles.eliHalo}>
+              <EliFigure
+                alt={eliAvatarAlt("saluda")}
+                className={styles.eliSaluda}
+                intencion="saluda"
+                size={260}
+              />
             </div>
-          ) : null}
 
-          {fase === 'redirigiendo' ? (
-            <div ref={bloqueRef} tabIndex={-1}>
-              Abriendo su espacio… Si la página no cambia,{' '}
-              <a href={RUTAS_EXPERIENCIA[(experiencias[0] ?? 'PATIENT')]}>continúe aquí</a>.
-            </div>
-          ) : null}
-
-          {fase === 'selector' ? (
-            <div className={styles.choices} ref={bloqueRef} tabIndex={-1}>
-              {experiencias.map((experiencia) => (
-                <Link className={styles.roleCard} href={RUTAS_EXPERIENCIA[experiencia]} key={experiencia}>
-                  <strong>{EXPERIENCIAS_LABEL[experiencia]}</strong>
-                  <span>Abrir el espacio {EXPERIENCIAS_LABEL[experiencia].toLowerCase()}.</span>
-                </Link>
-              ))}
-            </div>
-          ) : null}
-
-          {fase === 'denegado' ? (
-            <div ref={bloqueRef} tabIndex={-1}>
-              <p className={styles.errorMessage}>
-                Su cuenta no tiene ninguna experiencia aprobada. Puede revisar el estado de su
-                solicitud o registrar una nueva.
-              </p>
-              <Link className={styles.textLink} href="/acceso?accion=registro">
-                Ver o registrar una solicitud
-              </Link>
-            </div>
-          ) : null}
-
-          {fase === 'indisponible' ? (
-            <div ref={bloqueRef} tabIndex={-1}>
-              <p className={styles.errorMessage}>
-                No fue posible comprobar sus experiencias aprobadas. No se muestra ningún espacio
-                porque no hay una respuesta del servidor.
-              </p>
-              <button className={styles.secondary} onClick={() => void consultar()} type="button">
-                Volver a intentar
+            <div className={styles.roleList} aria-label="Perfiles disponibles">
+              <button
+                aria-pressed={perfilDemo === "PATIENT"}
+                className={`${styles.roleChip} ${styles.patientChip} ${perfilDemo === "PATIENT" ? styles.roleChipSelected : ""}`}
+                disabled={!modoDemoLocal}
+                onClick={() => setPerfilDemo("PATIENT")}
+                type="button"
+              >
+                <span aria-hidden="true">P</span>
+                <strong>Paciente</strong>
+              </button>
+              <button
+                aria-pressed={perfilDemo === "CAREGIVER"}
+                className={`${styles.roleChip} ${styles.caregiverChip} ${perfilDemo === "CAREGIVER" ? styles.roleChipSelected : ""}`}
+                disabled={!modoDemoLocal}
+                onClick={() => setPerfilDemo("CAREGIVER")}
+                type="button"
+              >
+                <span aria-hidden="true">C</span>
+                <strong>Cuidador</strong>
+              </button>
+              <button
+                aria-pressed={perfilDemo === "FIELD_PROFESSIONAL"}
+                className={`${styles.roleChip} ${styles.visitorChip} ${perfilDemo === "FIELD_PROFESSIONAL" ? styles.roleChipSelected : ""}`}
+                disabled={!modoDemoLocal}
+                onClick={() => setPerfilDemo("FIELD_PROFESSIONAL")}
+                type="button"
+              >
+                <span aria-hidden="true">V</span>
+                <strong>Visitador médico</strong>
               </button>
             </div>
-          ) : null}
-        </section>
+          </aside>
+
+          <section
+            className={styles.loginPanel}
+            aria-labelledby="human-access-title"
+          >
+            <p className={styles.eyebrow}>ATENCIÓN DOMICILIARIA</p>
+            <h1 id="central-access-title">Bienvenido</h1>
+            <h2 id="human-access-title">Inicia sesión para continuar</h2>
+            <p className={styles.lead}>
+              Acceso para pacientes, cuidadores y visitadores médicos.
+            </p>
+
+            {modoDemoLocal ? (
+              <>
+                <div className={styles.approvalNotice} role="status">
+                  <span aria-hidden="true" className={styles.approvalIcon}>i</span>
+                  <p>
+                    Seleccione un perfil para recorrer una demostración con información ficticia.
+                  </p>
+                </div>
+                <div className={styles.actions}>
+                  <button
+                    className={styles.primary}
+                    disabled={perfilDemo === null}
+                    onClick={iniciarDemo}
+                    type="button"
+                  >
+                    Iniciar sesión <span aria-hidden="true">→</span>
+                  </button>
+                </div>
+                <p className={styles.securityNote}>
+                  <span aria-hidden="true">◆</span>
+                  Esta demostración no consulta ni guarda información real.
+                </p>
+              </>
+            ) : null}
+
+            {modoDemoLocal ? null : (
+              <div className={styles.liveRegion} aria-live="polite">
+                {AVISOS[fase] === "" ? null : <p>{AVISOS[fase]}</p>}
+              </div>
+            )}
+
+            {!modoDemoLocal && fase === "sin-sesion" ? (
+              <div className={styles.statusPanel} ref={bloqueRef} tabIndex={-1}>
+                Abriendo el formulario seguro de correo y contraseña…
+              </div>
+            ) : null}
+
+            {!modoDemoLocal && fase === "consultando" ? (
+              <div className={styles.statusPanel} ref={bloqueRef} tabIndex={-1}>
+                Comprobando sus experiencias aprobadas…
+              </div>
+            ) : null}
+
+            {!modoDemoLocal && fase === "redirigiendo" ? (
+              <div className={styles.statusPanel} ref={bloqueRef} tabIndex={-1}>
+                Abriendo su espacio… Si la página no cambia,{" "}
+                <a href={RUTAS_EXPERIENCIA[experiencias[0] ?? "PATIENT"]}>
+                  continúe aquí
+                </a>
+                .
+              </div>
+            ) : null}
+
+            {!modoDemoLocal && fase === "selector" ? (
+              <div className={styles.choices} ref={bloqueRef} tabIndex={-1}>
+                {experiencias.map((experiencia) => (
+                  <Link
+                    className={styles.roleCard}
+                    href={RUTAS_EXPERIENCIA[experiencia]}
+                    key={experiencia}
+                  >
+                    <strong>{EXPERIENCIAS_LABEL[experiencia]}</strong>
+                    <span>
+                      Abrir el espacio{" "}
+                      {EXPERIENCIAS_LABEL[experiencia].toLowerCase()}.
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            ) : null}
+
+            {!modoDemoLocal && fase === "denegado" ? (
+              <div ref={bloqueRef} tabIndex={-1}>
+                <p className={styles.errorMessage}>
+                  Su cuenta no tiene ninguna experiencia aprobada. Puede revisar
+                  el estado de su solicitud o registrar una nueva.
+                </p>
+                <Link
+                  className={styles.textLink}
+                  href="/acceso?accion=registro"
+                >
+                  Regístrate
+                </Link>
+              </div>
+            ) : null}
+
+            {!modoDemoLocal && fase === "indisponible" ? (
+              <div ref={bloqueRef} tabIndex={-1}>
+                <p className={styles.errorMessage}>
+                  No fue posible comprobar sus experiencias aprobadas. No se
+                  muestra ningún espacio porque no hay una respuesta del
+                  servidor.
+                </p>
+                <button
+                  className={styles.secondary}
+                  onClick={() => void consultar()}
+                  type="button"
+                >
+                  Volver a intentar
+                </button>
+              </div>
+            ) : null}
+          </section>
+        </div>
       </section>
     </main>
   );

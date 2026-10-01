@@ -2,7 +2,12 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 import { platformNameInSentence } from '@/config/branding';
+import { humanAccessDemoLocalEnabled } from '@/features/access/humanAccessDemoLocal';
 import { CaregiverAccessPortal } from '@/features/caregiver/CaregiverAccessPortal';
+import { CaregiverLiquidationsDemo } from '@/features/caregiver/CaregiverLiquidationsDemo';
+
+/* La bandera demo se lee al atender la solicitud, no al construir la imagen. */
+export const dynamic = 'force-dynamic';
 
 /**
  * Superficie protegida del Cuidador (SPEC 038, MP04 §12).
@@ -16,6 +21,10 @@ import { CaregiverAccessPortal } from '@/features/caregiver/CaregiverAccessPorta
  *
  * Con relación activa monta la demostración de liquidaciones; SIN relación
  * muestra una portada neutra sin ningún dato nominal.
+ *
+ * `MERDN_HUMAN_ACCESS_DEMO_LOCAL=true` es una excepción de presentación local
+ * resuelta en el servidor: solo muestra contenido ficticio y no crea sesión ni
+ * consulta o escribe en la API. Ningún parámetro de URL la puede habilitar.
  */
 export const metadata: Metadata = {
   title: `${platformNameInSentence()} — Portal del cuidador`,
@@ -25,5 +34,9 @@ export const metadata: Metadata = {
 };
 
 export default function CaregiverPage(): ReactNode {
+  if (humanAccessDemoLocalEnabled()) {
+    return <CaregiverLiquidationsDemo />;
+  }
+
   return <CaregiverAccessPortal />;
 }

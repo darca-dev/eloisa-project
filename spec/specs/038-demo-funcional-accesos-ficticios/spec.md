@@ -119,8 +119,13 @@ fuente de autoridad.
 
 ### 6.2 Entrada central
 
-- `/acceso` debe montar una sola implementación autorizada y distinguir:
-  `Iniciar sesión`, `Registrarme / solicitar acceso` y `Explorar demo`.
+- La tarjeta de Atención Domiciliaria en `/` y el estado sin sesión de
+  `/acceso` deben presentar exactamente dos acciones: `Iniciar sesión` y
+  `Regístrate`.
+- `Regístrate` abre el formulario persistente de SPEC 038. Su envío crea
+  automáticamente la solicitud pendiente para revisión Hospital; no existe una
+  acción visible separada `Solicitar acceso` ni un tercer enlace a
+  `Registro guiado` en esta entrada.
 - Los parámetros de URL son orientación y nunca autoridad.
 - El Portal Central debe enlazar a la entrada aprobada sin saltarse la sesión
   cuando se intente realizar una operación persistente o protegida.
@@ -388,6 +393,10 @@ puede persistirse, la operación falla cerrada.
 1. CUANDO una persona ficticia envía una solicitud válida, EL SISTEMA DEBERÁ
    persistir una sola solicitud `PENDING`, devolver referencia opaca y
    conservarla después de recargar y reiniciar web/API.
+1.a CUANDO una persona entra a Atención Domiciliaria sin sesión, EL SISTEMA
+   DEBERÁ mostrar solo `Iniciar sesión` y `Regístrate`; al completar
+   `Regístrate`, la solicitud Hospital se enviará automáticamente sin una acción
+   separada denominada `Solicitar acceso`.
 2. CUANDO se repite una solicitud abierta para la misma identidad, tenant y
    perfil, EL SISTEMA DEBERÁ responder de forma neutral e idempotente.
 3. CUANDO no existe aprobación vigente, EL SISTEMA NO DEBERÁ crear sesión
@@ -511,3 +520,73 @@ Claude Code debe detener el paquete afectado si:
 La versión y sus decisiones están aprobadas. Solo el Product Owner registra
 consentimiento SDD. Ese consentimiento habilita implementación dentro de esta
 spec y no autoriza commit, merge, push, PR, release ni despliegue.
+
+## 24. Correccion vinculante: cinco pasos e iconografia de Eli
+
+La decision del Product Owner del 2026-09-30 sustituye la estructura de tres
+pasos descrita en la seccion 23. La seleccion inicial de perfil permanece, pero
+cada rama debe implementar los cinco pasos de la referencia protegida:
+
+- Paciente: `Datos personales`, `Condicion y necesidades`, `Ubicacion y EPS`,
+  `Contactos`, `Confirmacion`.
+- Cuidador: `Datos personales`, `Perfil del cuidador`, `Vincular paciente`,
+  `Contacto cercano`, `Confirmacion`.
+- Visitador medico: `Datos personales`, `Informacion profesional`,
+  `EPS e institucion`, `Zona de atencion`, `Verificacion`.
+
+Los campos capturados en los pasos 2 a 4 deben persistirse como una instantanea
+de solicitud, validada con esquema cerrado y versionado, ligada al mismo tenant
+y visible solo en el detalle Hospital autorizado. No se exponen en listados,
+busquedas, logs ni respuestas publicas. No contienen password.
+
+La instantanea expresa datos declarados para una solicitud ficticia. No es
+historia clinica, prueba de discapacidad, certificacion, afiliacion oficial,
+relacion cuidador-paciente ni asignacion profesional. La aprobacion conserva
+las restricciones OD-02, OD-05 y OD-06.
+
+La inscripcion usa los activos existentes `/eli/guia.png`,
+`/eli/escucha.png`, `/eli/agradece.png` y `/eli/saluda2.png` en las posiciones
+equivalentes de la referencia. Conserva `Eloisa` como marca vigente.
+
+## 25. Correccion vinculante: fidelidad visual de la inscripcion
+
+La decisión del Product Owner del 2026-10-01 exige que las tres ramas adopten
+la composición visual de `prototype-claude/Eligeme-Inscripcion.dc.html`; la
+marca visible será `Eloisa`. El encabezado azul, la tarjeta independiente de
+progreso, la tarjeta blanca del contenido, la burbuja gris de Elí, la barra, los
+cinco controles de etapa, las filas responsivas de campos y el ritmo espacial
+deben corresponder a la referencia.
+
+Los tres botones demo de cada rama permanecen funcionales y se integran en la
+tarjeta del paso. Esta corrección es de presentación: no cambia el contrato,
+los cinco pasos, los datos persistidos, la aprobación Hospital, la contraseña,
+la autenticación ni la autorización. Debe conservar labels visibles, foco,
+teclado, `aria-current`, mensajes asociados y uso sin desbordamiento a 320 px.
+
+## 23. Correccion de experiencia: inscripcion guiada por perfil
+
+Por decision expresa del Product Owner del 2026-09-30, `Registrate` conserva el
+flujo persistente de solicitud de acceso, pero adopta una experiencia visual
+guiada basada en `prototype-claude/Eligeme-Inscripcion.dc.html`:
+
+1. La primera pantalla pregunta como se va a registrar y ofrece exactamente
+   Paciente, Cuidador y Visitador medico como tarjetas accesibles.
+2. Cada rama presenta cuatro etapas: seleccion de perfil, datos personales,
+   contacto y credencial, y revision/envio. La barra de progreso y el titulo
+   deben indicar la rama y el paso actual.
+3. Solo se solicitan los campos del contrato vigente de access requests. Los
+   campos adicionales del prototipo no se incorporan hasta que exista una
+   especificacion de datos, autorizacion, tenencia y persistencia propia.
+4. Los tres fixtures del perfil elegido pueden llenar los campos del formulario;
+   los fixtures de las otras ramas quedan ocultos.
+5. El ultimo paso muestra un resumen minimizado sin revelar la contrasena y
+   envia exactamente una solicitud al Hospital mediante el cliente existente.
+6. El exito muestra referencia y `PENDING`, y explica que el acceso permanece
+   bloqueado hasta la aprobacion Hospital.
+7. Cambiar de perfil borra los valores de la rama previa. Retroceder conserva
+   los valores de la rama actual. Recargar o salir descarta el estado local.
+8. La implementacion debe conservar teclado, foco anunciado, etiquetas,
+   errores asociados, `aria-live`, contraste y uso a 320 px.
+9. La ruta historica `/inscripcion` no se conecta ni se modifica en este
+   paquete: actualmente tiene semantica distinta y una inscripcion directa de
+   Paciente. El prototipo y esa ruta son referencias, no el destino del CTA.

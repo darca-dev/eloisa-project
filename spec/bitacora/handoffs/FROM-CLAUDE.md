@@ -1,3 +1,496 @@
+# Auditoria Codex - SPEC 038 / MP04-C2 - CORRECCION DE REINTENTO REQUERIDA
+
+- Fecha: 2026-09-30.
+- Resultado general: la interfaz guiada por perfil, el filtrado de fixtures, el
+  cuerpo contractual, la accesibilidad declarada y el boton secundario de
+  `Registrate` estan implementados dentro de la allowlist.
+- Verificacion Codex: typecheck web y ESLint focal en exit 0; Vitest focal
+  70/70 tras repetir fuera del sandbox por `spawn EPERM` de Vite.
+- Hallazgo funcional: `enviar()` borra la contrasena en `finally` despues de un
+  403/429/503, pero conserva el paso 3. El boton `Registrarme` vuelve a quedar
+  disponible y un segundo clic ejecuta otro POST con `password: ''`, sin pasar
+  por `validarPaso2`.
+- La prueba E2E `permite reintentar tras un error con la clave vaciada` oculta el
+  defecto: su interceptor responde 202 al segundo cuerpo sin comprobar que la
+  contrasena esta vacia. Una API real rechazaria ese reintento.
+- Resultado: MP04-C2 no se acepta todavia. MP04-C2-C1 debe regresar a
+  `Contacto y acceso` tras un desenlace no aceptado, enfocar la contrasena y
+  exigir una credencial valida antes de permitir el siguiente POST.
+
+---
+
+# Auditoria Codex - SPEC 038 / MP04-C1 - CORRECCION VISUAL REQUERIDA
+
+- Fecha: 2026-09-30.
+- Resultado funcional: las rutas y destinos son correctos; registrarse conserva
+  el POST persistente y la solicitud automatica al Hospital.
+- Verificacion Codex: Vitest focal 47/47, typecheck web y ESLint focal en exit 0;
+  Playwright 12/12 contra el codigo actual servido temporalmente en `:3100`.
+- La ejecucion inicial contra `:3000` fallo 12/12 porque ese puerto sirve el
+  contenedor con imagen anterior; no es evidencia contra el cambio auditado.
+- Hallazgo: en `/acceso` sin sesion, `Regístrate` usa `styles.textLink`, por lo
+  que visualmente sigue siendo un enlace de texto. La decision del Product Owner
+  pide dos botones, con `Regístrate` debajo del inicio de sesion.
+- Resultado: MP04-C1 no se acepta todavia. Se abre MP04-C1-C1 para corregir solo
+  la presentacion del segundo control y comprobar su posicion a 320 px.
+
+---
+
+# Handoff FROM OpenCode - SPEC 038 / MP04-C3-C1-C1+MP04-C4 - IMPLEMENTADO, PENDIENTE AUDITORIA CODEX.
+
+- Handoff seguido: `TO-CLAUDE.md` v65, paquete combinado. Auditoría vinculante
+  previa: H1 y H3 aceptados con regresión verde (no se tocaron).
+- Rama: `feat/038-home-access-two-actions`. SDD gate=0 y validate --strict=0 antes
+  y después. Sin commit, push, merge, PR, despliegue ni `merdn_dev`.
+- Estado: bloqueo PostgreSQL cerrado con evidencia aislada sin skips, y tres
+  inscripciones homologadas visualmente con marca `Eloisa`. MP05/MP06 cerrados.
+
+## Trabajo A — PostgreSQL desbloqueado y evidencia sin skips
+
+- Migración histórica corregida con la línea exacta aprobada (`name = name`).
+  Verificado además que la línea vecina de `pg_locks` (`oid = oid`) era correcta
+  y no se tocó. Resto del archivo intacto.
+- Provisionador: lista cerrada 14→17 (las tres de SPEC 038) e invocación del
+  binario JS versionado de Prisma vía `process.execPath` (argv fijo, `shell:false`,
+  mismo entorno mínimo y timeout) en lugar del lanzador `.cmd`, que devuelve
+  `spawn EINVAL` en Node 24/Windows. Se conserva el `coalesce` ratificado.
+- Matriz del runner con `db/access-request-registration.db.test.ts` (29 etapas,
+  23 DB-gated) y pruebas de matriz actualizadas (37/37 + lifecycle 27/27).
+- Ejecución desde cero con el runner: `provision` verde con 17/17 migraciones;
+  prueba DB focal **8/8 sin omitidos** (columnas/CHECK, JSONB v1 sin password,
+  RLS/FORCE, dos tenants, lectura propia, cruzada denegada, rollback rechazado
+  por snapshot y por evento); `cleanup` verde sin restos del proyecto.
+- Incidente de entorno: los 4 contenedores de desarrollo aparecieron detenidos
+  (salida coordinada 08:00:21Z, ajena a este paquete: ningún comando tocó ese
+  proyecto); se levantaron de nuevo 4/4 healthy con volumen de datos intacto.
+- Hallazgos del provisionador/preflight corregidos al paso (mínimos y
+  documentados): `||` en vez de `,` en el SELECT de roles (imprimía columnas
+  separadas) y `updatedAt` faltante en su SQL de comportamiento. La prueba
+  lifecycle no fija esos textos y sigue verde.
+
+## Trabajo B — Fidelidad visual MP04-C4
+
+- Columna 600 px sobre `#F1F3F6`; encabezado `#1E5AA7` radio 20 con Elí guía
+  circular de borde rosa, `Eloisa` y `Panel de inscripción · Atención
+  domiciliaria`; tarjeta blanca de progreso separada (perfil en mayúsculas,
+  `Paso N de 5` rosa, barra 8 px, cinco botones, activo azul/blanco, futuros
+  claros, fila en escritorio); tarjeta blanca de contenido separada (escucha
+  48 px, burbuja gris, etiqueta de sección en mayúsculas, demo compacto).
+- Retorno y `Cambiar perfil` como acciones secundarias (sin fila suelta);
+  Elí compartido sin cambios; fixtures intactos sin password.
+- Paso 1 con retícula (documento completo, nombres/apellidos en columnas, fecha
+  con edad derivada solo-UI que jamás viaja, sexo y contactos en retícula);
+  controles 14x16, borde 1.5, radio 12, fuente 16, foco visible, `aria-invalid`;
+  ejemplos `Ej.` que complementan labels reales. Campos y títulos intactos;
+  toda la conducta (validación, foco, bloqueo, clave, resumen, POST, Hospital)
+  intacta por regresión.
+
+## Verificación ejecutada
+
+| Comprobación | Resultado |
+|---|---|
+| Runner provision + matriz (node:test) + lifecycle | verde, 37/37 y 27/27 |
+| DB focal aislada | 8/8, cero omitidos |
+| API focal (submit+review+openapi+composición) | 186/186 |
+| Web access/hub/page + hospital | 994/994 + e2e 26/26 (teclado, foco, axe, 320/600 px, estilos computados) |
+| Capturas 600/320 inspeccionadas y eliminadas | 4 vistas, 0 artefactos |
+| typecheck API / web, ESLint focal, Prisma, builds, `diff --check`, SDD | 0 en todo |
+
+## Archivos y límites
+
+- Solo allowlist v65: migración force-rls (1 línea), provision.mjs, run-baseline.mjs
+  + su test, wizard, CSS, campos, datos, CentralAccess.test, e2e access-request;
+  `run-baseline.mjs`/`preflight` tocan solo lo necesario y documentado arriba.
+- Sin API, contratos, Hospital, OIDC, dependencias, rutas, fixtures, prototipo ni
+  migraciones fuera de la línea exacta. Sin datos reales ni secretos en reportes.
+
+# Handoff FROM OpenCode - SPEC 038 / MP04-C3-C1 - PARCIAL: H1+H3 VERDES, H2 BLOQUEADO POR MIGRACION EXISTENTE. PENDIENTE AUDITORIA CODEX.
+
+- Handoff seguido: `TO-CLAUDE.md` v64, paquete MP04-C3-C1.
+- Rama: `feat/038-home-access-two-actions`. SDD gate=0 y validate --strict=0 antes
+  y después. Sin commit, push, merge, PR, despliegue, `merdn_dev` ni Docker de
+  desarrollo tocados (verificados en pie tras el trabajo).
+- Estado: hallazgos 1 y 3 cerrados con verificación verde. El hallazgo 2 queda con
+  prueba lista y provisionamiento intentado de verdad, detenido por un defecto
+  preexistente en una migración existente fuera de la allowlist. MP05/MP06 cerrados.
+
+## H1 — Auditoría atómica del 409 (cerrado)
+
+- Evento `ACCESS_REQUEST_REPLAY_CONFLICT` agregado al enum Prisma, a la migración
+  MP04-C3 (aún no aplicada) y documentada su inercia tras rollback, como en MP04.
+- `AuditService.recordAccessRequestReplayConflictWithin` dedicado:
+  `actorType=PUBLIC_SELF_ENROLLMENT`, actor/rol nulos, recurso interno, endpoint
+  fijo, correlación de servidor, `outcome=DENIED`, sin PII. Sin reutilizar familias
+  ajenas.
+- El servicio lo escribe en la misma transacción que detecta la diferencia, antes
+  del marcador; si falla, la llamada falla cerrada (503 opaco, sin 409). Se retiró
+  la desviación documentada en MP04-C3.
+- Tests: reintento idéntico conserva un solo `CREATED`; distinto devuelve 409 y
+  agrega exactamente un `REPLAY_CONFLICT` sin PII; fallo de auditoría responde 503
+  sin 409 ni evento.
+
+## H3 — Encabezado Hospital (cerrado)
+
+- `Datos personales` como `h4` visible asociado con `aria-labelledby` al bloque
+  existente (hermano del `dl`, no dentro: un encabezado dentro de `dl` es inválido).
+  Cinco encabezados reconocibles con las cuatro secciones del expediente. Sin PII
+  duplicada ni JSON crudo.
+
+## H2 — DB aislada (bloqueado por defecto preexistente, con evidencia real)
+
+- Prueba `access-request-registration.db.test.ts` reescrita a matriz real: columnas,
+  4 CHECK, RLS/FORCE, versión 1 sin password, lectura por tenant, lectura cruzada
+  denegada y rollback rechazado con instantánea y con evento (este último en
+  transacción que el propio rechazo revierte). `tsc`/`eslint` en verde.
+- `REQUIRED_MIGRATIONS` del provisionador ampliado 14→17 (las tres de SPEC 038).
+- Ejecución real intentada con el runner aprobado sobre contenedor desechable
+  (nunca `merdn_dev`): `up`, `health`, identidad y `pre-clean` verificados; la
+  migración 13/17 (`20260830160000_force_rls_core_institutional_hospital`, archivo
+  fuera de allowlist) aborta siempre en su preflight: `g.database = (SELECT oid
+  ...)` compara `name = oid` (`pg_prepared_xacts.database` es `name`). Tampoco
+  está aplicada en `merdn_dev`: nunca se aplicó en ningún entorno. Corrección
+  requerida (no aplicada por allowlist): `WHERE g.database = current_database()`.
+- Hallazgo lateral documentado: `assertServerIdentity` del provisionador fallaba
+  siempre porque `inet_server_addr()` es NULL por socket Unix y envenenaba la
+  concatenación; se aplicó `coalesce` mínimo sin tocar las tres comparaciones
+  exigidas (requiere ratificación Codex, excede la letra de la allowlist).
+- Hallazgo lateral 2: `execFile('npx.cmd', ..., shell:false)` da `spawn EINVAL` en
+  este Node 24/Windows; `migrate deploy` se ejecutó directo con Prisma CLI e
+  idéntico mecanismo de URL (12/17 aplicadas antes del defecto anterior).
+- Cleanup aprobado ejecutado con éxito (proyecto de pruebas eliminado, desarrollo
+  intacto).
+- Etapa `db/access-request-registration.db.test.ts` deliberadamente NO agregada a
+  la matriz: `tests/testing/run-baseline.test.mts` (fuera de allowlist) fija 28
+  etapas e índices y quedaría en rojo. Propuesta de una línea para Codex.
+- Evidencia DB de MP04-C3 sigue diferida sin culpa del paquete; comando y causa
+  exactos arriba.
+
+## Verificación ejecutada
+
+| Comprobación | Resultado |
+|---|---|
+| API focal (submit 89 + review 41 + openapi 55 + composición) | 186/186 |
+| Web access + hospital | 994/994 (28 arch.) |
+| typecheck API / web | 0 / 0 |
+| ESLint focal (incl. provision.mjs) + `node --check` | 0 / 0 |
+| prisma validate / format --check | 0 / 0 |
+| SDD gate / validate --strict (pre y post) | 0 / 0 |
+| Escáner de secretos | falla en baseline (verificado con `stash`, preexistente) |
+
+## Archivos tocados (solo allowlist v64, más 2 notas)
+
+- `prisma/schema.prisma`, migración MP04-C3, ROLLBACK, `audit.service.ts`,
+  `access-request.service.ts`, `access-requests.test.ts`,
+  `access-request-registration.db.test.ts`, `HospitalAccessRequests.tsx`,
+  `hospitalAccessRequests.test.tsx`, `test-db-provision.mjs` (lista + coalesce),
+  `FROM-CLAUDE.md`.
+- `generated/**` regenerado localmente (ignorado por git, verificado con `tsc`).
+- No se agregaron etapas a `run-baseline.mjs` (motivo arriba); no se tocó el
+  wizard ni su CSS.
+
+# Handoff FROM OpenCode - SPEC 038 / MP04-C3 - IMPLEMENTADO, PENDIENTE AUDITORIA CODEX
+
+- Handoff seguido: `TO-CLAUDE.md` v63, paquete MP04-C3 (requiere MP04-C2-C1, incluido
+  por regresión). Decisiones PO de dos acciones, inscripción guiada y cinco pasos.
+- Rama: `feat/038-home-access-two-actions`. SDD gate=0 y validate --strict=0 antes
+  y después. Sin commit, push, merge, PR, despliegue ni migraciones aplicadas.
+- Estado: paquete completo ejecutado (datos, API, Hospital, web). MP05/MP06 cerrados.
+
+## Entrega funcional
+
+- `/acceso?accion=registro` son tres inscripciones de cinco pasos con títulos exactos,
+  iconografía de Elí (guía en cabecera con borde rosa, escucha por paso, agradece en
+  el cierre, burbuja flotante con saludo) y marca `Eloisa`. Paso 1 conserva identidad
+  y contacto; la clave se pide solo en el paso 5 y jamás sale en el resumen.
+- Cada rama muestra solo sus tres fixtures completos (sin clave). Cambiar perfil borra
+  todo; los condicionales ocultos se purgan (apoyos, institución, otra EPS, vecino sin
+  autorización, municipio al cambiar departamento).
+- El POST lleva once claves (diez + `registration` de la rama). La API valida la unión
+  discriminada (claves cruzadas/extra, catálogos, longitudes, arreglos acotados sin
+  duplicados, NINGUNA excluyente, condicionales, password estructuralmente prohibida en
+  el expediente) y persiste Person + solicitud + instantánea versión 1 en la misma
+  transacción. Reintento idéntico devuelve la existente; cuerpo materialmente distinto
+  recibe 409 opaco sin sobrescribir.
+- El detalle protegido del Hospital muestra el expediente por secciones traducidas
+  (4 por rama + nota de declaraciones), nunca JSON crudo; el listado no lo incluye.
+  La aprobación no interpreta el expediente: perfiles mínimos MP04 intactos.
+- C2-C1 generalizado al paso 5: tras fallo se vuelve a la clave vacía, marcada y
+  enfocada; defensa pre-POST impide cualquier envío sin clave.
+
+## Archivos
+
+- Datos: `prisma/schema.prisma` (+2 columnas), migración
+  `20260930230000_access_request_registration_snapshot/` (4 CHECK) y su ROLLBACK
+  condicional. NO aplicadas; `validate`/`format --check` en verde.
+- API: `access-request-registration.contract.ts` + `access-request-registration.validation.ts`
+  (nuevos), `access-request.dto.ts`, `access-request.validation.ts`,
+  `access-request.service.ts` (comparación canónica, escritura cruda acotada, 409 por
+  `ConflictException`), `access-request-review.contract.ts`, `access-request-review.dto.ts`,
+  `access-request-review.service.ts` (detalle con expediente), tests de los tres
+  archivos focales + `access-request-registration.db.test.ts` (nuevo) + `openapi.test.ts`.
+- Web registro: `accessRegistrationProfileData.ts`, `accessRegistrationProfileFields.tsx`
+  (nuevos), `accessRegistrationFlow.ts` + test (5 pasos), `accessRequestDemoFixtures.ts`
+  (nuevo export, anterior intacto), `accessRequestClient.ts` + test (11 claves),
+  `AccessRegistrationWizard.tsx`, `accessRegistration.module.css`, `CentralAccess.test.ts`,
+  ambos e2e.
+- Hospital: `hospitalAccessRequestsClient.ts` (claves opcionales compatibles),
+  `HospitalAccessRequests.tsx` (secciones), su CSS y ambos tests.
+- `FROM-CLAUDE.md`: solo este reporte.
+
+## Verificación ejecutada
+
+| Comprobación | Resultado |
+|---|---|
+| API focal: submit 87 + review 41 + openapi 55 + composición (4 arch.) | 184/184 |
+| API provisioning | 25/25 |
+| API registration.db | 6 omitidos con banner (diferida, sin `merdn_dev`) |
+| Web unitaria access+hospital+page | 1015/1015 (29 arch.) |
+| Playwright access-request (3 ramas × 5 pasos) + provisioning | 25/25 (teclado, foco, 320 px, axe) |
+| typecheck API / web | 0 / 0 |
+| ESLint focal API / web | 0 / 0 |
+| `nest build` / `next build` | 0 / 0 |
+| prisma validate / format --check | 0 / 0 |
+| SDD gate / validate --strict (pre y post) | 0 / 0 |
+
+- E2E contra `next dev` en `:3100`, API/OIDC interceptados, Docker intacto.
+
+## Desviaciones, residuales y riesgos para Codex
+
+1. **409 sin evento dedicado (desviación documentada).** `audit.service.ts` y el enum
+   están fuera de la allowlist: `Viewed` exige revisor institucional (inventarlo sería
+   falso) y `Created` afirmaría una creación inexistente. El 409 es opaco y sin PII;
+   se propone `ACCESS_REQUEST_REPLAY_CONFLICT` como seguimiento.
+2. **DB real diferida.** Sin base aislada autorizada y sin tocar `merdn_dev`; comando
+   de aplicación local pendiente de auditoría.
+3. **Hospital e2e preexistente en rojo (5 tests, archivo fuera de allowlist).** Su
+   DETAIL es anterior a MP04 (sin `provisioningAttempts/ErrorCode`) y espera
+   `status=PENDING` por defecto; el cliente aprobado ya no lo envía. No lo causa ni lo
+   puede tocar este paquete; requiere actualización Codex de ese spec.
+4. **`human-auth.api.test.ts` con 2 fallos preexistentes de entorno** (usan PostgreSQL
+   real con baseline rota: `idleExpiresInSeconds` 28799 y 401/200). Módulos no tocados.
+5. **Escáner de secretos falla en baseline** (verificado con `stash`: también falla sin
+   mis cambios; marca el centinela `claveFicticia7` y `{ secret: ... }` de pruebas).
+6. Reducciones fieles a límites: sin tarjeta/registro profesional, sin corregimientos,
+   sin carga documental, sin residencia del cuidador, sin texto libre de diagnóstico;
+   `Visitador médico` con tilde; geo del visitador por códigos DIVIPOLA con nombres en
+   el expediente.
+
+# Handoff FROM OpenCode - SPEC 038 / MP04-C2-C1 - IMPLEMENTADO, PENDIENTE AUDITORIA CODEX
+
+- Handoff seguido: `TO-CLAUDE.md` v62, paquete MP04-C2-C1.
+- Rama: `feat/038-home-access-two-actions`. SDD gate=0 y validate --strict=0
+  antes y después de editar. No hubo commit, push, merge, PR ni despliegue.
+- Estado: reintento corregido y toda la verificación indicada en verde. MP05 y
+  MP06 permanecen cerrados. Se detiene para auditoría Codex.
+
+## Defecto y corrección
+
+- Defecto: tras `forbidden`, `rateLimited` o `unavailable` el wizard quedaba en
+  Confirmación con la clave ya borrada por OD-11; pulsar `Registrarme` enviaba
+  un POST con contraseña vacía.
+- Corrección en `AccessRegistrationWizard.tsx` (único archivo productivo tocado):
+  1. Tras esos tres desenlaces se conservan datos no secretos y mensaje opaco,
+     pero se vuelve al paso 2 con la clave marcada inválida y enfocada tras el
+     render. Solo con clave nueva, Continuar y `Registrarme` hay otro POST.
+  2. `invalid` conserva el regreso al paso del primer campo conocido; sin campo
+     conocido vuelve al paso 2 y enfoca la clave (ya borrada).
+  3. Defensa inmediatamente antes del bloqueo y la red: si el paso 2 ya no es
+     válido, no hay llamada, se vuelve al paso 2 y se enfoca el campo.
+  4. El mensaje se conserva al volver al paso 2 hasta un nuevo intento real o
+     cambio de perfil; `cargarDemo` ya no lo limpia. Sin reponer password.
+- Sin cambios visuales, de cuerpo válido, cliente, API ni otras pantallas.
+
+## Archivos (solo allowlist v62)
+
+- `AccessRegistrationWizard.tsx`: `regresarAPaso2()`, defensa pre-POST,
+  ramas de `invalid`-desconocido y no-aceptado.
+- `CentralAccess.test.ts`: aserciones de defensa (orden validar-bloqueo-red),
+  regreso a paso 2 y foco diferido.
+- `e2e/access-request.spec.ts`: test 503 reescrito (paso 2, clave vacía y
+  enfocada, Continuar sin clave = 1 POST, segundo POST con clave nueva) y test
+  nuevo de `invalid` con campo desconocido.
+- `FROM-CLAUDE.md`: solo este reporte. `flow.ts`/`flow.test.ts` sin cambios.
+
+## Verificación ejecutada
+
+| Comprobación | Resultado |
+|---|---|
+| Vitest focal access+page | 4 archivos, 91/91 |
+| Playwright ambos specs (chromium, 320 px, axe) | 25/25 |
+| `npm run typecheck` (web) | exit 0 |
+| `npx eslint` focal | exit 0 |
+| SDD gate / validate --strict (pre y post) | 0 / 0 |
+
+- E2E contra `next dev` local en `:3100` (Docker intacto durante las pruebas).
+- Segundo cuerpo verificado: `password: 'OtraClave456'`; primero y segundo son
+  las únicas dos llamadas; doble gesto, tres perfiles, 320 px y axe verdes.
+
+## Docker
+
+- `docker compose up -d --build web` ejecutado tras la verificación: imagen
+  `merdn-web:latest` reconstruida del árbol actual (21:44 -06:00),
+  `merdn-web-1` healthy, `/` y `/acceso?accion=registro` responden 200.
+  API, PostgreSQL y OIDC intactos y healthy. Recargar el celular sin caché.
+
+# Handoff FROM OpenCode - SPEC 038 / MP04-C2 - IMPLEMENTADO, PENDIENTE AUDITORIA CODEX
+
+- Handoff seguido: `TO-CLAUDE.md` v61, paquete MP04-C2, decisiones PO
+  `2026-09-30-atencion-domiciliaria-dos-acciones.md` y
+  `2026-09-30-inscripcion-guiada-por-perfil.md`. Absorbe MP04-C1-C1
+  (`Regístrate` como segundo botón bajo `Iniciar sesión`).
+- Rama: `feat/038-home-access-two-actions`. SDD gate=0 y validate --strict=0
+  antes y después de editar. No hubo commit, push, merge, PR ni despliegue.
+- Estado: inscripción guiada implementada y toda la verificación indicada en
+  verde. MP05 y MP06 permanecen cerrados. Se detiene para auditoría Codex.
+
+## Entrega funcional
+
+- `/acceso?accion=registro` es una inscripción guiada: encabezado azul con marca
+  `Eloisa` y `Panel de inscripción - Atención domiciliaria`, regreso al Portal
+  Central, aviso permanente de datos ficticios y `¿Cómo se va a registrar?` con
+  tres tarjetas (Paciente, Cuidador, Visitador médico).
+- Cada rama muestra `INSCRIPCIÓN COMO ...`, barra de progreso, tres pasos
+  navegables (Datos personales, Contacto y acceso, Confirmación) y solo sus tres
+  fixtures. `Atrás` conserva la rama; `Cambiar perfil` borra todo sin transferir
+  datos entre perfiles. La credencial nunca entra en fixtures, resumen ni DOM
+  de confirmación, y se vacía en `finally` tras todo intento de red.
+- El envío reutiliza `submitAccessRequest`: un solo POST con las diez claves,
+  `requestedProfile` derivado de la tarjeta, bloqueo sincrónico y validación por
+  paso con foco al primer campo inválido. Ante `invalid` se regresa al paso del
+  primer campo reportado; el resto conserva mensajes opacos con reintento. Solo
+  tras `202` hay referencia, `PENDING` y espera de aprobación Hospital, sin
+  entradas a portales.
+- `AccessRequestForm.tsx` (bloque único) queda eliminado y sustituido por el
+  wizard; era el único montaje en `CentralAccess` y ningún otro archivo lo
+  importaba. Cliente y fixtures intactos: reutilizados sin modificar.
+- Sin sesión conserva dos botones con `Regístrate` como botón secundario bajo
+  `Iniciar sesión` (absorción C1-C1 verificada a 320 px, sin desborde).
+
+## Archivos (solo allowlist v61)
+
+- `accessRegistrationFlow.ts` (nuevo): máquina pura (ramas, pasos, validación,
+  `pasoDeCampo`, cuerpo exacto de 10 claves, bloqueo sincrónico).
+- `accessRegistrationFlow.test.ts` (nuevo): 18 pruebas puras.
+- `AccessRegistrationWizard.tsx` (nuevo): selector, rama, pasos, confirmación.
+- `accessRegistration.module.css` (nuevo): patrón del prototipo (azul #1E5AA7,
+  rosa #E83CB6 en acentos no textuales, primario #9C1568 por contraste AA).
+- `CentralAccess.tsx`: rama de registro monta el wizard; `Regístrate` con
+  `styles.secondary`. `centralAccess.module.css` no requirió cambios.
+- `AccessRequestForm.tsx`: eliminado (sustituido).
+- `CentralAccess.test.ts`: contrato migrado al wizard + flujo; expectativa del
+  hub intacta; test C1-C1 del botón secundario.
+- `e2e/access-request.spec.ts`: reescrito a las tres ramas (12 tests).
+- `e2e/access-provisioning.spec.ts`: test de registro migrado al wizard.
+- `FROM-CLAUDE.md`: solo este reporte.
+
+## Verificación ejecutada
+
+| Comprobación | Resultado |
+|---|---|
+| Vitest focal access+hub+page | 4 archivos, 90/90 |
+| Playwright `access-request` + `access-provisioning` (chromium, 320 px, axe) | 24/24 |
+| `npm run typecheck` (web) | exit 0 |
+| `npx eslint` archivos tocados | exit 0 |
+| SDD gate / validate --strict (pre y post) | 0 / 0 |
+
+- E2E contra `next dev` local en `:3100` (Docker intacto; API/OIDC interceptados).
+- Axe: sin `serious`/`critical` en selector, pasos y confirmación. El botón
+  primario usa magenta oscuro #9C1568 (7.72:1) porque el rosa del prototipo
+  #E83CB6 con blanco da 3.65:1; el rosa queda en acentos no textuales.
+- Correcciones durante el trabajo: foco diferido tras `invalid` con cambio de
+  paso (el campo aún no existe en el DOM en el mismo tick) y reescritura del
+  test de botón-bloqueado (tras `202` la rama se retira a confirmación).
+
+## Riesgos y notas para Codex
+
+- `HubAccessPortal.tsx` y `page.test.tsx` figuran modificados en el árbol pero
+  son restas de MP04-C1, anteriores a esta ejecución; no se tocaron aquí.
+- Residual preexistente fuera del paquete, no tocado: `branding.test.tsx`.
+- `Visitador médico` con tilde (no `Visitador medico` de v61): el handoff va sin
+  tildes en todo el texto y la app usa la forma acentuada aprobada desde MP02.
+- Sin datos clínicos/territoriales/relaciones/afiliaciones; `/inscripcion` y
+  prototipo intactos; sin secretos nuevos.
+
+# Handoff FROM OpenCode - SPEC 038 / MP04-C1 - IMPLEMENTADO, PENDIENTE AUDITORIA CODEX
+
+- Handoff seguido: `TO-CLAUDE.md` v59, paquete autorizado MP04-C1, decision PO
+  `spec/bitacora/decisiones/2026-09-30-atencion-domiciliaria-dos-acciones.md`.
+- Rama: `feat/038-home-access-two-actions`. SDD gate=0 y validate --strict=0
+  antes y despues de editar. No hubo commit, push, merge, PR ni despliegue.
+- Estado: las dos acciones estan implementadas y toda la verificacion indicada
+  esta en verde. MP05 y MP06 permanecen cerrados. Se detiene para auditoria Codex.
+
+## Entrega funcional
+
+- La tarjeta `Atencion Domiciliaria` de `/` ofrece exactamente `Iniciar sesión`
+  -> `/acceso` y `Regístrate` -> `/acceso?accion=registro`. Sin tercer CTA.
+- `/acceso` sin sesion ofrece exactamente las dos acciones: el primer CTA inicia
+  el Authorization Code + PKCE existente; el segundo abre la rama de registro.
+- La rama `accion=registro` se presenta como `Regístrate` y explica que al
+  completar el registro se envia automaticamente una solicitud al Hospital y
+  que no se podra entrar hasta que sea aprobada.
+- El boton de envio del formulario persistente dice `Registrarme`; sigue siendo
+  una sola llamada con referencia y `PENDING`, bloqueo de doble envio por
+  `useRef` y vaciado de password en `finally` (exito y error).
+- Botones de carga ficticia de Paciente, Cuidador y Visitador medico intactos:
+  mismos datos y mismo cuerpo enviado.
+- Retirados de estas superficies: `Solicitar acceso`,
+  `Registrarme / solicitar acceso`, `Ver o registrar una solicitud`,
+  `Registro guiado`, `Abrir registro guiado` y `Ver el registro guiado por perfil`.
+  La ruta `/inscripcion` no se toco y sigue accesible por URL.
+- Hospital, Alcaldia, login institucional, backend, Prisma, migraciones,
+  Keycloak, contratos API y permisos: intactos.
+
+## Archivos modificados (solo allowlist v59)
+
+- `apps/web/src/features/hub/HubAccessPortal.tsx`: tarjeta con dos CTA
+  (`Iniciar sesión`, `Regístrate`); eliminado el enlace a `/inscripcion`.
+- `apps/web/src/app/page.test.tsx`: nuevo test de exactamente dos enlaces a
+  `/acceso` con destinos exactos y ausencia del vocabulario retirado; Hospital
+  y Alcaldia conservan su acceso.
+- `apps/web/src/features/access/CentralAccess.tsx`: rama de registro como
+  `Regístrate` con explicacion de solicitud automatica; sin sesion y denegado
+  con solo `Regístrate`; eliminados los dos enlaces a `/inscripcion`.
+- `apps/web/src/features/access/AccessRequestForm.tsx`: texto del boton a
+  `Registrarme`; sin cambios de logica, contrato ni seguridad.
+- `apps/web/src/features/access/CentralAccess.test.ts`: actualizada la
+  expectativa del hub (dos CTA, sin `/inscripcion`) y nuevos bloques de
+  contrato MP04-C1 sobre la fuente.
+- `apps/web/e2e/access-provisioning.spec.ts`: dos tests nuevos (tarjeta de `/`
+  con teclado y axe; sin sesion con dos CTA y axe) y aserciones de encabezado,
+  explicacion y boton `Registrarme` en el registro.
+- `spec/bitacora/handoffs/FROM-CLAUDE.md`: solo este reporte.
+
+## Verificacion ejecutada
+
+| Comprobacion | Resultado |
+|---|---|
+| Vitest focal: `src/app/page.test.tsx` + `src/features/access/CentralAccess.test.ts` | 2 archivos, 47/47 |
+| Playwright focal: `e2e/access-provisioning.spec.ts` (chromium) | 12/12, incluye teclado, foco, 320 px y axe |
+| `npm run typecheck` (web) | exit 0 |
+| `npx eslint` sobre los 6 archivos tocados | exit 0 |
+| `check-sdd-gate.sh` / `validate-sdd.sh --strict` (pre y post) | 0 / 0 |
+
+- E2E servido por `next dev` local en `:3100` con el codigo actual del arbol
+  (`MERDN_E2E_BASE_URL=http://localhost:3100`); contenedores Docker intactos;
+  API/OIDC interceptados, sin backend ni Keycloak reales.
+- Axe: sin violaciones `serious`/`critical` en `/` y `/acceso` sin sesion;
+  el selector multiple conserva cero violaciones totales.
+- Diff total: 6 archivos, +135/-12. Sin cambios fuera de la allowlist
+  (`git status` verificado; los `M` en `spec/` y el untracked de decisiones
+  son previos de Codex, no de esta ejecucion).
+
+## Riesgos y notas para Codex
+
+- Residual preexistente fuera del paquete, no tocado: `src/config/branding.test.tsx`
+  (2 tests por el literal `Portal Eloisa` en `HubAccessPortal.tsx`). Sigue igual.
+- Avisos `LF will be replaced by CRLF` al inspeccionar el diff: cosmeticos,
+  comportamiento previo del repo en Windows; sin efecto en el codigo.
+- La rama de registro conserva el subtitulo de marca `Solicitud de acceso`
+  (sustantivo descriptivo, no CTA): no esta en la lista de retiro de v59.
+- El texto de carga del boton se conservo como `Enviando solicitud…`; v59 solo
+  autoriza `Registrarme` para el boton en reposo.
+
 # Handoff FROM OpenCode/Codex - SPEC 038 / MP04 - IMPLEMENTADO, EVIDENCIA DB DIFERIDA
 
 - START: 2026-09-30 12:20:00 -06:00. Cierre: 2026-09-30 16:42:17 -06:00.

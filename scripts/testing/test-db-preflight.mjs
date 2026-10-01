@@ -224,7 +224,10 @@ export function buildCatalogSql() {
   const roles = [EXPECTED_TEST_ENVIRONMENT.runtimeUser, TEST_OWNER_ROLE];
   const roleSelects = roles
     .map((role) => {
-      const flags = UNSAFE_ROLE_FLAGS.map((flag) => `coalesce(r.${flag}, false)::text`).join(", '|', ");
+      // Concatenación con `||`: una coma separaría COLUMNAS y psql las
+      // imprimiría con su propio separador, rompiendo el formato de una sola
+      // línea etiquetada que el parser espera.
+      const flags = UNSAFE_ROLE_FLAGS.map((flag) => `coalesce(r.${flag}, false)::text`).join(" || '|' || ");
       return `SELECT 'role|' || ${quoteLiteral(role)} || '|' || coalesce(r.rolcanlogin::text, 'missing') || '|' || ${flags}
   FROM pg_roles r WHERE r.rolname = ${quoteLiteral(role)};`;
     })
@@ -408,13 +411,13 @@ BEGIN;
 SET LOCAL lock_timeout = '${PREFLIGHT_LIMITS.lockTimeoutMs}ms';
 SET LOCAL statement_timeout = '${PREFLIGHT_LIMITS.statementTimeoutMs}ms';
 
-INSERT INTO public.tenant (id, code, name)
-VALUES (${quoteLiteral(a.tenantAId)}::uuid, ${quoteLiteral(a.tenantACode)}, 'PREFLIGHT A EFIMERA'),
-       (${quoteLiteral(a.tenantBId)}::uuid, ${quoteLiteral(a.tenantBCode)}, 'PREFLIGHT B EFIMERA');
+INSERT INTO public.tenant (id, code, name, "updatedAt")
+VALUES (${quoteLiteral(a.tenantAId)}::uuid, ${quoteLiteral(a.tenantACode)}, 'PREFLIGHT A EFIMERA', now()),
+       (${quoteLiteral(a.tenantBId)}::uuid, ${quoteLiteral(a.tenantBCode)}, 'PREFLIGHT B EFIMERA', now());
 
-INSERT INTO public.person (id, "tenantId", "documentType", "documentNumber", "documentNumberNormalized", "givenNames", "familyNames", "birthDate", "sexGenderCode")
-VALUES (${quoteLiteral(a.personAId)}::uuid, ${quoteLiteral(a.tenantAId)}::uuid, 'OTRO', 'PF-A-0001', 'pf-a-0001', 'PREFLIGHT', 'A', DATE '1990-01-01', 'PREFIERE_NO_DECIRLO'),
-       (${quoteLiteral(a.personBId)}::uuid, ${quoteLiteral(a.tenantBId)}::uuid, 'OTRO', 'PF-B-0001', 'pf-b-0001', 'PREFLIGHT', 'B', DATE '1990-01-01', 'PREFIERE_NO_DECIRLO');
+INSERT INTO public.person (id, "tenantId", "documentType", "documentNumber", "documentNumberNormalized", "givenNames", "familyNames", "birthDate", "sexGenderCode", "updatedAt")
+VALUES (${quoteLiteral(a.personAId)}::uuid, ${quoteLiteral(a.tenantAId)}::uuid, 'OTRO', 'PF-A-0001', 'pf-a-0001', 'PREFLIGHT', 'A', DATE '1990-01-01', 'PREFIERE_NO_DECIRLO', now()),
+       (${quoteLiteral(a.personBId)}::uuid, ${quoteLiteral(a.tenantBId)}::uuid, 'OTRO', 'PF-B-0001', 'pf-b-0001', 'PREFLIGHT', 'B', DATE '1990-01-01', 'PREFIERE_NO_DECIRLO', now());
 
 ${roleProbe(
   EXPECTED_TEST_ENVIRONMENT.runtimeUser,
@@ -439,8 +442,8 @@ ${roleProbe(
   EXPECTED_TEST_ENVIRONMENT.runtimeUser,
   `  DO $probe$ BEGIN
   BEGIN
-    INSERT INTO public.person (id, "tenantId", "documentType", "documentNumber", "documentNumberNormalized", "givenNames", "familyNames", "birthDate", "sexGenderCode")
-    VALUES (${quoteLiteral(a.personCrossId)}::uuid, ${quoteLiteral(a.tenantBId)}::uuid, 'OTRO', 'PF-C-0001', 'pf-c-0001', 'PREFLIGHT', 'C', DATE '1990-01-01', 'PREFIERE_NO_DECIRLO');
+    INSERT INTO public.person (id, "tenantId", "documentType", "documentNumber", "documentNumberNormalized", "givenNames", "familyNames", "birthDate", "sexGenderCode", "updatedAt")
+    VALUES (${quoteLiteral(a.personCrossId)}::uuid, ${quoteLiteral(a.tenantBId)}::uuid, 'OTRO', 'PF-C-0001', 'pf-c-0001', 'PREFLIGHT', 'C', DATE '1990-01-01', 'PREFIERE_NO_DECIRLO', now());
     PERFORM set_config('merdn.preflight.cross_insert', 'allowed', true);
   EXCEPTION WHEN insufficient_privilege THEN
     PERFORM set_config('merdn.preflight.cross_insert', 'denied', true);

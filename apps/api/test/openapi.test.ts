@@ -1336,6 +1336,25 @@ describe('documento OpenAPI de la revisión institucional de solicitudes', () =>
       'submittedAt',
       'version',
     ]);
+
+    // El expediente no se filtra al listado ni por accidente de esquema.
+    expect('registration' in (item?.properties ?? {})).toBe(false);
+    expect('registrationSchemaVersion' in (item?.properties ?? {})).toBe(false);
+  });
+
+  it('el detalle y el envio declaran el expediente opcional (MP04-C3)', () => {
+    const detalle = document.components?.schemas?.['AccessRequestReviewDetailDto'] as
+      | { readonly properties?: Record<string, unknown> }
+      | undefined;
+
+    expect('registration' in (detalle?.properties ?? {})).toBe(true);
+    expect('registrationSchemaVersion' in (detalle?.properties ?? {})).toBe(true);
+
+    const envio = document.components?.schemas?.['AccessRequestSubmissionDto'] as
+      | { readonly properties?: Record<string, unknown> }
+      | undefined;
+
+    expect('registration' in (envio?.properties ?? {})).toBe(true);
   });
 
   it('el detalle declara los campos personales y el 404 opaco', () => {

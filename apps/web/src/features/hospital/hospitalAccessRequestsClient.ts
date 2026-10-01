@@ -152,6 +152,16 @@ export interface AccessRequestDetail extends AccessRequestListItem {
   readonly provisioningErrorCode: string | null;
   readonly decidedAt: string | null;
   readonly decisionReasonCode: (typeof REASON_CODES)[number] | null;
+  /**
+   * Versión del esquema del expediente ficticio, o `null` sin expediente.
+   * Ausente en respuestas anteriores al flujo guiado: se normaliza a `null`.
+   */
+  readonly registrationSchemaVersion: number | null;
+  /**
+   * Expediente ficticio declarado, o `null` sin expediente. Se renderiza por
+   * secciones y etiquetas, nunca como JSON crudo.
+   */
+  readonly registration: Record<string, unknown> | null;
 }
 
 export interface AccessRequestDecision {
@@ -267,8 +277,63 @@ const DETAIL_KEYS = [
   'decidedAt', 'decisionReasonCode',
 ] as const;
 
+/**
+ * Claves del expediente. OPCIONALES por compatibilidad: las respuestas
+ * anteriores al flujo guiado no las traen y se normalizan a `null`. Cuando
+ * vienen, ambas o ninguna: el servidor las emite juntas por su CHECK.
+ */
+const REGISTRATION_KEYS = ['registrationSchemaVersion', 'registration'] as const;
+
+function isRegistration(value: Record<string, unknown>): boolean {
+  const version = value['registrationSchemaVersion'];
+  const data = value['registration'];
+
+  // Compatibilidad: las respuestas anteriores al flujo guiado no traen las claves.
+  if (version === undefined && data === undefined) {
+    return true;
+  }
+
+  // Coherencia del servidor: ambos nulos o versión con objeto no vacío.
+  if (version === null || version === undefined) {
+    return data === null || data === undefined;
+  }
+
+  if (typeof version !== 'number' || !Number.isInteger(version) || version <= 0) {
+    return false;
+  }
+
+  return isRecord(data) && Object.keys(data).length > 0;
+}
+
+function withRegistration(value: Record<string, unknown>): AccessRequestDetail {
+  return {
+    ...(value as unknown as AccessRequestDetail),
+    registrationSchemaVersion:
+      typeof value['registrationSchemaVersion'] === 'number'
+        ? (value['registrationSchemaVersion'] as number)
+        : null,
+    registration: isRecord(value['registration']) ? (value['registration'] as Record<string, unknown>) : null,
+  };
+}
+
 function parseDetail(value: unknown): AccessRequestDetail | null {
-  if (!isRecord(value) || !hasExactKeys(value, DETAIL_KEYS) || !isListItem(pickListItem(value))) return null;
+  if (!isRecord(value) || !isListItem(pickListItem(value))) return null;
+
+  const resto = Object.fromEntries(
+    Object.entries(value).filter(([key]) => !LIST_ITEM_KEYS.includes(key as never)),
+  );
+
+  const esperadas = [...DETAIL_KEYS.filter((key) => !LIST_ITEM_KEYS.includes(key as never))];
+  const presentes = Object.keys(resto);
+
+  const sinExpediente = presentes.every((key) => esperadas.includes(key as never)) &&
+    esperadas.every((key) => presentes.includes(key));
+  const conExpediente = [...esperadas, ...REGISTRATION_KEYS].every((key) =>
+    presentes.includes(key),
+  ) && presentes.length === esperadas.length + REGISTRATION_KEYS.length;
+
+  if (!sinExpediente && !conExpediente) return null;
+  if (!isRegistration(value)) return null;
   if (!isEnum(value.documentType, DOCUMENT_TYPES)
     || typeof value.documentNumber !== 'string' || value.documentNumber.trim() === ''
     || typeof value.birthDate !== 'string' || !DATE_ONLY.test(value.birthDate)
@@ -282,7 +347,7 @@ function parseDetail(value: unknown): AccessRequestDetail | null {
         || !PROVISIONING_ERROR_CODE_PATTERN.test(value.provisioningErrorCode)))
     || (value.decidedAt !== null && !isIsoDateTime(value.decidedAt))
     || (value.decisionReasonCode !== null && !isEnum(value.decisionReasonCode, REASON_CODES))) return null;
-  return value as unknown as AccessRequestDetail;
+  return withRegistration(value);
 }
 
 function pickListItem(value: Record<string, unknown>): Record<string, unknown> {

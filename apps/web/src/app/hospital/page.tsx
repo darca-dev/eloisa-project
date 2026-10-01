@@ -5,6 +5,9 @@ import { platformNameInSentence } from '@/config/branding';
 import { HospitalShell } from '@/features/hospital/HospitalShell';
 import type { HospitalSesionDto } from '@/features/hospital/hospitalInstitutionClient';
 
+/* La bandera demo se lee al atender la solicitud, no al construir la imagen. */
+export const dynamic = 'force-dynamic';
+
 /**
  * Superficie protegida de revisión del Shell Hospital (TASK-003H-01, FR-01).
  *
@@ -17,11 +20,11 @@ import type { HospitalSesionDto } from '@/features/hospital/hospitalInstitutionC
  * server-side (`MERDN_HOSPITAL_DEMO_LOCAL=true`), cerrada por defecto. Ningún
  * parámetro de URL puede activarlo: el bypass no existe en el navegador.
  *
- * Con el modo demo activado se inyecta una sesión demostrativa para que el shell
- * muestre el panel completo en un entorno local sin backend. Esa sesión ES
- * FICTICIA: no otorga acceso al API real, no tiene cookie HttpOnly válida y no
- * persiste entre recargas. Los endpoints de datos siguen protegidos por sus
- * propios guards en el servidor.
+ * Con el modo demo activado se inyecta un contexto demostrativo para recorrer
+ * Hospital sin escribir credenciales. Esa sesión ES FICTICIA, no crea cookie,
+ * no otorga acceso al API real y no persiste entre recargas. Los endpoints de
+ * datos conservan sus propios guards. Con el modo desactivado el formulario
+ * institucional manual permanece intacto.
  */
 const SESION_DEMO: HospitalSesionDto = {
   role: 'HOSPITAL_PATIENT_VIEWER',
@@ -46,5 +49,6 @@ export default function HospitalPage(): ReactNode {
   if (!modoDemoLocal()) {
     return <HospitalShell />;
   }
+
   return <HospitalShell sesionInicial={SESION_DEMO} modoDemoLocal />;
 }

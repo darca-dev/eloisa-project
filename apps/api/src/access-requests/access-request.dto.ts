@@ -97,6 +97,32 @@ export class AccessRequestSubmissionDto {
     example: 'claveFicticia7',
   })
   public readonly password!: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Expediente ficticio del flujo guiado de cinco pasos, con la forma cerrada de la ' +
+      'rama del perfil solicitado. Opcional por compatibilidad: sin él la solicitud se ' +
+      'registra sin expediente. Nunca incluye contraseña, referencia, tenant, estados ' +
+      'ni revisor; el servidor lo persiste versionado y solo lo muestra en el detalle ' +
+      'protegido del Hospital.',
+    type: Object,
+    example: {
+      necesitaApoyo: 'SI',
+      apoyos: ['MOVILIZARSE', 'ACOMPANAMIENTO'],
+      condiciones: ['NINGUNA'],
+      zona: 'URBANA',
+      eps: 'NUEVA_EPS',
+      direccion: 'Cra 45 # 32-16',
+      contactoNombre: 'Carlos Ejemplo',
+      contactoParentesco: 'Hijo',
+      contactoTelefono: '311 220 3355',
+      vecinoNombre: 'Rosa Ficticia',
+      vecinoTelefono: '312 778 4410',
+      vecinoAutorizado: true,
+      autorizaDatos: true,
+    },
+  })
+  public readonly registration?: object;
 }
 
 /** Respuesta `202` de la creación idempotente. Contiene tres campos y nada más. */

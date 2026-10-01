@@ -1,4 +1,5 @@
 import type { AccessRequestSubmission } from './accessRequestClient';
+import type { RequestedProfile } from './accessRequestClient';
 
 export interface AccessRequestDemoFixture {
   readonly id: string;
@@ -98,4 +99,171 @@ export const ACCESS_REQUEST_DEMOS: readonly AccessRequestDemoFixture[] = [
       phone: '3003000003', email: 'mateo.visitador3@example.test',
     },
   },
+];
+
+/**
+ * Fixtures COMPLETOS del flujo guiado de cinco pasos (SPEC 038, MP04-C3).
+ *
+ * Cada fixture llena TODOS los campos aplicables de sus cinco pasos excepto la
+ * contraseña, que la persona siempre escribe a mano en el paso 5. El arreglo
+ * anterior (`ACCESS_REQUEST_DEMOS`) queda intacto: solo cubre identidad y
+ * contacto base.
+ */
+export interface AccessRegistrationDemoFixture {
+  readonly id: string;
+  readonly label: string;
+  readonly perfil: RequestedProfile;
+  readonly base: AccessRequestSubmission;
+  /** Expediente sin contraseña, con la forma de la rama. */
+  readonly registro: Record<string, unknown>;
+}
+
+const REGISTRO_PACIENTE: Record<string, Record<string, unknown>> = {
+  'paciente-1': {
+    necesitaApoyo: 'SI',
+    apoyos: ['MOVILIZARSE', 'ACOMPANAMIENTO'],
+    condiciones: ['HIPERTENSION'],
+    zona: 'URBANA',
+    eps: 'NUEVA_EPS',
+    direccion: 'Cra 45 # 32-16',
+    contactoNombre: 'Carlos Demo',
+    contactoParentesco: 'Hijo',
+    contactoTelefono: '3001000001',
+    vecinoNombre: 'Rosa Delgado',
+    vecinoTelefono: '312 778 4410',
+    vecinoAutorizado: true,
+    autorizaDatos: true,
+  },
+  'paciente-2': {
+    necesitaApoyo: 'NO',
+    apoyos: [],
+    condiciones: ['NINGUNA'],
+    zona: 'RURAL',
+    eps: 'SANITAS',
+    direccion: 'Vereda El Recreo',
+    contactoNombre: 'Bruno Demo',
+    contactoParentesco: 'Hermano',
+    contactoTelefono: '3001000002',
+    vecinoNombre: 'Pedro Ficticio',
+    vecinoTelefono: '312 778 4411',
+    vecinoAutorizado: true,
+    autorizaDatos: true,
+  },
+  'paciente-3': {
+    necesitaApoyo: 'NO_SABE',
+    apoyos: [],
+    condiciones: ['DIABETES', 'MOVILIDAD_REDUCIDA'],
+    zona: 'URBANA',
+    eps: 'SURA',
+    direccion: 'Calle 20 # 8-14',
+    contactoNombre: 'Celia Demo',
+    contactoParentesco: 'Hija',
+    contactoTelefono: '3001000003',
+    vecinoNombre: 'Ana Vecina',
+    vecinoTelefono: '312 778 4412',
+    vecinoAutorizado: true,
+    autorizaDatos: true,
+  },
+};
+
+const REGISTRO_CUIDADOR: Record<string, Record<string, unknown>> = {
+  'cuidador-1': {
+    tipoCuidador: 'FAMILIAR',
+    tieneFormacion: 'NO',
+    viveConPaciente: 'SI',
+    horarios: ['MANANA', 'NOCHE'],
+    pacienteRegistrado: 'NO_SABE',
+    relacionPaciente: 'MADRE',
+    vecinoNombre: 'Rosa Delgado',
+    vecinoTelefono: '312 778 4410',
+    vecinoRelacion: 'VECINO',
+    vecinoDireccion: 'Casa de al lado',
+    vecinoAutorizado: true,
+    autorizaDatos: true,
+  },
+  'cuidador-2': {
+    tipoCuidador: 'REMUNERADO',
+    tieneFormacion: 'SI',
+    institucionFormacion: 'SENA',
+    viveConPaciente: 'NO',
+    horarios: ['TODO_EL_DIA'],
+    pacienteRegistrado: 'SI',
+    relacionPaciente: 'CONTRATADO',
+    vecinoNombre: 'Luis Ficticio',
+    vecinoTelefono: '312 778 4421',
+    vecinoRelacion: 'PORTERO',
+    vecinoDireccion: 'Portería norte',
+    vecinoAutorizado: true,
+    autorizaDatos: true,
+  },
+  'cuidador-3': {
+    tipoCuidador: 'AUXILIAR_ENFERMERIA',
+    tieneFormacion: 'SI',
+    institucionFormacion: 'HOSPITAL_ESE',
+    viveConPaciente: 'SI',
+    horarios: ['TARDE', 'DIAS_ESPECIFICOS'],
+    pacienteRegistrado: 'NO',
+    relacionPaciente: 'OTRO_FAMILIAR',
+    vecinoNombre: 'Marta Vecina',
+    vecinoTelefono: '312 778 4422',
+    vecinoRelacion: 'LIDER',
+    vecinoDireccion: 'Salón comunal',
+    vecinoAutorizado: true,
+    autorizaDatos: true,
+  },
+};
+
+const REGISTRO_VISITADOR: Record<string, Record<string, unknown>> = {
+  'visitador-1': {
+    profesion: 'MEDICO',
+    tiposAtencion: ['VISITA_MEDICA', 'SEGUIMIENTO'],
+    eps: 'NUEVA_EPS',
+    institucion: 'ESE Hospital municipal',
+    institucionDepartamento: '25',
+    institucionMunicipio: '25754',
+    cargo: 'Médico domiciliario',
+    zonaDepartamento: '25',
+    zonaMunicipio: '25754',
+    zonas: ['COMUNA_URBANA'],
+    sector: 'Sector nororiental',
+    autorizaDatos: true,
+  },
+  'visitador-2': {
+    profesion: 'ENFERMERO',
+    tiposAtencion: ['ENFERMERIA', 'MEDICAMENTOS'],
+    eps: 'OTRA_EPS',
+    otraEps: 'EPS Ficticia',
+    institucionDepartamento: '25',
+    institucionMunicipio: '25740',
+    zonaDepartamento: '25',
+    zonaMunicipio: '25740',
+    zonas: ['CABECERA', 'CENTRO_POBLADO'],
+    autorizaDatos: true,
+  },
+  'visitador-3': {
+    profesion: 'FISIOTERAPEUTA',
+    tiposAtencion: [],
+    eps: 'SANITAS',
+    institucionDepartamento: '25',
+    institucionMunicipio: '25175',
+    zonaDepartamento: '25',
+    zonaMunicipio: '25175',
+    zonas: ['RURAL_DISPERSA'],
+    autorizaDatos: true,
+  },
+};
+
+export const ACCESS_REGISTRATION_DEMOS: readonly AccessRegistrationDemoFixture[] = [
+  ...ACCESS_REQUEST_DEMOS.map((fixture) => ({
+    id: fixture.id,
+    label: fixture.label,
+    perfil: fixture.submission.requestedProfile,
+    base: fixture.submission,
+    registro:
+      fixture.submission.requestedProfile === 'PATIENT'
+        ? (REGISTRO_PACIENTE[fixture.id] as Record<string, unknown>)
+        : fixture.submission.requestedProfile === 'CAREGIVER'
+          ? (REGISTRO_CUIDADOR[fixture.id] as Record<string, unknown>)
+          : (REGISTRO_VISITADOR[fixture.id] as Record<string, unknown>),
+  })),
 ];

@@ -40,6 +40,10 @@ import {
   REQUESTED_PROFILE_CODES,
   type RequestedProfileCode,
 } from './access-request.contract';
+import {
+  validateRegistration,
+} from './access-request-registration.validation';
+import type { ValidatedRegistrationData } from './access-request-registration.contract';
 
 /**
  * Propiedades admitidas en la raíz del cuerpo. Es una lista CERRADA y su
@@ -56,6 +60,12 @@ import {
  * no se conserva en `ValidatedAccessRequest` más allá de la llamada, no se
  * comparte con el servicio de registro como parte de un objeto auditable y no
  * aparece en ningún mensaje de error.
+ *
+ * `registration` SÍ está admitida desde MP04-C3: es el expediente ficticio del
+ * flujo guiado de cinco pasos, con la forma cerrada de SU rama. Es OPCIONAL por
+ * compatibilidad: sin ella la solicitud se registra sin expediente, como antes.
+ * Su valor validado y normalizado viaja al servicio para persistirse como
+ * instantánea versionada y para comparar reintentos; nunca incluye password.
  */
 const ALLOWED_ROOT_KEYS = [
   'requestedProfile',
@@ -68,6 +78,7 @@ const ALLOWED_ROOT_KEYS = [
   'phone',
   'email',
   'password',
+  'registration',
 ] as const;
 
 /** Cuerpo validado y normalizado, listo para la transacción. */
@@ -97,6 +108,12 @@ export interface ValidatedAccessRequest {
    * auditoría, a una excepción, a un log ni a la respuesta.
    */
   readonly password: string;
+  /**
+   * Expediente ficticio normalizado de la rama del perfil, o `undefined` si el
+   * cuerpo no lo trae. Nunca contiene password: la validación de la rama lo
+   * rechaza estructuralmente antes de llegar aquí.
+   */
+  readonly registration?: ValidatedRegistrationData;
 }
 
 export interface AccessRequestValidationSuccess {
@@ -347,6 +364,32 @@ export function validateAccessRequestBody(
     fields.add('password');
   }
 
+  // --- `registration`: opcional, unión cerrada por perfil ----------------
+  //
+  // Solo se valida si está presente: ausente significa solicitud sin
+  // expediente, que sigue siendo válida. Los problemas se nombran con el campo
+  // anidado cuando existe, o con `registration` cuando el problema es la forma
+  // completa (no objeto, password infiltrada o claves de otra rama que no
+  // pertenecen a ningún campo de esta).
+  let registration: ValidatedRegistrationData | undefined;
+  if (body['registration'] !== undefined) {
+    if (
+      requestedProfileRaw === null ||
+      !isOneOf(requestedProfileRaw, REQUESTED_PROFILE_CODES)
+    ) {
+      fields.add('registration');
+    } else {
+      const expediente = validateRegistration(requestedProfileRaw, body['registration']);
+      if (!expediente.ok) {
+        for (const campo of expediente.fields) {
+          fields.add(campo);
+        }
+      } else {
+        registration = expediente.value;
+      }
+    }
+  }
+
   // --- Normalización documental -----------------------------------------
   //
   // Se hace AQUÍ y no en el servicio para que la clave de búsqueda de la
@@ -385,6 +428,7 @@ export function validateAccessRequestBody(
       phone,
       email,
       password: password as string,
+      ...(registration === undefined ? {} : { registration }),
     },
   };
 }

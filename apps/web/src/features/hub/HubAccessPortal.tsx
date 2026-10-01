@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { branding } from '@/config/branding';
+import { urlDeLoginHumano } from '@/features/auth/humanSessionClient';
 import styles from './hub.module.css';
 
 /**
@@ -70,9 +71,8 @@ export function HubAccessPortal(): ReactNode {
                 <li className={styles.featureItem}><span className={styles.featureCheck}>✓</span> Visitador médico</li>
               </ul>
               <div className={styles.cardActions}>
-                <Link href="/acceso" className={styles.btnPrimary}>Iniciar sesión</Link>
-                <Link href="/acceso?accion=registro" className={styles.btnSecondary}>Solicitar acceso</Link>
-                <Link href="/inscripcion" className={styles.btnSecondary}>Registro guiado</Link>
+                <a href={urlDeLoginHumano()} className={styles.btnPrimary}>Iniciar sesión</a>
+                <Link href="/acceso?accion=registro" className={styles.btnSecondary}>Regístrate</Link>
               </div>
             </article>
 

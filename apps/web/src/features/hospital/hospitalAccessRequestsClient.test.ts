@@ -81,8 +81,38 @@ describe('hospitalAccessRequestsClient', () => {
   it('consulta detalle con id codificado y valida la proyección exacta', async () => {
     const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(json(DETAIL));
     const result = await getHospitalAccessRequest(ID, fetchImpl);
-    expect(result).toEqual({ kind: 'ok', data: DETAIL });
+    expect(result).toEqual({
+      kind: 'ok',
+      data: { ...DETAIL, registrationSchemaVersion: null, registration: null },
+    });
     expect(fetchImpl.mock.calls[0]?.[0]).toBe(`${resolvePublicApiBaseUrl()}${HOSPITAL_ACCESS_REQUESTS_PATH}/${ID}`);
+  });
+
+  it('acepta el expediente del detalle y lo entrega como registro', async () => {
+    const registro = { necesitaApoyo: 'SI', apoyos: ['MOVILIZARSE'], autorizaDatos: true };
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+      json({ ...DETAIL, registrationSchemaVersion: 1, registration: registro }),
+    );
+    const result = await getHospitalAccessRequest(ID, fetchImpl);
+
+    expect(result).toEqual({
+      kind: 'ok',
+      data: { ...DETAIL, registrationSchemaVersion: 1, registration: registro },
+    });
+  });
+
+  it('rechaza un expediente incoherente o mal formado como indisponible', async () => {
+    for (const cuerpo of [
+      { ...DETAIL, registrationSchemaVersion: 1, registration: null },
+      { ...DETAIL, registrationSchemaVersion: null, registration: { apoyos: [] } },
+      { ...DETAIL, registrationSchemaVersion: 'uno', registration: {} },
+      { ...DETAIL, registrationSchemaVersion: 1, registration: [] },
+      { ...DETAIL, registrationSchemaVersion: 1 },
+    ]) {
+      const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(json(cuerpo));
+      const result = await getHospitalAccessRequest(ID, fetchImpl);
+      expect(result).toEqual({ kind: 'unavailable' });
+    }
   });
 
   it.each(

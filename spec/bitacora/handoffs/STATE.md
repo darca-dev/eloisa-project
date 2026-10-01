@@ -1,3 +1,111 @@
+Handoff-Version: 73
+Updated-At: 2026-09-30
+Updated-By: Codex
+Current-Branch: feat/038-home-access-two-actions
+Current-HEAD: 2e59339
+Related-Spec: 038-demo-funcional-accesos-ficticios
+Authorized-Package: MP04-C3
+Status: READY
+
+# Estado vigente - SPEC 038 / MP04-C3
+
+- El Product Owner corrige MP04-C2: requiere cinco pasos por cada perfil, como
+  el prototipo, y los iconos originales de Eli.
+- MP04-C3 amplia el contrato con un expediente ficticio versionado para que los
+  campos adicionales persistan y sean visibles solo al Hospital autorizado.
+- La respuesta publica, aprobacion, provisioning, relaciones y asignaciones no
+  cambian. La proteccion de reintento MP04-C2-C1 se conserva.
+- La migracion se escribe y prueba en base aislada; no se aplica a `merdn_dev`
+  antes de auditoria. MP05 y MP06 permanecen cerrados.
+
+---
+
+Handoff-Version: 72
+Updated-At: 2026-09-30
+Updated-By: Codex
+Current-Branch: feat/038-home-access-two-actions
+Current-HEAD: 2e59339
+Related-Spec: 038-demo-funcional-accesos-ficticios
+Authorized-Package: MP04-C2-C1
+Status: READY
+
+# Estado vigente - SPEC 038 / MP04-C2-C1
+
+- MP04-C2 implementa correctamente la experiencia visual guiada y las tres
+  ramas, pero no se acepta aun.
+- Hallazgo Codex: despues de un fallo de API, OD-11 borra password y el paso 3
+  permite un segundo POST con la credencial vacia.
+- MP04-C2-C1 autoriza solo regresar al paso 2, exigir una clave nueva y corregir
+  la prueba que actualmente acepta el cuerpo vacio.
+- MP05 y MP06 permanecen cerrados.
+
+---
+
+Handoff-Version: 71
+Updated-At: 2026-09-30
+Updated-By: Codex
+Current-Branch: feat/038-home-access-two-actions
+Current-HEAD: 2e59339
+Related-Spec: 038-demo-funcional-accesos-ficticios
+Authorized-Package: MP04-C2
+Status: READY
+
+# Estado vigente - SPEC 038 / MP04-C2
+
+- El Product Owner aprueba sustituir el formulario tecnico por una inscripcion
+  guiada inspirada en el prototipo, con ramas separadas para Paciente, Cuidador
+  y Visitador medico.
+- MP04-C2 mantiene el POST persistente y la aprobacion Hospital; solo reorganiza
+  y mejora la interfaz con selector de perfil, pasos y fixtures filtrados.
+- MP04-C1-C1 queda absorbido: el paquete tambien conserva `Registrate` como
+  segundo boton debajo de `Iniciar sesion`.
+- `/inscripcion`, `prototype-claude/`, backend, DB, OIDC, Hospital y Alcaldia
+  permanecen fuera de alcance. MP05 y MP06 siguen cerrados.
+
+---
+
+Handoff-Version: 70
+Updated-At: 2026-09-30
+Updated-By: Codex
+Current-Branch: feat/038-home-access-two-actions
+Current-HEAD: 2e59339
+Related-Spec: 038-demo-funcional-accesos-ficticios
+Authorized-Package: MP04-C1-C1
+Status: READY
+
+# Estado vigente - SPEC 038 / MP04-C1-C1
+
+- MP04-C1 implementa los destinos y el registro automatico correctamente.
+- Auditoria Codex: 47/47 focales y 12/12 E2E contra `:3100`, pero el segundo CTA
+  de `/acceso` sigue presentado como enlace de texto.
+- MP04-C1-C1 autoriza unicamente convertir `Registrate` en el segundo boton y
+  comprobar su posicion bajo `Iniciar sesion` a 320 px.
+- MP05 y MP06 permanecen cerrados.
+
+---
+
+Handoff-Version: 69
+Updated-At: 2026-09-30
+Updated-By: Codex
+Current-Branch: feat/038-home-access-two-actions
+Current-HEAD: 2e59339
+Related-Spec: 038-demo-funcional-accesos-ficticios
+Authorized-Package: MP04-C1
+Status: READY
+
+# Estado vigente - SPEC 038 / MP04-C1
+
+- MP04 fue implementado y publicado en la rama
+  `feat/038-demo-funcional-accesos-ficticios`, commit `2e59339`.
+- El Product Owner define una correccion de producto: Atencion Domiciliaria debe
+  mostrar solo `Iniciar sesion` y `Registrate`; el registro envia
+  automaticamente la solicitud pendiente al Hospital.
+- MP04-C1 queda listo para implementacion web focal. No cambia backend, DB,
+  OIDC, Hospital, Alcaldia ni `/inscripcion`.
+- MP05 y MP06 permanecen cerrados.
+
+---
+
 Handoff-Version: 68
 Updated-At: 2026-09-30
 Updated-By: Codex

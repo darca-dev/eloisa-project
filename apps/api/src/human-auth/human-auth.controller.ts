@@ -36,6 +36,7 @@ import { HumanAuthRateLimitGuard } from './human-auth-rate-limit.guard';
 import {
   HUMAN_AUTH_ATTEMPT_COOKIE_NAME,
   HUMAN_AUTH_ERROR_CODES,
+  type HumanAuthReturnTarget,
 } from './human-auth.contract';
 import { HumanAuthErrorDto, HumanSessionDto } from './human-auth.dto';
 import { HumanAuthService, HumanAuthUnavailableError } from './human-auth.service';
@@ -155,13 +156,30 @@ export class HumanAuthController {
        * que no hay sesión al consultar `session`, y el desenlace es idéntico
        * para todas las causas de fallo.
        */
-      response.redirect(HttpStatus.FOUND, '/');
+      response.redirect(HttpStatus.FOUND, this.webReturnUrl('/'));
 
       return;
     }
 
     response.setHeader('Set-Cookie', [...result.setCookieHeaders]);
-    response.redirect(HttpStatus.FOUND, result.returnTarget);
+    response.redirect(HttpStatus.FOUND, this.webReturnUrl(result.returnTarget));
+  }
+
+  /**
+   * Convierte la ruta cerrada de retorno en una URL de la WEB. La API y la web
+   * usan puertos distintos en local; una ruta relativa devolvería a la API.
+   */
+  private webReturnUrl(returnTarget: HumanAuthReturnTarget): string {
+    const webOrigin = this.auth.allowedOrigins[0];
+
+    if (webOrigin === undefined) {
+      throw new ServiceUnavailableException({
+        code: HUMAN_AUTH_ERROR_CODES.unavailable,
+        message: 'El acceso no está disponible en este momento.',
+      });
+    }
+
+    return new URL(returnTarget, `${webOrigin}/`).toString();
   }
 
   /**

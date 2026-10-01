@@ -96,7 +96,7 @@ export const PROVISION_LIMITS = Object.freeze({
 });
 
 /**
- * Las 14 migraciones aprobadas, en orden versionado. La lista es cerrada: si
+ * Las 17 migraciones aprobadas, en orden versionado. La lista es cerrada: si
  * el repositorio o la base difieren, el provisionador falla en vez de aceptar
  * un subconjunto.
  */
@@ -115,6 +115,9 @@ export const REQUIRED_MIGRATIONS = Object.freeze([
   '20260826120000_patient_self_audit_event_type',
   '20260830160000_force_rls_core_institutional_hospital',
   '20260919051156_add_audit_events_human_account_linked_enrollment_revoked',
+  '20260928190000_access_request_foundation',
+  '20260930170000_access_provisioning',
+  '20260930230000_access_request_registration_snapshot',
 ]);
 
 /**
@@ -654,9 +657,14 @@ export function quoteLiteral(value) {
 
 /** Verifica la identidad del servidor antes de tocar roles. */
 export async function assertServerIdentity(envFilePath, secrets) {
+  // `coalesce` en direccion y puerto: `docker compose exec` conecta por socket
+  // Unix y `inet_server_addr()`/`inet_server_port()` devuelven NULL, lo que
+  // envenenaria toda la concatenacion con NULL y haria fallar siempre la
+  // comparacion. Las tres comparaciones exigidas (base, usuario y version) no
+  // cambian: direccion y puerto siguen informativos en la evidencia.
   const out = await runSql(
     envFilePath,
-    `SELECT current_database() || '|' || current_user || '|' || inet_server_addr()::text || '|' || inet_server_port()::text || '|' || current_setting('server_version_num');`,
+    `SELECT current_database() || '|' || current_user || '|' || coalesce(inet_server_addr()::text, '') || '|' || coalesce(inet_server_port()::text, '') || '|' || current_setting('server_version_num');`,
     secrets,
     { readOnly: true },
   );
@@ -692,6 +700,12 @@ export async function assertLoopbackPublication(envFilePath, secrets) {
 /**
  * Aplica `prisma migrate deploy` una sola vez, con entorno minimo y la URL
  * administrativa. La URL viaja por entorno del hijo, nunca en argv ni en logs.
+ *
+ * El binario invocado es el JS versionado de Prisma (`build/index.js`) mediante
+ * `process.execPath`, con argv fijo, `shell: false` y el mismo timeout: en
+ * Node 24/Windows, spawnear el lanzador `.cmd` sin shell devuelve `spawn
+ * EINVAL` y `shell: true` esta prohibido por diseno. No cambia argumentos,
+ * entorno ni garantias respecto al lanzador.
  */
 export async function applyMigrations(adminUrl, secrets, limits = PROVISION_LIMITS) {
   const minimalEnv = {
@@ -707,9 +721,10 @@ export async function applyMigrations(adminUrl, secrets, limits = PROVISION_LIMI
     PRISMA_HIDE_UPDATE_MESSAGE: '1',
     PRISMA_SKIP_POSTINSTALL_GENERATE: '1',
   };
+  const prismaBin = path.join(REPO_ROOT, 'node_modules', 'prisma', 'build', 'index.js');
   await runCommand(
-    process.platform === 'win32' ? 'npx.cmd' : 'npx',
-    ['--no-install', 'prisma', 'migrate', 'deploy', '--schema', PRISMA_SCHEMA],
+    process.execPath,
+    [prismaBin, 'migrate', 'deploy', '--schema', PRISMA_SCHEMA],
     { step: 'migrate', env: minimalEnv, timeoutMs: limits.migrateTimeoutMs, secrets },
   );
 }

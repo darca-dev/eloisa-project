@@ -3,7 +3,12 @@ import type { ReactNode } from 'react';
 
 import { platformNameInSentence } from '@/config/branding';
 import { urlDeLoginHumano } from '@/features/auth/humanSessionClient';
+import { humanAccessDemoLocalEnabled } from '@/features/access/humanAccessDemoLocal';
+import { PacienteDemoPresentation } from '@/features/paciente/PacienteDemoPresentation';
 import { PacienteExperience } from '@/features/paciente/PacienteExperience';
+
+/* La bandera demo se lee al atender la solicitud, no al construir la imagen. */
+export const dynamic = 'force-dynamic';
 
 /**
  * Superficie protegida del Paciente (SPEC 038, MP04 §12).
@@ -25,6 +30,11 @@ import { PacienteExperience } from '@/features/paciente/PacienteExperience';
  *   limitado a nombre de pila, iniciales y la etiqueta fija `Paciente`.
  *
  * `metadata.robots` queda cerrado: una portada autenticada no se indexa.
+ *
+ * La única excepción de presentación es una bandera server-side local,
+ * `MERDN_HUMAN_ACCESS_DEMO_LOCAL=true`: monta datos fijos ficticios sin sesión,
+ * API ni operaciones persistentes. Apagada la bandera, esta puerta conserva el
+ * comportamiento protegido descrito arriba.
  */
 export const metadata: Metadata = {
   title: `${platformNameInSentence()} — Mi espacio`,
@@ -34,5 +44,9 @@ export const metadata: Metadata = {
 };
 
 export default function PacientePage(): ReactNode {
+  if (humanAccessDemoLocalEnabled()) {
+    return <PacienteDemoPresentation />;
+  }
+
   return <PacienteExperience urlLogin={urlDeLoginHumano()} />;
 }

@@ -1,3 +1,794 @@
+Handoff-Version: 65
+Updated-At: 2026-10-01
+Updated-By: Codex
+Current-Branch: feat/038-home-access-two-actions
+Required-Base: feat/038-demo-funcional-accesos-ficticios
+Required-Work-Branch: feat/038-home-access-two-actions
+Related-Spec: 038-demo-funcional-accesos-ficticios
+Authorized-Package: MP04-C3-C1-C1+MP04-C4
+Status: READY
+
+# Handoff vigente a OpenCode - SPEC 038 / MP04-C3-C1-C1 + MP04-C4
+
+## Objetivo unico
+
+Cerrar en una sola ejecucion el bloqueo restante de PostgreSQL de MP04-C3-C1 y
+homologar las tres inscripciones con la composición visual de
+`prototype-claude/Eligeme-Inscripcion.dc.html`, usando `Eloisa` como marca.
+Conservar H1 y H3, ya auditados verdes, y toda la conducta funcional existente.
+
+## Resultado de auditoria vinculante
+
+1. H1 aceptado: evento `ACCESS_REQUEST_REPLAY_CONFLICT` atomico, 409 opaco y
+   fallo de auditoria fail-closed. Regresion Codex API focal verde.
+2. H3 aceptado: `Datos personales` asociado al bloque existente y cinco
+   encabezados reconocibles. Regresion Codex Hospital verde.
+3. H2 pendiente: la migracion
+   `20260830160000_force_rls_core_institutional_hospital` compara
+   `pg_prepared_xacts.database` (`name`) contra un OID y aborta antes de poder
+   aplicar la baseline. La correccion exacta aprobada es sustituir solo:
+   `g.database = (SELECT oid FROM pg_database WHERE datname = current_database())`
+   por `g.database = current_database()`.
+4. Se ratifica el `coalesce` ya aplicado en `assertServerIdentity`: una conexion
+   de `docker compose exec` puede usar socket Unix y devolver NULL en
+   `inet_server_addr()`/`inet_server_port()`. Base, usuario y version continúan
+   comparandose de forma exacta; no relajar esas tres comprobaciones.
+
+## Allowlist exacta
+
+### Cierre PostgreSQL
+
+- `prisma/migrations/20260830160000_force_rls_core_institutional_hospital/migration.sql`
+- `scripts/testing/test-db-provision.mjs`
+- `scripts/testing/run-baseline.mjs`
+- `tests/testing/run-baseline.test.mts`
+- `tests/testing/test-db-lifecycle.test.mts` solo si una asercion cerrada debe
+  reflejar las 17 migraciones actuales
+- `apps/api/test/access-request-registration.db.test.ts` solo para corregir un
+  defecto demostrado al ejecutarla, sin reducir cobertura
+
+### Fidelidad visual
+
+- `apps/web/src/features/access/AccessRegistrationWizard.tsx`
+- `apps/web/src/features/access/accessRegistration.module.css`
+- `apps/web/src/features/access/accessRegistrationProfileFields.tsx`
+- `apps/web/src/features/access/accessRegistrationProfileData.ts`
+- `apps/web/src/features/access/CentralAccess.test.ts`
+- `apps/web/src/components/ui/Eli.tsx` y `eli.module.css` solo si se necesita una
+  variante neutra reutilizable de la burbuja; el comportamiento por defecto no cambia
+- el test focal existente del componente Elí, si existe y requiere ampliacion
+- `apps/web/e2e/access-request.spec.ts`
+
+### Reporte
+
+- `spec/bitacora/handoffs/FROM-CLAUDE.md` solo para el reporte final
+
+## Trabajo A - Desbloqueo y evidencia PostgreSQL
+
+1. Aplicar exactamente la correccion `name = name` indicada en la migracion
+   historica. No alterar sus tablas, policies, FORCE RLS, preflight restante,
+   postflight, transaccion ni mensajes.
+2. Conservar el `coalesce` ratificado y las 17 migraciones cerradas en el
+   provisionador.
+3. Agregar `db/access-request-registration.db.test.ts` a la matriz cerrada del
+   runner y actualizar sus pruebas de 28 a 29 etapas y de 22 a 23 DB-gated,
+   incluidos indices/orden que dependan de la lista. No usar globs.
+4. Ejecutar desde cero con `compose.test.yml`, env-file local ignorado, guardas,
+   runner fail-closed y cleanup aprobado. Deben aplicarse las 17 migraciones y
+   la prueba focal debe terminar sin skips.
+5. La evidencia obligatoria incluye columnas/CHECK, JSONB version 1 sin
+   password, RLS/FORCE, dos tenants, lectura propia, lectura cruzada denegada y
+   rollback rechazado por snapshot y por evento.
+6. No usar `npx.cmd` si Node 24/Windows devuelve `spawn EINVAL`; invocar el
+   binario JS versionado de Prisma mediante `process.execPath`, argv fijo,
+   `shell:false`, entorno minimo y el mismo timeout. No usar shell como rodeo.
+7. Cleanup debe eliminar solo `merdn-baseline-test`; comprobar que `merdn_dev` y
+   los contenedores de desarrollo permanecen intactos.
+
+## Trabajo B - Fidelidad visual MP04-C4
+
+La referencia es de solo lectura. No copiar su runtime ni modificar
+`prototype-claude/`. La unica sustitucion de marca es `ELÍGEME` por `Eloisa`.
+
+### Composicion obligatoria
+
+1. Columna central equivalente a 600 px, lienzo `#F1F3F6`, padding y separación
+   vertical de la referencia.
+2. Encabezado azul `#1E5AA7`, radio 20 px, Elí `guia` circular con borde rosa,
+   `Eloisa` y `Panel de inscripción · Atención domiciliaria`.
+3. En cada rama, tarjeta blanca de progreso independiente: perfil en mayusculas,
+   titulo del paso, `Paso N de 5` rosa a la derecha, barra de 8 px y cinco
+   botones. El activo usa fondo azul/texto blanco; los futuros conservan el
+   aspecto claro. En escritorio los cinco quedan en una fila; a 320 px no hay
+   desbordamiento ni texto ilegible.
+4. Debajo, tarjeta blanca separada de contenido: Elí `escucha` de 48 px a la
+   izquierda, burbuja gris `#F1F3F6`, etiqueta de seccion en mayusculas y campos.
+   La variante visual no debe cambiar las demás apariciones compartidas de Elí.
+5. El enlace de retorno y `Cambiar perfil` siguen disponibles, pero no pueden
+   volver a producir la fila suelta `Volver + chip de perfil` mostrada en la
+   captura rechazada. Integrarlos como acciones secundarias coherentes con la
+   composición.
+6. Los tres botones demo de la rama se conservan dentro de la tarjeta de
+   contenido, con tratamiento compacto acorde a la referencia. Nunca mezclar
+   fixtures de otras ramas ni incluir password.
+
+### Campos y responsividad
+
+1. Labels visibles siempre. Placeholders de ejemplo pueden complementar el
+   label y nunca sustituirlo.
+2. Controles con padding 14x16, borde 1.5 px, radio 12 px, fuente 16 px y foco
+   visible. Mantener `aria-invalid` y errores asociados.
+3. Paso 1: documento a ancho completo; nombres/apellidos en dos columnas cuando
+   quepan; fecha e indicador calculado de edad en una fila; sexo/genero y
+   contactos siguiendo la misma reticula. El indicador de edad es solo UI,
+   derivado de la fecha, no se envia ni persiste.
+4. Aplicar el mismo sistema de secciones, filas y tarjetas a los cinco pasos de
+   Paciente, Cuidador y Visitador medico. Conservar sus campos y titulos actuales.
+5. Aviso permanente de datos ficticios, validacion, navegación visitada,
+   `aria-current=step`, foco al cambiar paso, bloqueo doble, limpieza de password,
+   resumen sin password, POST unico y aprobacion Hospital permanecen intactos.
+
+## Pruebas y evidencia obligatorias
+
+1. PostgreSQL aislado: 17/17 migraciones, prueba DB focal sin skips y cleanup
+   exitoso. Reportar solo evidencia sanitizada.
+2. Runner: pruebas de matriz actualizadas y verdes; provisionador/lifecycle verde.
+3. Web: pruebas focales de selector, cinco pasos, filas, edad derivada, fixtures,
+   errores, reintento y envio sin cambio contractual.
+4. Playwright: Paciente, Cuidador y Visitador; teclado, foco, axe, 320 px y 600 px.
+   Comprobar por estilos/estructura que existen encabezado, tarjeta de progreso y
+   tarjeta de contenido separadas, y que el paso activo es azul con texto blanco.
+5. Capturas temporales comparables del selector y paso 1 a 600 px y 320 px para
+   inspeccion; eliminarlas al cerrar, sin versionar artefactos.
+6. Typecheck web/API, ESLint focal, Prisma validate/format, builds, `diff --check`
+   y ambas compuertas SDD.
+
+## Limites y cierre
+
+- No modificar API, contratos, datos, Hospital, OIDC, permisos, dependencias,
+  rutas, fixtures ni migraciones distintas de la linea exacta autorizada.
+- No aplicar nada sobre `merdn_dev` ni tocar su volumen.
+- No usar datos reales, secretos ni URLs en reportes.
+- No hacer commit, push, merge, PR, release ni despliegue.
+- Prependar un único reporte del paquete combinado y detenerse para auditoria
+  Codex. MP05 y MP06 permanecen cerrados.
+
+---
+
+# Handoff vigente a OpenCode - SPEC 038 / MP04-C3-C1
+
+## Objetivo unico
+
+Cerrar en un solo paquete los tres hallazgos de la auditoria MP04-C3: auditar
+atomicamente el reintento materialmente distinto que responde 409, completar la
+evidencia PostgreSQL aislada sin tocar `merdn_dev` y presentar en Hospital las
+cinco secciones reconocibles del registro. Conservar todo lo ya verde de
+MP04-C3 y la correccion MP04-C2-C1.
+
+## Hallazgos confirmados
+
+1. `access-request.service.ts` devuelve el 409 opaco correcto, pero declara y
+   ejecuta una desviacion: no escribe el evento de auditoria exigido por v63.
+2. `access-request-registration.db.test.ts` omitio sus seis pruebas y tampoco
+   cubre la matriz obligatoria completa: dos tenants, acceso cruzado y rollback
+   rechazado con evidencia. Una omision no constituye verificacion.
+3. Hospital muestra los datos personales en un `dl` general y cuatro secciones
+   del expediente. Debe hacer visible el encabezado de la primera seccion para
+   que las cinco etapas se reconozcan, sin duplicar ni exponer datos.
+
+## Allowlist exacta
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260930230000_access_request_registration_snapshot/migration.sql`
+- `prisma/migrations/ROLLBACK-access_request_registration_snapshot.sql`
+- `apps/api/src/generated/prisma/**` solo cambios producidos por `prisma generate`
+  derivados de los dos campos MP04-C3 y el evento nuevo
+- `apps/api/src/audit/audit.service.ts`
+- `apps/api/src/access-requests/access-request.service.ts`
+- `apps/api/test/access-requests.test.ts`
+- `apps/api/test/access-request-registration.db.test.ts`
+- `apps/web/src/features/hospital/HospitalAccessRequests.tsx`
+- `apps/web/src/features/hospital/hospitalAccessRequests.test.tsx`
+- `scripts/testing/test-db-provision.mjs` solo si es indispensable para que la
+  base desechable reconozca todas las migraciones versionadas actuales
+- `scripts/testing/run-baseline.mjs` solo para agregar la prueba DB focal a la
+  matriz cerrada; no ampliar otras etapas
+- `tests/testing/test-db-lifecycle.test.mts` solo para ajustar las aserciones de
+  la lista cerrada que cambien por los dos puntos anteriores
+- `spec/bitacora/handoffs/FROM-CLAUDE.md` solo para el reporte final
+
+No modificar `AccessRegistrationWizard.tsx` ni su CSS: el ajuste manual de
+`selectorCard` ya quedo separado y su prueba focal esta verde.
+
+## Correcciones obligatorias
+
+1. Agregar el evento `ACCESS_REQUEST_REPLAY_CONFLICT` al enum Prisma y a la
+   migracion MP04-C3, que aun no ha sido aplicada. El evento representa solo un
+   intento conflictivo; no reutilizar `CREATED`, `REJECTED`, `VIEWED` ni
+   `LIST_DENIED` con semantica falsa.
+2. Implementar en `AuditService` un metodo transaccional especifico. Debe usar
+   `actorType=PUBLIC_SELF_ENROLLMENT`, actor humano y rol nulos, `resourceType`
+   y `resourceId` internos de la solicitud, endpoint fijo, correlacion generada
+   por servidor y resultado `DENIED` o equivalente vigente. No incluir nombre,
+   documento, contacto, expediente, password, referencia publica, tenant
+   recibido del cliente ni diferencias del cuerpo.
+3. Escribir ese evento dentro de la misma transaccion que detecta la diferencia,
+   antes de devolver el marcador de conflicto. Si la auditoria falla, la llamada
+   falla cerrada y no devuelve un 409 falsamente auditado. El expediente y la
+   solicitud existente nunca se sobrescriben.
+4. Actualizar el rollback: debe rechazar si existe una instantanea o un evento
+   `ACCESS_REQUEST_REPLAY_CONFLICT`; no borrar eventos ni reconstruir el enum.
+   Documentar que el valor aditivo del enum permanece inerte tras una reversion
+   permitida, como en la migracion de provision.
+5. Completar la prueba DB real con PostgreSQL desechable y dos tenants. Probar
+   columnas/tipos/CHECK, version 1, JSONB sin password, RLS/FORCE, lectura
+   permitida en el tenant, lectura cruzada denegada y rollback rechazado cuando
+   haya instantanea o evento dependiente. Las pruebas deben crear solo datos
+   ficticios y el cleanup debe eliminar exclusivamente el proyecto aislado.
+6. Ejecutar la prueba sin skips mediante `compose.test.yml`, guardas existentes,
+   env-file local ignorado y runner fail-closed. Nunca usar `merdn_dev`, el
+   contenedor de desarrollo ni sus volumenes. Si el provisionador cerrado no
+   reconoce las migraciones actuales, actualizar solo su lista versionada y sus
+   pruebas; no relajar la comprobacion exacta.
+7. En el detalle Hospital, agregar un encabezado visible `Datos personales`
+   asociado al bloque existente y conservar las otras cuatro secciones. No
+   mostrar password, JSON crudo, campos nuevos en el listado ni duplicar PII.
+
+## Pruebas obligatorias
+
+1. API focal: reintento identico conserva un solo evento `CREATED`; reintento
+   distinto devuelve 409, conserva la fila y agrega exactamente un evento
+   `REPLAY_CONFLICT` sin PII; fallo de auditoria falla cerrado.
+2. DB focal real: cero omitidos, dos tenants, RLS cruzada y los dos casos de
+   rollback rechazado. Reportar comando sanitizado, conteos y cleanup exitoso.
+3. Hospital focal: cinco encabezados reconocibles, compatibilidad con solicitud
+   historica sin snapshot, listado minimizado y ningun JSON crudo.
+4. Repetir typecheck API/web, ESLint focal, Prisma validate/format, builds y las
+   dos compuertas SDD. No repetir suites no relacionadas salvo que falle una
+   dependencia concreta.
+
+## Limites y cierre
+
+- No aplicar migraciones sobre `merdn_dev`; no tocar el Docker de desarrollo.
+- No modificar el prototipo, autenticacion, provision OIDC, portales, fixtures,
+  campos del wizard, decisiones Hospital, dependencias ni producto adicional.
+- No usar datos reales ni registrar secretos o URLs de conexion.
+- No hacer commit, push, merge, PR, release ni despliegue.
+- Prependar un unico reporte MP04-C3-C1 con resultados reales y detenerse para
+  auditoria Codex. MP05 y MP06 permanecen cerrados.
+
+---
+
+# Handoff vigente a OpenCode - SPEC 038 / MP04-C3
+
+## Objetivo unico
+
+Sustituir la simplificacion de tres pasos por las tres inscripciones completas
+de cinco pasos de `prototype-claude/Eligeme-Inscripcion.dc.html`, restaurar la
+iconografia de Eli y persistir los datos ficticios adicionales como expediente
+versionado de solicitud visible en el detalle protegido del Hospital.
+
+Ejecutar el paquete completo sin detenerse entre datos, API, Hospital y web. La
+correccion MP04-C2-C1 debe permanecer incluida y cubierta por regresion.
+
+## Decisiones cerradas
+
+1. La marca sigue siendo `Eloisa`. No restaurar el texto antiguo `ELIGEME`.
+2. Los pasos, campos, opciones, condicionales y orden visual tienen como
+   referencia de solo lectura:
+   - `prototype-claude/Eligeme-Inscripcion.dc.html`;
+   - `apps/web/src/features/inscripcion/inscripcionFlow.ts`;
+   - `apps/web/src/features/inscripcion/steps/PasosPaciente.tsx`;
+   - `apps/web/src/features/inscripcion/steps/PasosCuidador.tsx`;
+   - `apps/web/src/features/inscripcion/steps/PasosVisitador.tsx`.
+   No modificar esos archivos ni conectar la ruta antigua `/inscripcion`.
+3. Titulos exactos:
+   - Paciente: Datos personales; Condicion y necesidades; Ubicacion y EPS;
+     Contactos; Confirmacion.
+   - Cuidador: Datos personales; Perfil del cuidador; Vincular paciente;
+     Contacto cercano; Confirmacion.
+   - Visitador medico: Datos personales; Informacion profesional; EPS e
+     institucion; Zona de atencion; Verificacion.
+4. Paso 1 conserva identidad y contacto. La contrasena ficticia se solicita en
+   el paso 5 antes de enviar y nunca aparece en el resumen.
+5. Cada rama muestra solo sus tres fixtures y cada fixture llena todos los
+   campos aplicables de los cinco pasos excepto password.
+
+## Iconografia exacta
+
+- Cabecera azul: `EliAvatar`/`EliFigure` con intencion `guia`
+  (`/eli/guia.png`), circular y con borde rosa, en lugar del corazon.
+- Orientacion al inicio de cada paso: intencion `escucha`
+  (`/eli/escucha.png`) junto a un mensaje propio del paso.
+- Cierre 202: intencion `agradece` (`/eli/agradece.png`).
+- Asistente flotante: `EliBubble` con activador `saluda`
+  (`/eli/saluda2.png`).
+- No cambiar esos archivos PNG ni crear sustitutos.
+
+## Persistencia y contrato
+
+6. Agregar a `AccessRequest` una instantanea nullable por compatibilidad:
+   `registrationSchemaVersion Int?` y `registrationData Json?` (`jsonb`). Una
+   restriccion SQL exige ambos nulos o ambos presentes. Nuevas solicitudes de
+   este flujo escriben version `1` y datos presentes.
+7. `registrationData` contiene solamente los datos adicionales de los pasos 2
+   a 4 y consentimientos del paso 5. No duplica Person, no contiene password,
+   referencia, tenant, estados, revisor, tokens, `sub` ni errores.
+8. El POST publico adopta una union discriminada cerrada por
+   `requestedProfile`. Mantiene las diez propiedades vigentes y agrega una sola
+   propiedad `registration` cerrada. Rechazar claves de otra rama, claves extra,
+   arrays sin limite, valores fuera de catalogo y texto fuera de longitud.
+9. Mantener respuesta 202 exacta `{reference,status,source}` y errores opacos.
+10. Persistir Person, AccessRequest e instantanea en la misma transaccion. La
+    reutilizacion de una solicitud abierta debe devolver la existente sin
+    sobrescribir silenciosamente su expediente; un cuerpo materialmente distinto
+    recibe 409 opaco y queda auditado sin PII.
+11. Listado Hospital permanece minimizado. Solo el detalle protegido, tenant-
+    scoped y auditado devuelve `registrationSchemaVersion` y `registration`.
+    Renderizarlo por secciones y etiquetas; nunca como JSON crudo.
+12. La aprobacion/provision no interpreta la instantanea como autoridad. No crea
+    relaciones cuidador-paciente, asignaciones, acreditaciones, diagnosticos
+    validados ni permisos adicionales. MP04 conserva sus perfiles minimos.
+
+## Seguridad, privacidad y datos
+
+- Todos los valores son ficticios y `source=TEST_DATA`; el aviso permanece en
+  cada paso. No usar datos reales.
+- Clasificar direccion, necesidades, diagnosticos declarados y contactos como
+  datos sensibles de solicitud. No incluirlos en lista, busqueda, logs, metricas
+  ni eventos de auditoria; el evento usa solo requestId/reference/resultado.
+- Contacto cercano/vecino solo se conserva cuando su autorizacion esta marcada;
+  al desmarcarla, borrar sus valores del estado antes de construir el cuerpo.
+- Diagnosticos y condiciones son declaraciones, no reglas clinicas. Mostrar ese
+  rotulo en Hospital y no derivar alertas, prioridades ni decisiones.
+- Sin `dangerouslySetInnerHTML`, storage, query params con PII ni dependencias
+  nuevas. Mantener RLS y FKs tenant-scoped existentes.
+
+## Migracion y rollback
+
+- Crear `prisma/migrations/20260930230000_access_request_registration_snapshot/migration.sql`.
+- Crear `prisma/migrations/ROLLBACK-access_request_registration_snapshot.sql`.
+- Migracion solo aditiva; existentes quedan con ambos campos nulos.
+- Rollback debe abortar si alguna fila contiene instantanea/version y no borrar
+  evidencia silenciosamente.
+- Probar en base aislada autorizada. No aplicar sobre `merdn_dev` ni modificar
+  datos del Docker actual en este paquete; reportar el comando de aplicacion
+  local como pendiente de auditoria Codex.
+
+## Experiencia y accesibilidad
+
+- Barra `Paso N de 5`, cinco botones de paso y `aria-current="step"`.
+- No permitir saltar a un paso futuro sin validar los anteriores; permitir
+  volver a pasos visitados conservando la rama.
+- Cambiar perfil borra todos los datos, errores, password y desenlaces.
+- Foco al titulo al cambiar de paso y al primer control invalido.
+- Condicional oculto implica valor eliminado, no solo CSS oculto.
+- A 320 px no hay desborde. Labels persistentes, errores asociados, teclado y
+  axe sin violaciones serious/critical.
+- Mantener la correccion C2-C1: tras fallo se vuelve al paso 5, password vacio y
+  enfocado; no existe segundo POST hasta escribir una nueva clave valida.
+
+## Allowlist exacta
+
+### Datos y migracion
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260930230000_access_request_registration_snapshot/migration.sql` (nuevo)
+- `prisma/migrations/ROLLBACK-access_request_registration_snapshot.sql` (nuevo)
+
+### API
+
+- `apps/api/src/access-requests/access-request.dto.ts`
+- `apps/api/src/access-requests/access-request.validation.ts`
+- `apps/api/src/access-requests/access-request.service.ts`
+- `apps/api/src/access-requests/access-request-registration.contract.ts` (nuevo, opcional)
+- `apps/api/src/access-requests/access-request-registration.validation.ts` (nuevo, opcional)
+- `apps/api/src/access-requests/access-request-review.contract.ts`
+- `apps/api/src/access-requests/access-request-review.dto.ts`
+- `apps/api/src/access-requests/access-request-review.service.ts`
+- `apps/api/test/access-requests.test.ts`
+- `apps/api/test/access-request-review.test.ts`
+- `apps/api/test/access-request-registration.db.test.ts` (nuevo)
+- `apps/api/test/openapi.test.ts`
+
+### Web de registro
+
+- `apps/web/src/features/access/AccessRegistrationWizard.tsx`
+- `apps/web/src/features/access/accessRegistrationFlow.ts`
+- `apps/web/src/features/access/accessRegistrationFlow.test.ts`
+- `apps/web/src/features/access/accessRegistration.module.css`
+- `apps/web/src/features/access/accessRequestClient.ts`
+- `apps/web/src/features/access/accessRequestClient.test.ts`
+- `apps/web/src/features/access/accessRequestDemoFixtures.ts`
+- `apps/web/src/features/access/accessRegistrationProfileFields.tsx` (nuevo, opcional)
+- `apps/web/src/features/access/accessRegistrationProfileData.ts` (nuevo, opcional)
+- `apps/web/src/features/access/CentralAccess.test.ts`
+- `apps/web/e2e/access-request.spec.ts`
+- `apps/web/e2e/access-provisioning.spec.ts`
+
+### Hospital
+
+- `apps/web/src/features/hospital/hospitalAccessRequestsClient.ts`
+- `apps/web/src/features/hospital/hospitalAccessRequestsClient.test.ts`
+- `apps/web/src/features/hospital/HospitalAccessRequests.tsx`
+- `apps/web/src/features/hospital/hospitalAccessRequests.test.tsx`
+- `apps/web/src/features/hospital/hospitalAccessRequests.module.css`
+
+### Reporte
+
+- `spec/bitacora/handoffs/FROM-CLAUDE.md` solo para el reporte
+
+## Pruebas obligatorias
+
+1. Validacion API exhaustiva de cada union: valido, faltante, extra, cruzado,
+   longitud, arrays, condicionales y ausencia de password en snapshot.
+2. Servicio: creacion atomica, reutilizacion identica, conflicto distinto,
+   P2002, 202 exacto, ningun dato sensible en logs/auditoria.
+3. DB aislada: columnas/check, JSONB version 1, RLS con dos tenants, detalle
+   cross-tenant denegado y rollback seguro.
+4. Hospital: listado sin expediente; detalle autorizado con cinco secciones de
+   la rama; texto declarado claramente rotulado; sin JSON crudo.
+5. Web: pruebas puras de las tres maquinas de cinco pasos, todos los
+   condicionales, borrado al ocultar/cambiar perfil y cuerpo exacto.
+6. E2E independiente para Paciente, Cuidador y Visitador: cinco pasos, fixture,
+   iconos exactos, password solo al final, un POST, 202/PENDING y reintento C2-C1.
+7. Teclado, foco, 320 px y axe en selector, los cinco pasos y cierre.
+8. Typecheck/lint web y API, Prisma validate/format check, OpenAPI, suites
+   focales, build si las focales pasan, SDD gate y strict.
+
+## Limites y salida
+
+- No modificar `prototype-claude/`, `/inscripcion`, archivos de inscripcion
+  historica, provisioning, roles, permisos, Keycloak, compose, dependencias ni
+  otros dominios.
+- No hacer commit, push, merge, PR, release ni despliegue.
+- No aplicar migraciones a `merdn_dev`.
+- Prependar reporte MP04-C3 con archivos, resultados, evidencia DB aislada y
+  riesgos; detenerse para auditoria Codex. MP05 y MP06 siguen cerrados.
+
+---
+
+Handoff-Version: 62
+Updated-At: 2026-09-30
+Updated-By: Codex
+Current-Branch: feat/038-home-access-two-actions
+Required-Base: feat/038-demo-funcional-accesos-ficticios
+Required-Work-Branch: feat/038-home-access-two-actions
+Related-Spec: 038-demo-funcional-accesos-ficticios
+Authorized-Package: MP04-C2-C1
+Status: READY
+
+# Handoff vigente a OpenCode - SPEC 038 / MP04-C2-C1
+
+## Objetivo unico
+
+Corregir el reintento de la inscripcion guiada cuando la API no acepta la
+solicitud. Una contrasena borrada por OD-11 nunca puede enviarse vacia desde el
+paso de Confirmacion.
+
+## Correccion requerida
+
+1. Despues de `forbidden`, `rateLimited` o `unavailable`, conservar los datos
+   no secretos y el mensaje opaco, pero volver al paso 2 `Contacto y acceso`.
+2. Mantener la contrasena vacia, marcar su control como invalido y enfocarlo
+   despues del render. La persona debe escribir una contrasena ficticia valida,
+   continuar otra vez a Confirmacion y solo entonces reintentar el POST.
+3. Para `invalid`, conservar el comportamiento contractual de volver al paso
+   del primer campo conocido. Si no existe ningun campo conocido, volver al
+   paso 2 y enfocar la contrasena porque ya fue borrada.
+4. Agregar una validacion defensiva inmediatamente antes de tomar el bloqueo y
+   llamar `submitAccessRequest`: si paso 2 ya no es valido, no hacer red,
+   volver al paso 2 y enfocar el campo correspondiente.
+5. Conservar el mensaje de error al volver al paso 2 hasta que comience un nuevo
+   intento real o la persona cambie de perfil. No reponer ni recordar password.
+6. No cambiar la interfaz visual, el cuerpo valido, el cliente, la API ni las
+   otras pantallas.
+
+## Pruebas obligatorias
+
+- Corregir el E2E de 503: tras el primer POST debe volver al paso 2 con password
+  vacio y enfocado; pulsar Continuar sin clave no crea otro POST; solo despues
+  de escribir una clave valida, continuar y pulsar `Registrarme` se observa el
+  segundo POST aceptado.
+- Cubrir al menos un `invalid` con campo desconocido y comprobar regreso seguro
+  al password sin segundo POST vacio.
+- Comprobar que el segundo cuerpo de un reintento exitoso contiene una password
+  valida y que el primero y el segundo son las unicas dos llamadas.
+- Mantener las pruebas de doble gesto, tres perfiles, 320 px y axe verdes.
+- Ejecutar Vitest focal, Playwright focal, typecheck web, ESLint focal y ambas
+  compuertas SDD.
+
+## Allowlist exacta
+
+- `apps/web/src/features/access/AccessRegistrationWizard.tsx`
+- `apps/web/src/features/access/accessRegistrationFlow.ts`
+- `apps/web/src/features/access/accessRegistrationFlow.test.ts`
+- `apps/web/src/features/access/CentralAccess.test.ts`
+- `apps/web/e2e/access-request.spec.ts`
+- `spec/bitacora/handoffs/FROM-CLAUDE.md` solo para el reporte
+
+## Limites
+
+- No modificar CSS, cliente, fixtures, API, DB, OIDC, Hospital, Alcaldia,
+  `/inscripcion`, prototipo, dependencias ni archivos fuera de la allowlist.
+- No hacer commit, push, merge, PR, release ni despliegue.
+- Prependar reporte MP04-C2-C1 y detenerse para auditoria Codex. MP05 y MP06
+  siguen cerrados.
+
+---
+
+Handoff-Version: 61
+Updated-At: 2026-09-30
+Updated-By: Codex
+Current-Branch: feat/038-home-access-two-actions
+Required-Base: feat/038-demo-funcional-accesos-ficticios
+Required-Work-Branch: feat/038-home-access-two-actions
+Related-Spec: 038-demo-funcional-accesos-ficticios
+Authorized-Package: MP04-C2
+Status: READY
+
+# Handoff vigente a OpenCode - SPEC 038 / MP04-C2
+
+## Objetivo unico
+
+Convertir `/acceso?accion=registro` en una inscripcion guiada, amistosa y
+separada para Paciente, Cuidador y Visitador medico, inspirada visualmente en
+`prototype-claude/Eligeme-Inscripcion.dc.html`, conservando sin cambios el
+contrato real de solicitud, la identidad deshabilitada y la aprobacion Hospital.
+
+Este paquete sustituye y absorbe MP04-C1-C1: en `/acceso` sin sesion deben
+seguir existiendo dos botones, con `Registrate` debajo de `Iniciar sesion`.
+
+## Experiencia requerida
+
+### Entrada
+
+1. Al abrir `Registrate`, mostrar un encabezado azul con la marca vigente
+   `Eloisa` y el texto `Panel de inscripcion - Atencion domiciliaria`. No
+   restaurar la marca antigua `ELIGEME`.
+2. Mostrar `¿Como se va a registrar?` y exactamente tres tarjetas grandes:
+   - `Paciente` - `Recibo o necesito atencion en casa`.
+   - `Cuidador` - `Cuido a una o mas personas`.
+   - `Visitador medico` - `Profesional que realiza visitas domiciliarias`.
+3. Mantener visibles el regreso al Portal Central y el aviso permanente de que
+   solo deben usarse datos ficticios.
+
+### Rama elegida
+
+4. Despues de elegir, mostrar el rotulo `INSCRIPCION COMO ...`, una barra de
+   progreso y tres pasos navegables:
+   - Paso 1 `Datos personales`: tipo y numero de documento, nombres, apellidos,
+     fecha de nacimiento y sexo/genero.
+   - Paso 2 `Contacto y acceso`: telefono, correo y contrasena ficticia con su
+     control para mostrar/ocultar.
+   - Paso 3 `Confirmacion`: resumen minimizado, aviso de envio al Hospital y
+     boton `Registrarme`.
+5. Cada rama debe tener texto de ayuda propio y mostrar unicamente sus tres
+   botones existentes de datos demo. Nunca mostrar juntos los nueve fixtures.
+6. Un fixture puede completar solo datos no secretos. No agregar password a
+   fixtures, codigo fuente, storage, URL ni DOM de resumen.
+7. `Atras` conserva los datos dentro de la misma rama. `Cambiar perfil` vuelve
+   al selector y borra todo el estado capturado, incluido password, errores y
+   desenlaces. No transferir datos entre perfiles.
+
+### Envio y desenlaces
+
+8. Reutilizar `submitAccessRequest`; efectuar exactamente un POST con las diez
+   propiedades vigentes, incluido `requestedProfile` derivado de la tarjeta.
+   No ampliar, renombrar ni reinterpretar el cuerpo.
+9. Conservar el bloqueo sincronico contra doble submit y limpiar password en
+   `finally` despues de todo intento de red. No usar storage ni query params
+   para datos personales.
+10. La validacion de paso debe impedir avanzar y mover el foco al primer campo
+    invalido. Al menos telefono o correo sigue siendo obligatorio.
+11. Ante `invalid`, regresar al paso del primer campo reportado y enfocarlo.
+    Los desenlaces forbidden, rateLimited y unavailable conservan mensajes
+    opacos y permiten reintento.
+12. Solo tras `202` mostrar referencia, `PENDING` y que el Hospital debe aprobar
+    antes de iniciar sesion. No ofrecer entrada directa a ningun portal.
+
+## Referencia visual y limites de datos
+
+- Reproducir el patron visual del prototipo: fondo gris claro, ancho legible,
+  encabezado azul redondeado, tarjetas blancas, acento rosa, guia amistosa,
+  progreso visible, controles grandes y composicion movil.
+- Se permite reutilizar componentes/activos productivos existentes de Eloisa y
+  Eli. No copiar runtime, estado inline ni logica del `.dc.html`.
+- No capturar condicion medica, discapacidad, diagnostico, ubicacion, EPS,
+  contactos de terceros, relacion con paciente, tarjeta profesional,
+  afiliacion, asignacion ni consentimiento clinico: el endpoint no los admite.
+- No modificar ni enlazar `/inscripcion`; hoy tiene otra persistencia y otra
+  semantica. No modificar `prototype-claude/`.
+
+## Accesibilidad
+
+- HTML semantico, labels persistentes, errores asociados y `aria-invalid`.
+- Al elegir perfil y cambiar paso, enfocar el `h1`/titulo del panel sin robar
+  foco en la carga inicial.
+- Barra con semantica `progressbar`; paso actual con `aria-current="step"`.
+- Todos los controles utilizables por teclado con foco visible.
+- A 320 px no debe existir scroll horizontal, corte de texto ni botones fuera
+  del viewport. No depender solo del color.
+
+## Allowlist exacta
+
+- `apps/web/src/features/access/CentralAccess.tsx`
+- `apps/web/src/features/access/AccessRequestForm.tsx`
+- `apps/web/src/features/access/centralAccess.module.css`
+- `apps/web/src/features/access/AccessRegistrationWizard.tsx` (nuevo, opcional)
+- `apps/web/src/features/access/accessRegistration.module.css` (nuevo, opcional)
+- `apps/web/src/features/access/accessRegistrationFlow.ts` (nuevo, opcional)
+- `apps/web/src/features/access/accessRegistrationFlow.test.ts` (nuevo, opcional)
+- `apps/web/src/features/access/CentralAccess.test.ts`
+- `apps/web/e2e/access-request.spec.ts`
+- `apps/web/e2e/access-provisioning.spec.ts`
+- `spec/bitacora/handoffs/FROM-CLAUDE.md` solo para el reporte
+
+No modificar fixtures ni cliente salvo que una prueba demuestre una
+incompatibilidad real; en ese caso detenerse y reportarla, porque no estan en
+la allowlist.
+
+## Pruebas obligatorias
+
+1. Vitest del estado puro: seleccion de cada perfil, pasos, atras, cambio con
+   borrado total, validacion y doble envio.
+2. Contrato focal: los tres perfiles derivan los codigos exactos `PATIENT`,
+   `CAREGIVER`, `FIELD_PROFESSIONAL`; el cuerpo conserva las diez claves y no
+   incorpora datos extra.
+3. Playwright de las tres ramas: seleccionar, cargar uno de sus tres fixtures,
+   comprobar que los otros seis no aparecen, completar password ficticia,
+   revisar sin exponerla y enviar un unico POST interceptado.
+4. Exito: referencia y `PENDING`; errores 400/403/429/503; doble toque una sola
+   peticion; password ausente del DOM y vaciada tras exito/error.
+5. Teclado, foco entre pasos, cambio de perfil, progressbar, 320 px y axe sin
+   violaciones serious/critical en selector, cada paso y confirmacion.
+6. Ejecutar Vitest focal, Playwright focal, `npm run typecheck`, ESLint focal,
+   `check-sdd-gate.sh .` y `validate-sdd.sh . --strict`.
+
+## Limites y salida
+
+- No cambiar API, Prisma, migraciones, DB, OIDC, Hospital, Alcaldia, roles,
+  permisos, dependencias, `/inscripcion` ni el prototipo.
+- No usar datos reales ni agregar secretos/credenciales al repositorio.
+- No hacer commit, push, merge, PR, release ni despliegue.
+- Prependar reporte MP04-C2 con archivos, pruebas, conteos y riesgos reales;
+  luego detenerse para auditoria Codex. MP05 y MP06 permanecen cerrados.
+
+---
+
+Handoff-Version: 60
+Updated-At: 2026-09-30
+Updated-By: Codex
+Current-Branch: feat/038-home-access-two-actions
+Required-Base: feat/038-demo-funcional-accesos-ficticios
+Required-Work-Branch: feat/038-home-access-two-actions
+Related-Spec: 038-demo-funcional-accesos-ficticios
+Authorized-Package: MP04-C1-C1
+Status: READY
+
+# Handoff vigente a OpenCode - SPEC 038 / MP04-C1-C1
+
+## Objetivo unico
+
+Corregir el unico hallazgo de auditoria de MP04-C1: en `/acceso` sin sesion,
+`Registrate` debe verse y comportarse como el segundo boton, ubicado debajo de
+`Iniciar sesion` en viewport de 320 px. No cambiar destinos, textos funcionales,
+registro, API ni otras pantallas.
+
+## Correccion exacta
+
+1. En la rama `fase === 'sin-sesion'` de `CentralAccess.tsx`, mantener el enlace
+   `Registrate` a `/acceso?accion=registro`, pero aplicarle el estilo de boton
+   secundario ya existente en lugar de `styles.textLink`.
+2. No cambiar el control `Registrate` del estado `denegado`; queda fuera de esta
+   correccion puntual.
+3. A 320 px, el segundo boton debe quedar debajo del primero, sin desbordamiento,
+   y ambos deben conservar foco visible y activacion por teclado.
+
+## Allowlist exacta
+
+- `apps/web/src/features/access/CentralAccess.tsx`
+- `apps/web/src/features/access/CentralAccess.test.ts`
+- `apps/web/e2e/access-provisioning.spec.ts`
+- `spec/bitacora/handoffs/FROM-CLAUDE.md` solo para el reporte
+
+## Pruebas obligatorias
+
+- Vitest focal debe comprobar que la rama sin sesion usa `styles.secondary` para
+  `Registrate` y conserva el href exacto.
+- Playwright a 320 px debe comprobar dos controles visibles, que `Registrate`
+  tenga presentacion de boton, quede debajo de `Iniciar sesion`, no desborde y
+  abra la rama de registro con teclado.
+- Repetir typecheck web, ESLint focal y ambas compuertas SDD.
+
+## Limites
+
+- No modificar CSS, Hub, formulario, backend, Hospital, Alcaldia, DB, OIDC,
+  dependencias ni archivos fuera de la allowlist.
+- No hacer commit, push, merge, PR, release ni despliegue.
+- Prependar reporte y detenerse para auditoria Codex. MP05 sigue cerrado.
+
+---
+
+Handoff-Version: 59
+Updated-At: 2026-09-30
+Updated-By: Codex
+Current-Branch: feat/038-home-access-two-actions
+Required-Base: feat/038-demo-funcional-accesos-ficticios
+Required-Work-Branch: feat/038-home-access-two-actions
+Related-Spec: 038-demo-funcional-accesos-ficticios
+Authorized-Package: MP04-C1
+Status: READY
+
+# Handoff vigente a OpenCode - SPEC 038 / MP04-C1
+
+## Objetivo unico
+
+Simplificar la entrada de Atencion Domiciliaria para que la persona vea solo
+`Iniciar sesion` y `Registrate`. Registrarse debe enviar automaticamente la
+solicitud persistente ya implementada para revision Hospital. No debe existir
+una accion visible separada `Solicitar acceso` ni un tercer acceso a
+`Registro guiado` dentro de estas superficies.
+
+## Comportamiento requerido
+
+1. En la tarjeta `Atencion Domiciliaria` de `/`, dejar exactamente dos CTA:
+   - `Iniciar sesion` -> `/acceso`.
+   - `Registrate` -> `/acceso?accion=registro`.
+2. En `/acceso` sin sesion, dejar exactamente esas dos acciones. El primer CTA
+   inicia el Authorization Code + PKCE existente; el segundo abre la rama de
+   registro persistente.
+3. En la rama `accion=registro`, presentar el flujo como `Registrate`. Explicar
+   de forma breve que al completar el registro se envia automaticamente una
+   solicitud al Hospital y que no podra entrar hasta ser aprobada.
+4. Mantener `AccessRequestForm` y su unico POST existente. Puede ajustarse el
+   texto visible del boton de envio a `Registrarme`, pero debe seguir realizando
+   una sola llamada, mostrando referencia y `PENDING`, y conservando el bloqueo
+   de doble envio y el vaciado de password.
+5. Mantener los botones de carga ficticia para Paciente, Cuidador y Visitador
+   medico. No cambiar sus datos ni el cuerpo enviado.
+6. Retirar de estas superficies los CTA/textos de accion `Solicitar acceso`,
+   `Registrarme / solicitar acceso`, `Ver o registrar una solicitud`,
+   `Registro guiado` y `Abrir registro guiado`. La ruta `/inscripcion` permanece
+   intacta y accesible por URL; no borrarla ni modificarla.
+7. Hospital y Alcaldia permanecen intactos. No modificar login institucional,
+   backend, Prisma, migraciones, Keycloak, contratos API ni permisos.
+
+## Allowlist exacta
+
+- `apps/web/src/features/hub/HubAccessPortal.tsx`
+- `apps/web/src/app/page.test.tsx`
+- `apps/web/src/features/access/CentralAccess.tsx`
+- `apps/web/src/features/access/AccessRequestForm.tsx`
+- `apps/web/src/features/access/CentralAccess.test.ts`
+- `apps/web/e2e/access-provisioning.spec.ts`
+- `spec/bitacora/handoffs/FROM-CLAUDE.md` solo para el reporte
+
+## Pruebas obligatorias
+
+1. La tarjeta de `/` contiene solo los dos CTA y destinos exactos.
+2. El estado sin sesion de `/acceso` contiene solo los dos CTA.
+3. `Registrate` monta el formulario de los tres perfiles y un submit produce
+   exactamente un POST con el contrato vigente.
+4. La confirmacion muestra referencia y `PENDING` y comunica que espera
+   aprobacion Hospital.
+5. Doble gesto genera una sola peticion; password se limpia en exito y error.
+6. Navegacion por teclado, foco, viewport 320 px y axe sin violaciones serias o
+   criticas en las dos pantallas afectadas.
+7. Ejecutar Vitest focal, Playwright focal, typecheck web, ESLint focal y las dos
+   compuertas SDD.
+
+## Limites y salida
+
+- No modificar API, DB, migraciones, OIDC, Hospital, Alcaldia, `/inscripcion`,
+  prototipo, dependencias ni archivos fuera de la allowlist.
+- No hacer commit, push, merge, PR, release ni despliegue.
+- Prependar el reporte MP04-C1 en `FROM-CLAUDE.md` con archivos, comandos,
+  conteos y riesgos reales; luego detenerse para auditoria Codex.
+- MP05 y MP06 permanecen cerrados.
+
+---
+
 Handoff-Version: 58
 Updated-At: 2026-09-30
 Updated-By: Codex

@@ -34,6 +34,7 @@ const CUERPO: AccessRequestWithCredential = {
   sexGenderCode: 'FEMENINO',
   password: 'claveFicticia7',
   phone: '311 220 3355',
+  registration: { necesitaApoyo: 'SI' },
 };
 
 const RESPUESTA_202 = {
@@ -88,7 +89,7 @@ describe('cliente de POST /api/v1/access-requests', () => {
     expect(JSON.stringify(llamadas[0]?.init)).not.toContain('credentials');
   });
 
-  it('envía solo los diez campos del contrato cerrado', async () => {
+  it('envía los diez campos del contrato más el expediente de la rama', async () => {
     const llamadas: Llamada[] = [];
     await submitAccessRequest(CUERPO, fetchQueDevuelve(202, RESPUESTA_202, llamadas));
 
@@ -102,9 +103,11 @@ describe('cliente de POST /api/v1/access-requests', () => {
       'givenNames',
       'password',
       'phone',
+      'registration',
       'requestedProfile',
       'sexGenderCode',
     ]);
+    expect((enviado['registration'] as Record<string, unknown>)['necesitaApoyo']).toBe('SI');
   });
 
   it('envía la credencial UNA sola vez y sólo dentro del cuerpo', async () => {

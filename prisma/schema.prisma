@@ -181,6 +181,7 @@ enum AuditEventType {
   PATIENT_SELF_ACCESS_GRANTED
   PATIENT_SELF_ACCESS_DENIED
   ACCESS_REQUEST_CREATED
+  ACCESS_REQUEST_REPLAY_CONFLICT
   ACCESS_REQUEST_LIST_GRANTED
   ACCESS_REQUEST_LIST_DENIED
   ACCESS_REQUEST_VIEWED
@@ -1801,6 +1802,21 @@ model AccessRequest {
   /// Codigo CERRADO del ultimo fallo de provision. Nunca texto libre, nunca
   /// un cuerpo del proveedor, nunca un mensaje con datos de la persona.
   provisioningErrorCode String?
+
+  /// Version del esquema del expediente ficticio de solicitud (MP04-C3). NULA
+  /// en solicitudes registradas antes del flujo guiado de cinco pasos. Cuando
+  /// esta presente, `registrationData` tambien lo esta: la coherencia la exige
+  /// el CHECK `access_request_registration_snapshot_coherent` y la version
+  /// admitida la cierra `access_request_registration_schema_version_known`.
+  registrationSchemaVersion Int?
+
+  /// Instantanea versionada del expediente ficticio declarado en los pasos 2 a
+  /// 4 y los consentimientos del paso 5 (MP04-C3). Solo visible en el detalle
+  /// protegido del Hospital del mismo tenant. NUNCA guarda password, username,
+  /// token, issuer, subject, referencia, tenant, estados, revisor ni cuerpos
+  /// externos; no duplica la `Person`. Lo garantiza el CHECK
+  /// `access_request_registration_data_has_no_password` ademas del servicio.
+  registrationData Json? @db.JsonB
 
   createdAt DateTime @default(now()) @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @db.Timestamptz(6)
