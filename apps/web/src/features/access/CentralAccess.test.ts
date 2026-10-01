@@ -34,8 +34,9 @@ describe('Navegación demo local', () => {
 
     expect(hub).toContain('href="/hospital"');
     expect(hub).toContain('href="/municipality"');
-    // MP04-C1: la entrada de Atencion Domiciliaria ofrece exactamente dos CTA.
-    expect(hub).toContain('href={urlDeLoginHumano()}');
+    // La entrada pasa primero por /acceso: allí se muestra el selector demo
+    // o, fuera de demo, la redirección OIDC controlada.
+    expect(hub).toContain('href="/acceso"');
     expect(hub).toContain('href="/acceso?accion=registro"');
     expect(hub).toContain('>Iniciar sesión<');
     expect(hub).toContain('>Regístrate<');

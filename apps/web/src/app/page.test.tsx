@@ -33,14 +33,15 @@ describe('Portal Central de Acceso (Página Raíz /)', () => {
     const html = markupHub();
 
     // Destinos exactos de las dos unicas acciones.
-    expect(html).toContain('href="http://127.0.0.1:3001/api/v1/human-auth/login?returnTo=/acceso"');
+    expect(html).toContain('href="/acceso"');
     expect(html).toContain('href="/acceso?accion=registro"');
     expect(html).toContain('>Iniciar sesión<');
     expect(html).toContain('>Regístrate<');
 
-    // Solo Registro entra a /acceso; Inicio navega directamente al proveedor OIDC.
+    // Inicio y Registro pasan por /acceso; el primero abre el selector demo
+    // cuando está habilitado y el segundo abre el registro guiado.
     const enlacesAcceso = html.match(/href="\/acceso[^"]*"/gu) ?? [];
-    expect(enlacesAcceso).toHaveLength(1);
+    expect(enlacesAcceso).toHaveLength(2);
 
     // Vocabulario retirado de esta superficie (MP04-C1).
     for (const retirado of [
