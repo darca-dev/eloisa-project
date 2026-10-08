@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+
 import { test, expect } from '@playwright/test';
 
 /**
@@ -144,7 +147,7 @@ test.describe('Cuenta persistente paciente - Flujo E2E completo', () => {
     await expect(page.locator('text=¡Hola, María!')).toBeVisible();
   });
 
-  test('Cerrar y reabrir navegador mantiene sesión (simulado con nueva página)', async ({ page, context }) => {
+  test('Cerrar y reabrir navegador mantiene sesión (simulado con nueva página)', async ({ context }) => {
     // Este test asume que ya hay una sesión válida del test anterior
     // En CI real se usaría storageState para persistir cookies entre tests
 
@@ -164,11 +167,9 @@ test.describe('Verificación BD (helper - no E2E real)', () => {
   test('Script de verificación BD disponible', async () => {
     // Este test solo verifica que el script SQL existe
     // La ejecución real se hace manual contra la BD
-    const fs = require('fs');
-    const path = require('path');
     const scriptPath = path.join(__dirname, '../../scripts/verify-patient-account.sql');
     // El script se crea en Fase 6
-    expect(fs.existsSync(scriptPath) || true).toBeTruthy(); // placeholder
+    expect(existsSync(scriptPath) || true).toBeTruthy(); // placeholder
   });
 });
 

@@ -27,10 +27,10 @@ const availability = inject('databaseAvailability');
 const puedeEjecutarse = availability.available && availability.migrated;
 
 if (!availability.available || !availability.migrated) {
-  console.warn('\nPruebas omitidas: base de datos no disponible\n');
+  process.stderr.write('\nPruebas omitidas: base de datos no disponible\n');
 }
 
-let prisma: any;
+let prisma: ReturnType<typeof createTestPrismaClient>;
 let tenantId: string;
 let tenantIdOtro: string;
 

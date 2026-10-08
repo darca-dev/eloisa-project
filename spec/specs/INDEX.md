@@ -109,3 +109,11 @@ que auditar.
 | 036 | patient-demo-autofill | Approved / Aprobada · consentimiento SDD recibido | Medium / Media | Product Owner | 2026-09-23 |
 | 037 | local-oidc-recovery | Approved / Aprobada · consentimiento SDD recibido | High / Alta | Product Owner | 2026-09-24 |
 | 038 | demo-funcional-accesos-ficticios | Approved / Aprobada · consentimiento SDD recibido | Critical / Crítica | Product Owner | 2026-09-24 |
+
+## Término funcional — seguimiento desde 2026-10-08
+
+| Número | Nombre | Estado | Prioridad | Responsable | Actualización |
+|---|---|---|---|---|---|
+| 039 | termino-s00-base-y-baseline | MP01 aceptado por PO; continuidad/Git autorizados; S00 restante pendiente | Crítica | Product Owner / Codex | 2026-10-08 |
+
+D-01 selecciona la copia fuera de OneDrive, rama S00 y base local 9980582. La spec 039 no hereda consentimiento de 025/038. Ver docs/plan-funcional/00-BASE-Y-BASELINE.md y el handoff S00-2026-10-08.md.

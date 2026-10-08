@@ -1,6 +1,5 @@
-const { chromium } = require('playwright');
-
 (async () => {
+  const { chromium } = await import('playwright');
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
   await page.goto('http://127.0.0.1:3000/');
@@ -18,12 +17,12 @@ const { chromium } = require('playwright');
     ];
 
     const selected = selectors.map((selector) => {
-      const element = document.querySelector(selector);
+      const element = globalThis.document.querySelector(selector);
       return element === null
         ? { selector, missing: true }
         : { selector, tag: element.tagName, id: element.id, className: element.className };
     });
-    const main = document.querySelector('main');
+    const main = globalThis.document.querySelector('main');
     const tree = main === null
       ? []
       : [...main.querySelectorAll('*')].slice(0, 45).map((element) => ({
@@ -34,15 +33,15 @@ const { chromium } = require('playwright');
     return { selected, tree };
   });
 
-  console.log(JSON.stringify({
+  process.stdout.write(JSON.stringify({
     title: await page.title(),
     usernameLabel: await page.locator('label[for="username"]').textContent(),
     passwordLabel: await page.locator('label[for="password"]').textContent(),
     submitText: await page.locator('#kc-login').textContent(),
     structure,
-  }));
+  }) + '\n');
   await browser.close();
 })().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
+  process.stderr.write((error instanceof Error ? error.message : String(error)) + '\n');
   process.exit(1);
 });

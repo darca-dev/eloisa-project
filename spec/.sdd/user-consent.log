@@ -16,3 +16,4 @@
 [2026-09-23 22:45:00 -0600] [spec:036-patient-demo-autofill] Product Owner approved three fictional patient profiles to autofill the existing enrollment form, without passwords or automatic submission.
 [2026-09-24 00:00:00 -0600] [spec:037-local-oidc-recovery] Product Owner approved recovery of local fictional OIDC and verification of test access on 2026-09-24.
 [2026-09-24 22:34:29 -0600] [spec:038-demo-funcional-accesos-ficticios] User approved implementation for spec 038-demo-funcional-accesos-ficticios
+[2026-10-08 14:47:34 -0400] [spec:039-termino-s00-base-y-baseline] Apruebo exclusivamente S00-MP01 para Claude Code

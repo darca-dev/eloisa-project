@@ -1,0 +1,36 @@
+# Historial 039
+
+## 2026-10-08 — creación prospectiva por Codex
+
+El PO eligió Eloisa-develop, autorizó nueva rama y continuar fuera de OneDrive. Se tomó origin/develop local 9980582, se conservó main 1aa1201 y el original como respaldo. Fetch del origin arvtechv no accesible con credenciales actuales.
+
+Se creó este bundle como propuesta de S00; no modifica aprobaciones/consentimientos de 025/038 ni registra aprobación de 039. No hubo implementación, cuenta, migración, commit/push, merge o despliegue nuevos.
+
+Checks: tipos/builds/schema correctos; web 1882/1885 con 3 fallos; contratos API 656 correctos en conjunto de selección; contratos baseline puros 72; lint 17 errores; scanner 52 coincidencias. DB/RLS/IdP integrados y E2E no ejecutados. Ver comandos y límites en docs/plan-funcional/00-BASE-Y-BASELINE.md.
+
+Un primer intento de contratos API usó dos DSN ficticios idénticos y fue rechazado correctamente por configuración. Se corrigió únicamente el entorno del comando y se repitieron los tres archivos afectados: 64/64. Los otros 31 archivos ya pasaban 592/592. No se atribuye ese fallo de ejecución a un defecto del producto. Las pruebas node:test se relanzaron con su runner nativo tras un intento incorrecto con Vitest.
+
+## 2026-10-08 — comprobaciones finales y aprobación MP01
+
+Tras incorporar documentos, check-sdd-gate.sh y validate-sdd.sh --strict salieron 0; strict: 0 errores y 0 advertencias. El gate de framework no aprobó 039 por sí mismo. Scanner mantiene 52 coincidencias, sin nuevas en documentos importados/creados. Diff de código, lockfile y carpetas protegidas vacío; HEAD/main preservados.
+
+El Product Owner respondió «Apruebo S00-MP01 para Claude Code». Se registra aprobación exclusivamente de ese paquete, implementador Claude Code y hard stop para auditoría. MP02/MP03/MP04 no quedan autorizados. Consentimiento SDD de 039 aún no registrado; ningún agente lo ejecutó. No se inició implementación.
+### Estado específico posterior a aprobación
+
+Gate: EXIT 1, 1 error/19 warnings; el único error es falta de consentimiento de 039. Strict: EXIT 0, 0 errores/0 warnings. No se reutilizaron los consentimientos de 025/038. Claude Code no se localizó como CLI en PATH, .local/bin/claude.exe o AppData/Roaming/npm/claude.cmd. No se instaló ni se invocó un sustituto. Handoff listo, ejecución retenida hasta el acto SDD del PO.
+## 2026-10-08 — consentimiento verificado y handoff READY
+
+El Product Owner ejecutó personalmente confirm-user-consent.sh y avisó «comando ingresado». Codex verificó una entrada [spec:039-termino-s00-base-y-baseline] de 2026-10-08 14:47:34 -0400: «Apruebo exclusivamente S00-MP01 para Claude Code». El agente no creó ni editó el log de consentimiento.
+
+Gate EXIT 0, 0 errores/19 advertencias heredadas. Strict EXIT 0, 0 errores/0 advertencias. Handoff S00-2026-10-08 actualizado a READY exclusivamente para S00-MP01 / Claude Code. Codex conserva auditoría; no implementó producción. CLI Claude Code no disponible en PATH ni en las ubicaciones habituales verificadas; implementación aún no iniciada aquí. MP02/MP03/MP04 continúan sin autorización.
+## 2026-10-08 — cambio explícito de implementador
+
+El PO autorizó a Codex para S00-MP01 y mantuvo explícitamente el consentimiento SDD del mismo paquete al sustituir a Claude. Decisión: 2026-10-08-s00-mp01-codex.md. Se preserva intacto el log de consentimiento personal. Único paquete autorizado: MP01; lógica de negocio, permisos y demás paquetes fuera de alcance.
+## 2026-10-08 — MP01 implementado y verificado por Codex
+
+Siete archivos dentro de allowlist. Lint pasa (antes 17 errores), typecheck shared/API/web pasa, build API pasa, 65 contratos API pasan sin skips y 10 E2E se colectan sin ejecutarse. Herramientas CJS pasan node --check. Job cotejado contra HEAD restaurando solo import/tokens: lógica exacta sin cambios. Scanner conserva 52 coincidencias; web mantiene tres fallos previamente abiertos, fuera de MP01. No se ejecutó DB/RLS/E2E real ni se crearon cuentas.
+
+Se registraron dos hallazgos residuales de pruebas heredadas: helper E2E tautológico y DB test con retorno temprano sin skipped. No se modificó su semántica dentro del paquete de lint. Informe completo: S00-MP01-FROM-CODEX.md. Cambios locales sin commit; main y fuentes protegidas conservados. Implementación/revisión técnica realizadas, aceptación PO pendiente. HARD STOP antes de MP02.
+## 2026-10-08 — MP01 aceptado por PO; Git y continuidad autorizados
+
+El PO aceptó MP01 y ordenó commit/push, nueva rama MP02 y repetir el ciclo hasta terminar las tareas dadas. Decisión: 2026-10-08-continuidad-git-por-paquete.md. La ejecución continua no resuelve decisiones materiales abiertas ni permite saltar specs suficientes o pruebas. Publicación pendiente: origin arvtechv/eloisa_project devuelve Repository not found con acceso actual. No se cambió destino.

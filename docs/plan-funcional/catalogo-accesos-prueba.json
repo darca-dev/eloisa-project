@@ -1,0 +1,545 @@
+{
+  "catalogVersion": 1,
+  "date": "2026-10-08",
+  "status": "DESIGNED_NOT_PROVISIONED",
+  "purpose": "Cuentas y escenarios de prueba para funcionamiento real sobre IdP/DB; todos los datos son ficticios.",
+  "aliasesAreNotLoginNames": true,
+  "credentialsIncluded": false,
+  "productionUse": false,
+  "environmentPrerequisite": "S00 y D-01: entorno aislado explícito; nunca DB ni realm ajenos.",
+  "fixtureOwnership": {
+    "source": "TEST_DATA",
+    "tenantAliases": [
+      "TEST_A",
+      "TEST_B"
+    ],
+    "runId": "Se genera en el seed aprobado; todas las filas creadas y cleanup quedan asociadas a ese runId.",
+    "actorMappings": "Relaciones/asignaciones se crean como fixtures auditados explícitos; nunca como efecto del registro/aprobación."
+  },
+  "secretDelivery": {
+    "locationTemplate": ".secrets/accesos-test/<runId>.json",
+    "gitIgnored": "Comprobar con git check-ignore antes de escribir",
+    "contents": "URLs reales verificadas, login real por alias, contraseña aleatoria por cuenta, MFA de test si aplica, fecha/expiry y resultado de provisión.",
+    "rules": [
+      "No imprimir credenciales en logs ni incluirlas en reportes, commits o interfaz.",
+      "Permisos de lectura limitados al usuario probador; entrega y rotación seguras.",
+      "Escribir solo para cuentas creadas y verificadas contra el proveedor real.",
+      "No persistir contraseñas en MERDN ni en auditoría.",
+      "Contraseñas aleatorias por ejecución; nunca una contraseña compartida para todos los perfiles."
+    ]
+  },
+  "cases": [
+    {
+      "caseId": "AC-01",
+      "accountAlias": "QA_PATIENT_A",
+      "tenantAlias": "TEST_A",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "PATIENT"
+      ],
+      "plannedRequestState": "APPROVED",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Patient ACTIVE del mismo tenant"
+      ],
+      "expected": "Login y /paciente permitidos; solo datos propios.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-02",
+      "accountAlias": "QA_CAREGIVER_A_NEUTRAL",
+      "tenantAlias": "TEST_A",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "CAREGIVER"
+      ],
+      "plannedRequestState": "APPROVED",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Sin relación cuidador-paciente"
+      ],
+      "expected": "Login y portada neutra permitidos; no pacientes ni contexto CAREGIVER de recurso.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-03",
+      "accountAlias": "QA_CAREGIVER_A_SCOPED",
+      "tenantAlias": "TEST_A",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "CAREGIVER"
+      ],
+      "plannedRequestState": "APPROVED",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Relación ACTIVE solo con QA_PATIENT_A",
+        "Scopes mínimos aprobados y vigentes"
+      ],
+      "expected": "Acceso únicamente a datos/capacidades delegadas de ese paciente.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-04",
+      "accountAlias": "QA_PROFESSIONAL_A_ASSIGNED",
+      "tenantAlias": "TEST_A",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "FIELD_PROFESSIONAL"
+      ],
+      "plannedRequestState": "APPROVED",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Perfil ACTIVE",
+        "Afiliación vigente",
+        "Asignación vigente a una cita/paciente de test"
+      ],
+      "expected": "Worklist asignada; operación de visita solo según capacidad vigente.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-05",
+      "accountAlias": "QA_PROFESSIONAL_A_UNASSIGNED",
+      "tenantAlias": "TEST_A",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "FIELD_PROFESSIONAL"
+      ],
+      "plannedRequestState": "APPROVED",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Perfil ACTIVE y afiliación vigente",
+        "Sin asignaciones"
+      ],
+      "expected": "Portal permitido; worklist vacía y recursos de terceros denegados.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-06",
+      "accountAlias": "QA_PATIENT_B",
+      "tenantAlias": "TEST_B",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "PATIENT"
+      ],
+      "plannedRequestState": "APPROVED",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Patient ACTIVE propio en TEST_B"
+      ],
+      "expected": "Acceso propio; cualquier recurso TEST_A denegado.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-07",
+      "accountAlias": "QA_CAREGIVER_B",
+      "tenantAlias": "TEST_B",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "CAREGIVER"
+      ],
+      "plannedRequestState": "APPROVED",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Relación ACTIVE únicamente dentro de TEST_B"
+      ],
+      "expected": "No leer ni modificar vínculos/pacientes TEST_A.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-08",
+      "accountAlias": "QA_PROFESSIONAL_B",
+      "tenantAlias": "TEST_B",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "FIELD_PROFESSIONAL"
+      ],
+      "plannedRequestState": "APPROVED",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Afiliación/asignación vigentes TEST_B"
+      ],
+      "expected": "No listar ni abrir visitas/pacientes TEST_A.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-09",
+      "accountAlias": "QA_PATIENT_A_PENDING",
+      "tenantAlias": "TEST_A",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "PATIENT"
+      ],
+      "plannedRequestState": "PENDING",
+      "plannedAccountState": "DISABLED",
+      "conditions": [
+        "Sin participación otorgada automáticamente antes de aprobación"
+      ],
+      "expected": "Ningún portal/self-scope del perfil solicitado; no convertir estado administrativo en éxito de acceso.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-10",
+      "accountAlias": "QA_PATIENT_A_REJECTED",
+      "tenantAlias": "TEST_A",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "PATIENT"
+      ],
+      "plannedRequestState": "REJECTED",
+      "plannedAccountState": "DISABLED",
+      "conditions": [
+        "Sin participación otorgada automáticamente antes de aprobación"
+      ],
+      "expected": "Ningún portal/self-scope del perfil solicitado; no convertir estado administrativo en éxito de acceso.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-11",
+      "accountAlias": "QA_PATIENT_A_SUSPENDED",
+      "tenantAlias": "TEST_A",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "PATIENT"
+      ],
+      "plannedRequestState": "SUSPENDED",
+      "plannedAccountState": "DISABLED",
+      "conditions": [
+        "Sin participación otorgada automáticamente antes de aprobación"
+      ],
+      "expected": "Ningún portal/self-scope del perfil solicitado; no convertir estado administrativo en éxito de acceso.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-12",
+      "accountAlias": "QA_PATIENT_A_REVOKED",
+      "tenantAlias": "TEST_A",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "PATIENT"
+      ],
+      "plannedRequestState": "REVOKED",
+      "plannedAccountState": "DISABLED",
+      "conditions": [
+        "Sin participación otorgada automáticamente antes de aprobación"
+      ],
+      "expected": "Ningún portal/self-scope del perfil solicitado; no convertir estado administrativo en éxito de acceso.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-13",
+      "accountAlias": "QA_PATIENT_A_PROVISIONING_FAILED",
+      "tenantAlias": "TEST_A",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "PATIENT"
+      ],
+      "plannedRequestState": "PROVISIONING_FAILED",
+      "plannedAccountState": "DISABLED",
+      "conditions": [
+        "Sin participación otorgada automáticamente antes de aprobación"
+      ],
+      "expected": "Ningún portal/self-scope del perfil solicitado; no convertir estado administrativo en éxito de acceso.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-14",
+      "accountAlias": "QA_PATIENT_A_APPROVED_PENDING_PROVISIONING",
+      "tenantAlias": "TEST_A",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "PATIENT"
+      ],
+      "plannedRequestState": "APPROVED_PENDING_PROVISIONING",
+      "plannedAccountState": "DISABLED",
+      "conditions": [
+        "Sin participación otorgada automáticamente antes de aprobación"
+      ],
+      "expected": "Ningún portal/self-scope del perfil solicitado; no convertir estado administrativo en éxito de acceso.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-15",
+      "accountAlias": "QA_PATIENT_A_LEGACY_NO_APPROVAL",
+      "tenantAlias": "TEST_A",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "PATIENT"
+      ],
+      "plannedRequestState": null,
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Cuenta OIDC activa y Patient ACTIVE de procedencia anterior",
+        "Sin AccessRequest APPROVED"
+      ],
+      "expected": "Entrada directa /paciente y APIs según decisión de compatibilidad D-02; recomendación: denegar hasta reconciliación/aprobación explícita.",
+      "provisioningStatus": "NOT_PROVISIONED",
+      "decisionDependency": "D-02"
+    },
+    {
+      "caseId": "AC-16",
+      "accountAlias": "QA_CAREGIVER_A_EXPIRED_LINK",
+      "tenantAlias": "TEST_A",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "CAREGIVER"
+      ],
+      "plannedRequestState": "APPROVED",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Relación EXPIRED con QA_PATIENT_A"
+      ],
+      "expected": "Login/portada neutra permitidos; datos delegados denegados.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-17",
+      "accountAlias": "QA_CAREGIVER_A_REVOKED_LINK",
+      "tenantAlias": "TEST_A",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "CAREGIVER"
+      ],
+      "plannedRequestState": "APPROVED",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Relación REVOKED con QA_PATIENT_A"
+      ],
+      "expected": "Login/portada neutra permitidos; datos delegados denegados inmediatamente.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-18",
+      "accountAlias": "QA_MULTIPROFILE_A",
+      "tenantAlias": "TEST_A",
+      "kind": "HUMAN",
+      "requestedProfiles": [
+        "PATIENT",
+        "CAREGIVER"
+      ],
+      "plannedRequestState": "APPROVED",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Solicitud APPROVED independiente por perfil",
+        "Patient propio y vínculo cuidador explícito a otro Patient"
+      ],
+      "expected": "Selector de experiencias; no sumar permisos de perfiles sobre un mismo recurso.",
+      "provisioningStatus": "NOT_PROVISIONED"
+    },
+    {
+      "caseId": "AC-19",
+      "accountAlias": "QA_HOSPITAL_PATIENT_VIEWER_A",
+      "tenantAlias": "TEST_A",
+      "kind": "INSTITUTIONAL",
+      "technicalRole": "HOSPITAL_PATIENT_VIEWER",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Actor individual autenticado con OIDC real según D-02",
+        "Asignación institucional vigente y aislada"
+      ],
+      "expected": "Consulta nominal Hospital limitada; sin aprobación ni agenda write.",
+      "provisioningStatus": "NOT_PROVISIONED",
+      "decisionDependency": "D-02"
+    },
+    {
+      "caseId": "AC-20",
+      "accountAlias": "QA_HOSPITAL_SCHEDULER_A",
+      "tenantAlias": "TEST_A",
+      "kind": "INSTITUTIONAL",
+      "technicalRole": "HOSPITAL_SCHEDULER",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Actor individual autenticado con OIDC real según D-02",
+        "Asignación institucional vigente y aislada"
+      ],
+      "expected": "Agenda/asignación conforme a permisos; no aprobar solicitudes.",
+      "provisioningStatus": "NOT_PROVISIONED",
+      "decisionDependency": "D-02"
+    },
+    {
+      "caseId": "AC-21",
+      "accountAlias": "QA_CAREGIVER_RELATIONSHIP_MANAGER_A",
+      "tenantAlias": "TEST_A",
+      "kind": "INSTITUTIONAL",
+      "technicalRole": "CAREGIVER_RELATIONSHIP_MANAGER",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Actor individual autenticado con OIDC real según D-02",
+        "Asignación institucional vigente y aislada"
+      ],
+      "expected": "Validación de relación autorizada; no acceder por ese rol a datos clínicos.",
+      "provisioningStatus": "NOT_PROVISIONED",
+      "decisionDependency": "D-02"
+    },
+    {
+      "caseId": "AC-22",
+      "accountAlias": "QA_HOSPITAL_ACCESS_REVIEWER_A",
+      "tenantAlias": "TEST_A",
+      "kind": "INSTITUTIONAL",
+      "technicalRole": "HOSPITAL_ACCESS_REVIEWER",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Actor individual autenticado con OIDC real según D-02",
+        "Asignación institucional vigente y aislada"
+      ],
+      "expected": "Bandeja/decisión de solicitudes del tenant; no aprobar otro tenant ni autootorgar privilegios.",
+      "provisioningStatus": "NOT_PROVISIONED",
+      "decisionDependency": "D-02"
+    },
+    {
+      "caseId": "AC-23",
+      "accountAlias": "QA_MUNICIPAL_VIEWER_A",
+      "tenantAlias": "TEST_A",
+      "kind": "INSTITUTIONAL",
+      "technicalRole": "MUNICIPAL_VIEWER",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Actor individual autenticado con OIDC real según D-02",
+        "Asignación institucional vigente y aislada"
+      ],
+      "expected": "Consulta municipal agregada autorizada; sin clinical/nominal implícito.",
+      "provisioningStatus": "NOT_PROVISIONED",
+      "decisionDependency": "D-02"
+    },
+    {
+      "caseId": "AC-24",
+      "accountAlias": "QA_HOSPITAL_PATIENT_VIEWER_B",
+      "tenantAlias": "TEST_B",
+      "kind": "INSTITUTIONAL",
+      "technicalRole": "HOSPITAL_PATIENT_VIEWER",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Actor individual autenticado con OIDC real según D-02",
+        "Asignación institucional vigente y aislada"
+      ],
+      "expected": "Consulta nominal Hospital limitada; sin aprobación ni agenda write.",
+      "provisioningStatus": "NOT_PROVISIONED",
+      "decisionDependency": "D-02"
+    },
+    {
+      "caseId": "AC-25",
+      "accountAlias": "QA_HOSPITAL_SCHEDULER_B",
+      "tenantAlias": "TEST_B",
+      "kind": "INSTITUTIONAL",
+      "technicalRole": "HOSPITAL_SCHEDULER",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Actor individual autenticado con OIDC real según D-02",
+        "Asignación institucional vigente y aislada"
+      ],
+      "expected": "Agenda/asignación conforme a permisos; no aprobar solicitudes.",
+      "provisioningStatus": "NOT_PROVISIONED",
+      "decisionDependency": "D-02"
+    },
+    {
+      "caseId": "AC-26",
+      "accountAlias": "QA_CAREGIVER_RELATIONSHIP_MANAGER_B",
+      "tenantAlias": "TEST_B",
+      "kind": "INSTITUTIONAL",
+      "technicalRole": "CAREGIVER_RELATIONSHIP_MANAGER",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Actor individual autenticado con OIDC real según D-02",
+        "Asignación institucional vigente y aislada"
+      ],
+      "expected": "Validación de relación autorizada; no acceder por ese rol a datos clínicos.",
+      "provisioningStatus": "NOT_PROVISIONED",
+      "decisionDependency": "D-02"
+    },
+    {
+      "caseId": "AC-27",
+      "accountAlias": "QA_HOSPITAL_ACCESS_REVIEWER_B",
+      "tenantAlias": "TEST_B",
+      "kind": "INSTITUTIONAL",
+      "technicalRole": "HOSPITAL_ACCESS_REVIEWER",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Actor individual autenticado con OIDC real según D-02",
+        "Asignación institucional vigente y aislada"
+      ],
+      "expected": "Bandeja/decisión de solicitudes del tenant; no aprobar otro tenant ni autootorgar privilegios.",
+      "provisioningStatus": "NOT_PROVISIONED",
+      "decisionDependency": "D-02"
+    },
+    {
+      "caseId": "AC-28",
+      "accountAlias": "QA_MUNICIPAL_VIEWER_B",
+      "tenantAlias": "TEST_B",
+      "kind": "INSTITUTIONAL",
+      "technicalRole": "MUNICIPAL_VIEWER",
+      "plannedAccountState": "ACTIVE",
+      "conditions": [
+        "Actor individual autenticado con OIDC real según D-02",
+        "Asignación institucional vigente y aislada"
+      ],
+      "expected": "Consulta municipal agregada autorizada; sin clinical/nominal implícito.",
+      "provisioningStatus": "NOT_PROVISIONED",
+      "decisionDependency": "D-02"
+    },
+    {
+      "caseId": "AC-29",
+      "accountAlias": "QA_PLATFORM_ADMIN_LIMITED",
+      "tenantAlias": null,
+      "kind": "PRIVILEGED_PROPOSED",
+      "functionalRoleReference": "R14: recomendado en docs/ROLES.md; no rol implementado certificado",
+      "conditions": [
+        "Identidad individual y MFA real",
+        "No permisos de negocio por defecto"
+      ],
+      "expected": "Administración técnica aprobada; no self/clinical/finance por ser administrador.",
+      "provisioningStatus": "NOT_PROVISIONED",
+      "decisionDependency": "Spec de permisos de plataforma"
+    },
+    {
+      "caseId": "AC-30",
+      "accountAlias": "QA_FINANCE_CREATOR_A",
+      "tenantAlias": "TEST_A",
+      "kind": "BUSINESS_ROLE_PROPOSED",
+      "functionalRoleReference": "R8: subpermiso creador por especificar en S07",
+      "conditions": [
+        "Sin capacidad de aprobar su propio gasto"
+      ],
+      "expected": "Crear gasto; aprobación propia denegada.",
+      "provisioningStatus": "NOT_PROVISIONED",
+      "decisionDependency": "Spec S07"
+    },
+    {
+      "caseId": "AC-31",
+      "accountAlias": "QA_FINANCE_APPROVER_A",
+      "tenantAlias": "TEST_A",
+      "kind": "BUSINESS_ROLE_PROPOSED",
+      "functionalRoleReference": "R8: subpermiso aprobador independiente por especificar en S07",
+      "conditions": [
+        "Actor distinto de QA_FINANCE_CREATOR_A"
+      ],
+      "expected": "Aprobar solo gasto ajeno autorizado; no tenant TEST_B.",
+      "provisioningStatus": "NOT_PROVISIONED",
+      "decisionDependency": "Spec S07"
+    },
+    {
+      "caseId": "AC-32",
+      "accountAlias": "QA_AUDITOR_READONLY_A",
+      "tenantAlias": "TEST_A",
+      "kind": "BUSINESS_ROLE_PROPOSED",
+      "functionalRoleReference": "R11: recomendado en docs/ROLES.md; asignación por especificar",
+      "conditions": [
+        "Lectura/exportación solo según alcance aprobado"
+      ],
+      "expected": "Consultar trazas/evidencia permitidas; toda mutación denegada.",
+      "provisioningStatus": "NOT_PROVISIONED",
+      "decisionDependency": "Specs de auditoría/evidencia"
+    }
+  ],
+  "additionalScenarios": [
+    "Contraseña incorrecta; error neutral sin enumeración.",
+    "Issuer/audience/state/nonce/PKCE inválidos y returnTo externo denegados.",
+    "IdP caído/timeout/5xx sostenido; reintento acotado y sin APPROVED falso.",
+    "Login por superficie equivocada y URL protegida escrita directamente.",
+    "Suspender/revocar con sesión abierta; siguiente petición denegada y caché retirada.",
+    "Login/logout con cuota agotada, CSRF y CORS correctos.",
+    "Respuesta tardía tras logout/cambio de contexto no repuebla datos.",
+    "Recuperación real y sesión anterior invalidada; no usar correo/SMS simulado.",
+    "Doble submit, decisión concurrente, reintento idempotente y fallo entre IdP y DB.",
+    "Reinicio de web/API/IdP y lectura después de recarga confirma persistencia.",
+    "Seed repetido no duplica; cleanup conserva auditoría y registros ajenos al runId."
+  ]
+}

@@ -43,7 +43,6 @@ test.describe('Accesibilidad WCAG 2.1 AA', () => {
     await page.goto('/');
 
     // Si no hay sesión, redirige a inscripción - test pasa
-    const isInscripcion = await page.locator('h1:has-text("¿Cómo se va a registrar?")').isVisible();
     const isPortal = await page.locator('h1:has-text("Mi espacio")').isVisible();
 
     if (isPortal) {

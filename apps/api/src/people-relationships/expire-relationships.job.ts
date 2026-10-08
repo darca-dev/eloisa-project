@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { PrismaService } from '../database/prisma.service';
@@ -22,8 +22,8 @@ export class ExpireRelationshipsJob {
   private readonly logger = new Logger(ExpireRelationshipsJob.name);
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly tenants: TenantContextService,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(TenantContextService) private readonly tenants: TenantContextService,
   ) {}
 
   /**
