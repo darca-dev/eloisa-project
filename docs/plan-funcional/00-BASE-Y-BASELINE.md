@@ -87,3 +87,6 @@ El handoff S00-2026-10-08.md contiene allowlist exacta y hard stop. Claude Code 
 ## Actualización — S00-MP01 implementado por Codex
 
 El PO retiró a Claude y autorizó explícitamente a Codex para el mismo paquete y consentimiento. MP01 corrige los 17 errores: lint 0, tipos de los tres workspaces y build API correctos, 65 contratos API correctos, 10 E2E colectados sin ejecución. Siete archivos de código permitidos; lógica del job comparada sin cambios. Scanner aún 52 coincidencias y tres fallos web heredados corresponden a los próximos paquetes. Informe: spec/bitacora/handoffs/S00-MP01-FROM-CODEX.md. Aceptación PO pendiente; S00 completo aún sin terminar. No se inició MP02 ni se crearon cuentas/commits.
+## Actualización — MP02 y guardado local
+
+MP01 aceptado y guardado localmente en 8bbdd6e. MP02 verificado: 1888/1888 pruebas web, tipos/lint/build web correctos; marca configurable y ruta municipal siempre detrás de sesión. Informe S00-MP02-FROM-CODEX.md. El PO ordenó guardar todo localmente tras falla de escritura remota; no se reintentará publicación. Scanner 52 coincidencias pendiente MP03. S00 completo, DB/RLS/OIDC y cuentas aún pendientes.

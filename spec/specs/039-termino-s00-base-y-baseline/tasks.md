@@ -17,12 +17,12 @@
 ## Autorización e implementación pendientes
 
 - [x] Product Owner aprueba S00-MP01 exclusivamente para Claude Code (2026-10-08).
-- [ ] Product Owner revisa/aprueba los demás paquetes; no heredan la aprobación MP01.
+- [x] Product Owner autoriza a Codex a continuar MP02 y tareas definidas, con commits/ramas locales; decisiones materiales abiertas conservadas.
 - [x] Product Owner registra consentimiento SDD de 039 limitado a S00-MP01 (2026-10-08 14:47:34 -0400); Codex verifica sin sustituirlo.
 - [x] Emitir handoff S00-2026-10-08 READY para Claude Code, paquete único S00-MP01, allowlist y hard stop.
 - [x] Codex verifica gate EXIT 0 y strict EXIT 0; Claude debe repetirlos inmediatamente antes de código.
 - [x] S00-MP01 implementado por Codex: lint 0, tipos/build API correctos, 65 contratos correctos; DI preservada.
-- [ ] S00-MP02: web verde con branding configurable y ruta municipal sin bypass.
+- [x] S00-MP02: 1888/1888 pruebas web, tipos/lint/build correctos; branding configurable y ruta municipal sin bypass.
 - [ ] S00-MP03: clasificación 52/52 y remediación acotada; scanner negativo real preservado.
 - [ ] Definir operación S00-MP04 con topología exacta 025/038, env-file, runId y límites de cleanup.
 - [ ] Validar DB/RLS/runtime y aislamiento real sin skips; identificar imagen exacta.

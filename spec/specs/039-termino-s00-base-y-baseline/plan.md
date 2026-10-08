@@ -2,7 +2,7 @@
 
 ## Estado
 
-S00-MP01 aprobado por el Product Owner exclusivamente para Claude Code el 2026-10-08. Consentimiento SDD registrado personalmente por el PO y verificado; S00-MP01 listo para Claude Code. Los demás paquetes siguen pendientes. La auditoría y preparación no autorizan ampliar el alcance.
+MP01 implementado por Codex con autorización explícita y aceptado por el PO. MP02 autorizado para Codex mediante la orden de continuidad, verificado técnicamente: 1888/1888 pruebas web y tipos/lint/build correctos. El consentimiento original del PO se conserva; no lo ejecutó ni editó el agente. MP03 necesita clasificación y allowlist específica; MP04 necesita contrato operativo suficiente. Git local por decisión posterior del PO; S00 completo pendiente.
 
 ## Estrategia y hitos
 
@@ -28,4 +28,4 @@ D-01 base local cerrada. Specs 025/038 e instrucciones actuales siguen autoritat
 
 ## Compatibilidad, rollback y operación
 
-Sin nuevas dependencias ni migraciones en MP01/MP02. Conservar APIs/contratos y trazabilidad. No relajar puerta municipal al fallar IdP. Diff inverso puntual para corrección local; nunca reset, borrado de migraciones o limpieza de recursos no identificados. El plan no autoriza commit, push, merge o despliegue.
+Sin nuevas dependencias ni migraciones en MP01/MP02. Conservar APIs/contratos y trazabilidad. No relajar puerta municipal al fallar IdP. Diff inverso puntual para corrección local; nunca reset, borrado de migraciones o limpieza de recursos no identificados. La autorización de commits y ramas locales proviene de la orden explícita del PO, no de este plan. Sin push, merge o despliegue.

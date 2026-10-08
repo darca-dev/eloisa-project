@@ -3,13 +3,18 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import MunicipalityPage from '@/app/municipality/page';
 import { branding, platformNameInSentence } from '@/config/branding';
 
 import { MunicipalityShell } from './MunicipalityShell';
 import { apariciones, texto } from './municipalityTestUtils';
 import { MUNICIPALITY_MODULOS } from './municipalityViews';
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 /**
  * Pruebas negativas de Alcaldía (TASK-ALCALDIA-A-01, T-11, T-12, T-13 y T-14).
@@ -361,6 +366,14 @@ describe('Alcaldía — accesibilidad estructural', () => {
  * autorización no se pide ni se monta.
  */
 describe('Alcaldía — frontera de sesión institucional (spec 022)', () => {
+  it.each(['true', 'false'])('la bandera heredada %s no habilita contenido sin sesión', (valor) => {
+    vi.stubEnv('MERDN_MUNICIPALITY_DEMO_LOCAL', valor);
+    const html = renderToStaticMarkup(<MunicipalityPage />);
+
+    expect(html).not.toContain('data-municipality-content');
+    expect(apariciones(html, /<nav\b/gu)).toBe(0);
+  });
+
   it('la ruta monta la PUERTA, no la composición autorizada', () => {
     /*
      * `MunicipalityShellAutorizado` se exporta para poder probar la composición

@@ -5,7 +5,7 @@
 - Estado / Status: `Aprobado`
 - Fecha de aprobación / Approval date: 2026-10-08.
 - Aprobado por / Approved by: Product Owner; exclusivamente S00-MP01; Codex sustituye a Claude por autorización explícita posterior.
-- Evidencia / Approval evidence: «Apruebo S00-MP01 para Claude Code», respuesta explícita del Product Owner en esta sesión. S00-MP02/MP03/MP04 siguen sin aprobación de implementación.
+- Evidencia / Approval evidence: «Apruebo S00-MP01 para Claude Code», respuesta explícita del Product Owner en esta sesión. MP02 aprobado por la instrucción posterior de continuidad; MP03 requiere clasificación/allowlist previa y MP04 alcance operativo suficiente.
 - Consentimiento SDD de implementación: REGISTRADO personalmente por el Product Owner el 2026-10-08 14:47:34 -0400, exclusivamente S00-MP01 para Claude Code; ver spec/.sdd/user-consent.log. El agente solo verificó el registro.
 - Estado operativo: auditoría y preparación realizadas; baseline funcional NO aceptada.
 
@@ -66,7 +66,7 @@ prototype-claude/ es referencia visual de solo lectura. Conservar semántica, fo
 
 ## 9. Archivos permitidos por paquete propuesto
 
-S00-MP01 está aprobado y consentido; implementador actual Codex por autorización explícita del PO. Repetir gate/strict antes de código. Los demás paquetes siguen pendientes de aprobación y suficiencia. Ejecutar uno y devolverlo a auditoría antes del siguiente.
+S00-MP01 está aprobado y consentido; implementador actual Codex por autorización explícita del PO. Repetir gate/strict antes de código. MP02 fue autorizado por el PO para Codex, con continuidad Git local. MP03 requiere clasificar/fijar allowlist y MP04 especificación operativa suficiente. Ejecutar/verificar/registrar un paquete antes del siguiente.
 
 S00-MP01 / lint y DI:
 - .tmp-inspect-keycloak.cjs
@@ -82,6 +82,7 @@ S00-MP02 / tres regresiones web:
 - apps/web/src/config/branding.test.tsx
 - apps/web/src/app/municipality/page.tsx (retiro del bypass local de esa ruta)
 - apps/web/src/features/municipality/municipalityPrivacidad.test.tsx
+- apps/web/src/app/municipality/page.test.tsx (reconciliar la expectativa heredada del bypass retirado; mantener negativa y restaurar entorno)
 
 S00-MP03 / clasificación del scanner: primero informe en research.md; la allowlist de remediación debe fijarse después de conocer cada causa y antes de editar. No se autoriza modificar los 52 puntos a ciegas ni ampliar la allowlist mediante interpretación.
 
@@ -116,8 +117,8 @@ Pruebas por riesgo: unitarias, composición DI, web regresión, permisos/denegac
 
 ## 13. Decisiones aprobadas, pendientes y evidencia de retorno
 
-Aprobadas en sesión: proyecto Eloisa-develop como base; una rama por sección; copia fuera de OneDrive; funcionamiento real con datos ficticios; accesos primero. Se conserva el stack existente. El PO aprobó S00-MP01 y autorizó posteriormente a Codex a sustituir a Claude manteniendo su consentimiento; no se extiende a otros paquetes.
+Aprobadas en sesión: proyecto Eloisa-develop como base; una rama por sección; copia fuera de OneDrive; funcionamiento real con datos ficticios; accesos primero. Se conserva el stack existente. El PO aprobó S00-MP01 y autorizó posteriormente a Codex a sustituir a Claude manteniendo su consentimiento; La orden posterior de continuidad autoriza MP02 y las tareas dadas con especificación suficiente; no resuelve decisiones materiales abiertas.
 
-Pendientes: implementación/auditoría S00-MP01; aprobación de MP02/MP03/MP04 y sus límites; alcance operativo MP04; acceso al remoto; D-02/D-03/D-04 de S01. Implementador actual MP01: Codex por decisión 2026-10-08-s00-mp01-codex.md, que mantiene el consentimiento del mismo paquete. No convertir el catálogo de pruebas en cuentas activas antes de cumplirlos.
+MP01 aceptado. MP02 autorizado y en ejecución; pendientes: especificación suficiente de remediación MP03 y operación MP04; alcance operativo MP04; acceso al remoto; D-02/D-03/D-04 de S01. Implementador actual MP01: Codex por decisión 2026-10-08-s00-mp01-codex.md, que mantiene el consentimiento del mismo paquete. No convertir el catálogo de pruebas en cuentas activas antes de cumplirlos.
 
 Claude Code debe devolver Task ID/paquete, rama/HEAD, diff exacto, archivos y propósito, comandos/resultados/conteos/omisiones, cumplimiento por CA, datos/tenants afectados, ausencia de secretos, supuestos, fallos y rollback. Codex verifica antes de aceptación PO; no considerar terminado por su reporte solamente.

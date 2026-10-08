@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-import { branding } from '@/config/branding';
+import { branding, platformNameInSentence } from '@/config/branding';
 import styles from './hub.module.css';
 
 /**
@@ -36,7 +36,7 @@ export function HubAccessPortal(): ReactNode {
       <main className={styles.hubMain}>
         <section className={styles.heroSection} aria-labelledby="portal-title">
           <span className={styles.heroTag}>Entorno local de demostración</span>
-          <h1 className={styles.heroTitle} id="portal-title">Portal Eloisa</h1>
+          <h1 className={styles.heroTitle} id="portal-title">Portal {platformNameInSentence()}</h1>
           <p className={styles.heroSubtitle}>
             Seleccione el espacio al que desea ingresar.
           </p>

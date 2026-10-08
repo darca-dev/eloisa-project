@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import MunicipalityPage from './page';
 
@@ -7,9 +7,13 @@ function renderRuta(): string {
   return renderToStaticMarkup(<MunicipalityPage />);
 }
 
-describe('/municipality — puerta y modo demo local', () => {
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+describe('/municipality — puerta institucional', () => {
   it('permanece sin sesión por defecto', () => {
-    delete process.env.MERDN_MUNICIPALITY_DEMO_LOCAL;
+    vi.stubEnv('MERDN_MUNICIPALITY_DEMO_LOCAL', undefined);
 
     const html = renderRuta();
 
@@ -17,16 +21,13 @@ describe('/municipality — puerta y modo demo local', () => {
     expect(html).not.toContain('data-municipality-content');
   });
 
-  it('solo habilita el recorrido automático con configuración de servidor', () => {
-    process.env.MERDN_MUNICIPALITY_DEMO_LOCAL = 'true';
+  it('mantiene la puerta aunque la bandera demo heredada esté habilitada', () => {
+    vi.stubEnv('MERDN_MUNICIPALITY_DEMO_LOCAL', 'true');
 
-    try {
-      const html = renderRuta();
+    const html = renderRuta();
 
-      expect(html).toContain('data-municipality-content');
-      expect(html).toContain('Datos demostrativos');
-    } finally {
-      delete process.env.MERDN_MUNICIPALITY_DEMO_LOCAL;
-    }
+    expect(html).toContain('Comprobando la sesión institucional');
+    expect(html).not.toContain('data-municipality-content');
+    expect(html).not.toContain('Datos demostrativos');
   });
 });

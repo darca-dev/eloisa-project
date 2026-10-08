@@ -35,7 +35,10 @@ const MARCA_PROHIBIDA: readonly RegExp[] = [
 ];
 
 /** Renderiza la entrada con una configuración de branding dada (T-16). */
-async function renderConBranding(config: BrandingConfig): Promise<string> {
+async function renderConBranding(
+  config: BrandingConfig,
+  superficie: 'portal' | 'asistente' = 'portal',
+): Promise<string> {
   vi.resetModules();
   vi.doMock('@/config/branding', () => ({
     branding: config,
@@ -44,6 +47,11 @@ async function renderConBranding(config: BrandingConfig): Promise<string> {
       return first + rest.join('').toLocaleLowerCase('es-CO');
     },
   }));
+
+  if (superficie === 'asistente') {
+    const { EliBubble } = await import('@/components/ui/EliBubble');
+    return renderToStaticMarkup(<EliBubble stepHelp="Ayuda de prueba" topics={[]} />);
+  }
 
   const { default: Page } = await import('@/app/page');
   return renderToStaticMarkup(<Page />);
@@ -56,7 +64,7 @@ function normalizar(markup: string, config: BrandingConfig): string {
     .split(config.platformDisplayName)
     .join('«PLATAFORMA»')
     .split(sentence)
-    .join('«PLATAFORMA_FRASE»')
+    .join('«PLATAFORMA»')
     .split(config.platformTagline)
     .join('«BAJADA»')
     .split(config.aiDisplayName)
@@ -122,12 +130,22 @@ describe('sustitución futura de los nombres visibles (T-16)', () => {
     const conSustituto = await renderConBranding(SUSTITUTO);
 
     expect(conDefecto).toContain('Eloisa');
-    expect(conDefecto).toContain('Isa');
+    expect(conDefecto).toContain('Portal Eloisa');
 
     expect(conSustituto).toContain('CUIDAMOS');
-    expect(conSustituto).toContain('Ana');
+    expect(conSustituto).toContain('Portal Cuidamos');
     expect(conSustituto).not.toContain('Eloisa');
 
+    expect(normalizar(conSustituto, SUSTITUTO)).toBe(normalizar(conDefecto, branding));
+  }, 15000);
+
+  it('sustituye el nombre de la asistente conservando su estructura', async () => {
+    const conDefecto = await renderConBranding(branding, 'asistente');
+    const conSustituto = await renderConBranding(SUSTITUTO, 'asistente');
+
+    expect(conDefecto).toContain('Isa');
+    expect(conSustituto).toContain('Ana');
+    expect(conSustituto).not.toContain('Isa');
     expect(normalizar(conSustituto, SUSTITUTO)).toBe(normalizar(conDefecto, branding));
   }, 15000);
 });

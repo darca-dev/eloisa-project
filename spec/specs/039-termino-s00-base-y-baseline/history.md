@@ -34,3 +34,11 @@ Se registraron dos hallazgos residuales de pruebas heredadas: helper E2E tautol�
 ## 2026-10-08 — MP01 aceptado por PO; Git y continuidad autorizados
 
 El PO aceptó MP01 y ordenó commit/push, nueva rama MP02 y repetir el ciclo hasta terminar las tareas dadas. Decisión: 2026-10-08-continuidad-git-por-paquete.md. La ejecución continua no resuelve decisiones materiales abiertas ni permite saltar specs suficientes o pruebas. Publicación pendiente: origin arvtechv/eloisa_project devuelve Repository not found con acceso actual. No se cambió destino.
+## 2026-10-08 — MP01 commit local y rama MP02
+
+MP01 guardado en 8bbdd6e128189928508147b9635cef21bb4fc3fb. El remoto permitió lectura tras hacerse público (develop coincide con 9980582); push devolvió 403 por falta de escritura de la cuenta activa. El PO ordenó guardar todo localmente, así que se cancelan intentos de publicación y se continúa por commits/ramas locales.
+
+Rama MP02 creada desde MP01: feat/termino-00-mp02-web-real. Ejecución autorizada por instrucción explícita de continuidad; allowlist de cuatro archivos y contrato S00-MP02-TO-CODEX.md. No se marca S00 aceptado ni se transfieren decisiones materiales abiertas.
+## 2026-10-08 — MP02 verificado, continuidad local
+
+MP01 guardado en 8bbdd6e; MP02 en feat/termino-00-mp02-web-real. Cinco archivos web permitidos, incluida prueba de ruta heredada identificada por suite completa y añadida al contrato antes de editar. Gate/strict EXIT 0. Resultado final: 1888/1888 web, tipos/lint/build web correctos. Informe S00-MP02-FROM-CODEX.md; no aceptación total S00 ni evidencia DB/OIDC. Scanner mantiene 52 coincidencias. Sin push por orden del PO; commits y ramas locales autorizados.
