@@ -23,7 +23,7 @@
 - [x] Codex verifica gate EXIT 0 y strict EXIT 0; Claude debe repetirlos inmediatamente antes de código.
 - [x] S00-MP01 implementado por Codex: lint 0, tipos/build API correctos, 65 contratos correctos; DI preservada.
 - [x] S00-MP02: 1888/1888 pruebas web, tipos/lint/build correctos; branding configurable y ruta municipal sin bypass.
-- [ ] S00-MP03: clasificación 52/52 y remediación acotada; scanner negativo real preservado.
+- [x] S00-MP03: 55 puntos clasificados (52 originales + 3 revelados); scanner EXIT 0, 16 adversariales correctas, E2E contraseña aleatoria en memoria; detección negativa preservada.
 - [ ] Definir operación S00-MP04 con topología exacta 025/038, env-file, runId y límites de cleanup.
 - [ ] Validar DB/RLS/runtime y aislamiento real sin skips; identificar imagen exacta.
 - [ ] Codex verifica correcciones y reporta riesgos residuales.

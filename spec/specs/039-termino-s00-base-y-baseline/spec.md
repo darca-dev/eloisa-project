@@ -86,6 +86,14 @@ S00-MP02 / tres regresiones web:
 
 S00-MP03 / clasificación del scanner: primero informe en research.md; la allowlist de remediación debe fijarse después de conocer cada causa y antes de editar. No se autoriza modificar los 52 puntos a ciegas ni ampliar la allowlist mediante interpretación.
 
+Clasificación MP03 realizada (52/52) en research.md. Allowlist vigente bajo la autorización explícita de continuidad del PO:
+- tests/secrets-scan.check.mjs: excepciones por ruta/regla/hash de línea, comprobación de catálogo, matches múltiples y marcadores exactos; sin excluir carpetas ni imprimir valores.
+- tests/secrets-scan.exceptions.json: 53 entradas de evidencia no secreta para 54 ocurrencias clasificadas (incluidas tres detectadas al endurecer marcadores), con motivo y procedencia; sin valores.
+- tests/secrets-scan.test.mjs: adversariales CLI en repositorios Git temporales, sin conexiones reales ni commits/remotos.
+- apps/web/e2e/patient-persistent-account.spec.ts: sustituir únicamente contraseña fija por randomBytes en memoria; mantener datos, aserciones y flujo, sin provisión/ejecución E2E nueva.
+
+No modificar los otros fixtures, environment.ts, FROM-CLAUDE histórico o plantillas. Las pruebas deben rechazar nueva credencial en cualquier ruta, mutaciones/reubicación de excepción, segundo secreto en línea, placeholders incrustados en valores y catálogo inválido. Mantener reglas de tokens/claves, plantillas y lockfile. Sin cambios a seguridad de aplicación/tenant/IdP. Este paquete corrige clasificación del tooling y retira credencial E2E fija; no define MFA ni decide D-02/D-03/D-04.
+
 S00-MP04 / DB e imagen: solo operación propuesta. Reutilizar scripts aprobados 025 y matrices 038 tras emitir el handoff exacto, definir env-file/identidad/runId/cleanup y resolver el fallo heredado de inventario. Esta spec aún NO autoriza arrancar/migrar/limpiar recursos ni cambiar Dockerfiles. Si faltan límites, parar solo esa parte.
 
 Documentación S00 permitida: este bundle completo; docs/PLAN-TERMINO-FUNCIONAL.md; docs/plan-funcional/00-BASE-Y-BASELINE.md; docs/plan-funcional/01-ACCESOS-REALES.md; catálogo/trazabilidad importados; spec/specs/INDEX.md; decisión de base y handoff S00 separados. ENTREGA.md se importa sin reescribir su auditoría histórica.

@@ -42,3 +42,13 @@ Rama MP02 creada desde MP01: feat/termino-00-mp02-web-real. Ejecución autorizad
 ## 2026-10-08 — MP02 verificado, continuidad local
 
 MP01 guardado en 8bbdd6e; MP02 en feat/termino-00-mp02-web-real. Cinco archivos web permitidos, incluida prueba de ruta heredada identificada por suite completa y añadida al contrato antes de editar. Gate/strict EXIT 0. Resultado final: 1888/1888 web, tipos/lint/build web correctos. Informe S00-MP02-FROM-CODEX.md; no aceptación total S00 ni evidencia DB/OIDC. Scanner mantiene 52 coincidencias. Sin push por orden del PO; commits y ramas locales autorizados.
+
+## 2026-10-08 — contrato MP03 suficiente antes de código
+
+52/52 coincidencias clasificadas en research.md. Allowlist exacta de cuatro archivos fijada; gate EXIT 0 (19 warnings heredados), strict EXIT 0 con dos avisos por historial aún no actualizado, subsanados en esta entrada. Catálogo ruta/regla/hash; E2E aleatorio; tests adversariales CLI sin recursos reales. Orden de continuidad del PO y Git local conservadas. No se altera consentimiento.
+
+MP03: marcadores exactos descubrieron tres coincidencias sintéticas adicionales, clasificadas antes de incluirlas en catálogo. Total 55 clasificadas; catálogo 53 entradas para 54 ocurrencias. Sin cambios a las fuentes de fixtures/plantillas.
+
+## 2026-10-08 — MP03 verificado
+
+Scanner EXIT 0, 53 entradas exactas/54 ocurrencias sintéticas, E2E fijo retirado. 16/16 adversariales, tipos y lint correctos; Playwright colecta cinco casos sin ejecución. Strict final EXIT 0/0 warnings. Cuatro archivos técnicos en allowlist, sin servicios alterados. Informe S00-MP03-FROM-CODEX.md; S00/DB/OIDC pendientes. Commit local y siguiente rama MP04 bajo orden del PO.

@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
@@ -27,7 +28,7 @@ const TEST_PATIENT = {
   sexo: 'Femenino',
   telefono: '3001234567',
   correo: `maria.test.${Date.now()}@ejemplo.invalid`,
-  password: 'Passw0rd123', // cumple: 8+ chars, 1 letra, 1 número
+  password: `Test-${randomBytes(24).toString('base64url')}-1`, // solo en memoria para inscripción/login
   eps: 'Nueva EPS',
   discapacidad: false,
   requiereCuidadoCasa: true,

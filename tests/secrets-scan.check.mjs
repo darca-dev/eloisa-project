@@ -19,6 +19,7 @@
  * El script NUNCA imprime el valor detectado: solo archivo, línea y regla.
  */
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { readFileSync, statSync } from 'node:fs';
 import process from 'node:process';
 
@@ -113,7 +114,7 @@ function listVersionableFiles() {
 }
 
 function isAllowedPlaceholder(value) {
-  return ALLOWED_PLACEHOLDERS.some((placeholder) => value.includes(placeholder));
+  return ALLOWED_PLACEHOLDERS.includes(value);
 }
 
 /**
@@ -124,17 +125,12 @@ function matchSecretRules(line) {
   const matched = [];
 
   for (const rule of SECRET_RULES) {
-    const match = rule.pattern.exec(line);
-    if (match === null) {
-      continue;
+    for (const match of line.matchAll(new RegExp(rule.pattern.source, `${rule.pattern.flags}g`))) {
+      const captured = rule.capture === undefined ? match[0] : (match[rule.capture] ?? '');
+      if (!isAllowedPlaceholder(captured)) {
+        matched.push(rule.id);
+      }
     }
-
-    const captured = rule.capture === undefined ? line : (match[rule.capture] ?? '');
-    if (isAllowedPlaceholder(captured)) {
-      continue;
-    }
-
-    matched.push(rule.id);
   }
 
   return matched;
@@ -208,6 +204,40 @@ function selfCheckDotenvRule() {
 
 const files = listVersionableFiles();
 const findings = [];
+let reviewedExceptions = [];
+let reviewedOccurrences = 0;
+
+// Solo evidencia clasificada por ruta/regla/linea completa; nunca por carpeta,
+// prefijo de valor, nombre uppercase o host local. JSON no contiene secretos.
+try {
+  const catalog = JSON.parse(readFileSync('tests/secrets-scan.exceptions.json', 'utf8'));
+  const seen = new Set();
+  const permittedRules = new Set(['hardcoded-credential-assignment', 'connection-string-with-password']);
+  const permittedCategories = new Set(['environment-reference', 'test-template', 'unit-sentinel', 'baseline-contract', 'historical-example']);
+  if (catalog.version !== 1 || !Array.isArray(catalog.entries)) {
+    throw new Error('invalid catalog');
+  }
+  for (const entry of catalog.entries) {
+    if (
+      typeof entry.file !== 'string' || !/^[A-Za-z0-9_./-]+$/u.test(entry.file) ||
+      entry.file.startsWith('/') || entry.file.split('/').some((part) => part === '..' || part === '') ||
+      !permittedRules.has(entry.rule) || !permittedCategories.has(entry.category) ||
+      typeof entry.lineSha256 !== 'string' || !/^[a-f0-9]{64}$/u.test(entry.lineSha256) ||
+      !Number.isInteger(entry.originalLine) || entry.originalLine < 1 ||
+      typeof entry.reason !== 'string' || entry.reason.length < 10 ||
+      typeof entry.provenance !== 'string' || entry.provenance.length < 10
+    ) {
+      throw new Error('invalid entry');
+    }
+    const key = `${entry.file}:${entry.rule}:${entry.lineSha256}`;
+    if (seen.has(key)) throw new Error('duplicate entry');
+    seen.add(key);
+  }
+  reviewedExceptions = catalog.entries;
+} catch {
+  // No imprimir el error de JSON: puede contener una porcion de su contenido.
+  findings.push({ file: 'tests/secrets-scan.exceptions.json', line: 0, rule: 'cobertura:catalogo-invalido-o-ilegible' });
+}
 
 for (const problem of selfCheckDotenvRule()) {
   findings.push({ file: 'tests/secrets-scan.check.mjs', line: 0, rule: problem });
@@ -277,6 +307,11 @@ for (const file of files) {
 
   lines.forEach((line, index) => {
     for (const ruleId of matchSecretRules(line)) {
+      const lineSha256 = createHash('sha256').update(line).digest('hex');
+      if (reviewedExceptions.some((entry) => entry.file === file && entry.rule === ruleId && entry.lineSha256 === lineSha256)) {
+        reviewedOccurrences += 1;
+        continue;
+      }
       findings.push({ file, line: index + 1, rule: `secreto:${ruleId}` });
     }
   });
@@ -289,6 +324,7 @@ for (const template of envTemplates) {
 }
 
 console.log(`[secrets:scan] Archivos versionables analizados: ${files.length}`);
+console.log(`[secrets:scan] Excepciones revisadas exactas: ${reviewedExceptions.length}; ocurrencias reconocidas: ${reviewedOccurrences}`);
 console.log(
   `[secrets:scan] Marcadores ficticios permitidos: ${ALLOWED_PLACEHOLDERS.join(', ')}`,
 );

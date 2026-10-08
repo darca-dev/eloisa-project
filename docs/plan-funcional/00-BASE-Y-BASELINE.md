@@ -90,3 +90,7 @@ El PO retiró a Claude y autorizó explícitamente a Codex para el mismo paquete
 ## Actualización — MP02 y guardado local
 
 MP01 aceptado y guardado localmente en 8bbdd6e. MP02 verificado: 1888/1888 pruebas web, tipos/lint/build web correctos; marca configurable y ruta municipal siempre detrás de sesión. Informe S00-MP02-FROM-CODEX.md. El PO ordenó guardar todo localmente tras falla de escritura remota; no se reintentará publicación. Scanner 52 coincidencias pendiente MP03. S00 completo, DB/RLS/OIDC y cuentas aún pendientes.
+
+## Actualización — MP03
+
+55 puntos clasificados (52 originales y tres detectados tras endurecer coincidencia de marcadores). Scanner EXIT 0 con 53 excepciones exactas para 54 ocurrencias no secretas; contraseña E2E aleatoria en memoria. 16 pruebas adversariales sin skips, tipos/lint correctos. Informe S00-MP03-FROM-CODEX.md. No evidencia DB/OIDC nueva; MP04 debe reconciliar catálogo y fijar operación antes de conectar.
