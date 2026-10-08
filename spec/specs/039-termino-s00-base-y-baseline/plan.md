@@ -2,7 +2,7 @@
 
 ## Estado
 
-MP01 implementado por Codex con autorización explícita y aceptado por el PO. MP02 autorizado para Codex mediante la orden de continuidad, verificado técnicamente: 1888/1888 pruebas web y tipos/lint/build correctos. El consentimiento original del PO se conserva; no lo ejecutó ni editó el agente. MP03 necesita clasificación y allowlist específica; MP04 necesita contrato operativo suficiente. Git local por decisión posterior del PO; S00 completo pendiente.
+MP01 implementado por Codex con autorización explícita y aceptado por el PO. MP02 verificado: 1888/1888 web y tipos/lint/build correctos. MP03 verificado: scanner EXIT 0, 16 adversariales, tipos/lint correctos. MP04A corrige comando de tipos del runner: 72 contratos puros y tres comandos reales pasan, sin infraestructura. MP04B propuesto con catálogo/owner y operación exactos; requiere decisión PO. El consentimiento original se conserva; ningún agente lo ejecutó o editó. Git local por decisión posterior del PO; S00 completo pendiente.
 
 ## Estrategia y hitos
 

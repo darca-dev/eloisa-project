@@ -114,6 +114,6 @@ que auditar.
 
 | Número | Nombre | Estado | Prioridad | Responsable | Actualización |
 |---|---|---|---|---|---|
-| 039 | termino-s00-base-y-baseline | MP01 aceptado por PO; continuidad/Git autorizados; S00 restante pendiente | Crítica | Product Owner / Codex | 2026-10-08 |
+| 039 | termino-s00-base-y-baseline | MP01 aceptado; MP02/03/04A verificados; MP04B propuesto, decisión PO pendiente; Git local | Crítica | Product Owner / Codex | 2026-10-08 |
 
 D-01 selecciona la copia fuera de OneDrive, rama S00 y base local 9980582. La spec 039 no hereda consentimiento de 025/038. Ver docs/plan-funcional/00-BASE-Y-BASELINE.md y el handoff S00-2026-10-08.md.

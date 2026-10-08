@@ -94,3 +94,7 @@ MP01 aceptado y guardado localmente en 8bbdd6e. MP02 verificado: 1888/1888 prueb
 ## Actualización — MP03
 
 55 puntos clasificados (52 originales y tres detectados tras endurecer coincidencia de marcadores). Scanner EXIT 0 con 53 excepciones exactas para 54 ocurrencias no secretas; contraseña E2E aleatoria en memoria. 16 pruebas adversariales sin skips, tipos/lint correctos. Informe S00-MP03-FROM-CODEX.md. No evidencia DB/OIDC nueva; MP04 debe reconciliar catálogo y fijar operación antes de conectar.
+
+## Actualización — MP04A y propuesta MP04B
+
+MP04A: typecheck del runner corregido sin infraestructura. 72 contratos puros y tres comandos reales types correctos; lint correcto. MP04B-PROPOSAL.md fija operación local desechable y cambio de catálogo/owner test (27 tablas/28 policies). Inventario estático, no evidencia DB. Decisión PO solicitada por AGENTS §6/22.2 y aún pendiente. Puerto 55432 libre, imagen postgres17.6 presente; cero recursos baseline. Cuatro contenedores de aplicación ya estaban detenidos externamente; no se tocaron. Cuentas y DB/OIDC pendientes.

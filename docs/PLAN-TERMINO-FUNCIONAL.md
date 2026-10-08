@@ -4,7 +4,7 @@ Fecha: **8 de octubre de 2026**. Responsable de producto: Product Owner. Arquite
 
 **Objetivo:** terminar las capacidades existentes como operaciones reales de punta a punta. El trabajo se divide en 15 secciones, cada una con una rama Git propia, dependencias, pruebas y aceptación. La primera entrega funcional será el acceso real para todos los perfiles e instituciones.
 
-**Estado:** D-01 resuelta por el Product Owner. Base local: `9980582bc40f41c80b90078f0c24374cbad9df9e` (referencia almacenada `origin/develop`). Proyecto activo: `C:\Users\10plu\Eloisa-develop\eloisa_project`, fuera de OneDrive. Rama S00: `feat/termino-00-base-y-baseline`. S00 EN AUDITORÍA, con fallos heredados pendientes; no aceptada. El fetch del remoto no pudo autenticarse/verificarse; este SHA no se presenta como última versión remota.
+**Estado:** D-01 resuelta por el Product Owner. Base local: `9980582bc40f41c80b90078f0c24374cbad9df9e` (`origin/develop` almacenado). Proyecto activo: `C:\Users\10plu\Eloisa-develop\eloisa_project`, fuera de OneDrive. MP01 aceptado; MP02/MP03/MP04A verificados técnicamente. MP04B tiene propuesta concreta de DB aislada pendiente de decisión PO; S00 completo no aceptado. Commits y ramas locales por orden del PO, sin publicación remota. Informes vigentes en spec/bitacora/handoffs/S00-MP*-FROM-CODEX.md.
 
 ## 1. Instrucción de producto y contrato de entrega
 
@@ -55,11 +55,11 @@ Estados: PLANIFICADA → ESPECIFICADA → APROBADA → EN IMPLEMENTACIÓN → EN
 
 ## 4. Secciones y orden propuesto
 
-Trabajaremos secuencialmente S00 a S14. El número indica el orden normal. Las dependencias permiten reconocer reutilización; no autorizan paralelismo ni saltar pruebas. Cada sección contiene varios paquetes pequeños, sin abrir una rama distinta por cada botón.
+Trabajaremos secuencialmente S00 a S14. El número indica el orden normal. Las dependencias permiten reconocer reutilización; no autorizan paralelismo ni saltar pruebas. La orden posterior del PO añade una rama por paquete revisable y un commit local al terminarlo, manteniendo trazabilidad dentro de cada sección.
 
 | Sección | Resultado | Rama nueva al iniciar | Dependencias mínimas | Estado actual |
 |---|---|---|---|---|
-| S00 | Base de trabajo y entorno verificable | `feat/termino-00-base-y-baseline` | — | EN AUDITORÍA · baseline pendiente |
+| S00 | Base de trabajo y entorno verificable | `feat/termino-00-base-y-baseline` y ramas MP02/MP03/MP04 | — | MP01 aceptado; MP02/03/04A verificados; DB MP04B pendiente |
 | S01 | Accesos, registro y ciclo de cuenta | `feat/termino-01-accesos-reales` | S00 | PLANIFICADA |
 | S02 | Personas, relaciones y consentimientos | `feat/termino-02-personas-relaciones-y-consentimientos` | S01 | PLANIFICADA |
 | S03 | Alcaldía, programas y población | `feat/termino-03-alcaldia-programas-y-poblacion` | S02 | PLANIFICADA |

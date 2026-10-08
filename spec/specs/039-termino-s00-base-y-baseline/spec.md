@@ -96,6 +96,10 @@ No modificar los otros fixtures, environment.ts, FROM-CLAUDE histórico o planti
 
 S00-MP04 / DB e imagen: solo operación propuesta. Reutilizar scripts aprobados 025 y matrices 038 tras emitir el handoff exacto, definir env-file/identidad/runId/cleanup y resolver el fallo heredado de inventario. Esta spec aún NO autoriza arrancar/migrar/limpiar recursos ni cambiar Dockerfiles. Si faltan límites, parar solo esa parte.
 
+MP04 se divide para avanzar sin decidir ownership pendiente:
+- S00-MP04A (autorización de continuidad): corregir solo el comando de typecheck API del runner, equiparándolo al script existente de @merdn/api con --noEmit --allowImportingTsExtensions. Allowlist: scripts/testing/run-baseline.mjs y tests/testing/run-baseline.test.mts. No modifica matriz de 29 stages/23 DB, entorno hijo, timeouts, catálogo, roles, provisionamiento o cleanup. Repetir gate/strict antes de código; contratos 72 sin skips, tipos reales de los tres comandos, lint/scanner correctos. Sin infraestructura.
+- S00-MP04B (PROPUESTA; requiere decisión PO por contradicción de catálogo/ownership): contrato operativo separado S00-MP04B-PROPOSAL.md; incorporar access_request/policy al catálogo completo y crear exclusivamente topología local desechable. Mientras no exista decisión explícita, no editar su código ni ejecutar DB.
+
 Documentación S00 permitida: este bundle completo; docs/PLAN-TERMINO-FUNCIONAL.md; docs/plan-funcional/00-BASE-Y-BASELINE.md; docs/plan-funcional/01-ACCESOS-REALES.md; catálogo/trazabilidad importados; spec/specs/INDEX.md; decisión de base y handoff S00 separados. ENTREGA.md se importa sin reescribir su auditoría histórica.
 
 ## 10. Archivos y acciones prohibidos
@@ -127,6 +131,6 @@ Pruebas por riesgo: unitarias, composición DI, web regresión, permisos/denegac
 
 Aprobadas en sesión: proyecto Eloisa-develop como base; una rama por sección; copia fuera de OneDrive; funcionamiento real con datos ficticios; accesos primero. Se conserva el stack existente. El PO aprobó S00-MP01 y autorizó posteriormente a Codex a sustituir a Claude manteniendo su consentimiento; La orden posterior de continuidad autoriza MP02 y las tareas dadas con especificación suficiente; no resuelve decisiones materiales abiertas.
 
-MP01 aceptado. MP02 autorizado y en ejecución; pendientes: especificación suficiente de remediación MP03 y operación MP04; alcance operativo MP04; acceso al remoto; D-02/D-03/D-04 de S01. Implementador actual MP01: Codex por decisión 2026-10-08-s00-mp01-codex.md, que mantiene el consentimiento del mismo paquete. No convertir el catálogo de pruebas en cuentas activas antes de cumplirlos.
+MP01 aceptado. MP02/MP03 verificados técnicamente y guardados en commits locales d00bb82/581eb65; MP04A comando de tipos verificado sin infraestructura. MP04B tiene propuesta concreta pendiente de decisión sobre catálogo/owner test y operación aislada; no se ejecuta DB hasta resolverla. D-02/D-03/D-04 de S01 siguen abiertas. Codex es implementador autorizado por las decisiones explícitas del PO; Git local por instrucción posterior, sin push. No convertir el catálogo de pruebas en cuentas activas antes de cumplir sus contratos.
 
 Claude Code debe devolver Task ID/paquete, rama/HEAD, diff exacto, archivos y propósito, comandos/resultados/conteos/omisiones, cumplimiento por CA, datos/tenants afectados, ausencia de secretos, supuestos, fallos y rollback. Codex verifica antes de aceptación PO; no considerar terminado por su reporte solamente.

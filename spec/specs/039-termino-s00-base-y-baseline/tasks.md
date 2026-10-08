@@ -25,6 +25,9 @@
 - [x] S00-MP02: 1888/1888 pruebas web, tipos/lint/build correctos; branding configurable y ruta municipal sin bypass.
 - [x] S00-MP03: 55 puntos clasificados (52 originales + 3 revelados); scanner EXIT 0, 16 adversariales correctas, E2E contraseña aleatoria en memoria; detección negativa preservada.
 - [ ] Definir operación S00-MP04 con topología exacta 025/038, env-file, runId y límites de cleanup.
+- [x] MP04A: comando API del runner alineado con workspace; 72 contratos y tres comandos reales correctos, sin DB.
+- [x] Preparar propuesta MP04B: tabla/policy omitidas, catálogo 27/28, owner no privilegiado y topología local exacta.
+- [ ] Product Owner resuelve contradicción de catálogo/owner y aprueba operación MP04B; no inferir respuesta del silencio.
 - [ ] Validar DB/RLS/runtime y aislamiento real sin skips; identificar imagen exacta.
 - [ ] Codex verifica correcciones y reporta riesgos residuales.
 - [ ] Product Owner acepta S00; autoriza integración Git cuando proceda.

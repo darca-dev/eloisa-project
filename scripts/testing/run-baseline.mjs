@@ -125,7 +125,7 @@ function buildCommands(stage) {
   if (stage === 'typecheck') {
     return [
       { argv: [NODE, TSC, '--project', path.join('packages', 'shared', 'tsconfig.json'), '--noEmit'], cwd: REPO_ROOT },
-      { argv: [NODE, TSC, '--project', path.join('apps', 'api', 'tsconfig.json'), '--noEmit'], cwd: REPO_ROOT },
+      { argv: [NODE, TSC, '--project', path.join('apps', 'api', 'tsconfig.json'), '--noEmit', '--allowImportingTsExtensions'], cwd: REPO_ROOT },
       { argv: [NODE, TSC, '--project', path.join('apps', 'web', 'tsconfig.json'), '--noEmit'], cwd: REPO_ROOT },
     ];
   }

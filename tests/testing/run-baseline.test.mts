@@ -246,7 +246,13 @@ describe('MP14 - matriz de stages', () => {
   test('los comandos de typecheck cubren los tres proyectos y no emiten', () => {
     const typecheck = runner.STAGE_MATRIX.find((s) => s.id === 'typecheck');
     assert.equal(typecheck?.commands.length, 3);
-    assert.deepEqual(typecheck?.commands.map((c) => c.argv.slice(-1)[0]), ['--noEmit', '--noEmit', '--noEmit']);
+    for (const command of typecheck?.commands ?? []) {
+      assert.ok(command.argv.includes('--noEmit'));
+    }
+    const api = typecheck?.commands.find((command) => command.argv.includes('apps/api/tsconfig.json') || command.argv.includes('apps\\api\\tsconfig.json'));
+    assert.ok(api, 'la matriz debe incluir el proyecto API');
+    assert.ok(api.argv.includes('--allowImportingTsExtensions'), 'los tests API importan herramientas Node con extension .ts');
+    assert.equal(typecheck?.commands.filter((command) => command.argv.includes('--allowImportingTsExtensions')).length, 1);
   });
 });
 

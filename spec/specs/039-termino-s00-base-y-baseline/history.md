@@ -52,3 +52,11 @@ MP03: marcadores exactos descubrieron tres coincidencias sintéticas adicionales
 ## 2026-10-08 — MP03 verificado
 
 Scanner EXIT 0, 53 entradas exactas/54 ocurrencias sintéticas, E2E fijo retirado. 16/16 adversariales, tipos y lint correctos; Playwright colecta cinco casos sin ejecución. Strict final EXIT 0/0 warnings. Cuatro archivos técnicos en allowlist, sin servicios alterados. Informe S00-MP03-FROM-CODEX.md; S00/DB/OIDC pendientes. Commit local y siguiente rama MP04 bajo orden del PO.
+
+## 2026-10-08 — preparación MP04
+
+Rama MP04 desde 581eb65. Inventario puro: 27 tablas de esquema, catálogo 26/27, access_request ausente; 17 migraciones coinciden, 29 stages/23 DB. Runner typecheck API reproduce nueve TS5097; se abre MP04A técnico de dos archivos para igualar comando existente. MP04B queda PROPUESTA por contradicción de catálogo/owner y operación DB, no autorizada por el agente. Docker: cuatro contenedores de app detenidos externamente, cero running; no recursos baseline ni listener55432. Sin mutación Docker/DB.
+
+## 2026-10-08 — MP04A verificado, MP04B propuesto
+
+Dos archivos técnicos en allowlist; command API del runner corregido con opción existente. 72/72 contratos sin omisiones, tres comandos reales types EXIT0/0/0, lint correcto. Informe MP04A y propuesta MP04B registrados. Pregunta PO específica sobre catálogo/owner/operación aislada pendiente; no se toma silencio por aprobación ni se altera consent log. Scanner/diff check final antes de guardar commit local. DB/IdP intactos.
