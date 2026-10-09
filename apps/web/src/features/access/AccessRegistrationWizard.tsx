@@ -14,6 +14,7 @@ import {
   type AccessRequestPasswordProblem,
 } from './accessRequestClient';
 import { ACCESS_REGISTRATION_DEMOS } from './accessRequestDemoFixtures';
+import { precargarUsuarioTest } from './accessRegistrationTestUser';
 import {
   cambiarPaso,
   construirCuerpo,
@@ -44,7 +45,7 @@ import styles from './accessRegistration.module.css';
  * Inscripción guiada de cinco pasos por perfil (SPEC 038, MP04-C3).
  *
  * SELECTOR y RAMA, nada más. Cada rama muestra sus cinco títulos exactos, su
- * barra `Paso N de 5`, sus cinco pasos navegables, solo sus tres fixtures y la
+ * barra `Paso N de 5`, sus cinco pasos navegables, tres usuarios test por perfil y la
  * iconografía de Elí de la referencia (guía en cabecera, escucha por paso,
  * agradece en el cierre y burbuja flotante con saludo).
  *
@@ -70,7 +71,7 @@ import styles from './accessRegistration.module.css';
  * red.
  */
 
-const AYUDA_PASSWORD = `Es una contraseña ficticia para esta prueba: debe tener entre ${ACCESS_REQUEST_PASSWORD_MIN_LENGTH} y ${ACCESS_REQUEST_PASSWORD_MAX_LENGTH} caracteres, al menos una letra y un número. Se usa solo para crear la cuenta de prueba.`;
+const AYUDA_PASSWORD = `Su contraseña debe tener entre ${ACCESS_REQUEST_PASSWORD_MIN_LENGTH} y ${ACCESS_REQUEST_PASSWORD_MAX_LENGTH} caracteres, al menos una letra y un número. La usará para iniciar sesión después de la aprobación del Hospital.`;
 
 const PROBLEMAS_PASSWORD: Readonly<Record<AccessRequestPasswordProblem, string>> = {
   tooShort: `Use al menos ${ACCESS_REQUEST_PASSWORD_MIN_LENGTH} caracteres.`,
@@ -106,9 +107,9 @@ const AUTORIZACION_POR_PERFIL: Readonly<Record<RegistrationProfile, string>> = {
 
 const TEMAS_AYUDA: readonly EliTopic[] = [
   {
-    id: 'datos-ficticios',
-    question: '¿Debo usar mis datos reales?',
-    answer: 'No. Todo es ficticio y de prueba: nunca ingrese datos reales de ninguna persona.',
+    id: 'datos-registro',
+    question: '¿Para qué son los botones de usuarios test?',
+    answer: 'Precargan los campos y una contraseña para probar el registro. No envían la solicitud ni aprueban el acceso.',
   },
   {
     id: 'aprobacion-hospital',
@@ -116,9 +117,9 @@ const TEMAS_AYUDA: readonly EliTopic[] = [
     answer: 'Solo después de que el Hospital apruebe su solicitud. Registrarla no concede acceso.',
   },
   {
-    id: 'clave-ficticia',
+    id: 'clave-acceso',
     question: '¿Para qué es la contraseña?',
-    answer: 'Es ficticia y solo sirve para esta prueba. Se borra después de cada intento.',
+    answer: 'La usará para iniciar sesión cuando el Hospital apruebe su solicitud. Puede verla en el paso Confirmación antes de enviar; el formulario la borra después de cada intento.',
   },
 ];
 
@@ -140,6 +141,7 @@ export function AccessRegistrationWizard(): ReactNode {
   const [sinContacto, setSinContacto] = useState(false);
   const [sinAutorizacion, setSinAutorizacion] = useState(false);
   const [campoInvalido, setCampoInvalido] = useState<string | null>(null);
+  const [testUserError, setTestUserError] = useState(false);
 
   const tituloRef = useRef<HTMLHeadingElement | null>(null);
   const bloqueoRef = useRef<BloqueoEnvio | null>(null);
@@ -178,6 +180,7 @@ export function AccessRegistrationWizard(): ReactNode {
   }
 
   function limpiarErrores(): void {
+    setTestUserError(false);
     setPasswordProblem(null);
     setSinContacto(false);
     setSinAutorizacion(false);
@@ -309,34 +312,23 @@ export function AccessRegistrationWizard(): ReactNode {
     });
   }
 
-  function cargarDemo(id: string): void {
+  function cargarUsuarioTest(id: string): void {
     if (rama === null || enviando) {
       return;
     }
 
-    const fixture = ACCESS_REGISTRATION_DEMOS.find(
-      (candidato) => candidato.id === id && candidato.perfil === rama.perfil,
-    );
-
-    if (fixture === undefined) {
-      return;
+    try {
+      const precarga = precargarUsuarioTest(rama, id);
+      if (precarga === null) {
+        return;
+      }
+      setEstado(precarga);
+      setOutcome(null);
+      setVerPassword(false);
+      limpiarErrores();
+    } catch {
+      setTestUserError(true);
     }
-
-    setEstado({
-      ...rama,
-      base: {
-        documentType: fixture.base.requestedProfile === undefined ? 'CEDULA_CIUDADANIA' : fixture.base.documentType,
-        documentNumber: fixture.base.documentNumber,
-        givenNames: fixture.base.givenNames,
-        familyNames: fixture.base.familyNames,
-        birthDate: fixture.base.birthDate,
-        sexGenderCode: fixture.base.sexGenderCode,
-        phone: fixture.base.phone ?? '',
-        email: fixture.base.email ?? '',
-      },
-      reg: { ...rama.reg, ...(fixture.registro as Record<string, unknown>) },
-    });
-    limpiarErrores();
   }
 
   function senalar(campo: string): void {
@@ -509,10 +501,6 @@ export function AccessRegistrationWizard(): ReactNode {
             <p className={styles.lead}>
               Elija una opción. Al completar el registro se enviará automáticamente una solicitud al Hospital, y no podrá entrar hasta que sea aprobada.
             </p>
-            <p className={styles.warning}>
-              <strong>Datos ficticios de prueba.</strong> No ingrese datos reales de ninguna
-              persona.
-            </p>
             <div className={styles.profileGrid}>
               {RAMAS_INSCRIPCION.map((opcion) => (
                 <button
@@ -616,8 +604,7 @@ export function AccessRegistrationWizard(): ReactNode {
               <strong>{outcome.accepted.status}</strong>. Conserve esta referencia. Todavía NO puede iniciar sesión: el Hospital debe aprobar la solicitud antes de que pueda entrar. Esta pantalla no crea sesión ni cuenta.
             </p>
             <p className={styles.note}>
-              Una solicitud no concede acceso hasta la revisión institucional. Este registro usa
-              datos ficticios de prueba.
+              Una solicitud no concede acceso hasta la revisión institucional.
             </p>
           </div>
         ) : (
@@ -631,27 +618,26 @@ export function AccessRegistrationWizard(): ReactNode {
               <p className={styles.burbujaGris}>{meta.pasos[rama.paso - 1]?.ayudaEli ?? ''}</p>
             </div>
             <p className={styles.etiquetaSeccion}>{meta.pasos[rama.paso - 1]?.seccion ?? ''}</p>
-            <p className={styles.warning}>
-              <strong>Datos ficticios de prueba.</strong> No ingrese datos reales de ninguna
-              persona.
-            </p>
 
             <section className={styles.demo} aria-labelledby="registro-demo-title">
-              <h2 id="registro-demo-title">Cargar datos de demostración</h2>
-              <p>Elija un perfil ficticio de esta rama. Revise los datos antes de continuar.</p>
+              <h2 id="registro-demo-title">Precargar usuario test</h2>
+              <p>Complete los campos de este perfil con un usuario test. La contraseña también se precarga; puede verla en el paso Confirmación antes de enviar.</p>
               <div className={styles.demoActions}>
                 {fixtures.map((fixture) => (
                   <button
                     className={styles.demoButton}
                     disabled={enviando}
                     key={fixture.id}
-                    onClick={() => cargarDemo(fixture.id)}
+                    onClick={() => cargarUsuarioTest(fixture.id)}
                     type="button"
                   >
                     {fixture.label}
                   </button>
                 ))}
               </div>
+              {testUserError ? (
+                <p role="alert">No fue posible preparar el usuario test. Puede completar los campos manualmente.</p>
+              ) : null}
             </section>
 
             {rama.paso === 1 ? (

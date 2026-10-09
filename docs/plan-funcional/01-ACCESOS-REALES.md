@@ -246,3 +246,7 @@ Claude debe devolver: spec/paquete/allowlist; base y HEAD; archivos cambiados; m
 El archivo privado de acceso se entrega al Product Owner fuera de Git y se verifica que sus cuentas efectivamente funcionan o se deniegan según el caso. Codex no certifica una credencial solo porque está escrita en un catálogo.
 
 Codex audita ACC-11/12 y las correcciones; Product Owner prueba al menos los tres perfiles humanos y Hospital/Alcaldía y acepta o rechaza. Solo después se considera el hito de acceso completo, y la integración requiere la autorización aplicable.
+
+## Aclaración PO — 2026-10-09
+
+La instrucción «todo es real» define registros y operaciones reales, conservando únicamente ayudas de precarga de usuarios test con contraseña. MP05 retira presentación general de demo y completa esas ayudas; no convierte fixtures en personas reales ni certifica producción. La restricción inicial de datos ficticios de este borrador debe reconciliarse para registros normales mediante el contrato de procedencia MP06, aún propuesto: nuevo SELF_REGISTRATION, históricos TEST_DATA intactos. No se han ingresado personas reales ni verificado provisión/login por este cambio. D-02/D-03/D-04, MP04C y aceptación integrada continúan pendientes.

@@ -167,7 +167,7 @@ describe('T-03 — Pestañas del contenedor', () => {
 
     expect(html).toContain('data-hospital-admin="Solicitudes de acceso"');
     expect(visible).toContain('Solicitudes de acceso');
-    expect(visible).toContain('Datos ficticios de prueba');
+    expect(visible).toContain('Revisión institucional');
     expect(visible).toContain('Cargando solicitudes');
     expect(visible).toContain('Visitador médico');
     expect(visible).not.toContain('SOL-DEMO');

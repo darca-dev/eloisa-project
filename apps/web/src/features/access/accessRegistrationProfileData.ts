@@ -195,12 +195,12 @@ export const RAMAS_INSCRIPCION: readonly [RamaMeta, RamaMeta, RamaMeta] = [
     perfil: 'PATIENT',
     titulo: 'Paciente',
     bajada: 'Recibo o necesito atención en casa',
-    ayuda: 'Cuéntanos quién recibirá la atención en casa. Usa solo datos ficticios de prueba.',
+    ayuda: 'Cuéntanos quién recibirá la atención en casa.',
     tituloRama: 'INSCRIPCIÓN COMO PACIENTE',
     pasos: [
       { paso: 1, titulo: 'Datos personales', ayudaEli: 'Empecemos con tus datos personales. Te acompaño campo por campo.', seccion: 'A · DATOS PERSONALES' },
       { paso: 2, titulo: 'Condición y necesidades', ayudaEli: 'Cuéntanos qué apoyo necesitas. Son declaraciones tuyas, no diagnósticos validados.', seccion: 'B · CONDICIÓN Y NECESIDADES' },
-      { paso: 3, titulo: 'Ubicación y EPS', ayudaEli: '¿Dónde vives y cuál es tu EPS? Solo datos ficticios de prueba.', seccion: 'C · UBICACIÓN Y EPS' },
+      { paso: 3, titulo: 'Ubicación y EPS', ayudaEli: '¿Dónde vives y cuál es tu EPS?', seccion: 'C · UBICACIÓN Y EPS' },
       { paso: 4, titulo: 'Contactos', ayudaEli: 'Personas a las que podemos acudir si no te localizamos.', seccion: 'D · CONTACTOS' },
       { paso: 5, titulo: 'Confirmación', ayudaEli: 'Revisa tu información y registra tu solicitud.', seccion: 'E · CONFIRMACIÓN' },
     ],
@@ -209,7 +209,7 @@ export const RAMAS_INSCRIPCION: readonly [RamaMeta, RamaMeta, RamaMeta] = [
     perfil: 'CAREGIVER',
     titulo: 'Cuidador',
     bajada: 'Cuido a una o más personas',
-    ayuda: 'Cuéntanos quién eres como persona cuidadora. Usa solo datos ficticios de prueba.',
+    ayuda: 'Cuéntanos quién eres como persona cuidadora.',
     tituloRama: 'INSCRIPCIÓN COMO CUIDADOR',
     pasos: [
       { paso: 1, titulo: 'Datos personales', ayudaEli: 'Primero tú como persona. Después hablamos del paciente que cuidas.', seccion: 'A · DATOS PERSONALES' },
@@ -223,7 +223,7 @@ export const RAMAS_INSCRIPCION: readonly [RamaMeta, RamaMeta, RamaMeta] = [
     perfil: 'FIELD_PROFESSIONAL',
     titulo: 'Visitador médico',
     bajada: 'Profesional que realiza visitas domiciliarias',
-    ayuda: 'Cuéntanos quién realiza las visitas. Usa solo datos ficticios de prueba.',
+    ayuda: 'Cuéntanos quién realiza las visitas.',
     tituloRama: 'INSCRIPCIÓN COMO VISITADOR MÉDICO',
     pasos: [
       { paso: 1, titulo: 'Datos personales', ayudaEli: 'Empecemos con tus datos personales.', seccion: 'A · DATOS PERSONALES' },

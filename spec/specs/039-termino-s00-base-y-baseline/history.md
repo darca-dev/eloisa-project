@@ -68,3 +68,13 @@ El PO ordenó aplicar la recomendación de catálogo completo 27 tablas/28 polic
 ## 2026-10-09 — MP04B catálogo real verificado, baseline detenida
 
 Gate previo EXIT0 (19 advertencias heredadas), strict previo y de cierre EXIT0 sin advertencias. Cuatro archivos técnicos permitidos: catálogo 27/28 y pruebas independientes del esquema/migraciones. 82/82 contratos sin skips/todo, 16/16 adversariales, lint/scanner correctos. Un intento real s00-mp04b-20261009-8aec95bd: provision 17 migraciones y preflight catálogo/owner/RLS/FORCE/tenant correctos, tres comandos types pasan; api-no-db-health falla por MERDN_ACTIVE_TENANT_ID ausente. Diagnóstico posterior sin DB confirma 1 fallo/1 pase/8 skips; conteos 0 del runner no concluyentes. Cleanup exclusivo correcto, cero recursos baseline, compartidos intactos. Informe/evidencia minimizados separados. MP04C propuesta concreta de contexto confiable, no implementación fuera de MP04B; decisión PO pendiente. S00 completo no aceptado, ninguna cuenta nueva. Se conserva autorización de commit/rama local; sin push/main/consent script.
+
+## 2026-10-09 — contrato MP05 antes de código
+
+PO solicita registro real y precisa mantener botones de usuarios test con todos los datos y contraseña. Rama feat/termino-00-mp05-accesos-sin-demo desde 389d5fe, contrato y decisión registrados. Plan inicial de retirar botones descartado antes de modificar producción. Allowlist exacta de once archivos web, sin backend/migraciones. Gates se repiten antes de implementar. MP04C y cierre de procedencia TEST_DATA pendientes; consent log intacto.
+
+## 2026-10-09 — MP05 verificado y web actualizada
+
+Once archivos web dentro de contrato; se conservaron botones test según corrección PO. Trece pruebas nuevas, focales 213/213 y suite web 1901/1901; tipos/lint/scanner y Docker build correctos. Imagen merdn-web:eloisa-mp05, huella web/shared/config de 307 archivos 7b405031dbb4dc25e58db50e9eb4bb3dd82c11c980c5949f2fd0835493f9f246. Solo web recreado, cuatro servicios healthy y hub/registro HTTP200; no navegador conectado ni envío real/E2E. Informe MP05 diferencia precarga real de cuentas aún no verificadas. MP06 propuesta de procedencia con nuevo enum/migración y linaje histórico, pendiente PO; MP04C tampoco aprobado. Git local, consent log y main conservados.
+
+Cierre MP05: strict EXIT0/0 advertencias, scanner EXIT0 con excepciones específicas intactas y diff-check correcto. Se guarda commit local y se abre rama MP06 para la propuesta pendiente, sin implementación de procedencia.

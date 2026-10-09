@@ -561,7 +561,7 @@ export function CamposCuidador(
         />
         {reg.pacienteRegistrado === 'SI' ? (
           <p className={styles.fieldHelp}>
-            La búsqueda del paciente no está disponible en esta demostración: no se consulta
+            La búsqueda del paciente no está disponible en este registro: no se consulta
             ningún registro y no se crea ningún vínculo.
           </p>
         ) : null}

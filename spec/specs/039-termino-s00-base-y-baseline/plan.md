@@ -29,3 +29,9 @@ D-01 base local cerrada. Specs 025/038 e instrucciones actuales siguen autoritat
 ## Compatibilidad, rollback y operación
 
 Sin nuevas dependencias ni migraciones en MP01/MP02. Conservar APIs/contratos y trazabilidad. No relajar puerta municipal al fallar IdP. Diff inverso puntual para corrección local; nunca reset, borrado de migraciones o limpieza de recursos no identificados. La autorización de commits y ramas locales proviene de la orden explícita del PO, no de este plan. Sin push, merge o despliegue.
+
+## MP05 — prioridad de interfaz indicada por PO
+
+Rama desde 389d5fe, independiente de implementación MP04C pendiente. Primero contrato y gates; después mensajes de registro/hub/revisión y precarga test completa con contraseña aleatoria; pruebas de nueve perfiles y regresión web; build/recreación exclusiva web; informe y commit local. Hallazgo source TEST_DATA exige paquete de procedencia separado.
+
+MP05 verificado: 1901/1901 web, tipos/lint/scanner/build y HTTP local correctos. Interacción de navegador no verificada por falta de conexión; no cuentas/solicitudes creadas. Siguiente propuesta MP06 separa SELF_REGISTRATION nuevo de TEST_DATA histórico, pendiente de decisión material. MP04C continúa pendiente.

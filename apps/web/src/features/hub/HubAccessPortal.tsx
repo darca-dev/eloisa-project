@@ -35,7 +35,7 @@ export function HubAccessPortal(): ReactNode {
 
       <main className={styles.hubMain}>
         <section className={styles.heroSection} aria-labelledby="portal-title">
-          <span className={styles.heroTag}>Entorno local de demostración</span>
+          <span className={styles.heroTag}>Portal de acceso</span>
           <h1 className={styles.heroTitle} id="portal-title">Portal {platformNameInSentence()}</h1>
           <p className={styles.heroSubtitle}>
             Seleccione el espacio al que desea ingresar.
@@ -48,7 +48,7 @@ export function HubAccessPortal(): ReactNode {
               <span className={styles.sectionIcon} aria-hidden="true">◌</span>
               <h2 className={styles.sectionTitle} id="experiencias-title">Elija su experiencia</h2>
             </div>
-            <span className={styles.sectionBadge}>Datos ficticios de demostración</span>
+            <span className={styles.sectionBadge}>Servicios y gestión institucional</span>
           </div>
 
           <div className={styles.primaryGrid}>
@@ -112,12 +112,12 @@ export function HubAccessPortal(): ReactNode {
 
       <footer className={styles.hubFooter}>
         <div className={styles.footerBadges}>
-          <span className={styles.footerBadge}>Datos de prueba</span>
-          <span className={styles.footerBadge}>Acceso local</span>
+          <span className={styles.footerBadge}>Acceso por perfil</span>
+          <span className={styles.footerBadge}>Servicios institucionales</span>
           <span className={styles.footerBadge}>Municipio de Soacha</span>
         </div>
         <p className={styles.footerText}>
-          Plataforma para la gestión y coordinación de la atención domiciliaria.
+          Plataforma para la atención domiciliaria y la gestión hospitalaria y municipal.
         </p>
       </footer>
     </div>

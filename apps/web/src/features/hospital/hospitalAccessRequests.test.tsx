@@ -12,7 +12,7 @@ describe('HospitalAccessRequests', () => {
   it('parte de un estado de carga accesible, sin filas o datos personales inventados', () => {
     const html = renderToStaticMarkup(<HospitalAccessRequests />);
     expect(html).toContain('Solicitudes de acceso');
-    expect(html).toContain('Datos ficticios de prueba');
+    expect(html).toContain('Revisión institucional');
     expect(html).toContain('Cargando solicitudes');
     expect(html).toContain('Buscar por referencia, nombre o documento');
     expect(html).toContain('Visitador médico');

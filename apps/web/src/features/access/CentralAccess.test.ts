@@ -171,10 +171,11 @@ describe('inscripcion guiada por perfil', () => {
     expect(flujo).toContain('SOLO UI');
   });
 
-  it('cada rama muestra solo sus tres fixtures completos', () => {
+  it('cada rama conserva sus tres usuarios test completos', () => {
     expect(form).toContain('ACCESS_REGISTRATION_DEMOS.filter');
     expect(form).toContain('fixture.perfil === rama.perfil');
-    expect(form).toContain('Cargar datos de demostración');
+    expect(form).toContain('Precargar usuario test');
+    expect(form).toContain('precargarUsuarioTest(rama, id)');
   });
 
   it('cambiar de perfil borra todo y atras conserva la rama', () => {
@@ -291,9 +292,11 @@ describe('inscripcion guiada por perfil', () => {
     expect(cliente).not.toContain("{ code: 'FIELD_PROFESSIONAL', label: 'Personal de terreno' }");
   });
 
-  it('muestra permanentemente el aviso de datos ficticios', () => {
-    expect(form).toContain('Datos ficticios de prueba.');
-    expect(form).toContain('No ingrese datos reales');
+  it('presenta registro con precarga test sin aviso general de datos ficticios', () => {
+    expect(form).not.toContain('Datos ficticios de prueba.');
+    expect(form).not.toContain('No ingrese datos reales');
+    expect(form).toContain('La contraseña también se precarga');
+    expect(form).toContain('Una solicitud no concede acceso hasta la revisión institucional.');
   });
 
   it('conserva la rama tras el error para que la persona pueda corregir', () => {
@@ -346,7 +349,7 @@ describe('inscripcion guiada por perfil', () => {
     }
   });
 
-  it('la credencial ficticia es un campo de contrasena real, etiquetado y con ayuda', () => {
+  it('la credencial es un campo de contrasena real, etiquetado y con ayuda', () => {
     expect(form).toContain('type={verPassword ? \'text\' : \'password\'}');
     expect(form).toContain("htmlFor={idDeCampo('password')}");
     expect(form).toContain("id={idDeCampo('password')}");

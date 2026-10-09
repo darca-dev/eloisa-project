@@ -48,3 +48,13 @@
 - [x] Codex coteja siete archivos permitidos y verifica cuerpo del job sin cambios.
 - [x] Informe S00-MP01-FROM-CODEX.md registra pruebas y límites; HARD STOP cumplido.
 - [x] Product Owner acepta S00-MP01 el 2026-10-08; S00 completo sigue pendiente.
+
+## MP05 — registro y precarga test
+
+- [x] Registrar petición corregida del PO: mantener botones test y agregar contraseña.
+- [x] Fijar contrato/allowlist antes de código, sin modificar backend ni source.
+- [x] Gate/strict previos; interfaz y precarga completas con contraseña aleatoria.
+- [x] Pruebas nueve usuarios, 1901/1901 web, tipos/lint/scanner y build Docker correctos.
+- [x] Imagen web actual y verificación HTTP local; informe preparado. Navegador no conectado, sin E2E. Commit local autorizado.
+- [x] Propuesta MP06 de procedencia SELF_REGISTRATION frente a TEST_DATA histórico, sin reclasificar filas.
+- [ ] PO decide MP06 antes de modificar enum/contrato; S01 completo sigue pendiente.

@@ -549,7 +549,7 @@ export function HospitalAccessRequests({
       </header>
 
       <p className={styles.notice}>
-        <strong>Datos ficticios de prueba.</strong> Cada acción exige confirmación y la
+        <strong>Revisión institucional.</strong> Cada acción exige confirmación y la
         versión vigente de la solicitud. La aprobación ejecuta la creación de acceso y
         solo esa creación confirmada permite iniciar sesión.
       </p>

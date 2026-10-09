@@ -11,7 +11,7 @@ export interface AccessRequestDemoFixture {
 export const ACCESS_REQUEST_DEMOS: readonly AccessRequestDemoFixture[] = [
   {
     id: 'paciente-1',
-    label: 'Paciente demo 1',
+    label: 'Paciente test 1',
     submission: {
       requestedProfile: 'PATIENT', documentType: 'CEDULA_CIUDADANIA',
       documentNumber: '900100001', givenNames: 'Aurora', familyNames: 'Demo Salcedo',
@@ -21,7 +21,7 @@ export const ACCESS_REQUEST_DEMOS: readonly AccessRequestDemoFixture[] = [
   },
   {
     id: 'paciente-2',
-    label: 'Paciente demo 2',
+    label: 'Paciente test 2',
     submission: {
       requestedProfile: 'PATIENT', documentType: 'CEDULA_CIUDADANIA',
       documentNumber: '900100002', givenNames: 'Bruno', familyNames: 'Demo Ríos',
@@ -31,7 +31,7 @@ export const ACCESS_REQUEST_DEMOS: readonly AccessRequestDemoFixture[] = [
   },
   {
     id: 'paciente-3',
-    label: 'Paciente demo 3',
+    label: 'Paciente test 3',
     submission: {
       requestedProfile: 'PATIENT', documentType: 'CEDULA_CIUDADANIA',
       documentNumber: '900100003', givenNames: 'Celia', familyNames: 'Demo Pardo',
@@ -41,7 +41,7 @@ export const ACCESS_REQUEST_DEMOS: readonly AccessRequestDemoFixture[] = [
   },
   {
     id: 'cuidador-1',
-    label: 'Cuidador demo 1',
+    label: 'Cuidador test 1',
     submission: {
       requestedProfile: 'CAREGIVER', documentType: 'CEDULA_CIUDADANIA',
       documentNumber: '900200001', givenNames: 'Carlos', familyNames: 'Demo Ruiz',
@@ -51,7 +51,7 @@ export const ACCESS_REQUEST_DEMOS: readonly AccessRequestDemoFixture[] = [
   },
   {
     id: 'cuidador-2',
-    label: 'Cuidador demo 2',
+    label: 'Cuidador test 2',
     submission: {
       requestedProfile: 'CAREGIVER', documentType: 'CEDULA_CIUDADANIA',
       documentNumber: '900200002', givenNames: 'Lucía', familyNames: 'Demo Vargas',
@@ -61,7 +61,7 @@ export const ACCESS_REQUEST_DEMOS: readonly AccessRequestDemoFixture[] = [
   },
   {
     id: 'cuidador-3',
-    label: 'Cuidador demo 3',
+    label: 'Cuidador test 3',
     submission: {
       requestedProfile: 'CAREGIVER', documentType: 'CEDULA_CIUDADANIA',
       documentNumber: '900200003', givenNames: 'Elena', familyNames: 'Demo Mora',
@@ -71,7 +71,7 @@ export const ACCESS_REQUEST_DEMOS: readonly AccessRequestDemoFixture[] = [
   },
   {
     id: 'visitador-1',
-    label: 'Visitador demo 1',
+    label: 'Visitador test 1',
     submission: {
       requestedProfile: 'FIELD_PROFESSIONAL', documentType: 'CEDULA_CIUDADANIA',
       documentNumber: '900300001', givenNames: 'Andrés', familyNames: 'Demo López',
@@ -81,7 +81,7 @@ export const ACCESS_REQUEST_DEMOS: readonly AccessRequestDemoFixture[] = [
   },
   {
     id: 'visitador-2',
-    label: 'Visitador demo 2',
+    label: 'Visitador test 2',
     submission: {
       requestedProfile: 'FIELD_PROFESSIONAL', documentType: 'CEDULA_CIUDADANIA',
       documentNumber: '900300002', givenNames: 'Paula', familyNames: 'Demo Torres',
@@ -91,7 +91,7 @@ export const ACCESS_REQUEST_DEMOS: readonly AccessRequestDemoFixture[] = [
   },
   {
     id: 'visitador-3',
-    label: 'Visitador demo 3',
+    label: 'Visitador test 3',
     submission: {
       requestedProfile: 'FIELD_PROFESSIONAL', documentType: 'CEDULA_CIUDADANIA',
       documentNumber: '900300003', givenNames: 'Mateo', familyNames: 'Demo Silva',
@@ -104,8 +104,8 @@ export const ACCESS_REQUEST_DEMOS: readonly AccessRequestDemoFixture[] = [
 /**
  * Fixtures COMPLETOS del flujo guiado de cinco pasos (SPEC 038, MP04-C3).
  *
- * Cada fixture llena TODOS los campos aplicables de sus cinco pasos excepto la
- * contraseña, que la persona siempre escribe a mano en el paso 5. El arreglo
+ * Cada fixture aporta los datos test de los cinco pasos. La contraseña no se
+ * versiona: se genera con Web Crypto al pulsar la precarga. El arreglo
  * anterior (`ACCESS_REQUEST_DEMOS`) queda intacto: solo cubre identidad y
  * contacto base.
  */
@@ -232,7 +232,10 @@ const REGISTRO_VISITADOR: Record<string, Record<string, unknown>> = {
     profesion: 'ENFERMERO',
     tiposAtencion: ['ENFERMERIA', 'MEDICAMENTOS'],
     eps: 'OTRA_EPS',
-    otraEps: 'EPS Ficticia',
+    otraEps: 'EPS Test',
+    institucion: 'Institución Test 2',
+    cargo: 'Enfermería domiciliaria',
+    sector: 'Sector Test 2',
     institucionDepartamento: '25',
     institucionMunicipio: '25740',
     zonaDepartamento: '25',
@@ -244,6 +247,9 @@ const REGISTRO_VISITADOR: Record<string, Record<string, unknown>> = {
     profesion: 'FISIOTERAPEUTA',
     tiposAtencion: [],
     eps: 'SANITAS',
+    institucion: 'Institución Test 3',
+    cargo: 'Fisioterapia domiciliaria',
+    sector: 'Sector Test 3',
     institucionDepartamento: '25',
     institucionMunicipio: '25175',
     zonaDepartamento: '25',
