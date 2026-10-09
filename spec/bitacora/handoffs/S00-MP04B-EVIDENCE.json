@@ -1,0 +1,157 @@
+{
+  "runId": "s00-mp04b-20261009-8aec95bd",
+  "startedAt": "2026-10-09T15:58:57.363Z",
+  "stages": [
+    {
+      "runId": "s00-mp04b-20261009-8aec95bd",
+      "evidence": [
+        {
+          "runId": "s00-mp04b-20261009-8aec95bd",
+          "commit": "720d07b222dcf2a0f07413949dfe3c4fa4f25b80",
+          "stage": "provision",
+          "outcome": "pass",
+          "durationMs": 37566,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "project": null
+        }
+      ],
+      "ok": true,
+      "failedStage": null,
+      "cleanup": null
+    },
+    {
+      "runId": "s00-mp04b-20261009-8aec95bd",
+      "evidence": [
+        {
+          "runId": "s00-mp04b-20261009-8aec95bd",
+          "commit": "720d07b222dcf2a0f07413949dfe3c4fa4f25b80",
+          "stage": "typecheck",
+          "outcome": "pass",
+          "durationMs": 13440,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "project": null
+        }
+      ],
+      "ok": true,
+      "failedStage": null,
+      "cleanup": null
+    },
+    {
+      "runId": "s00-mp04b-20261009-8aec95bd",
+      "evidence": [
+        {
+          "runId": "s00-mp04b-20261009-8aec95bd",
+          "commit": "720d07b222dcf2a0f07413949dfe3c4fa4f25b80",
+          "stage": "api-no-db-health",
+          "outcome": "skipped",
+          "durationMs": 29433,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "project": null
+        }
+      ],
+      "ok": false,
+      "failedStage": "api-no-db-health",
+      "cleanup": {
+        "cleaned": true,
+        "reason": null
+      }
+    }
+  ],
+  "before": {
+    "containers": [],
+    "networks": [],
+    "volumes": []
+  },
+  "head": "720d07b222dcf2a0f07413949dfe3c4fa4f25b80",
+  "fingerprintBefore": {
+    "files": 1124,
+    "sha256": "13e643f8fd566862388af60ddc3f7831e9e17719c3b551090c3ad0a2717d5be9"
+  },
+  "composeSha256": "50f564e7a359e8f77a9c9732f0f7c671fa29407c83c2ffa044273264a4396964",
+  "postgresDigests": [
+    "postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94"
+  ],
+  "sharedBefore": "merdn-api-1 Exited (0) 21 hours ago\nmerdn-web-1 Exited (143) 21 hours ago\nmerdn-oidc-local-1 Exited (143) 21 hours ago\nmerdn-postgres-1 Exited (0) 21 hours ago",
+  "provision": {
+    "runId": "provision-mv15hecv",
+    "project": "merdn-baseline-test",
+    "service": "postgres-test",
+    "database": "merdn_test",
+    "migrations": 17,
+    "steps": [
+      "identity",
+      "pre-clean",
+      "up",
+      "health",
+      "server-identity",
+      "migrate",
+      "roles-and-ownership",
+      "verify"
+    ],
+    "verification": {
+      "fictionalTenant": "merdn-mvp",
+      "tenantCount": 1,
+      "runtimeFlagsSafe": true,
+      "ownerFlagsSafe": true,
+      "runtimeIsOwner": false,
+      "ownerTableCount": 27,
+      "protectedTableCount": 27,
+      "policyCount": 28
+    },
+    "durationMs": 36245
+  },
+  "preflight": {
+    "runId": "preflight-mv15i6bp",
+    "project": "merdn-baseline-test",
+    "database": "merdn_test",
+    "runtimeRole": "merdn_runtime",
+    "ownerRole": "merdn_test_migrator",
+    "migrations": 17,
+    "catalog": {
+      "tables": 27,
+      "policies": 28,
+      "forceEnforced": true,
+      "runtimeIsOwner": false,
+      "runtimeHasSchemaCreate": false,
+      "ownerHoldsAllProtectedTables": true
+    },
+    "tenant": {
+      "code": "merdn-mvp",
+      "before": 1,
+      "after": 1
+    },
+    "behavior": {
+      "noContextDenied": true,
+      "tenantAIsolated": true,
+      "crossTenantInsertDenied": true,
+      "crossTenantUpdateNoRows": true,
+      "migratorForceEnforced": true
+    },
+    "durationMs": 1318
+  },
+  "ok": false,
+  "after": {
+    "containers": [],
+    "networks": [],
+    "volumes": []
+  },
+  "sharedAfter": "merdn-api-1 Exited (0) 21 hours ago\nmerdn-web-1 Exited (143) 21 hours ago\nmerdn-oidc-local-1 Exited (143) 21 hours ago\nmerdn-postgres-1 Exited (0) 21 hours ago",
+  "fingerprintAfter": {
+    "files": 1124,
+    "sha256": "13e643f8fd566862388af60ddc3f7831e9e17719c3b551090c3ad0a2717d5be9"
+  },
+  "sourceUnchanged": true,
+  "finishedAt": "2026-10-09T16:00:21.509Z"
+}

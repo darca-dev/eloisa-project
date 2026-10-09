@@ -4,7 +4,7 @@ Fecha: **8 de octubre de 2026**. Responsable de producto: Product Owner. Arquite
 
 **Objetivo:** terminar las capacidades existentes como operaciones reales de punta a punta. El trabajo se divide en 15 secciones, cada una con una rama Git propia, dependencias, pruebas y aceptación. La primera entrega funcional será el acceso real para todos los perfiles e instituciones.
 
-**Estado:** D-01 resuelta por el Product Owner. Base local: `9980582bc40f41c80b90078f0c24374cbad9df9e` (`origin/develop` almacenado). Proyecto activo: `C:\Users\10plu\Eloisa-develop\eloisa_project`, fuera de OneDrive. MP01 aceptado; MP02/MP03/MP04A verificados técnicamente. MP04B tiene propuesta concreta de DB aislada pendiente de decisión PO; S00 completo no aceptado. Commits y ramas locales por orden del PO, sin publicación remota. Informes vigentes en spec/bitacora/handoffs/S00-MP*-FROM-CODEX.md.
+**Estado:** D-01 resuelta por el Product Owner. Base local: `9980582bc40f41c80b90078f0c24374cbad9df9e` (`origin/develop` almacenado). Proyecto activo: `C:\Users\10plu\Eloisa-develop\eloisa_project`, fuera de OneDrive. MP01 aceptado; MP02/MP03/MP04A verificados técnicamente. MP04B aprobado: catálogo 27/28 y preflight PostgreSQL real correctos; baseline detenida por configuración de tenant en el runner. MP04C propuesto; S00 completo no aceptado. Commits y ramas locales por orden del PO, sin publicación remota. Informes vigentes en spec/bitacora/handoffs/S00-MP*-FROM-CODEX.md.
 
 ## 1. Instrucción de producto y contrato de entrega
 
@@ -59,7 +59,7 @@ Trabajaremos secuencialmente S00 a S14. El número indica el orden normal. Las d
 
 | Sección | Resultado | Rama nueva al iniciar | Dependencias mínimas | Estado actual |
 |---|---|---|---|---|
-| S00 | Base de trabajo y entorno verificable | `feat/termino-00-base-y-baseline` y ramas MP02/MP03/MP04 | — | MP01 aceptado; MP02/03/04A verificados; DB MP04B pendiente |
+| S00 | Base de trabajo y entorno verificable | `feat/termino-00-base-y-baseline` y ramas por MP | — | MP01 aceptado; MP02/03/04A verificados; MP04B catálogo/preflight reales correctos, baseline incompleta; MP04C propuesto |
 | S01 | Accesos, registro y ciclo de cuenta | `feat/termino-01-accesos-reales` | S00 | PLANIFICADA |
 | S02 | Personas, relaciones y consentimientos | `feat/termino-02-personas-relaciones-y-consentimientos` | S01 | PLANIFICADA |
 | S03 | Alcaldía, programas y población | `feat/termino-03-alcaldia-programas-y-poblacion` | S02 | PLANIFICADA |
@@ -491,3 +491,5 @@ S00 empezó el 8 de octubre en la base elegida. Se copiaron la auditoría histó
 Tipos, builds API/web y validación Prisma pasan. La suite web falla en tres casos; lint tiene 17 errores y el escáner reporta 52 coincidencias que requieren clasificación. Las pruebas puras de baseline pasan 72/72. Los contratos API ejecutados pasan 656/656 tras corregir la configuración de prueba. Estos contratos no validan PostgreSQL/RLS real ni un login OIDC integrado.
 
 S00-MP01 completó su implementación/verificación focal (lint 0, tipos/build API y 65 contratos correctos). Siguiente orden, tras aceptación y autorización del paquete: S00-MP02 regresiones web y retiro del atajo municipal conforme al objetivo sin demo; S00-MP03 clasificar/remediar escaneo sin debilitar reglas; S00-MP04 baseline aislada e imagen exacta bajo alcance aprobado. Después S01/ACC-01 a ACC-12, resolviendo D-02 a D-04 antes del paquete que dependa de ellas. No se han creado cuentas, contraseñas, sesiones ni consentimientos nuevos.
+
+Actualización 2026-10-09: MP01 aceptado, MP02/MP03/MP04A guardados y verificados. MP04B aprobado por el PO, catálogo efectivo y preflight PostgreSQL real verificados (27 tablas/28 policies/17 migraciones). La baseline completa se detuvo en contratos API por falta de contexto confiable de tenant en entorno hijo; propuesta MP04C preparada para decisión material. Cleanup exclusivo verificado, sin tocar recursos compartidos. S00 completo y accesos S01 no aceptados. Los párrafos anteriores de ejecución conservan el diagnóstico inicial; el estado actual y el runbook incorporan las correcciones.

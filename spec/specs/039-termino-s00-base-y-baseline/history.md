@@ -60,3 +60,11 @@ Rama MP04 desde 581eb65. Inventario puro: 27 tablas de esquema, catálogo 26/27,
 ## 2026-10-08 — MP04A verificado, MP04B propuesto
 
 Dos archivos técnicos en allowlist; command API del runner corregido con opción existente. 72/72 contratos sin omisiones, tres comandos reales types EXIT0/0/0, lint correcto. Informe MP04A y propuesta MP04B registrados. Pregunta PO específica sobre catálogo/owner/operación aislada pendiente; no se toma silencio por aprobación ni se altera consent log. Scanner/diff check final antes de guardar commit local. DB/IdP intactos.
+
+## 2026-10-09 — decisión PO MP04B y contrato activo
+
+El PO ordenó aplicar la recomendación de catálogo completo 27 tablas/28 policies. Decisión explícita registrada; contrato MP04B de cuatro archivos y operación local desechable activado en feat/termino-00-mp04b-db-aislada desde 720d07b. Se preservan 025/038, consent log y Git local. Se repetirán gates antes de código y guard/identidad antes de cualquier infraestructura.
+
+## 2026-10-09 — MP04B catálogo real verificado, baseline detenida
+
+Gate previo EXIT0 (19 advertencias heredadas), strict previo y de cierre EXIT0 sin advertencias. Cuatro archivos técnicos permitidos: catálogo 27/28 y pruebas independientes del esquema/migraciones. 82/82 contratos sin skips/todo, 16/16 adversariales, lint/scanner correctos. Un intento real s00-mp04b-20261009-8aec95bd: provision 17 migraciones y preflight catálogo/owner/RLS/FORCE/tenant correctos, tres comandos types pasan; api-no-db-health falla por MERDN_ACTIVE_TENANT_ID ausente. Diagnóstico posterior sin DB confirma 1 fallo/1 pase/8 skips; conteos 0 del runner no concluyentes. Cleanup exclusivo correcto, cero recursos baseline, compartidos intactos. Informe/evidencia minimizados separados. MP04C propuesta concreta de contexto confiable, no implementación fuera de MP04B; decisión PO pendiente. S00 completo no aceptado, ninguna cuenta nueva. Se conserva autorización de commit/rama local; sin push/main/consent script.

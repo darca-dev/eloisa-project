@@ -24,10 +24,15 @@
 - [x] S00-MP01 implementado por Codex: lint 0, tipos/build API correctos, 65 contratos correctos; DI preservada.
 - [x] S00-MP02: 1888/1888 pruebas web, tipos/lint/build correctos; branding configurable y ruta municipal sin bypass.
 - [x] S00-MP03: 55 puntos clasificados (52 originales + 3 revelados); scanner EXIT 0, 16 adversariales correctas, E2E contraseña aleatoria en memoria; detección negativa preservada.
-- [ ] Definir operación S00-MP04 con topología exacta 025/038, env-file, runId y límites de cleanup.
+- [x] Definir operación S00-MP04B con topología exacta, env-file, runId y límites de cleanup.
 - [x] MP04A: comando API del runner alineado con workspace; 72 contratos y tres comandos reales correctos, sin DB.
 - [x] Preparar propuesta MP04B: tabla/policy omitidas, catálogo 27/28, owner no privilegiado y topología local exacta.
-- [ ] Product Owner resuelve contradicción de catálogo/owner y aprueba operación MP04B; no inferir respuesta del silencio.
+- [x] Product Owner resuelve contradicción de catálogo/owner y aprueba operación MP04B el 2026-10-09.
+- [x] MP04B: cuatro archivos técnicos; 82 contratos puros sin skips, 16 adversariales scanner, lint/scanner correctos.
+- [x] PostgreSQL real: 17 migraciones, 27 tablas/28 policies, ownership no privilegiado, RLS/FORCE y sondas de aislamiento correctos; cleanup exclusivo confirmado.
+- [x] Registrar baseline detenida en api-no-db-health y diagnóstico sin DB: falta MERDN_ACTIVE_TENANT_ID, 1 fallo/1 pase/8 skips; conteos del runner no concluyentes.
+- [x] Preparar propuesta acotada MP04C para contexto de tenant confiable; no modificar runner fuera de MP04B.
+- [ ] PO decide MP04C (cuarta clave de contexto validada); gates y contrato suficiente antes de implementar.
 - [ ] Validar DB/RLS/runtime y aislamiento real sin skips; identificar imagen exacta.
 - [ ] Codex verifica correcciones y reporta riesgos residuales.
 - [ ] Product Owner acepta S00; autoriza integración Git cuando proceda.

@@ -97,3 +97,7 @@ La coincidencia exacta de marcadores revelo tres puntos antes ocultos por includ
 - .env.staging.example:17: marcador sintetico explicito REPLACE de plantilla, no operable sin reemplazo.
 - .env.staging.example:18: marcador sintetico explicito REPLACE de plantilla, no operable sin reemplazo.
 - apps/api/src/config/environment.test.ts:140: centinela de prueba unitaria de error sanitizado, sin conexion real.
+
+## MP04B — evidencia y hallazgo de configuración
+
+27 tablas/28 policies y 17 migraciones efectivas reconciliadas por decisión PO de 2026-10-09. Provision y preflight real verificaron owner sobre las 27, roles no privilegiados, runtime sin ownership/CREATE, RLS/FORCE, denegación sin contexto y aislamiento cruzado. Baseline se detuvo tras types: runner CHILD_TEST_KEYS admite solo DATABASE_URL, RUNTIME_DATABASE_URL y MERDN_RUNTIME_ROLE; environment.ts exige MERDN_ACTIVE_TENANT_ID bajo enforce conforme a 024. Diagnóstico aislado sin DB confirmó ausencia/error de validación con 8 skips. No cambiar runtime a disabled, no inventar UUID ni heredar del padre. Propuesta MP04C define contexto validado solo desde cluster exclusivo, sin evidencia del UUID; pendiente de decisión PO sobre frontera de entorno. Las 23 etapas DB de la matriz no se ejecutaron. Véanse S00-MP04B-FROM-CODEX y JSON minimizados para linaje, digest y limpieza.

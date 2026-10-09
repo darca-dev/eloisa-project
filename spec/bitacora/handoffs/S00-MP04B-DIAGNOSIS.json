@@ -1,0 +1,16 @@
+{
+  "operation": "no-db diagnostic after baseline cleanup; not a baseline retry",
+  "exitCode": 1,
+  "timedOut": false,
+  "requiredTenantIdPresent": false,
+  "missingTenantIdError": true,
+  "mentionsTenantId": true,
+  "environmentValidationError": true,
+  "standaloneSkippedWord": true,
+  "reportsNoTests": false,
+  "noConnectionAvailable": false,
+  "summary": [
+    "Test Files  2 failed (2)",
+    "Tests  1 failed | 1 passed | 8 skipped (10)"
+  ]
+}

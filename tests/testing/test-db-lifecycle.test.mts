@@ -293,14 +293,14 @@ const VALID_BEHAVIOR: Record<string, string> = {
   migrator_no_context: '0',
 };
 
-test('MP08 1. la baseline declarada son 27 policies sobre 26 tablas protegidas', () => {
+test('MP08 1 / S00-MP04B. la baseline completa son 28 policies sobre 27 tablas protegidas', () => {
   const baseline = validatePolicyBaseline();
   assert.deepEqual(baseline.problems, [], 'la baseline declarada no debe tener problemas');
   assert.equal(baseline.policyCount, EXPECTED_POLICY_COUNT);
-  assert.equal(EXPECTED_POLICY_COUNT, 27);
-  assert.equal(baseline.tableCount, 26);
-  assert.equal(PROTECTED_TABLES.length, 26);
-  assert.equal(new Set(RLS_POLICY_PAIRS.map((pair) => pair.policy)).size, 27);
+  assert.equal(EXPECTED_POLICY_COUNT, 28);
+  assert.equal(baseline.tableCount, 27);
+  assert.equal(PROTECTED_TABLES.length, 27);
+  assert.equal(new Set(RLS_POLICY_PAIRS.map((pair) => pair.policy)).size, 28);
 });
 
 test('MP08 2. el catalogo no consulta el puerto interno y el SQL es de solo lectura', () => {
@@ -316,10 +316,25 @@ test('MP08 3. un catalogo valido se evalua sin problemas y el conteo coincide', 
   const parsed = parseCatalogOutput(validCatalogStdout());
   const evaluated = evaluateCatalog(parsed);
   assert.deepEqual(evaluated.problems, [], `catalogo valido rechazado: ${evaluated.problems.join(' | ')}`);
-  assert.deepEqual(evaluated.counts, { tables: 26, policies: 27, roles: 2, migrations: evaluated.counts.migrations });
-  assert.equal(evaluated.counts.tables, 26);
-  assert.equal(evaluated.counts.policies, 27);
+  assert.deepEqual(evaluated.counts, { tables: 27, policies: 28, roles: 2, migrations: evaluated.counts.migrations });
+  assert.equal(evaluated.counts.tables, 27);
+  assert.equal(evaluated.counts.policies, 28);
 });
+
+for (const [name, original, replacement, problem] of [
+  ['tabla ausente', 'table|access_request|true|true|merdn_test_migrator', '', 'tablas protegidas ausentes'],
+  ['policy ausente', 'policy|access_request_tenant|access_request', '', 'policies ausentes'],
+  ['policy en otra tabla', 'policy|access_request_tenant|access_request', 'policy|access_request_tenant|person', 'policies inesperadas'],
+  ['owner privilegiado', 'table|access_request|true|true|merdn_test_migrator', 'table|access_request|true|true|merdn_test_admin', 'tablas con owner inesperado'],
+  ['RLS desactivado', 'table|access_request|true|true|merdn_test_migrator', 'table|access_request|false|true|merdn_test_migrator', 'tablas sin RLS+FORCE'],
+  ['FORCE desactivado', 'table|access_request|true|true|merdn_test_migrator', 'table|access_request|true|false|merdn_test_migrator', 'tablas sin RLS+FORCE'],
+] as const) {
+  test(`S00-MP04B. rechaza access_request con ${name}`, () => {
+    const stdout = validCatalogStdout().replace(original, replacement);
+    const evaluated = evaluateCatalog(parseCatalogOutput(stdout));
+    assert.ok(evaluated.problems.some((message) => message.includes(problem)));
+  });
+}
 
 test('MP08 4. el evaluador rechaza una policy alterada', () => {
   const sinUltima = RLS_POLICY_PAIRS.slice(0, -1);
@@ -405,7 +420,7 @@ test('MP08 8. el evaluador rechaza una conducta alterada', () => {
 test('MP08 9. la evidencia de preflight es minima, congelada y sin secretos', () => {
   const evidencia = buildPreflightEvidence({
     runId: 'corrida-ficticia-0001',
-    catalog: { problems: [], counts: { tables: 26, policies: 27, roles: 2, migrations: 9 } },
+    catalog: { problems: [], counts: { tables: 27, policies: 28, roles: 2, migrations: 17 } },
     behavior: { problems: [], outcomes: { noContextDenied: true } },
     durationMs: 12,
     tenantBefore: 1,

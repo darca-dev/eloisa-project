@@ -2,7 +2,7 @@
 
 ## Estado
 
-MP01 implementado por Codex con autorización explícita y aceptado por el PO. MP02 verificado: 1888/1888 web y tipos/lint/build correctos. MP03 verificado: scanner EXIT 0, 16 adversariales, tipos/lint correctos. MP04A corrige comando de tipos del runner: 72 contratos puros y tres comandos reales pasan, sin infraestructura. MP04B propuesto con catálogo/owner y operación exactos; requiere decisión PO. El consentimiento original se conserva; ningún agente lo ejecutó o editó. Git local por decisión posterior del PO; S00 completo pendiente.
+MP01 aceptado; MP02/MP03/MP04A verificados. MP04B aprobado por el PO el 2026-10-09: catálogo 27 tablas/28 policies y 17 migraciones verificados en PostgreSQL aislado, con owner no privilegiado y sondas RLS/tenant correctos. Baseline detenida en contratos API: falta MERDN_ACTIVE_TENANT_ID en entorno hijo; recursos propios limpiados. MP04C propuesto para resolver ese transporte confiable, pendiente de decisión material antes de código. El consentimiento original se conserva sin intervención del agente. Git local por decisión del PO; S00 completo pendiente.
 
 ## Estrategia y hitos
 

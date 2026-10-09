@@ -3,8 +3,8 @@
  * SPEC 025 / MP07 - Provisionador fail-closed del cluster de pruebas aislado.
  *
  * Prepara un PostgreSQL desechable y exclusivo para la baseline de pruebas:
- * levanta `postgres-test`, aplica las 14 migraciones versionadas, prepara el
- * owner no privilegiado `merdn_test_migrator` sobre las 26 tablas protegidas y
+ * levanta `postgres-test`, aplica las 17 migraciones versionadas, prepara el
+ * owner no privilegiado `merdn_test_migrator` sobre las 27 tablas protegidas y
  * devuelve evidencia sanitizada.
  *
  * Este módulo NO se ejecutó al escribirlo. MP07 crea el provisionador; el
@@ -60,8 +60,8 @@ export const PRISMA_SCHEMA = path.join(REPO_ROOT, 'prisma', 'schema.prisma');
 export const PROJECT_NAME = EXPECTED_TEST_ENVIRONMENT.project;
 
 /**
- * Owner no privilegiado de las 26 tablas protegidas, segun la decision del
- * Product Owner del 2026-09-26. NOLOGIN: existe para poseer objetos, nunca
+ * Owner no privilegiado del catalogo completo, segun las decisiones del
+ * Product Owner del 2026-09-26 y 2026-10-09. NOLOGIN: existe para poseer objetos, nunca
  * para conectarse al cluster.
  */
 export const TEST_OWNER_ROLE = 'merdn_test_migrator';
@@ -121,10 +121,11 @@ export const REQUIRED_MIGRATIONS = Object.freeze([
 ]);
 
 /**
- * Las 26 tablas protegidas, congeladas. La propiedad se transfiere solo a
- * estas; el resto del esquema no se toca.
+ * Catalogo efectivo aprobado por S00-MP04B: las 26 tablas de 025 mas
+ * access_request de 038. La propiedad se transfiere solo a estas.
  */
 export const PROTECTED_TABLES = Object.freeze([
+  'access_request',
   'appointment',
   'audit_event',
   'care_assignment',
@@ -153,8 +154,8 @@ export const PROTECTED_TABLES = Object.freeze([
   'territorial_unit',
 ]);
 
-/** Numero de policies esperado sobre las 26 tablas. */
-export const EXPECTED_POLICY_COUNT = 27;
+/** Numero de policies esperado sobre las 27 tablas del catalogo completo. */
+export const EXPECTED_POLICY_COUNT = 28;
 
 /**
  * Familia de nombres de contenedor admitida. Es deliberadamente estrecha:
@@ -729,7 +730,7 @@ export async function applyMigrations(adminUrl, secrets, limits = PROVISION_LIMI
   );
 }
 
-/** Exige exactamente las 14 migraciones aplicadas. */
+/** Exige exactamente las migraciones del catalogo versionado aprobado. */
 export async function assertMigrationsApplied(envFilePath, secrets) {
   const out = await runSql(
     envFilePath,
@@ -755,7 +756,7 @@ export async function assertMigrationsApplied(envFilePath, secrets) {
 }
 
 /**
- * Prepara los dos roles aprobados y transfiere la propiedad de las 26 tablas.
+ * Prepara los dos roles aprobados y transfiere la propiedad del catalogo completo.
  * No se toca ningun otro rol, policy, grant, schema, dato ni migracion.
  */
 export async function prepareRolesAndOwnership(envFilePath, runtimePassword, secrets) {
@@ -861,13 +862,13 @@ SELECT 'policies|' || count(*)::text
   }
   if (metrics.get('runtime_is_owner')?.[0] !== '0') fail('el rol runtime es propietario de alguna tabla');
   if (metrics.get('owner_tables')?.[0] !== String(PROTECTED_TABLES.length)) {
-    fail('las tablas del owner no coinciden con las 26 aprobadas');
+    fail(`las tablas del owner no coinciden con las ${PROTECTED_TABLES.length} aprobadas`);
   }
   if (metrics.get('protected_force')?.[0] !== String(PROTECTED_TABLES.length)) {
-    fail('las 26 tablas no tienen RLS y FORCE vigentes');
+    fail(`las ${PROTECTED_TABLES.length} tablas no tienen RLS y FORCE vigentes`);
   }
   if (metrics.get('policies')?.[0] !== String(EXPECTED_POLICY_COUNT)) {
-    fail('las policies no coinciden con las 27 aprobadas');
+    fail(`las policies no coinciden con las ${EXPECTED_POLICY_COUNT} aprobadas`);
   }
 
   return Object.freeze({

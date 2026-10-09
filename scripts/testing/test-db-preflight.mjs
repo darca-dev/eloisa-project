@@ -3,7 +3,7 @@
  * SPEC 025 / MP08 - Preflight fail-closed de runtime y RLS de la baseline aislada.
  *
  * Comprueba, sobre el cluster desechable de pruebas, que el rol de runtime
- * `merdn_runtime` esta sujeto a las 26 tablas protegidas con RLS + FORCE, que el
+ * `merdn_runtime` esta sujeto a las 27 tablas protegidas con RLS + FORCE, que el
  * catalogo coincide exactamente con la baseline aprobada y que el aislamiento por
  * tenant se sostiene en una UNICA transaccion que siempre termina en `ROLLBACK`.
  *
@@ -56,13 +56,15 @@ import {
 export { EXPECTED_POLICY_COUNT, EXPECTED_TEST_ENVIRONMENT, FICTIONAL_TENANT, PROTECTED_TABLES, REQUIRED_MIGRATIONS, TEST_OWNER_ROLE };
 
 /**
- * Los 27 pares policy/tabla congelados por la spec 025 seccion 4.3. El
+ * Los 27 pares de spec 025 mas access_request_tenant/access_request de 038,
+ * incorporado al catalogo efectivo por decision PO S00-MP04B (2026-10-09). El
  * PROVISIONADOR solo expone el CONTEO (`EXPECTED_POLICY_COUNT`); los nombres
  * exactos no existian en ningun modulo, asi que se declaran aqui una sola vez y
  * se contrastan contra el conteo y contra `PROTECTED_TABLES` en
  * `validatePolicyBaseline()`, que es puro y no necesita base.
  */
 export const RLS_POLICY_PAIRS = Object.freeze([
+  Object.freeze({ policy: 'access_request_tenant', table: 'access_request' }),
   Object.freeze({ policy: 'tenant_self', table: 'tenant' }),
   Object.freeze({ policy: 'territorial_unit_scope', table: 'territorial_unit' }),
   Object.freeze({ policy: 'person_tenant', table: 'person' }),
@@ -191,7 +193,7 @@ function tableListSql() {
 
 /**
  * Valida la linea base de policies declarada en este modulo contra el conteo
- * aprovado en MP07 y contra las 26 tablas. Es puro: si la spec y el
+ * aprobado en MP07/MP04B y contra el catalogo completo. Es puro: si la spec y el
  * provisionador dejaran de coincidir, el preflight se detiene ANTES de abrir
  * una conexion en lugar de afirmar un catalogo que no existe.
  */
@@ -341,7 +343,7 @@ export function evaluateCatalog(parsed) {
 
   if (parsed.metrics.get('runtime_owned_tables')?.[0] !== '0') problems.push('el rol runtime es propietario de alguna tabla');
   if (parsed.metrics.get('owner_protected_tables')?.[0] !== String(PROTECTED_TABLES.length)) {
-    problems.push('el owner de pruebas no es propietario de las 26 tablas aprobadas');
+    problems.push(`el owner de pruebas no es propietario de las ${PROTECTED_TABLES.length} tablas aprobadas`);
   }
   if (parsed.schemaCreate !== false) problems.push('el rol runtime tiene CREATE en el schema public');
 
@@ -596,7 +598,7 @@ export async function runRuntimeRlsPreflight(options = {}) {
       throw new PreflightError('identity', 'la publicacion del puerto no es loopback en el puerto aprobado');
     }
 
-    // 5. Catalogo de solo lectura: identidad, roles, owners, 26/27 y tenant.
+    // 5. Catalogo completo de solo lectura: identidad, roles, owners, tablas/policies y tenant.
     const catalogOut = await runSql(envFilePath, buildCatalogSql(), secrets, { readOnly: true });
     const catalog = evaluateCatalog(parseCatalogOutput(catalogOut));
     if (catalog.problems.length > 0) {
