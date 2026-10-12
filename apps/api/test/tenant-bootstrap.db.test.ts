@@ -311,6 +311,7 @@ describe.skipIf(!puedeEjecutarse)('Bootstrap del tenant activo bajo enforce', ()
   // --- Evidencia 14: sin fuga de rol ni de GUC ------------------------------
 
   it('la transacción de bootstrap no deja rol ni GUC en la conexión reutilizada', async () => {
+    const [antes] = await servicio.$queryRaw<{ readonly rol: string }[]>`SELECT current_user::text AS rol`;
     await arranqueEnFrio(tenantId, CODIGO_ACTIVO).resolveActiveTenant();
 
     // Varias lecturas seguidas: el pool puede devolver conexiones distintas y
@@ -320,7 +321,8 @@ describe.skipIf(!puedeEjecutarse)('Bootstrap del tenant activo bajo enforce', ()
         { readonly rol: string; readonly tenant: string | null }[]
       >`SELECT current_user::text AS rol, current_setting('merdn.tenant_id', true) AS tenant`;
 
-      expect(estado?.rol).not.toBe(RUNTIME_ROLE_NAME);
+      expect(antes?.rol).toBeDefined();
+      expect(estado?.rol).toBe(antes?.rol);
       expect(estado?.tenant === null || estado?.tenant === '').toBe(true);
     }
   });

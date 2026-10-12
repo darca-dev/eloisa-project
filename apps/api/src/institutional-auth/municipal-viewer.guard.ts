@@ -75,7 +75,7 @@ export class MunicipalViewerGuard implements CanActivate {
     let principal: InstitutionalPrincipal | null;
 
     try {
-      principal = await this.auth.validate(token, new Date());
+      principal = await this.auth.validate(token, new Date(), request.headers.cookie, 'MUNICIPAL_VIEWER');
     } catch (error) {
       if (error instanceof RuntimeContextUnavailableError) {
         /*

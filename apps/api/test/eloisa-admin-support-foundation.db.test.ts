@@ -556,11 +556,11 @@ describe.skipIf(!puedeEjecutarse)(
            ORDER BY relname`;
 
         expect(filas).toStrictEqual([
-          { tabla: 'audit_event', habilitada: true, forzada: false },
+          { tabla: 'audit_event', habilitada: true, forzada: true },
           { tabla: 'home_visit', habilitada: true, forzada: true },
           { tabla: 'human_account', habilitada: true, forzada: true },
           { tabla: 'human_session', habilitada: true, forzada: true },
-          { tabla: 'patient', habilitada: true, forzada: false },
+          { tabla: 'patient', habilitada: true, forzada: true },
         ]);
       });
     });
@@ -756,6 +756,7 @@ describe.skipIf(!puedeEjecutarse)(
           'HOSPITAL_PATIENT_VIEWER',
           'HOSPITAL_SCHEDULER',
           'CAREGIVER_RELATIONSHIP_MANAGER',
+          'HOSPITAL_ACCESS_REVIEWER',
         ]);
       });
     });
@@ -1030,7 +1031,7 @@ describe.skipIf(!puedeEjecutarse)(
             FROM pg_constraint c
             JOIN unnest(c.conkey) WITH ORDINALITY AS k(attnum, orden) ON TRUE
             JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = k.attnum
-           WHERE c.conname = 'support_context_session_human_session_fkey'
+           WHERE c.conname = 'support_context_session_humanSessionId_humanAccountId_home_fkey'
            ORDER BY k.orden`;
 
         expect(columnas.map((fila) => fila.columna)).toStrictEqual([
@@ -1965,14 +1966,14 @@ describe.skipIf(!puedeEjecutarse)(
                  'platform_support_capability', 'support_grant', 'support_context_session'
                )
                OR conname IN (
-                 'audit_event_actor_home_tenant_fkey',
-                 'audit_event_support_grant_fkey',
-                 'audit_event_support_context_session_fkey'
+                 'audit_event_actorHomeTenantId_fkey',
+                 'audit_event_supportGrantId_fkey',
+                 'audit_event_supportContextSessionId_fkey'
                )
              )
            ORDER BY conname`;
 
-        expect(reglas.length).toBeGreaterThanOrEqual(11);
+        expect(reglas.length).toBe(12);
         // 'r' = RESTRICT, 'a' = NO ACTION. Ninguna 'c' = CASCADE, ninguna
         // 'n' = SET NULL, ninguna 'd' = SET DEFAULT.
         expect(reglas.every((regla) => ['r', 'a'].includes(regla.alBorrar))).toBe(true);

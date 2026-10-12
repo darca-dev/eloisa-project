@@ -51,15 +51,16 @@ import { SameOriginGuard } from './same-origin.guard';
 /**
  * Superficie de autenticación HUMANA (IDENTITY-RELATIONSHIPS-CORE-01 §8.1).
  *
- * Cuatro rutas y ninguna más:
+ * Rutas de autenticación:
  * - `GET  /api/v1/human-auth/login`    inicia el flujo OIDC;
  * - `GET  /api/v1/human-auth/callback` lo completa y abre la sesión;
  * - `GET  /api/v1/human-auth/session`  describe la sesión vigente;
  * - `POST /api/v1/human-auth/logout`   la revoca.
+ * - `POST /api/v1/human-auth/reauthenticate` fuerza autenticación reciente
+ *   vinculada a la sesión actual, para operaciones protegidas de recuperación.
  *
- * NO existe registro público, NO existe recuperación de cuenta, NO existe
- * administración de personas usuarias y NO existe selección de institución: el
- * tenant lo resuelve el servidor y el navegador nunca lo envía ni lo elige.
+ * El registro y la recuperación administrada pertenecen al módulo de accesos.
+ * El tenant lo resuelve el servidor y el navegador nunca lo envía ni lo elige.
  *
  * NO existe ninguna vía alternativa de autenticación. No hay `dev-login`, no hay
  * cabecera de identidad, no hay contraseña MERDN y no hay sesión manual. Si el
@@ -180,6 +181,20 @@ export class HumanAuthController {
     }
 
     return new URL(returnTarget, `${webOrigin}/`).toString();
+  }
+
+  @Post('reauthenticate')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(HumanAuthRateLimitGuard, SameOriginGuard, HumanSessionGuard)
+  @ApiOperation({ operationId: 'reauthenticateHumanSession', summary: 'Verifica nuevamente la identidad en el proveedor' })
+  @ApiOkResponse({ description: 'URL de autorización OIDC forzada, ligada a la sesión vigente.', schema: { type: 'object', required: ['authorizationUrl'], additionalProperties: false, properties: { authorizationUrl: { type: 'string', format: 'uri' } } } })
+  public async reauthenticate(@Req() request: RequestWithHumanSession, @Res({ passthrough: true }) response: Response): Promise<{ authorizationUrl: string }> {
+    noStore(response);
+    const principal = humanPrincipalOf(request);
+    if (principal === null) throw new UnauthorizedException();
+    const started = await this.protegido(() => this.auth.startLogin('/acceso', new Date(), principal));
+    response.setHeader('Set-Cookie', started.setCookieHeader);
+    return { authorizationUrl: started.authorizationUrl };
   }
 
   /**

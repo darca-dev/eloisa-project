@@ -138,6 +138,8 @@ export class HospitalAgendaService {
         data: buildHospitalOperationsAudit({
           tenantId,
           identityId: context.principal.identityId,
+
+          ...(context.principal.humanAccountId === undefined ? {} : { humanAccountId: context.principal.humanAccountId }),
           role: context.principal.role,
           eventType: 'HOSPITAL_AGENDA_ACCESS_GRANTED',
           resourceType: HOSPITAL_OPERATIONS_RESOURCES.agenda,

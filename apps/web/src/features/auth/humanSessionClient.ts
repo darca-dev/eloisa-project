@@ -289,7 +289,7 @@ export async function consultarSesionHumana(
  * desconocido —una experiencia de un paquete futuro, o un cuerpo alterado— se
  * convierta en un enlace que la interfaz siga.
  */
-export const EXPERIENCIAS_APROBADAS = ['PATIENT', 'CAREGIVER', 'FIELD_PROFESSIONAL'] as const;
+export const EXPERIENCIAS_APROBADAS = ['PATIENT', 'CAREGIVER', 'FIELD_PROFESSIONAL', 'HOSPITAL', 'MUNICIPALITY'] as const;
 
 export type ExperienciaAprobada = (typeof EXPERIENCIAS_APROBADAS)[number];
 
@@ -298,6 +298,8 @@ export const RUTAS_EXPERIENCIA: Readonly<Record<ExperienciaAprobada, string>> = 
   PATIENT: '/paciente',
   CAREGIVER: '/cuidador',
   FIELD_PROFESSIONAL: '/profesional',
+  HOSPITAL: '/hospital',
+  MUNICIPALITY: '/municipality',
 };
 
 /**

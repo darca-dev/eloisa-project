@@ -1,3 +1,4 @@
+import { institutionalAuditActor } from '../institutional-auth/institutional-audit-actor';
 import { Injectable } from '@nestjs/common';
 
 import { type PrismaTransaction } from '../database/prisma-transaction';
@@ -641,9 +642,7 @@ export class AuditService {
       data: {
         tenantId: input.tenantId,
         eventType: evento.eventType,
-        actorType: 'INSTITUTIONAL_IDENTITY',
-        actorUserId: input.identityId,
-        actorRole: input.role,
+        ...institutionalAuditActor(input),
         resourceType: 'AccessRequest',
         resourceId: evento.resourceId,
         outcome: evento.outcome,
@@ -772,7 +771,8 @@ export class AuditService {
     input: {
       readonly tenantId: string;
       /** Identificador OPACO de la identidad institucional que opero. */
-      readonly identityId: string;
+      readonly humanAccountId?: string;
+  readonly identityId: string;
       readonly role: InstitutionalRole;
       readonly homeVisitId: string;
     },
@@ -782,9 +782,7 @@ export class AuditService {
       data: {
         tenantId: input.tenantId,
         eventType: 'HOME_VISIT_MATERIALIZED',
-        actorType: 'INSTITUTIONAL_IDENTITY',
-        actorUserId: input.identityId,
-        actorRole: input.role,
+        ...institutionalAuditActor(input),
         resourceType: 'HomeVisit',
         resourceId: input.homeVisitId,
         outcome: 'SUCCESS',
@@ -1069,6 +1067,7 @@ const EVENTO_POR_ESTADO_DESTINO: Record<
 export interface AccessRequestReviewAuditInput {
   readonly tenantId: string;
   /** Identificador OPACO de la identidad institucional revisora. */
+  readonly humanAccountId?: string;
   readonly identityId: string;
   /** Rol efectivo en el momento del evento. La revisión exige su rol exacto. */
   readonly role: InstitutionalRole;

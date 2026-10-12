@@ -230,6 +230,8 @@ export class AccessRequestReviewService {
         {
           tenantId,
           identityId: principal.identityId,
+
+          ...(principal.humanAccountId === undefined ? {} : { humanAccountId: principal.humanAccountId }),
           role: principal.role,
           endpoint: ENDPOINT_LISTA,
           correlationId: randomUUID(),
@@ -281,6 +283,8 @@ export class AccessRequestReviewService {
         {
           tenantId,
           identityId: principal.identityId,
+
+          ...(principal.humanAccountId === undefined ? {} : { humanAccountId: principal.humanAccountId }),
           role: principal.role,
           accessRequestId: fila.id,
           endpoint: ENDPOINT_DETALLE,
@@ -352,6 +356,13 @@ export class AccessRequestReviewService {
     const desactivante = isDeactivatingAction(action);
 
     const paso = await this.prisma.withTenant(tenantId, async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "access_request" WHERE "id" = ${requestId}::uuid AND "tenantId" = ${tenantId}::uuid FOR UPDATE`;
+      const target = await tx.accessRequest.findFirst({ where: { id: requestId, tenantId }, select: { humanAccountId: true } });
+      if (target?.humanAccountId !== null && target?.humanAccountId !== undefined) {
+        await tx.$queryRaw`SELECT "id" FROM "human_account" WHERE "id" = ${target.humanAccountId}::uuid AND "tenantId" = ${tenantId}::uuid FOR UPDATE`;
+        const account = await tx.humanAccount.findFirst({ where: { id: target.humanAccountId, tenantId }, select: { passwordRecoveryBlocked: true } });
+        if (decision.runsSaga && account?.passwordRecoveryBlocked === true) return { ok: false as const, failure: { kind: 'CONFLICT' as const } };
+      }
       const actualizada = await tx.accessRequest.updateMany({
         where: {
           id: requestId,
@@ -425,6 +436,8 @@ export class AccessRequestReviewService {
           {
             tenantId,
             identityId: principal.identityId,
+
+            ...(principal.humanAccountId === undefined ? {} : { humanAccountId: principal.humanAccountId }),
             role: principal.role,
             accessRequestId: requestId,
             action,

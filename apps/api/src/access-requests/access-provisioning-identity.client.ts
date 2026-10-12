@@ -231,7 +231,7 @@ export class AccessProvisioningIdentityClient {
       // proveedor y una creación sin ella no debe ser un fallo.
       const creado = await this.findUserByUsername(input.username);
 
-      if (creado === null) {
+      if (creado === null || creado.marker !== input.marker) {
         throw new AccessProvisioningIdentityError(
           ACCESS_PROVISIONING_ERROR_CODES.unavailable,
           'La creación de identidad no pudo confirmarse.',
@@ -273,6 +273,38 @@ export class AccessProvisioningIdentityClient {
 
     if (estado !== 204) {
       throw this.fromStatus(estado);
+    }
+  }
+
+  /** 041: one reset attempt; an uncertain response must be reconciled explicitly. */
+  public async setTemporaryPasswordOnce(userId: string, marker: string, password: string): Promise<void> {
+    const current = await this.getUser(userId);
+    if (current.id !== userId || current.marker !== marker) {
+      throw new AccessProvisioningIdentityError(ACCESS_PROVISIONING_ERROR_CODES.identityCollision, 'La identidad no corresponde a la operación.');
+    }
+    const status = await this.requestStatus(
+      'PUT', `/users/${encodeURIComponent(userId)}/reset-password`,
+      JSON.stringify({ type: 'password', value: password, temporary: true }), false,
+    );
+    if (status !== 204) throw this.fromStatus(status);
+    const verified = await this.requestJson<Record<string, unknown>>('GET', `/users/${encodeURIComponent(userId)}`);
+    if (extraerId(verified) !== userId || extraerMarcador(verified) !== marker
+      || !Array.isArray(verified['requiredActions']) || !verified['requiredActions'].includes('UPDATE_PASSWORD')) {
+      throw new AccessProvisioningIdentityError(ACCESS_PROVISIONING_ERROR_CODES.unavailable, 'No se pudo confirmar el cambio obligatorio de contraseña.');
+    }
+  }
+
+  /** 041: invalidate provider SSO and verify that no user session remains. */
+  public async revokeUserSessions(userId: string, marker: string): Promise<void> {
+    const current = await this.getUser(userId);
+    if (current.id !== userId || current.marker !== marker) {
+      throw new AccessProvisioningIdentityError(ACCESS_PROVISIONING_ERROR_CODES.identityCollision, 'La identidad no corresponde a la operación.');
+    }
+    const status = await this.requestStatus('POST', `/users/${encodeURIComponent(userId)}/logout`, undefined);
+    if (status !== 204) throw this.fromStatus(status);
+    const sessions = await this.requestJson<unknown>('GET', `/users/${encodeURIComponent(userId)}/sessions`);
+    if (!Array.isArray(sessions) || sessions.length !== 0) {
+      throw new AccessProvisioningIdentityError(ACCESS_PROVISIONING_ERROR_CODES.unavailable, 'No se pudo confirmar el cierre de sesiones de identidad.');
     }
   }
 
@@ -324,6 +356,17 @@ export class AccessProvisioningIdentityClient {
     }
 
     return { id, marker: extraerMarcador(registro) };
+  }
+
+  /** Confirm the provider persisted activation for this exact registration. */
+  public async verifyEnabledUser(userId: string, marker: string): Promise<void> {
+    const record = await this.requestJson<Record<string, unknown>>('GET', `/users/${encodeURIComponent(userId)}`);
+    if (extraerId(record) !== userId || extraerMarcador(record) !== marker || record?.['enabled'] !== true) {
+      throw new AccessProvisioningIdentityError(
+        ACCESS_PROVISIONING_ERROR_CODES.unavailable,
+        'No se pudo confirmar la activación de la identidad.',
+      );
+    }
   }
 
   /* ---------------------------------------------------------------------- */
@@ -424,8 +467,9 @@ export class AccessProvisioningIdentityClient {
     method: 'GET' | 'POST' | 'PUT',
     ruta: string,
     cuerpo: string | undefined,
+    retryable = true,
   ): Promise<number> {
-    const respuesta = await this.requestWithAuth(method, ruta, cuerpo);
+    const respuesta = await this.requestWithAuth(method, ruta, cuerpo, retryable);
     return respuesta.status;
   }
 
@@ -433,6 +477,7 @@ export class AccessProvisioningIdentityClient {
     method: 'GET' | 'POST' | 'PUT',
     ruta: string,
     cuerpo: string | undefined,
+    retryable = true,
   ): Promise<Response> {
     const token = await this.adminToken();
     /*
@@ -444,7 +489,7 @@ export class AccessProvisioningIdentityClient {
      */
     const url = new URL(`${this.adminBase()}${ruta}`);
 
-    return this.requestRaw(method, url, cuerpo, true, token);
+    return this.requestRaw(method, url, cuerpo, retryable, token);
   }
 
   /**
@@ -509,7 +554,7 @@ export class AccessProvisioningIdentityClient {
     }
 
     if (cuerpo !== undefined) {
-      headers['Content-Type'] = 'application/json';
+      headers['Content-Type'] = token === undefined ? 'application/x-www-form-urlencoded' : 'application/json';
     }
 
     return fetch(url, {

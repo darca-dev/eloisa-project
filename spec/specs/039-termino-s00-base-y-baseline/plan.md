@@ -35,3 +35,11 @@ Sin nuevas dependencias ni migraciones en MP01/MP02. Conservar APIs/contratos y 
 Rama desde 389d5fe, independiente de implementación MP04C pendiente. Primero contrato y gates; después mensajes de registro/hub/revisión y precarga test completa con contraseña aleatoria; pruebas de nueve perfiles y regresión web; build/recreación exclusiva web; informe y commit local. Hallazgo source TEST_DATA exige paquete de procedencia separado.
 
 MP05 verificado: 1901/1901 web, tipos/lint/scanner/build y HTTP local correctos. Interacción de navegador no verificada por falta de conexión; no cuentas/solicitudes creadas. Siguiente propuesta MP06 separa SELF_REGISTRATION nuevo de TEST_DATA histórico, pendiente de decisión material. MP04C continúa pendiente.
+# MP04C — activado el 2026-10-12
+
+Dependencias: MP04B catálogo/preflight real verificado y orden actual de ejecución.
+Fases: contexto privado al terminar preflight; transmisión mínima al hijo;
+negativas de contexto y regresión; ejecución real aislada de baseline.
+Riesgos: contexto suplantado, filtración de UUID y reutilización de un cluster
+distinto. Mantener env-file/identidad validados y no incluir contexto en evidencia.
+Contrato/allowlist: S00-MP04C-PROPOSAL.md y decisión 2026-10-12-ejecucion-modulos-reales-codex.md.

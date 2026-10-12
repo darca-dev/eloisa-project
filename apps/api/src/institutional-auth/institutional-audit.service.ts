@@ -1,3 +1,4 @@
+import { institutionalAuditActor } from '../institutional-auth/institutional-audit-actor';
 import { Injectable } from '@nestjs/common';
 
 import { type PrismaTransaction } from '../database/prisma-transaction';
@@ -57,6 +58,7 @@ const HOSPITAL_GRANTED_EVENT = {
 
 export interface InstitutionalSessionAuditInput {
   readonly tenantId: string;
+  readonly humanAccountId?: string;
   readonly identityId: string;
   readonly role: InstitutionalRoleCode;
   readonly sessionId: string;
@@ -67,6 +69,7 @@ export interface InstitutionalSessionAuditInput {
 export interface HospitalPatientAccessAuditInput {
   readonly tenantId: string;
   /** `null` cuando la petición no llegó con una identidad institucional válida. */
+  readonly humanAccountId?: string;
   readonly identityId: string | null;
   readonly role: InstitutionalRoleCode | null;
   readonly resource: HospitalPatientResource;
@@ -83,6 +86,7 @@ export interface HospitalPatientAccessAuditInput {
 export interface MunicipalAccessAuditInput {
   readonly tenantId: string;
   /** `null` cuando la petición no llegó con una identidad institucional válida. */
+  readonly humanAccountId?: string;
   readonly identityId: string | null;
   readonly role: InstitutionalRoleCode | null;
   readonly resource: MunicipalAggregateResource;
@@ -102,9 +106,7 @@ export class InstitutionalAuditService {
       data: {
         tenantId: input.tenantId,
         eventType: 'INSTITUTIONAL_SESSION_CREATED',
-        actorType: 'INSTITUTIONAL_IDENTITY',
-        actorUserId: input.identityId,
-        actorRole: input.role,
+        ...institutionalAuditActor(input),
         resourceType: 'InstitutionalSession',
         resourceId: input.sessionId,
         outcome: 'SUCCESS',
@@ -126,9 +128,7 @@ export class InstitutionalAuditService {
       data: {
         tenantId: input.tenantId,
         eventType: 'INSTITUTIONAL_SESSION_REVOKED',
-        actorType: 'INSTITUTIONAL_IDENTITY',
-        actorUserId: input.identityId,
-        actorRole: input.role,
+        ...institutionalAuditActor(input),
         resourceType: 'InstitutionalSession',
         resourceId: input.sessionId,
         outcome: 'SUCCESS',
@@ -160,9 +160,7 @@ export class InstitutionalAuditService {
       data: {
         tenantId: input.tenantId,
         eventType: HOSPITAL_GRANTED_EVENT[input.resource],
-        actorType: 'INSTITUTIONAL_IDENTITY',
-        actorUserId: input.identityId,
-        actorRole: input.role,
+        ...institutionalAuditActor(input),
         resourceType: input.resource,
         /*
          * Solo el detalle nombra un recurso. El listado y la analítica dejan
@@ -198,9 +196,7 @@ export class InstitutionalAuditService {
       data: {
         tenantId: input.tenantId,
         eventType: 'HOSPITAL_PATIENT_ACCESS_DENIED',
-        actorType: input.identityId === null ? 'UNAUTHENTICATED' : 'INSTITUTIONAL_IDENTITY',
-        actorUserId: input.identityId,
-        actorRole: input.identityId === null ? null : input.role,
+        ...institutionalAuditActor(input),
         resourceType: input.resource,
         resourceId: null,
         outcome: 'DENIED',
@@ -230,9 +226,7 @@ export class InstitutionalAuditService {
         eventType: granted
           ? 'MUNICIPAL_AGGREGATE_ACCESS_GRANTED'
           : 'MUNICIPAL_AGGREGATE_ACCESS_DENIED',
-        actorType: input.identityId === null ? 'UNAUTHENTICATED' : 'INSTITUTIONAL_IDENTITY',
-        actorUserId: input.identityId,
-        actorRole: input.identityId === null ? null : input.role,
+        ...institutionalAuditActor(input),
         resourceType: input.resource,
         resourceId: null,
         outcome: granted ? 'SUCCESS' : 'DENIED',

@@ -268,6 +268,8 @@ describe('Alcaldía — sin red, persistencia ni integraciones', () => {
     expect([...new Set(externas)].sort()).toStrictEqual([
       '@/config/branding',
       '@/config/environment',
+      '@/features/auth/InstitutionalAccess',
+      '@/features/auth/institutionalAdministratorClient',
       '@/features/auth/institutionalSessionClient',
       'react',
     ]);

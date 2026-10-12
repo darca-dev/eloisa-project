@@ -224,7 +224,6 @@ function CampoGeo({ prefijo, departamento, municipio, etiquetaMunicipio, ...comu
           name={campoDepto}
           onChange={(event) => {
             comunes.ponerReg(campoDepto, event.target.value);
-            comunes.ponerReg(campoMun, '');
           }}
           value={departamento}
         >

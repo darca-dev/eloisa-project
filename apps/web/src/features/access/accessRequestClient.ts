@@ -98,8 +98,8 @@ export interface AccessRequestWithCredential extends AccessRequestSubmission {
  */
 export interface AccessRequestAccepted {
   readonly reference: string;
-  readonly status: 'PENDING';
-  readonly source: 'TEST_DATA';
+  readonly status: 'PENDING' | 'APPROVED_PENDING_PROVISIONING' | 'PROVISIONING_FAILED';
+  readonly source: 'TEST_DATA' | 'SELF_REGISTRATION';
 }
 
 /**
@@ -115,6 +115,7 @@ export type AccessRequestOutcome =
   | { readonly kind: 'invalid'; readonly fields: readonly string[] }
   | { readonly kind: 'forbidden' }
   | { readonly kind: 'rateLimited' }
+  | { readonly kind: 'conflict' }
   | { readonly kind: 'unavailable' };
 
 /* -------------------------------------------------------------------------- */
@@ -247,8 +248,8 @@ const REFERENCE_PATTERN = /^AR-[0-9A-F]{24}$/u;
  * en estos dos campos haría que la interfaz anunciara un estado que este paquete
  * no puede emitir —o una procedencia que no es de prueba— como si lo hiciera.
  */
-const ACCEPTED_STATUS = 'PENDING';
-const ACCEPTED_SOURCE = 'TEST_DATA';
+const ACCEPTED_STATUSES = ['PENDING', 'APPROVED_PENDING_PROVISIONING', 'PROVISIONING_FAILED'] as const;
+const ACCEPTED_SOURCES = ['TEST_DATA', 'SELF_REGISTRATION'] as const;
 
 function isAccepted(value: unknown): value is AccessRequestAccepted {
   if (typeof value !== 'object' || value === null) {
@@ -270,8 +271,8 @@ function isAccepted(value: unknown): value is AccessRequestAccepted {
   return (
     typeof candidato['reference'] === 'string' &&
     REFERENCE_PATTERN.test(candidato['reference']) &&
-    candidato['status'] === ACCEPTED_STATUS &&
-    candidato['source'] === ACCEPTED_SOURCE
+    ACCEPTED_STATUSES.includes(candidato['status'] as (typeof ACCEPTED_STATUSES)[number]) &&
+    ACCEPTED_SOURCES.includes(candidato['source'] as (typeof ACCEPTED_SOURCES)[number])
   );
 }
 
@@ -306,11 +307,32 @@ export async function submitAccessRequest(
   submission: AccessRequestWithCredential,
   fetchImpl: typeof fetch = fetch,
 ): Promise<AccessRequestOutcome> {
+  // A browser-wide lock covers cookie bootstrap AND submission. Two new tabs
+  // cannot overwrite their first ownership cookie while a registration commits.
+  if (typeof window !== 'undefined') {
+    if (!navigator.locks) return { kind: 'unavailable' };
+    return navigator.locks.request('merdn-personal-registration', () =>
+      sendAccessRequest(submission, fetchImpl));
+  }
+  return sendAccessRequest(submission, fetchImpl);
+}
+
+async function sendAccessRequest(
+  submission: AccessRequestWithCredential,
+  fetchImpl: typeof fetch,
+): Promise<AccessRequestOutcome> {
   let response: Response;
 
   try {
+    const attempt = await fetchImpl(`${resolvePublicApiBaseUrl()}${ACCESS_REQUESTS_PATH}/registration-attempt`, {
+      method: 'POST', credentials: 'include',
+    });
+    if (attempt.status === 403) return { kind: 'forbidden' };
+    if (attempt.status === 429) return { kind: 'rateLimited' };
+    if (attempt.status !== 204) return { kind: 'unavailable' };
     response = await fetchImpl(`${resolvePublicApiBaseUrl()}${ACCESS_REQUESTS_PATH}`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(submission),
     });
@@ -334,6 +356,8 @@ export async function submitAccessRequest(
   if (response.status === 429) {
     return { kind: 'rateLimited' };
   }
+
+  if (response.status === 409) return { kind: 'conflict' };
 
   if (response.status === 503) {
     return { kind: 'unavailable' };

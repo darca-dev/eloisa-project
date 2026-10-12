@@ -589,6 +589,8 @@ describe('consulta de experiencias aprobadas', () => {
       'PATIENT',
       'CAREGIVER',
       'FIELD_PROFESSIONAL',
+      'HOSPITAL',
+      'MUNICIPALITY',
     ]);
   });
 
@@ -652,6 +654,8 @@ describe('consulta de experiencias aprobadas', () => {
       PATIENT: '/paciente',
       CAREGIVER: '/cuidador',
       FIELD_PROFESSIONAL: '/profesional',
+      HOSPITAL: '/hospital',
+      MUNICIPALITY: '/municipality',
     });
 
     // No hay portada suelta: todo destino del mapa está en el catálogo.

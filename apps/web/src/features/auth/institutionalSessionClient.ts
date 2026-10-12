@@ -70,6 +70,7 @@ export type RolInstitucional =
   | 'HOSPITAL_ACCESS_REVIEWER';
 
 export interface SesionInstitucionalDto {
+  readonly administrator?: boolean;
   readonly role: RolInstitucional;
   readonly expiresAt: string;
   readonly institution: { readonly name: string };

@@ -31,6 +31,7 @@ import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { AppModule } from '../src/app.module';
 import { RuntimeContextUnavailableError } from '../src/database/runtime-context.error';
 import { type PrismaClient } from '../src/generated/prisma/client';
+import { HUMAN_SESSION_IDLE_SECONDS } from '../src/human-auth/human-auth.contract';
 import {
   PATIENT_SELF_ERROR_CODES,
   PATIENT_SELF_LABEL,
@@ -903,8 +904,9 @@ describe.skipIf(!puedeEjecutarse)('API self-scope del Paciente', () => {
       const inactiva = await crearSesionHumana(prisma, {
         tenantId,
         humanAccountId: cuenta.humanAccountId,
-        // Ventana de inactividad contratada: 30 minutos.
-        createdAt: new Date(Date.now() - 31 * 60 * 1000),
+        // Caducada por inactividad, pero no por su vigencia absoluta.
+        createdAt: new Date(Date.now() - (HUMAN_SESSION_IDLE_SECONDS + 60) * 1000),
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
         lastUsedAt: null,
       });
 

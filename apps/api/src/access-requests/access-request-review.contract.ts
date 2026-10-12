@@ -114,12 +114,12 @@ export type AccessRequestReviewAction = (typeof ACCESS_REQUEST_REVIEW_ACTIONS)[n
  * exportaciones y errores.
  */
 export const ACCESS_REQUEST_DECISION_REASON_CODES = [
-  'DEMO_ELIGIBLE',
-  'DEMO_NOT_ELIGIBLE',
-  'DEMO_PROVISIONING_RETRIED',
-  'DEMO_ACCESS_SUSPENDED',
-  'DEMO_ACCESS_REACTIVATED',
-  'DEMO_ACCESS_REVOKED',
+  'ACCESS_APPROVED',
+  'ACCESS_REJECTED',
+  'PROVISIONING_RETRIED',
+  'ACCESS_SUSPENDED',
+  'ACCESS_REACTIVATED',
+  'ACCESS_REVOKED',
 ] as const;
 
 export type AccessRequestDecisionReasonCode =
@@ -219,7 +219,7 @@ export const ACCESS_REQUEST_DECISION: Record<
     sourceStatuses: ['PENDING'],
     targetStatus: 'APPROVED_PENDING_PROVISIONING',
     settledStatuses: ['APPROVED', 'PROVISIONING_FAILED'],
-    reasonCode: 'DEMO_ELIGIBLE',
+    reasonCode: 'ACCESS_APPROVED',
     eventType: 'ACCESS_REQUEST_APPROVED',
     runsSaga: true,
     terminal: false,
@@ -228,7 +228,7 @@ export const ACCESS_REQUEST_DECISION: Record<
     sourceStatuses: ['PENDING', 'PROVISIONING_FAILED'],
     targetStatus: 'REJECTED',
     settledStatuses: ['REJECTED'],
-    reasonCode: 'DEMO_NOT_ELIGIBLE',
+    reasonCode: 'ACCESS_REJECTED',
     eventType: 'ACCESS_REQUEST_REJECTED',
     runsSaga: false,
     terminal: true,
@@ -237,7 +237,7 @@ export const ACCESS_REQUEST_DECISION: Record<
     sourceStatuses: ['PROVISIONING_FAILED'],
     targetStatus: 'APPROVED_PENDING_PROVISIONING',
     settledStatuses: ['APPROVED', 'PROVISIONING_FAILED'],
-    reasonCode: 'DEMO_PROVISIONING_RETRIED',
+    reasonCode: 'PROVISIONING_RETRIED',
     /* La traza del reintento son los `ACCESS_PROVISIONING_*` de la saga. */
     eventType: null,
     runsSaga: true,
@@ -247,7 +247,7 @@ export const ACCESS_REQUEST_DECISION: Record<
     sourceStatuses: ['APPROVED'],
     targetStatus: 'SUSPENDED',
     settledStatuses: ['SUSPENDED'],
-    reasonCode: 'DEMO_ACCESS_SUSPENDED',
+    reasonCode: 'ACCESS_SUSPENDED',
     eventType: 'ACCESS_REQUEST_SUSPENDED',
     runsSaga: false,
     terminal: false,
@@ -256,7 +256,7 @@ export const ACCESS_REQUEST_DECISION: Record<
     sourceStatuses: ['SUSPENDED'],
     targetStatus: 'APPROVED_PENDING_PROVISIONING',
     settledStatuses: ['APPROVED', 'PROVISIONING_FAILED'],
-    reasonCode: 'DEMO_ACCESS_REACTIVATED',
+    reasonCode: 'ACCESS_REACTIVATED',
     eventType: 'ACCESS_REQUEST_REACTIVATED',
     runsSaga: true,
     terminal: false,
@@ -265,7 +265,7 @@ export const ACCESS_REQUEST_DECISION: Record<
     sourceStatuses: ['APPROVED', 'SUSPENDED'],
     targetStatus: 'REVOKED',
     settledStatuses: ['REVOKED'],
-    reasonCode: 'DEMO_ACCESS_REVOKED',
+    reasonCode: 'ACCESS_REVOKED',
     eventType: 'ACCESS_REQUEST_REVOKED',
     runsSaga: false,
     terminal: true,

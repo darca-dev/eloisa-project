@@ -1,3 +1,4 @@
+import { institutionalAuditActor } from '../institutional-auth/institutional-audit-actor';
 import { Injectable } from '@nestjs/common';
 
 import { type PrismaTransaction } from '../database/prisma-transaction';
@@ -121,7 +122,8 @@ export class IdentityAuditService {
   public async recordCaregiverRelationshipCreatedWithin(
     tx: PrismaTransaction,
     context: IdentityAuditContext,
-    input: { readonly identityId: string; readonly relationshipId: string },
+    input: { readonly humanAccountId?: string;
+  readonly identityId: string; readonly relationshipId: string },
     occurredAt: Date,
   ): Promise<void> {
     await this.recordRelationshipEvent(
@@ -137,7 +139,8 @@ export class IdentityAuditService {
   public async recordCaregiverRelationshipValidatedWithin(
     tx: PrismaTransaction,
     context: IdentityAuditContext,
-    input: { readonly identityId: string; readonly relationshipId: string },
+    input: { readonly humanAccountId?: string;
+  readonly identityId: string; readonly relationshipId: string },
     occurredAt: Date,
   ): Promise<void> {
     await this.recordRelationshipEvent(
@@ -158,7 +161,8 @@ export class IdentityAuditService {
   public async recordCaregiverRelationshipRevokedWithin(
     tx: PrismaTransaction,
     context: IdentityAuditContext,
-    input: { readonly identityId: string; readonly relationshipId: string },
+    input: { readonly humanAccountId?: string;
+  readonly identityId: string; readonly relationshipId: string },
     occurredAt: Date,
   ): Promise<void> {
     await this.recordRelationshipEvent(
@@ -177,16 +181,15 @@ export class IdentityAuditService {
       | 'CAREGIVER_RELATIONSHIP_CREATED'
       | 'CAREGIVER_RELATIONSHIP_VALIDATED'
       | 'CAREGIVER_RELATIONSHIP_REVOKED',
-    input: { readonly identityId: string; readonly relationshipId: string },
+    input: { readonly humanAccountId?: string;
+  readonly identityId: string; readonly relationshipId: string },
     occurredAt: Date,
   ): Promise<void> {
     await tx.auditEvent.create({
       data: {
         tenantId: context.tenantId,
         eventType,
-        actorType: 'INSTITUTIONAL_IDENTITY',
-        actorUserId: input.identityId,
-        actorRole: 'CAREGIVER_RELATIONSHIP_MANAGER',
+        ...institutionalAuditActor({ ...input, role: 'CAREGIVER_RELATIONSHIP_MANAGER' }),
         resourceType: 'PatientCaregiverRelationship',
         resourceId: input.relationshipId,
         outcome: 'SUCCESS',

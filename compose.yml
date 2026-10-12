@@ -61,7 +61,7 @@ services:
       # inventa aqui ningun issuer, cliente ni clave, y ninguna es un secreto
       # versionado: todas viven en `.env`, ignorado por Git.
       #
-      # El issuer canonico local es `http://host.docker.internal:8081/realms/merdn-local`
+      # El issuer canonico local es `http://merdn.localhost:8081/realms/merdn-local`
       # y es el MISMO que ve el navegador: dentro de este contenedor `127.0.0.1`
       # apunta a la propia API, de modo que un issuer de bucle local seria
       # inalcanzable y el `iss` verificado no coincidiria entre las dos partes.
@@ -99,6 +99,7 @@ services:
     # misma en todos. Apunta a la maquina anfitriona, nunca a una red externa.
     extra_hosts:
       - 'host.docker.internal:host-gateway'
+      - 'merdn.localhost:host-gateway'
     depends_on:
       postgres:
         condition: service_healthy
@@ -171,7 +172,7 @@ services:
   #     se sustituye en el arranque desde `.env`, ignorado por Git;
   #   - fija un emisor canónico, de modo que navegador y API vean el mismo.
   #
-  # EMISOR CANÓNICO: `http://host.docker.internal:8081/realms/merdn-local`. Es
+  # EMISOR CANÓNICO: `http://merdn.localhost:8081/realms/merdn-local`. Es
   # el ÚNICO, y lo alcanzan por igual el navegador del anfitrión y la API que
   # corre dentro de Compose. El puerto se sigue publicando SOLO en 127.0.0.1.
   #
@@ -199,7 +200,7 @@ services:
       MERDN_ACCESS_PROVISIONING_CLIENT_SECRET: ${MERDN_ACCESS_PROVISIONING_CLIENT_SECRET:?defina MERDN_ACCESS_PROVISIONING_CLIENT_SECRET en .env (valor local ficticio)}
       # Emisor CANÓNICO: Keycloak lo anuncia igual venga de donde venga la
       # petición, para que navegador y API comparen el mismo `iss`.
-      KC_HOSTNAME: http://host.docker.internal:${OIDC_LOCAL_PORT:-8081}
+      KC_HOSTNAME: http://merdn.localhost:${OIDC_LOCAL_PORT:-8081}
       KC_HOSTNAME_STRICT: 'false'
       KC_HTTP_ENABLED: 'true'
       KC_HEALTH_ENABLED: 'true'

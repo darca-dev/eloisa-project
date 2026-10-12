@@ -16,11 +16,9 @@ import { IdentityAccessService } from './identity-access.service';
  * 1. la cuenta está `ACTIVE`;
  * 2. existe una `AccessRequest` de ESA cuenta con `status = APPROVED` y con el
  *    perfil correspondiente;
- * 3. para `PATIENT` y `FIELD_PROFESSIONAL`, además existe la participación que
- *    la aprobación creó —`Patient` activo y perfil profesional con afiliación
- *    vigente—. Para `CAREGIVER` NO se exige relación: una cuenta aprobada abre
- *    la experiencia neutra de cuidador aunque no tenga ningún vínculo, que es
- *    exactamente lo que el contrato de producto declara.
+ * 3. para `PATIENT` existe Patient activo. CAREGIVER y FIELD_PROFESSIONAL
+ *    abren su portal neutro sin inventar relaciones, profesiones o contratos.
+ *    La aprobación del portal no concede acceso a recursos clínicos.
  *
  * POR QUÉ EXISTE SEPARADO DE `HumanContextsService`: son dos preguntas
  * distintas. `contexts` responde «¿qué participaciones tiene vivas esta
@@ -58,7 +56,10 @@ export const APPROVED_EXPERIENCE_ORDER = [
   'PATIENT',
   'CAREGIVER',
   'FIELD_PROFESSIONAL',
+  'HOSPITAL',
+  'MUNICIPALITY',
 ] as const;
+const REQUESTABLE_PROFILES = ['PATIENT', 'CAREGIVER', 'FIELD_PROFESSIONAL'] as const;
 
 export type ApprovedExperience = (typeof APPROVED_EXPERIENCE_ORDER)[number];
 
@@ -75,7 +76,7 @@ export class ApprovedExperiencesService {
    *
    * @param principal Principal resuelto POR EL GUARD a partir de la cookie. Nunca
    *                  llega del cuerpo ni de la ruta.
-   * @param now       Instante del servidor. Define la vigencia de la afiliación.
+   * @param now       Instante del servidor para la auditoría.
    * @param correlationId Correlación opaca de la petición, para el evento de auditoría.
    */
   public async resolve(
@@ -84,16 +85,12 @@ export class ApprovedExperiencesService {
     correlationId: string,
   ): Promise<readonly ApprovedExperience[]> {
     /*
-     * Las participaciones se resuelven FUERA de la transacción de auditoría:
+     * La participación del paciente se resuelve FUERA de la transacción de auditoría:
      * `IdentityAccessService` abre su propia transacción tenant-scoped y anidar
      * `$transaction` dentro de otra sería una segunda conexión con su propio
-     * rol y su propio `set_config`. Ambas consultas corren en paralelo porque
-     * son independientes y ninguna escribe.
+     * rol y su propio `set_config`. La consulta de participación no escribe.
      */
-    const [patientVivo, professionalVivo] = await Promise.all([
-      this.identity.resolvePatient(principal),
-      this.identity.resolveProfessional(principal, now),
-    ]);
+    const patientVivo = await this.identity.resolvePatient(principal);
 
     return this.prisma.withTenant(principal.tenantId, async (tx) => {
       const cuentaActiva = await tx.humanAccount.findFirst({
@@ -121,7 +118,7 @@ export class ApprovedExperiencesService {
                 tenantId: principal.tenantId,
                 humanAccountId: principal.humanAccountId,
                 status: 'APPROVED',
-                requestedProfile: { in: [...APPROVED_EXPERIENCE_ORDER] },
+                requestedProfile: { in: [...REQUESTABLE_PROFILES] },
               },
               select: { requestedProfile: true },
               distinct: ['requestedProfile'],
@@ -139,8 +136,19 @@ export class ApprovedExperiencesService {
         experiences.push('CAREGIVER');
       }
 
-      if (aprobados.has('FIELD_PROFESSIONAL') && professionalVivo !== null) {
+      if (aprobados.has('FIELD_PROFESSIONAL')) {
         experiences.push('FIELD_PROFESSIONAL');
+      }
+
+      if (cuentaActiva !== null && principal.externalAuthIdentityId !== undefined) {
+        const registrations = await tx.institutionalAdministratorRegistration.findMany({ where: {
+          tenantId: principal.tenantId, humanAccountId: principal.humanAccountId, status: 'CONFIRMED',
+          externalAuthIdentityId: principal.externalAuthIdentityId,
+          externalIdentity: { tenantId: principal.tenantId, humanAccountId: principal.humanAccountId, status: 'ACTIVE' },
+        }, select: { experience: true } });
+        for (const experience of ['HOSPITAL', 'MUNICIPALITY'] as const) {
+          if (registrations.some(registration => registration.experience === experience)) experiences.push(experience);
+        }
       }
 
       await this.audit.recordExperienceAccessWithin(

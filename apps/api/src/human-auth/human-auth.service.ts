@@ -174,7 +174,7 @@ export class HumanAuthService implements OnModuleInit {
    * produce error: se sustituye por el destino por defecto, de modo que un
    * enlace manipulado no revele qué rutas existen.
    */
-  public async startLogin(returnTo: unknown, now: Date): Promise<HumanLoginStart> {
+  public async startLogin(returnTo: unknown, now: Date, stepUp?: HumanPrincipal): Promise<HumanLoginStart> {
     const config = this.enabled();
     const adapter = this.requireAdapter();
 
@@ -189,13 +189,22 @@ export class HumanAuthService implements OnModuleInit {
     const attemptId = randomUUID();
     const nonce = deriveAttemptNonce(attemptId, config.attemptKey);
 
-    const request = await adapter.buildAuthorizationRequest(nonce);
+    const request = await adapter.buildAuthorizationRequest(nonce, stepUp !== undefined);
 
     const browserToken = generateAttemptToken();
     const sealed = sealVerifier(request.codeVerifier, config.attemptKey);
     const { tenantId } = await this.tenants.resolveActiveTenant();
 
     await this.prisma.withTenant(tenantId, async (tx) => {
+      if (stepUp !== undefined) {
+        if (stepUp.tenantId !== tenantId || stepUp.externalAuthIdentityId === undefined) throw new HumanAuthUnavailableError();
+        const original = await tx.humanSession.findFirst({ where: {
+          id: stepUp.sessionId, tenantId, humanAccountId: stepUp.humanAccountId,
+          externalAuthIdentityId: stepUp.externalAuthIdentityId, revokedAt: null, expiresAt: { gt: now },
+          account: { status: 'ACTIVE', passwordRecoveryBlocked: false }, externalIdentity: { status: 'ACTIVE' },
+        }, select: { id: true } });
+        if (original === null) throw new HumanAuthUnavailableError();
+      }
       await tx.humanAuthAttempt.create({
         data: {
           id: attemptId,
@@ -208,6 +217,10 @@ export class HumanAuthService implements OnModuleInit {
           pkceVerifierAuthTag: sealed.authTag,
           returnTarget,
           expiresAt: new Date(now.getTime() + config.attemptTtlSeconds * 1000),
+          ...(stepUp === undefined ? {} : {
+            freshAuthenticationRequestedAt: now, stepUpSessionId: stepUp.sessionId,
+            stepUpHumanAccountId: stepUp.humanAccountId, stepUpExternalIdentityId: stepUp.externalAuthIdentityId,
+          }),
         },
         select: { id: true },
       });
@@ -290,11 +303,14 @@ export class HumanAuthService implements OnModuleInit {
       state: receivedState,
       nonce: attempt.nonce,
       codeVerifier,
+      ...(attempt.freshAuthenticationRequestedAt === null ? {} : { freshAuthenticationRequestedAt: attempt.freshAuthenticationRequestedAt }),
     });
 
     if (identity === null) {
       return null;
     }
+
+    if (attempt.freshAuthenticationRequestedAt !== null && identity.authenticatedAt === undefined) return null;
 
     /*
      * A partir de aquí el material OIDC ya no existe: solo viajan `issuer` y
@@ -307,6 +323,11 @@ export class HumanAuthService implements OnModuleInit {
       now,
       correlationId,
       endpoint,
+      attempt.createdAt,
+      attempt.freshAuthenticationRequestedAt === null ? undefined : {
+        authenticatedAt: identity.authenticatedAt!, sessionId: attempt.stepUpSessionId!,
+        accountId: attempt.stepUpHumanAccountId!, bindingId: attempt.stepUpExternalIdentityId!,
+      },
     );
 
     if (established === null) {
@@ -346,6 +367,11 @@ export class HumanAuthService implements OnModuleInit {
     readonly pkceVerifierIv: string;
     readonly pkceVerifierAuthTag: string;
     readonly returnTarget: HumanAuthReturnTarget;
+    readonly createdAt: Date;
+    readonly freshAuthenticationRequestedAt: Date | null;
+    readonly stepUpSessionId: string | null;
+    readonly stepUpHumanAccountId: string | null;
+    readonly stepUpExternalIdentityId: string | null;
   } | null> {
     const config = this.enabled();
     const browserTokenHash = hashAttemptValue(browserToken);
@@ -364,6 +390,9 @@ export class HumanAuthService implements OnModuleInit {
           returnTarget: true,
           expiresAt: true,
           consumedAt: true,
+          createdAt: true,
+          freshAuthenticationRequestedAt: true, stepUpSessionId: true,
+          stepUpHumanAccountId: true, stepUpExternalIdentityId: true,
         },
       });
 
@@ -416,6 +445,11 @@ export class HumanAuthService implements OnModuleInit {
         pkceVerifierIv: stored.pkceVerifierIv,
         pkceVerifierAuthTag: stored.pkceVerifierAuthTag,
         returnTarget: stored.returnTarget,
+        createdAt: stored.createdAt,
+        freshAuthenticationRequestedAt: stored.freshAuthenticationRequestedAt ?? null,
+        stepUpSessionId: stored.stepUpSessionId ?? null,
+        stepUpHumanAccountId: stored.stepUpHumanAccountId ?? null,
+        stepUpExternalIdentityId: stored.stepUpExternalIdentityId ?? null,
       };
     });
   }
@@ -434,6 +468,8 @@ export class HumanAuthService implements OnModuleInit {
     now: Date,
     correlationId: string,
     endpoint: string,
+    attemptCreatedAt: Date,
+    stepUp?: { readonly authenticatedAt: Date; readonly sessionId: string; readonly accountId: string; readonly bindingId: string },
   ): Promise<{ readonly principal: HumanPrincipal; readonly token: string } | null> {
     const config = this.enabled();
     const token = generateSessionToken();
@@ -444,14 +480,15 @@ export class HumanAuthService implements OnModuleInit {
         // Filtro explícito por tenant ADEMÁS de Row Level Security.
         where: { tenantId, issuer, subject, status: 'ACTIVE' },
         select: {
+          id: true,
           humanAccountId: true,
           account: {
-            select: { id: true, status: true, personId: true, tenantId: true },
+            select: { id: true, status: true, personId: true, tenantId: true, passwordRecoveryBlocked: true },
           },
         },
       });
 
-      if (binding === null || binding.account.status !== 'ACTIVE') {
+      if (binding === null || binding.account.status !== 'ACTIVE' || binding.account.passwordRecoveryBlocked === true) {
         return null;
       }
 
@@ -513,7 +550,7 @@ export class HumanAuthService implements OnModuleInit {
         where: { tenantId, issuer, subject, status: 'ACTIVE' },
         select: {
           humanAccountId: true,
-          account: { select: { id: true, status: true, tenantId: true } },
+          account: { select: { id: true, status: true, tenantId: true, passwordRecoveryBlocked: true, authenticationNotBefore: true } },
         },
       });
 
@@ -521,9 +558,25 @@ export class HumanAuthService implements OnModuleInit {
         revalidado === null ||
         revalidado.humanAccountId !== binding.account.id ||
         revalidado.account.status !== 'ACTIVE' ||
+        revalidado.account.passwordRecoveryBlocked === true ||
         revalidado.account.tenantId !== tenantId
       ) {
         return null;
+      }
+
+      // The IdP response may have been verified before recovery revoked access.
+      // Recheck its persisted attempt boundary under the account lock, even
+      // after recovery has completed and the account is ACTIVE again.
+      if (revalidado.account.authenticationNotBefore !== null && revalidado.account.authenticationNotBefore !== undefined &&
+        (!(attemptCreatedAt instanceof Date) || attemptCreatedAt.getTime() <= revalidado.account.authenticationNotBefore.getTime())) return null;
+
+      if (stepUp !== undefined) {
+        if (binding.id !== stepUp.bindingId || binding.account.id !== stepUp.accountId) return null;
+        const original = await tx.humanSession.findFirst({ where: {
+          id: stepUp.sessionId, tenantId, humanAccountId: stepUp.accountId,
+          externalAuthIdentityId: stepUp.bindingId, revokedAt: null, expiresAt: { gt: now },
+        }, select: { createdAt: true, lastUsedAt: true } });
+        if (original === null || now.getTime() - (original.lastUsedAt ?? original.createdAt).getTime() >= config.sessionIdleSeconds * 1000) return null;
       }
 
       /*
@@ -557,6 +610,8 @@ export class HumanAuthService implements OnModuleInit {
         data: {
           tenantId,
           humanAccountId: binding.account.id,
+          externalAuthIdentityId: binding.id,
+          freshAuthenticatedAt: stepUp?.authenticatedAt ?? null,
           tokenHash: hashSessionToken(token),
           expiresAt,
         },
@@ -599,6 +654,7 @@ export class HumanAuthService implements OnModuleInit {
           humanAccountId: binding.account.id,
           personId: binding.account.personId,
           tenantId,
+          externalAuthIdentityId: binding.id,
         },
         token,
       };
@@ -639,12 +695,13 @@ export class HumanAuthService implements OnModuleInit {
           id: true,
           tenantId: true,
           tokenHash: true,
+          externalAuthIdentityId: true,
           expiresAt: true,
           createdAt: true,
           lastUsedAt: true,
           revokedAt: true,
           account: {
-            select: { id: true, status: true, personId: true, tenantId: true },
+            select: { id: true, status: true, personId: true, tenantId: true, passwordRecoveryBlocked: true },
           },
         },
       });
@@ -674,7 +731,7 @@ export class HumanAuthService implements OnModuleInit {
         return null;
       }
 
-      if (session.account.status !== 'ACTIVE') {
+      if (session.account.status !== 'ACTIVE' || session.account.passwordRecoveryBlocked === true) {
         return null;
       }
 
@@ -684,7 +741,7 @@ export class HumanAuthService implements OnModuleInit {
        * y sin depender de que el proceso de desvinculación acertara a revocarla.
        */
       const vinculosActivos = await tx.externalAuthIdentity.count({
-        where: { tenantId, humanAccountId: session.account.id, status: 'ACTIVE' },
+        where: { tenantId, humanAccountId: session.account.id, status: 'ACTIVE', ...(session.externalAuthIdentityId === null || session.externalAuthIdentityId === undefined ? {} : { id: session.externalAuthIdentityId }) },
       });
 
       if (vinculosActivos === 0) {
@@ -719,6 +776,7 @@ export class HumanAuthService implements OnModuleInit {
           humanAccountId: session.account.id,
           personId: session.account.personId,
           tenantId,
+          ...(session.externalAuthIdentityId === null || session.externalAuthIdentityId === undefined ? {} : { externalAuthIdentityId: session.externalAuthIdentityId }),
         },
         validity: { expiresAt: session.expiresAt, idleExpiresInSeconds },
       };

@@ -168,6 +168,7 @@ export const HUMAN_AUTH_LOCAL_DOCKER_HOST = 'host.docker.internal';
 export const HUMAN_AUTH_LOOPBACK_HOSTS: readonly string[] = [
   '127.0.0.1',
   'localhost',
+  'merdn.localhost',
   '::1',
   '[::1]',
 ];

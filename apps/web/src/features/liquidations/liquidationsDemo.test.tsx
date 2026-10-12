@@ -37,11 +37,11 @@ describe('LiquidationsDemo', () => {
     expect(html).toContain('Mis pagos y liquidaciones');
   });
 
-  it('expone la entrada navegable de liquidaciones al Visitador sin montarla por defecto', () => {
+  it('la portada real del Visitador no ofrece liquidaciones ficticias', () => {
     const html = renderToStaticMarkup(<ProfesionalPortal />);
 
-    expect(html).toContain('Mis pagos y liquidaciones');
-    expect(html).toContain('aria-pressed="false"');
+    expect(html).not.toContain('Mis pagos y liquidaciones');
+    expect(html).toContain('aria-pressed="true"');
     expect(html).not.toContain('data-liquidations-demo-local="visitador"');
   });
 });

@@ -175,6 +175,8 @@ export class MunicipalityService {
       {
         tenantId: context.principal.tenantId,
         identityId: context.principal.identityId,
+
+        ...(context.principal.humanAccountId === undefined ? {} : { humanAccountId: context.principal.humanAccountId }),
         role: context.principal.role,
         resource,
         endpoint: context.endpoint,

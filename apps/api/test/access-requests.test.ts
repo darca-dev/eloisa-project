@@ -30,6 +30,8 @@
 import { type HttpException, type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
+import { generateAttemptToken } from '../src/human-auth/human-auth-attempt.crypto';
+const OWNER_COOKIE = `merdn_access_registration_attempt=${generateAttemptToken()}`;
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { AccessProvisioningService } from '../src/access-requests/access-provisioning.service';
@@ -207,6 +209,9 @@ function buildTransaction(store: Store, nextId: () => string) {
       },
     },
 
+    institutionalAdministratorRegistration: { findFirst: async () => null },
+    $queryRaw: async (_sql: TemplateStringsArray, id: string, tenantId: string) => store.people.filter(row => row['id'] === id && row['tenantId'] === tenantId).map(row => ({ id: row['id'] })),
+
     accessRequest: {
       findFirst: async (args: { where: Row; select?: Row }) => {
         store.queries.push('accessRequest.findFirst');
@@ -238,7 +243,9 @@ function buildTransaction(store: Store, nextId: () => string) {
             requestedProfile: args.data['requestedProfile'],
             status: 'PENDING',
             provisioningStatus: 'NOT_STARTED',
-            source: 'TEST_DATA',
+            source: 'SELF_REGISTRATION',
+            registrationAttemptTokenHash: args.data['registrationAttemptTokenHash'],
+            registrationAttemptExpiresAt: args.data['registrationAttemptExpiresAt'],
             reference: pendiente.reference,
             version: 1,
             submittedAt: new Date(),
@@ -400,7 +407,7 @@ describe('POST /api/v1/access-requests', () => {
 
   const server = () => request(harness.app.getHttpServer());
 
-  const enviar = (body: unknown) => server().post('/api/v1/access-requests').set('Origin', ALLOWED_ORIGIN).send(body as object);
+  const enviar = (body: unknown) => server().post('/api/v1/access-requests').set('Origin', ALLOWED_ORIGIN).set('Cookie', OWNER_COOKIE).send(body as object);
 
   beforeEach(async () => {
     harness = await createHarness(1000);
@@ -417,14 +424,14 @@ describe('POST /api/v1/access-requests', () => {
 
     expect(Object.keys(respuesta.body).sort()).toEqual(['reference', 'source', 'status']);
     expect(respuesta.body.status).toBe('PENDING');
-    expect(respuesta.body.source).toBe('TEST_DATA');
+    expect(respuesta.body.source).toBe('SELF_REGISTRATION');
     expect(respuesta.body.reference).toMatch(ACCESS_REQUEST_REFERENCE_PATTERN);
 
     expect(harness.store.people).toHaveLength(1);
     expect(harness.store.accessRequests).toHaveLength(1);
     expect(harness.store.accessRequests[0]?.['status']).toBe('PENDING');
     expect(harness.store.accessRequests[0]?.['provisioningStatus']).toBe('NOT_STARTED');
-    expect(harness.store.accessRequests[0]?.['source']).toBe('TEST_DATA');
+    expect(harness.store.accessRequests[0]?.['source']).toBe('SELF_REGISTRATION');
     expect(harness.store.accessRequests[0]?.['version']).toBe(1);
     expect(harness.store.accessRequests[0]?.['reviewedByInstitutionalIdentityId']).toBeNull();
     expect(harness.store.accessRequests[0]?.['decidedAt']).toBeNull();
@@ -512,7 +519,7 @@ describe('POST /api/v1/access-requests', () => {
 
   it('nunca actualiza una persona existente', async () => {
     await enviar(validBody({ givenNames: 'Nombre Original' })).expect(202);
-    await enviar(validBody({ givenNames: 'Nombre Distinto' })).expect(202);
+    await enviar(validBody({ givenNames: 'Nombre Distinto' })).expect(409);
 
     expect(harness.store.people).toHaveLength(1);
     expect(harness.store.people[0]?.['givenNames']).toBe('Nombre Original');
@@ -531,14 +538,51 @@ describe('POST /api/v1/access-requests', () => {
     expect(harness.store.auditEvents).toHaveLength(1);
   });
 
-  it('crea una solicitud distinta por perfil para la misma persona', async () => {
-    const paciente = await enviar(validBody({ requestedProfile: 'PATIENT' })).expect(202);
-    const cuidador = await enviar(validBody({ requestedProfile: 'CAREGIVER' })).expect(202);
+  it('otro navegador no obtiene la referencia ni invoca identidad', async () => {
+    const first = await enviar(validBody()).expect(202);
+    const calls = harness.provisioning.calls.length;
+    const second = await request(harness.app.getHttpServer()).post('/api/v1/access-requests')
+      .set('Origin', ALLOWED_ORIGIN).set('Cookie', `merdn_access_registration_attempt=${generateAttemptToken()}`)
+      .send(validBody()).expect(409);
+    expect(JSON.stringify(second.body)).not.toContain(first.body.reference);
+    expect(harness.provisioning.calls).toHaveLength(calls);
+    expect(harness.store.accessRequests).toHaveLength(1);
+  });
 
-    expect(cuidador.body.reference).not.toBe(paciente.body.reference);
+  it.each(['', 'merdn_access_registration_attempt=invalid'])('sin prueba privada válida rechaza sin escribir (%s)', async cookie => {
+    await request(harness.app.getHttpServer()).post('/api/v1/access-requests')
+      .set('Origin', ALLOWED_ORIGIN).set('Cookie', cookie).send(validBody()).expect(409);
+    expect(harness.store.people).toHaveLength(0);
+    expect(harness.provisioning.calls).toHaveLength(0);
+  });
+
+  it('la propiedad vencida no se renueva al repetir', async () => {
+    const first = await enviar(validBody()).expect(202);
+    harness.store.accessRequests[0]!['registrationAttemptExpiresAt'] = new Date(0);
+    const calls = harness.provisioning.calls.length;
+    const second = await enviar(validBody()).expect(409);
+    expect(JSON.stringify(second.body)).not.toContain(first.body.reference);
+    expect(harness.provisioning.calls).toHaveLength(calls);
+  });
+
+  it('prepara cookie segura sin crear datos ni identidad', async () => {
+    const result = await request(harness.app.getHttpServer()).post('/api/v1/access-requests/registration-attempt')
+      .set('Origin', ALLOWED_ORIGIN).expect(204);
+    const cookie = String(result.headers['set-cookie']);
+    for (const attribute of ['HttpOnly', 'Secure', 'SameSite=Strict', 'Path=/api/v1/access-requests']) expect(cookie).toContain(attribute);
+    expect(result.headers['cache-control']).toContain('no-store');
+    expect(harness.store.people).toHaveLength(0);
+    expect(harness.provisioning.calls).toHaveLength(0);
+  });
+
+  it('no concede otro perfil a una persona existente mediante registro público', async () => {
+    const paciente = await enviar(validBody({ requestedProfile: 'PATIENT' })).expect(202);
+    const cuidador = await enviar(validBody({ requestedProfile: 'CAREGIVER' })).expect(409);
+
+    expect(JSON.stringify(cuidador.body)).not.toContain(paciente.body.reference);
     expect(harness.store.people).toHaveLength(1);
-    expect(harness.store.accessRequests).toHaveLength(2);
-    expect(harness.store.auditEvents).toHaveLength(2);
+    expect(harness.store.accessRequests).toHaveLength(1);
+    expect(harness.store.auditEvents).toHaveLength(1);
   });
 
   it('resuelve la carrera del índice parcial releyendo y responde igual', async () => {
@@ -704,10 +748,10 @@ describe('POST /api/v1/access-requests', () => {
   });
 
   it('rechaza con 400 un cuerpo ausente o que no es un objeto', async () => {
-    await server().post('/api/v1/access-requests').set('Origin', ALLOWED_ORIGIN).expect(400);
+    await server().post('/api/v1/access-requests').set('Origin', ALLOWED_ORIGIN).set('Cookie', OWNER_COOKIE).expect(400);
     await server()
       .post('/api/v1/access-requests')
-      .set('Origin', ALLOWED_ORIGIN)
+      .set('Origin', ALLOWED_ORIGIN).set('Cookie', OWNER_COOKIE)
       .send('no-es-un-objeto')
       .expect(400);
   });
@@ -861,7 +905,7 @@ describe('expediente registration de POST /api/v1/access-requests (MP04-C3)', ()
   const enviar = (body: unknown) =>
     request(harness.app.getHttpServer())
       .post('/api/v1/access-requests')
-      .set('Origin', ALLOWED_ORIGIN)
+      .set('Origin', ALLOWED_ORIGIN).set('Cookie', OWNER_COOKIE)
       .send(body as object);
 
   it('acepta el expediente y responde el 202 exacto de tres claves', async () => {
@@ -871,7 +915,7 @@ describe('expediente registration de POST /api/v1/access-requests (MP04-C3)', ()
 
     expect(Object.keys(respuesta.body).sort()).toEqual(['reference', 'source', 'status']);
     expect(respuesta.body.status).toBe('PENDING');
-    expect(respuesta.body.source).toBe('TEST_DATA');
+    expect(respuesta.body.source).toBe('SELF_REGISTRATION');
   });
 
   it('persiste version 1 y datos sin password en la misma transaccion', async () => {
@@ -1089,7 +1133,7 @@ describe('límite de peticiones de POST /api/v1/access-requests', () => {
     const enviar = () =>
       request(harness.app.getHttpServer())
         .post('/api/v1/access-requests')
-        .set('Origin', ALLOWED_ORIGIN)
+        .set('Origin', ALLOWED_ORIGIN).set('Cookie', OWNER_COOKIE)
         .send(validBody({ documentNumber: '900000009' }));
 
     await enviar().expect(202);
@@ -1162,7 +1206,7 @@ describe('límite de peticiones de POST /api/v1/access-requests', () => {
     const admitido = () =>
       request(harness.app.getHttpServer())
         .post('/api/v1/access-requests')
-        .set('Origin', ALLOWED_ORIGIN)
+        .set('Origin', ALLOWED_ORIGIN).set('Cookie', OWNER_COOKIE)
         .send(cuerpo);
 
     await admitido().expect(202);

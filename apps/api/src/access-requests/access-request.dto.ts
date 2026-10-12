@@ -142,17 +142,16 @@ export class AccessRequestAcceptedDto {
     description:
       'Estado vigente de la solicitud. Este paquete solo emite `PENDING`; los estados ' +
       'posteriores pertenecen a paquetes de decisión ya aprobados.',
-    enum: ['PENDING'],
+    enum: ['PENDING', 'APPROVED_PENDING_PROVISIONING', 'PROVISIONING_FAILED'],
     example: 'PENDING',
   })
   public readonly status!: string;
 
   @ApiProperty({
     description:
-      'Origen de la solicitud. Fijo en `TEST_DATA` por decisión de entorno: estos registros ' +
-      'son ficticios y el servidor no puede presentarlos como producción.',
-    enum: ['TEST_DATA'],
-    example: 'TEST_DATA',
+      'Procedencia fijada por el servidor. SELF_REGISTRATION para nuevas altas; TEST_DATA conserva registros históricos.',
+    enum: ['TEST_DATA', 'SELF_REGISTRATION'],
+    example: 'SELF_REGISTRATION',
   })
   public readonly source!: string;
 }

@@ -1,6 +1,10 @@
 import { randomUUID } from 'node:crypto';
 
-import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional, type OnModuleInit } from '@nestjs/common';
+import { readCookie } from '../enrollment-sessions/enrollment-session.cookie';
+import { HUMAN_SESSION_COOKIE_NAME } from '../human-auth/human-auth.contract';
+import { InstitutionalAdministratorService } from './institutional-administrator.service';
+import { experienceForRole } from './institutional-administrator.contract';
 
 import { API_ENVIRONMENT, type ApiEnvironmentProvider } from '../config/api-environment.provider';
 import { PrismaService } from '../database/prisma.service';
@@ -58,6 +62,7 @@ import { deriveSecret, verifySecret } from './institutional-secret';
  */
 
 export interface InstitutionalPrincipal {
+  readonly humanAccountId?: string;
   readonly sessionId: string;
   readonly identityId: string;
   readonly tenantId: string;
@@ -113,6 +118,7 @@ export class InstitutionalAuthService implements OnModuleInit {
     @Inject(TenantContextService) private readonly tenants: TenantContextService,
     @Inject(InstitutionalAuditService) private readonly audit: InstitutionalAuditService,
     @Inject(API_ENVIRONMENT) environment: ApiEnvironmentProvider,
+    @Optional() @Inject(InstitutionalAdministratorService) private readonly administrators?: InstitutionalAdministratorService,
   ) {
     this.config = loadInstitutionalAuthConfig(process.env, environment);
   }
@@ -195,7 +201,8 @@ export class InstitutionalAuthService implements OnModuleInit {
             }),
           );
 
-    if (identity === null || identity.status !== 'ACTIVE') {
+    const closed = identity !== null && await this.isRegistrationConfirmed(tenantId, identity.role);
+    if (identity === null || identity.status !== 'ACTIVE' || closed || identity.accessSecretHash === null || identity.accessSecretSalt === null) {
       // Coste comparable al de una credencial incorrecta: no se distingue un
       // código inexistente de una identidad deshabilitada ni de un secreto malo.
       await verifySecret(accessSecret, { hash: SENUELO_HASH, salt: SENUELO_SALT });
@@ -265,7 +272,12 @@ export class InstitutionalAuthService implements OnModuleInit {
   public async validate(
     token: string | null,
     now: Date,
+    cookie?: string,
+    requiredRole?: InstitutionalRoleCode,
   ): Promise<InstitutionalPrincipal | null> {
+    if (cookie !== undefined && readCookie(cookie, HUMAN_SESSION_COOKIE_NAME) !== null) {
+      return requiredRole === undefined || this.administrators === undefined ? null : this.administrators.resolveForRole(cookie, requiredRole, now);
+    }
     if (token === null || !isWellFormedSessionToken(token)) {
       return null;
     }
@@ -309,6 +321,9 @@ export class InstitutionalAuthService implements OnModuleInit {
       if (session.identity.status !== 'ACTIVE') {
         return null;
       }
+
+      const registered = await tx.institutionalAdministratorRegistration.findUnique({ where: { tenantId_experience: { tenantId, experience: experienceForRole(session.identity.role) } }, select: { status: true } });
+      if (registered?.status === 'CONFIRMED') return null;
 
       await tx.institutionalSession.update({
         where: { id: session.id },
@@ -448,15 +463,17 @@ export class InstitutionalAuthService implements OnModuleInit {
       const aprovisionadas = new Map<string, string>();
 
       for (const identidad of this.config.provisioning.identities) {
+        if (await this.isRegistrationConfirmed(tenantId, identidad.role)) continue;
         const derived = await deriveSecret(identidad.accessSecret);
 
         const id = await this.prisma.withTenant(tenantId, async (tx) => {
           const existing = await tx.institutionalIdentity.findFirst({
             where: { tenantId, code: identidad.identityCode },
-            select: { id: true },
+            select: { id: true, administratorRegistrationId: true },
           });
 
           if (existing !== null) {
+            if (existing.administratorRegistrationId !== null) throw new Error('La configuración no puede modificar capacidades administrativas.');
             await tx.institutionalIdentity.update({
               where: { id: existing.id },
               data: {
@@ -506,5 +523,12 @@ export class InstitutionalAuthService implements OnModuleInit {
     });
 
     return this.provisioning;
+  }
+
+  private async isRegistrationConfirmed(tenantId: string, role: InstitutionalRoleCode): Promise<boolean> {
+    return this.prisma.withTenant(tenantId, async tx => {
+      const registration = await tx.institutionalAdministratorRegistration.findUnique({ where: { tenantId_experience: { tenantId, experience: experienceForRole(role) } }, select: { status: true } });
+      return registration?.status === 'CONFIRMED';
+    });
   }
 }

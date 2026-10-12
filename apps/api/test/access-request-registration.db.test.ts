@@ -225,7 +225,7 @@ describe('Migración MP04-C3 — expediente en PostgreSQL aislada', () => {
     }
   });
 
-  it('declara los cuatro CHECK del expediente', async (contexto) => {
+  it('conserva los cuatro CHECK del expediente y la coherencia del intento de registro', async (contexto) => {
     if (diferir(contexto)) return;
 
     const filas = await prisma.$queryRawUnsafe<Array<{ nombre: string; definicion: string }>>(
@@ -238,6 +238,7 @@ describe('Migración MP04-C3 — expediente en PostgreSQL aislada', () => {
     );
 
     expect(filas.map((fila) => fila.nombre)).toEqual([
+      'access_request_registration_attempt_coherent',
       'access_request_registration_data_has_no_password',
       'access_request_registration_data_is_object',
       'access_request_registration_schema_version_known',
@@ -245,6 +246,7 @@ describe('Migración MP04-C3 — expediente en PostgreSQL aislada', () => {
     ]);
 
     const porNombre = new Map(filas.map((fila) => [fila.nombre, fila.definicion]));
+    expect(porNombre.get('access_request_registration_attempt_coherent')).toContain('IS NOT NULL');
     expect(porNombre.get('access_request_registration_snapshot_coherent')).toContain('IS NOT NULL');
     expect(porNombre.get('access_request_registration_schema_version_known')).toContain('= 1');
     expect(porNombre.get('access_request_registration_data_is_object')).toContain('jsonb_typeof');

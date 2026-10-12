@@ -55,6 +55,55 @@ Para retirarlo: `docker compose --profile oidc-local down`.
 
 ## Topología y emisor canónico
 
+### Corrección de integración 040 (2026-10-12)
+
+El emisor humano vigente es `http://merdn.localhost:8081/realms/merdn-local`.
+El navegador resuelve el sufijo `.localhost` a loopback; la API dentro de Compose
+usa el mapeo exacto `merdn.localhost:host-gateway`. Keycloak considera este origen
+local adecuado para sus cookies. La configuración anterior con
+`host.docker.internal` por HTTP descartaba cookies en Chromium y el login fallaba.
+No se requiere modificar hosts del sistema ni activar opciones del navegador.
+Las referencias anteriores a host.docker.internal que siguen abajo documentan
+la topología heredada; ya no son el emisor recomendado del realm humano.
+
+Después de crear o importar el realm, ejecutar desde la raíz del proyecto:
+
+```powershell
+node scripts/identity/configure-local-oidc.mjs
+```
+
+El script comprueba los labels y el puerto loopback del contenedor local, utiliza
+sus credenciales de operador sin imprimirlas y respalda el perfil/realm/clientes
+anteriores en `.secrets/backups/`. Crea el cliente de servicio si falta, conserva
+su secreto si existe, asigna manage-users y declara `merdnAccessRequest` como
+atributo gestionado visible/editable solo por administración. Elimina la política
+permisiva de atributos no gestionados (el valor deshabilitado se expresa por
+omisión, no por el literal DISABLED). Nombre y correo permanecen en Person;
+no son campos obligatorios duplicados en el IdP.
+
+También fija frontendUrl del realm humano y comprueba el issuer publicado.
+Produce `.secrets/admin040-runtime-provisioning.json` con las cuatro variables
+de issuer/provisión que debe recibir la API. Ese archivo contiene un secreto:
+no se debe imprimir, versionar ni copiar a documentación. Ejecutarlo de nuevo
+no recrea cuentas humanas ni contraseñas y conserva el secreto del cliente.
+
+Antes de cambiar el issuer en una instalación con cuentas vinculadas, conciliar
+sus vínculos mediante un alcance específico: este script no los migra ni les
+concede acceso automáticamente. En el entorno local de esta entrega no existen
+cuentas administrativas registradas; sí existen cuatro vínculos humanos previos.
+Los cuatro se verificaron en el mismo realm por subject exacto. Su conciliación
+conserva IDs/cuentas/estados y revoca sesiones anteriores con auditoría SYSTEM.
+
+Comprobar discovery desde el anfitrión mediante `127.0.0.1:8081` (el documento
+debe anunciar merdn.localhost), y desde el contenedor API mediante
+`merdn.localhost:8081`. El issuer y los endpoints de autorización deben coincidir.
+No usar la resolución DNS de Node en Windows como sustituto del recorrido del
+navegador: el mapeo `.localhost` lo realiza el navegador.
+
+El modo start-dev sigue siendo exclusivamente local. No aplicar estas
+instrucciones como configuración de producción ni recrear el contenedor activo
+sin respaldo de sus usuarios y credenciales.
+
 El emisor canónico es:
 
 ```
@@ -133,7 +182,8 @@ la propiedad que AD-02 busca.
 
 `merdn-access-provisioning` es un cliente **confidencial de servicio**: la API
 pide un token administrativo con `client_credentials` y con él prepara y
-aprovisiona cuentas ficticias de personas.
+aprovisiona las cuentas de las personas que se registran. Los datos ficticios
+pertenecen exclusivamente a pruebas aisladas, no a identidades del producto.
 
 | Propiedad | Valor | Por qué |
 | --- | --- | --- |
@@ -190,5 +240,94 @@ docker compose --profile oidc-local up -d oidc-local
   con otro emisor, otro cliente y otra configuración, sin cambiar dominio,
   sesión ni autorización.
 - La consola administrativa queda en el mismo puerto de bucle local y no se
-  publica fuera de ella. No hay ningún dato real que proteger en ella, pero
-  tampoco hay razón para exponerla.
+  publica fuera de ella. Las cuentas y sus secretos se tratan como datos reales,
+  también durante desarrollo.
+
+## Recuperación administrada real (041)
+
+El administrador inicial de Hospital entra en Configuración → Solicitudes de
+acceso → Revisar una solicitud aprobada → Recuperar acceso personal. Verificar
+mi identidad fuerza un nuevo login OIDC del mismo administrador; la autorización
+reciente dura cinco minutos. Tras comprobar la identidad de la persona fuera
+del sistema, registrar una referencia de soporte opaca, introducir y confirmar
+la contraseña temporal y confirmar la verificación. El sistema revoca sesiones
+MERDN/IdP, audita y exige cambiar la contraseña en el siguiente ingreso. Entregar
+la contraseña por el canal privado institucional acordado. MERDN no la conserva,
+no la devuelve y no envía correo. Administradores institucionales y cuentas de
+soporte quedan excluidos de esta recuperación personal.
+
+PENDING no significa éxito. Consultar estado lee el resultado persistido;
+Registrar resultado incierto solo clasifica una operación abandonada tras 15
+minutos y mantiene la cuenta bloqueada. Repetir operationId no repite el PUT.
+UNCERTAIN necesita conciliación del operador: ni un temporizador ni otra
+respuesta HTTP ni editar ACTIVE directamente resuelven la incertidumbre remota.
+
+### Conciliación excepcional del operador local
+
+`scripts/identity/local-password-recovery.mjs` exige la última operación personal
+PENDING/UNCERTAIN elegible y las credenciales del operador Keycloak configuradas
+en el contenedor local. Solo admite Docker local verificado (pipe Desktop o
+socket Unix), una API y puertos de bucle local. Rechaza contextos Docker remotos.
+La invocación implica una interrupción breve: detiene la API, reinicia el MISMO
+contenedor IdP conservando su almacenamiento, reautentica al operador, verifica
+realm/subject/marcador, fija UNA contraseña temporal nueva y revoca SSO. Revalida
+aprobación/vínculos/generación con RLS/runtime y locks antes de liberar la cuenta;
+la auditoría SYSTEM conserva el resultado incierto anterior. No concede roles,
+no revierte suspensiones y no modifica reservas de primer administrador.
+
+Preparar un archivo de contraseña bajo `.secrets/` con ACL efectiva restringida
+al propietario, SYSTEM y Administradores. `mode:0600` por sí solo no basta en
+Windows; el script comprueba la ACL y rechaza archivos expuestos. El auxiliar
+`securePrivateDirectory` de `local-maintenance-lock.mjs` prepara un directorio
+privado antes de escribir el archivo. No introducir la contraseña como argumento,
+en el historial de shell ni en documentos versionados.
+
+```powershell
+node scripts/identity/local-password-recovery.mjs --operation-id UUID_OPERACION --support-reference CASO_123456 --password-file .secrets/recuperacion/temporal.txt
+```
+
+El resultado contiene estado, correlación y ruta de evidencia privada bajo
+`~/.merdn-maintenance/`. Conserva identificación del operador, referencia de
+soporte, contenedores y resolución; no contiene contraseña ni tokens. Tras
+confirmar y entregar la NUEVA contraseña del operador, eliminar el archivo
+temporal privado. SUCCEEDED de conciliación no confirma la contraseña del HTTP
+original. Volver a ingresar exige cambio obligatorio.
+
+La exclusión se conserva en un contenedor mutex `merdn-identity-maintenance-*`
+del mismo daemon, compartido por todos los usuarios y checkouts. Nunca se inicia,
+no tiene red y no caduca. Si el proceso se interrumpe, mantener ese recurso y la
+cuenta bloqueada: el operador confirma que el proceso anterior terminó,
+identifica el mutex por su scope/token y la evidencia, y lo retira explícitamente
+antes de repetir el procedimiento completo. Nunca retirar un bloqueo por edad
+ni iniciar el contenedor mutex. No recrear ni borrar el contenedor o almacenamiento
+de Keycloak. Un propietario antiguo no puede liberar un bloqueo reemplazado.
+
+### Pérdida de contraseña del único administrador
+
+Se atiende por el operador autenticado del IdP, verificando al titular y el
+subject exacto de la reserva CONFIRMED y ExternalAuthIdentity. Reset temporal y
+logout se realizan en la consola administrativa de Keycloak sobre ese subject;
+no crear otra cuenta, no borrar la reserva y no reabrir el registro. La revocación
+de sesiones MERDN y el avance de authenticationNotBefore necesitan mantenimiento
+tenant-scoped auditado con la API detenida. Esta excepción requiere intervención
+técnica; el endpoint personal y el CLI anterior la rechazan deliberadamente.
+Una cuenta suspendida permanece suspendida. El administrador vuelve por OIDC
+y cambia la contraseña temporal; conserva su reserva y capacidades.
+
+### Verificación reproducible
+
+Las pruebas usan exclusivamente stack, tenant y PostgreSQL desechables con
+labels verificadas, puertos 3002/3003/8083 e imágenes access041. No ejecutarlas
+contra la instalación activa ni usar sus datos como seed.
+
+```powershell
+node tests/e2e/prepare-institutional-administrator.real.mjs --personal-access
+node tests/e2e/personal-access.real.mjs
+node tests/e2e/operator-recovery.real.mjs
+node --test tests/testing/local-password-recovery.test.mts
+```
+
+El último E2E introduce explícitamente un fallo UNCERTAIN SOLO en el tenant
+aislado para comprobar conciliación, mutex y generación. El cambio de contraseña,
+reinicio persistente del IdP, logout, auditoría y login son reales. La E2E normal
+anterior usa formularios y HTTP reales sin respuestas simuladas.

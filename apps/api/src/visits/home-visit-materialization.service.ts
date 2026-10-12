@@ -44,6 +44,7 @@ import { type InstitutionalRole } from '../generated/prisma/client';
 export interface HomeVisitMaterializationContext {
   readonly tenantId: string;
   /** Identificador OPACO de la identidad institucional que opera. */
+  readonly humanAccountId?: string;
   readonly identityId: string;
   /** Rol efectivo de esa identidad en el momento del acto. */
   readonly role: InstitutionalRole;
@@ -216,7 +217,8 @@ export class HomeVisitMaterializationService {
       readonly appointmentId: string;
       readonly patientId: string;
       readonly careAssignmentId: string;
-      readonly identityId: string;
+      readonly humanAccountId?: string;
+  readonly identityId: string;
     },
   ): Promise<{ readonly id: string; readonly version: number; readonly createdAt: Date }> {
     try {

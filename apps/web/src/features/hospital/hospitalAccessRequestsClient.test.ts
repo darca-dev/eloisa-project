@@ -101,6 +101,17 @@ describe('hospitalAccessRequestsClient', () => {
     });
   });
 
+  it('lee motivos históricos y neutrales sin convertirlos en nuevas acciones demo', async () => {
+    for (const reason of ['DEMO_ELIGIBLE', 'ACCESS_APPROVED']) {
+      const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(json({ ...DETAIL, status: 'APPROVED',
+        decisionReasonCode: reason, decidedAt: '2026-10-12T12:00:00.000Z', provisioningStatus: 'SUCCEEDED', provisioningAttempts: 1 }));
+      const result = await getHospitalAccessRequest(ID, fetchImpl);
+      expect(result.kind).toBe('ok');
+      if (result.kind === 'ok') expect(result.data.decisionReasonCode).toBe(reason);
+    }
+    expect(ACCESS_REQUEST_ACTION_REASON.APPROVE).toBe('ACCESS_APPROVED');
+  });
+
   it('rechaza un expediente incoherente o mal formado como indisponible', async () => {
     for (const cuerpo of [
       { ...DETAIL, registrationSchemaVersion: 1, registration: null },
@@ -137,12 +148,12 @@ describe('hospitalAccessRequestsClient', () => {
 
   it('el motivo sale del catálogo y una acción fuera de catálogo no llega a la red', async () => {
     expect(ACCESS_REQUEST_ACTION_REASON).toEqual({
-      APPROVE: 'DEMO_ELIGIBLE',
-      REJECT: 'DEMO_NOT_ELIGIBLE',
-      RETRY_PROVISIONING: 'DEMO_PROVISIONING_RETRIED',
-      SUSPEND: 'DEMO_ACCESS_SUSPENDED',
-      REACTIVATE: 'DEMO_ACCESS_REACTIVATED',
-      REVOKE: 'DEMO_ACCESS_REVOKED',
+      APPROVE: 'ACCESS_APPROVED',
+      REJECT: 'ACCESS_REJECTED',
+      RETRY_PROVISIONING: 'PROVISIONING_RETRIED',
+      SUSPEND: 'ACCESS_SUSPENDED',
+      REACTIVATE: 'ACCESS_REACTIVATED',
+      REVOKE: 'ACCESS_REVOKED',
     });
 
     const fetchImpl = vi.fn<typeof fetch>();

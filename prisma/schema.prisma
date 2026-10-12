@@ -130,6 +130,14 @@ enum ConsentType {
 /// tiene (021 §9.1, §17.D-1). Su actor es SIEMPRE la cuenta humana OPACA y su
 /// `actorRole` queda NULO.
 enum AuditEventType {
+  ACCESS_PASSWORD_RECOVERY_STARTED
+  ACCESS_PASSWORD_RECOVERY_SUCCEEDED
+  ACCESS_PASSWORD_RECOVERY_UNCERTAIN
+  ACCESS_PASSWORD_RECOVERY_SUPERSEDED
+  INSTITUTIONAL_ADMINISTRATION_RESERVED
+  INSTITUTIONAL_ADMINISTRATION_CONFIRMED
+  INSTITUTIONAL_ADMINISTRATION_FAILED
+  INSTITUTIONAL_ADMINISTRATION_DENIED
   PATIENT_ENROLLMENT_CREATED
   INSTITUTIONAL_SESSION_CREATED
   INSTITUTIONAL_SESSION_REVOKED
@@ -297,6 +305,7 @@ enum AccessRequestProvisioningStatus {
 /// referencia histórica `DEMONSTRATION` ni el rótulo de interfaz `DEMO_LOCAL_FICTICIA`.
 enum AccessRequestSource {
   TEST_DATA
+  SELF_REGISTRATION
 }
 
 /**
@@ -329,6 +338,7 @@ model Tenant {
 
   institutionalIdentities InstitutionalIdentity[]
   institutionalSessions   InstitutionalSession[]
+  administratorRegistrations InstitutionalAdministratorRegistration[]
 
   professionalProfiles     ProfessionalProfile[]
   professionalAffiliations ProfessionalAffiliation[]
@@ -348,6 +358,7 @@ model Tenant {
   /// Solicitudes de acceso persistidas (SPEC 038 / MP01-C1). El tenant es la
   /// única frontera de autorización de este agregado.
   accessRequests AccessRequest[]
+  passwordRecoveries AccessPasswordRecovery[]
 
   /// Soporte de Plataforma (ELOISA-ADMIN-ACCESS-01 MP01). Un tenant participa
   /// de DOS maneras distintas y deliberadamente separadas: como tenant HOME de
@@ -528,6 +539,7 @@ model TerritorialUnit {
   addressesAsLocalUnit    PatientAddress[] @relation("PatientAddressLocalUnit")
 
   @@unique([type, officialCode], map: "territorial_unit_type_official_code_unique")
+  @@unique([id, tenantId], map: "territorial_unit_id_tenant_unique")
   @@unique([tenantId, parentId, type, normalizedName], map: "territorial_unit_scope_name_unique")
   @@index([parentId])
   @@index([tenantId])
@@ -575,7 +587,7 @@ model PatientAddress {
   patient          Patient          @relation(fields: [patientId, tenantId], references: [id, tenantId], onDelete: Cascade)
   departmentUnit   TerritorialUnit  @relation("PatientAddressDepartment", fields: [departmentUnitId], references: [id], onDelete: Restrict)
   municipalityUnit TerritorialUnit  @relation("PatientAddressMunicipality", fields: [municipalityUnitId], references: [id], onDelete: Restrict)
-  localUnit        TerritorialUnit? @relation("PatientAddressLocalUnit", fields: [localUnitId], references: [id], onDelete: Restrict)
+  localUnit        TerritorialUnit? @relation("PatientAddressLocalUnit", fields: [localUnitId, tenantId], references: [id, tenantId], onDelete: Restrict, map: "patient_address_local_unit_tenant_fkey")
 
   @@unique([patientId, tenantId], map: "patient_address_patient_unique")
   @@index([tenantId])
@@ -769,9 +781,11 @@ model InstitutionalIdentity {
   status InstitutionalIdentityStatus @default(ACTIVE)
 
   /// Derivación `scrypt` de la credencial, en hexadecimal.
-  accessSecretHash String
+  accessSecretHash String?
   /// Sal aleatoria de la derivación, en hexadecimal.
-  accessSecretSalt String
+  accessSecretSalt String?
+  administratorRegistrationId String? @db.Uuid
+  administratorRegistration InstitutionalAdministratorRegistration? @relation(fields: [administratorRegistrationId, tenantId], references: [id, tenantId], onDelete: Restrict)
 
   createdAt DateTime @default(now()) @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @db.Timestamptz(6)
@@ -798,6 +812,7 @@ model InstitutionalIdentity {
   reviewedAccessRequests AccessRequest[] @relation("AccessRequestReviewer")
 
   @@unique([tenantId, code], map: "institutional_identity_tenant_code_unique")
+  @@unique([administratorRegistrationId, role], map: "institutional_identity_administrator_role_unique")
   /// Permite FKs compuestas que impiden asociaciones entre tenants distintos.
   @@unique([id, tenantId], map: "institutional_identity_id_tenant_unique")
   @@index([tenantId])
@@ -810,6 +825,37 @@ model InstitutionalIdentity {
 /// cookie `HttpOnly` y aquí se guarda exclusivamente su hash. Es una entidad
 /// SEPARADA: una sesión de autoinscripción de paciente nunca autentica a
 /// Alcaldía, y una sesión institucional nunca da acceso a un paciente concreto.
+enum InstitutionalExperience {
+  HOSPITAL
+  MUNICIPALITY
+}
+
+enum InstitutionalAdministratorRegistrationStatus {
+  RESERVED
+  CONFIRMED
+}
+
+/// Permanent first-administrator claim. No ordinary delete or release.
+model InstitutionalAdministratorRegistration {
+  id String @id @default(uuid(7)) @db.Uuid
+  tenantId String @db.Uuid
+  experience InstitutionalExperience
+  status InstitutionalAdministratorRegistrationStatus @default(RESERVED)
+  attemptTokenHash String
+  humanAccountId String @db.Uuid
+  externalAuthIdentityId String? @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  confirmedAt DateTime? @db.Timestamptz(6)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  account HumanAccount @relation(fields: [humanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  externalIdentity ExternalAuthIdentity? @relation(fields: [externalAuthIdentityId, tenantId, humanAccountId], references: [id, tenantId, humanAccountId], onDelete: Restrict)
+  capabilities InstitutionalIdentity[]
+  @@unique([tenantId, experience], map: "institutional_administrator_tenant_experience_unique")
+  @@unique([id, tenantId], map: "institutional_administrator_id_tenant_unique")
+  @@index([tenantId, humanAccountId])
+  @@map("institutional_administrator_registration")
+}
+
 model InstitutionalSession {
   id         String @id @default(uuid(7)) @db.Uuid
   tenantId   String @db.Uuid
@@ -1125,6 +1171,9 @@ model HumanAccount {
   personId String @db.Uuid
 
   status HumanAccountStatus @default(ACTIVE)
+  passwordRecoveryBlocked Boolean @default(false)
+  authenticationNotBefore DateTime? @db.Timestamptz(6)
+  accessLifecycleVersion Int @default(0)
 
   createdAt DateTime @default(now()) @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @db.Timestamptz(6)
@@ -1133,7 +1182,11 @@ model HumanAccount {
   person Person @relation(fields: [personId, tenantId], references: [id, tenantId], onDelete: Restrict)
 
   externalIdentities ExternalAuthIdentity[]
+  administratorRegistrations InstitutionalAdministratorRegistration[]
   sessions           HumanSession[]
+  stepUpAttempts HumanAuthAttempt[] @relation("StepUpAccount")
+  recoveriesAsTarget AccessPasswordRecovery[] @relation("RecoveryTarget")
+  recoveriesAsActor AccessPasswordRecovery[] @relation("RecoveryActor")
 
   /// Solicitudes de acceso que apuntan a ESTA cuenta (MP04). Una solicitud es
   /// historia: la relacion no borra en cascada ni permite compartir cuenta
@@ -1187,8 +1240,13 @@ model ExternalAuthIdentity {
 
   tenant  Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   account HumanAccount @relation(fields: [humanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  administratorRegistrations InstitutionalAdministratorRegistration[]
 
   @@unique([id, tenantId], map: "external_auth_identity_id_tenant_unique")
+  humanSessions HumanSession[]
+  accessRequests AccessRequest[] @relation("AccessRequestExternalIdentity")
+  stepUpAttempts HumanAuthAttempt[] @relation("StepUpIdentity")
+  @@unique([id, tenantId, humanAccountId], map: "external_auth_identity_account_tenant_unique")
   /// Un `subject` de un emisor resuelve UNA sola cuenta dentro del tenant.
   @@unique([tenantId, issuer, subject], map: "external_auth_identity_tenant_issuer_subject_unique")
   @@index([tenantId, humanAccountId, status])
@@ -1209,6 +1267,7 @@ model HumanSession {
   id             String @id @default(uuid(7)) @db.Uuid
   tenantId       String @db.Uuid
   humanAccountId String @db.Uuid
+  externalAuthIdentityId String? @db.Uuid
 
   /// Hash del token aleatorio. Único: identifica la sesión sin conocer el token.
   tokenHash String @unique
@@ -1217,11 +1276,16 @@ model HumanSession {
   createdAt  DateTime  @default(now()) @db.Timestamptz(6)
   lastUsedAt DateTime? @db.Timestamptz(6)
   revokedAt  DateTime? @db.Timestamptz(6)
+  /// Signed OIDC auth_time, present only after a bound forced reauthentication.
+  freshAuthenticatedAt DateTime? @db.Timestamptz(6)
 
   tenant  Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   account HumanAccount @relation(fields: [humanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  externalIdentity ExternalAuthIdentity? @relation(fields: [externalAuthIdentityId, tenantId, humanAccountId], references: [id, tenantId, humanAccountId], onDelete: Restrict)
 
   supportContextSessions SupportContextSession[]
+  stepUpAttempts HumanAuthAttempt[] @relation("StepUpSession")
+  passwordRecoveries AccessPasswordRecovery[] @relation("RecoveryActorSession")
 
   @@unique([id, tenantId], map: "human_session_id_tenant_unique")
   /// ADITIVA y NO restrictiva (ELOISA-ADMIN-ACCESS-01 MP01): `id` ya es unico
@@ -1266,8 +1330,15 @@ model HumanAuthAttempt {
   createdAt  DateTime  @default(now()) @db.Timestamptz(6)
   expiresAt  DateTime  @db.Timestamptz(6)
   consumedAt DateTime? @db.Timestamptz(6)
+  freshAuthenticationRequestedAt DateTime? @db.Timestamptz(6)
+  stepUpSessionId String? @db.Uuid
+  stepUpHumanAccountId String? @db.Uuid
+  stepUpExternalIdentityId String? @db.Uuid
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  stepUpAccount HumanAccount? @relation("StepUpAccount", fields: [stepUpHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  stepUpSession HumanSession? @relation("StepUpSession", fields: [stepUpSessionId, stepUpHumanAccountId, tenantId], references: [id, humanAccountId, tenantId], onDelete: Restrict)
+  stepUpIdentity ExternalAuthIdentity? @relation("StepUpIdentity", fields: [stepUpExternalIdentityId, tenantId, stepUpHumanAccountId], references: [id, tenantId, humanAccountId], onDelete: Restrict)
 
   @@unique([id, tenantId], map: "human_auth_attempt_id_tenant_unique")
   @@index([tenantId, expiresAt])
@@ -1787,6 +1858,13 @@ model AccessRequest {
   /// desde aqui, incluso si el codigo cometiera el error de apuntarla.
   humanAccountId String? @db.Uuid
 
+  /// Exact provider binding and ownership proof for new public registrations (041).
+  externalAuthIdentityId String? @db.Uuid
+  registrationAttemptTokenHash String?
+  registrationAttemptExpiresAt DateTime? @db.Timestamptz(6)
+  provisioningOperationId String? @db.Uuid
+  provisioningOperationExpiresAt DateTime? @db.Timestamptz(6)
+
   /// Contador tecnico de intentos de provision fallidos. Acotado por el
   /// servicio: NO es un contador de eventos ni una decision de negocio y no
   /// guarda cuando empezo ni que dijo el proveedor mas alla del codigo cerrado.
@@ -1827,6 +1905,9 @@ model AccessRequest {
   person     Person                 @relation("AccessRequestPerson", fields: [personId, tenantId], references: [id, tenantId], onDelete: Restrict)
   reviewedBy InstitutionalIdentity? @relation("AccessRequestReviewer", fields: [reviewedByInstitutionalIdentityId, tenantId], references: [id, tenantId], onDelete: Restrict)
   account    HumanAccount?          @relation("AccessRequestHumanAccount", fields: [humanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  externalIdentity ExternalAuthIdentity? @relation("AccessRequestExternalIdentity", fields: [externalAuthIdentityId, tenantId, humanAccountId], references: [id, tenantId, humanAccountId], onDelete: Restrict)
+  passwordRecoveries AccessPasswordRecovery[]
+  @@unique([id, tenantId, humanAccountId, externalAuthIdentityId], map: "access_request_exact_identity_unique")
 
   /// Unicidad de la referencia dentro del tenant: es la clave de la
   /// idempotencia y lo que el solicitante puede citar.
@@ -1841,4 +1922,35 @@ model AccessRequest {
   @@index([tenantId, status, requestedProfile])
   @@index([tenantId, personId])
   @@map("access_request")
+}
+
+/// Administrator-managed recovery. No credential or credential hash is stored.
+/// PENDING is exclusive per target account through a partial SQL index.
+model AccessPasswordRecovery {
+  id String @id @db.Uuid
+  tenantId String @db.Uuid
+  accessRequestId String @db.Uuid
+  targetHumanAccountId String @db.Uuid
+  externalAuthIdentityId String @db.Uuid
+  actorHumanAccountId String @db.Uuid
+  actorSessionId String @db.Uuid
+  expectedVersion Int
+  expectedAccountVersion Int @default(0)
+  supportReference String
+  identityVerified Boolean
+  state String @default("PENDING")
+  predecessorId String? @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  finishedAt DateTime? @db.Timestamptz(6)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  request AccessRequest @relation(fields: [accessRequestId, tenantId, targetHumanAccountId, externalAuthIdentityId], references: [id, tenantId, humanAccountId, externalAuthIdentityId], onDelete: Restrict)
+  target HumanAccount @relation("RecoveryTarget", fields: [targetHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  actor HumanAccount @relation("RecoveryActor", fields: [actorHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  actorSession HumanSession @relation("RecoveryActorSession", fields: [actorSessionId, actorHumanAccountId, tenantId], references: [id, humanAccountId, tenantId], onDelete: Restrict)
+  predecessor AccessPasswordRecovery? @relation("RecoverySuccessor", fields: [predecessorId, tenantId, targetHumanAccountId], references: [id, tenantId, targetHumanAccountId], onDelete: Restrict)
+  successors AccessPasswordRecovery[] @relation("RecoverySuccessor")
+  @@unique([id, tenantId, targetHumanAccountId], map: "access_password_recovery_account_tenant_unique")
+  @@index([tenantId, accessRequestId, createdAt])
+  @@map("access_password_recovery")
 }

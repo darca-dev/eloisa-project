@@ -42,6 +42,7 @@ import {
   REQUIRED_MIGRATIONS,
   TEST_OWNER_ROLE,
   assertLoopbackPublication,
+  assertServerIdentity,
   buildApprovedTestTopology,
   loadEnvFile,
   quoteLiteral,
@@ -65,6 +66,8 @@ export { EXPECTED_POLICY_COUNT, EXPECTED_TEST_ENVIRONMENT, FICTIONAL_TENANT, PRO
  */
 export const RLS_POLICY_PAIRS = Object.freeze([
   Object.freeze({ policy: 'access_request_tenant', table: 'access_request' }),
+  Object.freeze({ policy: 'institutional_administrator_registration_tenant', table: 'institutional_administrator_registration' }),
+  Object.freeze({ policy: 'access_password_recovery_tenant', table: 'access_password_recovery' }),
   Object.freeze({ policy: 'tenant_self', table: 'tenant' }),
   Object.freeze({ policy: 'territorial_unit_scope', table: 'territorial_unit' }),
   Object.freeze({ policy: 'person_tenant', table: 'person' }),
@@ -552,6 +555,18 @@ async function readFictionalTenantCount(envFilePath, secrets, stage) {
   return count;
 }
 
+/** Contexto privado del cluster validado; jamás se incorpora a la evidencia. */
+export function parseTrustedTenantContext(output) {
+  const rows = String(output).trim().split(/\r?\n/u);
+  const fields = rows.length === 1 ? rows[0].split('|') : [];
+  if (fields.length !== 2 ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(fields[0]) ||
+      fields[1] !== FICTIONAL_TENANT) {
+    throw new PreflightError('tenant-context', 'el contexto del tenant aislado no es único o válido');
+  }
+  return Object.freeze({ tenantId: fields[0], tenantCode: fields[1] });
+}
+
 // ---------------------------------------------------------------------------
 // Funcion principal
 // ---------------------------------------------------------------------------
@@ -565,7 +580,7 @@ async function readFictionalTenantCount(envFilePath, secrets, stage) {
  * @returns {Promise<object>} Evidencia minimizada.
  */
 export async function runRuntimeRlsPreflight(options = {}) {
-  const { envFilePath, signal } = options;
+  const { envFilePath, signal, onTrustedContext } = options;
   const startedAt = Date.now();
   const runId = `preflight-${startedAt.toString(36)}`;
 
@@ -619,6 +634,20 @@ export async function runRuntimeRlsPreflight(options = {}) {
     const tenantAfter = await readFictionalTenantCount(envFilePath, secrets, 'tenant-after');
     if (tenantAfter !== tenantBefore) {
       throw new PreflightError('tenant-after', 'la prueba conductual altero el conteo del tenant ficticio');
+    }
+
+    if (onTrustedContext !== undefined) {
+      if (typeof onTrustedContext !== 'function') {
+        throw new PreflightError('tenant-context', 'receptor de contexto inválido');
+      }
+      if (signal?.aborted) throw new PreflightError('tenant-context', 'aborted by signal');
+      // Revalidar identidad antes de entregar contexto confiable al ejecutor.
+      await assertServerIdentity(envFilePath, secrets);
+      await assertLoopbackPublication(envFilePath, secrets);
+      const raw = await runSql(envFilePath,
+        `SELECT id::text || '|' || code FROM public.tenant WHERE code = ${quoteLiteral(FICTIONAL_TENANT)};`,
+        secrets, { readOnly: true });
+      await onTrustedContext(parseTrustedTenantContext(raw));
     }
 
     return buildPreflightEvidence({

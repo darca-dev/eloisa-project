@@ -171,11 +171,10 @@ describe('inscripcion guiada por perfil', () => {
     expect(flujo).toContain('SOLO UI');
   });
 
-  it('cada rama conserva sus tres usuarios test completos', () => {
-    expect(form).toContain('ACCESS_REGISTRATION_DEMOS.filter');
-    expect(form).toContain('fixture.perfil === rama.perfil');
-    expect(form).toContain('Precargar usuario test');
-    expect(form).toContain('precargarUsuarioTest(rama, id)');
+  it('el registro real no ofrece identidades ni contraseñas precargadas', () => {
+    expect(form).not.toContain('ACCESS_REGISTRATION_DEMOS');
+    expect(form).not.toContain('Precargar usuario test');
+    expect(form).not.toContain('precargarUsuarioTest');
   });
 
   it('cambiar de perfil borra todo y atras conserva la rama', () => {
@@ -234,7 +233,7 @@ describe('inscripcion guiada por perfil', () => {
     expect(form).not.toContain('Perfil que desea');
 
     // La credencial se pide solo en el paso 5 del wizard.
-    expect(form).toContain('Contraseña de prueba');
+    expect(form).toContain('>Contraseña</label>');
   });
 
   it('los ejemplos complementan la etiqueta y nunca la sustituyen', () => {
@@ -292,10 +291,10 @@ describe('inscripcion guiada por perfil', () => {
     expect(cliente).not.toContain("{ code: 'FIELD_PROFESSIONAL', label: 'Personal de terreno' }");
   });
 
-  it('presenta registro con precarga test sin aviso general de datos ficticios', () => {
+  it('presenta registro personal con revisión institucional', () => {
     expect(form).not.toContain('Datos ficticios de prueba.');
     expect(form).not.toContain('No ingrese datos reales');
-    expect(form).toContain('La contraseña también se precarga');
+    expect(form).not.toContain('La contraseña también se precarga');
     expect(form).toContain('Una solicitud no concede acceso hasta la revisión institucional.');
   });
 
@@ -536,14 +535,14 @@ describe('dos acciones de Atencion Domiciliaria', () => {
   });
 });
 
-describe('presentación local de perfiles ficticios', () => {
+describe('acceso real de perfiles personales', () => {
   const access = readFileSync(`${directory}CentralAccess.tsx`, 'utf8');
 
-  it('recibe el modo demo del servidor y no crea una credencial propia', () => {
-    expect(access).toContain('modoDemoLocal?: boolean');
-    expect(access).toContain('disabled={!modoDemoLocal}');
-    expect(access).toContain('router.push(RUTAS_EXPERIENCIA[perfilDemo])');
-    expect(access).toContain('no consulta ni guarda información real');
+  it('consulta experiencias autorizadas sin un selector que simule identidad', () => {
+    expect(access).not.toContain('modoDemoLocal');
+    expect(access).not.toContain('perfilDemo');
+    expect(access).toContain('consultarExperienciasAprobadas()');
+    expect(access).toContain('window.location.assign(urlDeLoginHumano())');
   });
 
   it('conserva el registro guiado fuera de la presentación', () => {

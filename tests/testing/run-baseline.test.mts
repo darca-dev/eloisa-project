@@ -12,7 +12,7 @@
  * marcadores de redaccion.
  *
  * Cobertura exigida por el handoff v37: (1) parser cerrado y run-id, (2) matriz
- * de 29/23/cleanup final, (3) los seis ceros y conteos positivos en ambos
+ * de 30/24/cleanup final, (3) los seis ceros y conteos positivos en ambos
  * ordenes, (4) entorno infantil de seis claves de sistema y tres derivadas, (5)
  * captura saneada, (6) timeout del ejecutor, (7) parada al primer fallo, (8)
  * provision/preflight/executor con una sola limpieza y (9) cleanup final
@@ -38,6 +38,12 @@ type Resultado = {
 const ENV_FILE = '.env.test.example';
 const RUN_ID = 'prueba-mp14-2026';
 const SISTEMA = 'clave-ficticia-sistema-0001';
+const TENANT_CONTEXT = Object.freeze({ tenantId: '11111111-2222-4333-8444-555555555555', tenantCode: 'merdn-mvp' });
+type ContextReceiver = { onTrustedContext: (value: typeof TENANT_CONTEXT) => void };
+const healthyPreflight = async ({ onTrustedContext }: ContextReceiver) => {
+  onTrustedContext(TENANT_CONTEXT);
+  return { problems: [] };
+};
 
 /** Env-file ficticio que satisface el guard anti-entorno sin tocar disco. */
 const ENV_VALIDA: Env = {
@@ -119,10 +125,10 @@ function doblesDeCiclo(inyeccion: { fallo?: 'provision' | 'preflight' | 'execute
     conteo.cleanupOnFailure.push(opciones?.cleanupOnFailure === true);
     if (inyeccion.fallo === 'provision') throw new Error('fichero de doble: fallo simulado de provision');
   };
-  const preflight = async () => {
+  const preflight = async (options: ContextReceiver) => {
     conteo.preflight += 1;
     if (inyeccion.fallo === 'preflight') throw new Error('fichero de doble: fallo simulado de preflight');
-    return { problems: [] };
+    return healthyPreflight(options);
   };
   const cleaner = async () => {
     conteo.cleanup += 1;
@@ -210,11 +216,11 @@ describe('MP14 - parser cerrado y run-id', () => {
 });
 
 describe('MP14 - matriz de stages', () => {
-  test('29 etapas, 23 DB-gated y cleanup final', () => {
-    assert.equal(runner.BASELINE_STAGES.length, 29);
-    assert.equal(runner.DB_GATED_STAGES.length, 23);
+  test('31 etapas, 25 DB-gated y cleanup final', () => {
+    assert.equal(runner.BASELINE_STAGES.length, 31);
+    assert.equal(runner.DB_GATED_STAGES.length, 25);
     assert.equal(runner.BASELINE_STAGES[0], 'provision');
-    assert.equal(runner.BASELINE_STAGES[28], 'cleanup');
+    assert.equal(runner.BASELINE_STAGES[30], 'cleanup');
     assert.equal(runner.STAGE_MATRIX.filter((s) => s.kind === 'lifecycle').map((s) => s.id).join(','), 'provision,cleanup');
     assert.equal(runner.STAGE_MATRIX.find((s) => s.id === 'typecheck')?.kind, 'static');
   });
@@ -240,7 +246,7 @@ describe('MP14 - matriz de stages', () => {
     assert.throws(() => runner.assertMatrixComplete(['*']), /no autorizado/u);
     assert.throws(() => runner.resolveStageIds('db/inventada.test.ts'), /fuera de la matriz/u);
     assert.equal(runner.resolveStageIds('web').length, 1);
-    assert.equal(runner.resolveStageIds('all').length, 29);
+    assert.equal(runner.resolveStageIds('all').length, 31);
   });
 
   test('los comandos de typecheck cubren los tres proyectos y no emiten', () => {
@@ -257,6 +263,19 @@ describe('MP14 - matriz de stages', () => {
 });
 
 describe('MP14 - clasificacion de outcomes', () => {
+  test('suma comandos y cuenta resumen con fallos primero', () => {
+    assert.deepEqual(runner.extractCounts('Tests 10 passed\nTests 41 passed'), { passed: 51, failed: 0, skipped: 0 });
+    assert.deepEqual(runner.extractCounts('Tests 1 failed | 25 passed'), { passed: 25, failed: 1, skipped: 0 });
+  });
+  test('interpreta el resumen real coloreado sin ocultar fallos ni omisiones', () => {
+    const color = (value: string) => `\u001b[2m${value}\u001b[22m`;
+    const output = `\n${color(' Test Files ')} 2 passed\n${color('      Tests ')} ${color('10 passed')} (10)\n`;
+    assert.equal(runner.classifyStageOutcome({ exitCode: 0, stdout: output }), 'pass');
+    assert.deepEqual(runner.extractCounts(output), { passed: 10, failed: 0, skipped: 0 });
+    assert.equal(runner.classifyStageOutcome({ exitCode: 0, stdout: `${output}${color('1 skipped')}` }), 'skipped');
+    assert.equal(runner.classifyStageOutcome({ exitCode: 1, stdout: output }), 'fail');
+    assert.equal(runner.classifyStageOutcome({ exitCode: 0, stdout: color('sin resumen') }), 'incomplete');
+  });
   test('los seis ceros pasan en los dos ordenes', () => {
     for (const texto of ['0 skipped', 'skipped 0', '0 todo', 'todo 0', '0 disabled', 'disabled 0']) {
       assert.equal(runner.classifyStageOutcome({ exitCode: 0, stdout: ` Tests  9 passed | ${texto}` }), 'pass');
@@ -277,8 +296,16 @@ describe('MP14 - clasificacion de outcomes', () => {
     assert.equal(runner.classifyStageOutcome({ exitCode: 0, stdout: 'No test files found, exiting with code 1' }), 'disabled');
     assert.equal(runner.classifyStageOutcome({ exitCode: 0, stdout: ' Tests  1 disabled' }), 'disabled');
     assert.equal(runner.classifyStageOutcome({ exitCode: 1, stdout: ' Tests  1 failed' }), 'fail');
+    assert.equal(runner.classifyStageOutcome({ exitCode: 1, stdout: 'failed test: account is DISABLED\n Tests 4 failed | 58 passed' }), 'fail');
     assert.equal(runner.classifyStageOutcome({ exitCode: 0, stdout: 'sin resumen' }), 'incomplete');
     assert.equal(runner.classifyStageOutcome({ exitCode: 0, stdout: '' }), 'incomplete');
+    assert.equal(runner.classifyStageOutcome({ exitCode: 0, stdout: "Expected constraint rejection: status = 'DISABLED'\n Tests 62 passed" }), 'pass');
+    assert.equal(runner.classifyStageOutcome({ exitCode: 0, stdout: 'suite disabled\n Tests 62 passed' }), 'disabled');
+    assert.equal(runner.classifyStageOutcome({ exitCode: 0, stdout: 'PRUEBAS DE POSTGRESQL NO EJECUTADAS\n Tests 62 passed' }), 'disabled');
+    assert.equal(runner.classifyStageOutcome({ exitCode: 0, stdout: '  ✓ todo campo editable tiene etiqueta asociada 671ms\n Tests 1909 passed' }), 'pass');
+    assert.equal(runner.classifyStageOutcome({ exitCode: 0, stdout: '  ✓ descarta todo valor fuera del catálogo\n Tests 1909 passed' }), 'pass');
+    assert.equal(runner.classifyStageOutcome({ exitCode: 0, stdout: 'todo\n Tests 1909 passed' }), 'skipped');
+    assert.equal(runner.classifyStageOutcome({ exitCode: 0, stdout: ' Tests 1909 passed | todo' }), 'skipped');
   });
 
   test('una etapa estatica no exige resumen de pruebas', () => {
@@ -293,7 +320,7 @@ describe('MP14 - entorno infantil minimo', () => {
   test('la allowlist de sistema son exactamente seis variables', () => {
     assert.equal(runner.SYSTEM_ENV_ALLOWLIST.length, 6);
     assert.deepEqual([...runner.SYSTEM_ENV_ALLOWLIST], ['SystemRoot', 'COMSPEC', 'PATHEXT', 'PATH', 'TEMP', 'TMP']);
-    assert.deepEqual([...runner.CHILD_TEST_KEYS], ['DATABASE_URL', 'RUNTIME_DATABASE_URL', 'MERDN_RUNTIME_ROLE']);
+    assert.deepEqual([...runner.CHILD_TEST_KEYS], ['DATABASE_URL', 'RUNTIME_DATABASE_URL', 'MERDN_RUNTIME_ROLE', 'MERDN_ACTIVE_TENANT_ID']);
   });
 
   test('el hijo solo recibe claves de sistema y las tres derivadas', () => {
@@ -335,7 +362,7 @@ describe('MP14 - entorno infantil minimo', () => {
     const sinEnvFile = Object.keys(runner.buildChildEnvironment({}, PADRE));
     assert.deepEqual(sinEnvFile, ['SystemRoot', 'COMSPEC', 'PATHEXT', 'PATH', 'TEMP', 'TMP']);
     assert.equal(sinEnvFile.some((k) => runner.CHILD_TEST_KEYS.includes(k)), false);
-    assert.deepEqual(Object.keys(runner.buildChildEnvironment(ENV_VALIDA, {})), [...runner.CHILD_TEST_KEYS]);
+    assert.deepEqual(Object.keys(runner.buildChildEnvironment(ENV_VALIDA, {})), [...runner.CHILD_TEST_KEYS].filter((key) => key !== 'MERDN_ACTIVE_TENANT_ID'));
   });
 
   test('los secretos declarados incluyen ambas URL y ambas contrasenas', () => {
@@ -421,13 +448,46 @@ describe('MP14 - ejecutor real con spawn simulado', () => {
 });
 
 describe('MP14 - ciclo completo con dobles inyectados', () => {
-  test('un ciclo sano recorre las 29 etapas, termina en cleanup y conserva el run-id', async () => {
+  test('MP04C: el contexto solo procede del preflight, no del padre ni del env-file', () => {
+    const child = runner.buildChildEnvironment(
+      { ...ENV_VALIDA, MERDN_ACTIVE_TENANT_ID: 'suplantado' },
+      { ...PADRE, MERDN_ACTIVE_TENANT_ID: 'suplantado-padre' }, TENANT_CONTEXT,
+    );
+    assert.equal(child.MERDN_ACTIVE_TENANT_ID, TENANT_CONTEXT.tenantId);
+    assert.equal(Object.keys(child).length, 10);
+    assert.throws(() => runner.buildChildEnvironment(ENV_VALIDA, PADRE, { tenantId: 'no-uuid', tenantCode: 'merdn-mvp' }));
+    assert.throws(() => runner.buildChildEnvironment(ENV_VALIDA, PADRE, { ...TENANT_CONTEXT, tenantCode: 'otro' }));
+  });
+
+  test('MP04C: contexto ausente, inválido o preflight negativo impiden crear hijos', async () => {
+    for (const mode of ['missing', 'invalid', 'wrong-tenant', 'negative'] as const) {
+      let children = 0;
+      let cleanups = 0;
+      const result = await runner.runBaseline({
+        argv: ['--env-file', ENV_FILE, '--stage', 'web', '--run-id', RUN_ID], env: ENV_VALIDA,
+        preflight: async ({ onTrustedContext }: ContextReceiver) => {
+          if (mode === 'invalid') onTrustedContext({ ...TENANT_CONTEXT, tenantId: 'no-uuid' });
+          if (mode === 'wrong-tenant') onTrustedContext({ ...TENANT_CONTEXT, tenantCode: 'otro' });
+          if (mode === 'negative') { onTrustedContext(TENANT_CONTEXT); return { problems: ['fail'] }; }
+          return { problems: [] };
+        },
+        execute: async () => { children += 1; return SALUDABLE; },
+        cleanupDatabase: async () => { cleanups += 1; return { cleaned: true }; },
+      });
+      assert.equal(result.ok, false);
+      assert.equal(children, 0);
+      assert.equal(cleanups, 1);
+      assert.equal(JSON.stringify(result).includes(TENANT_CONTEXT.tenantId), false);
+    }
+  });
+
+  test('un ciclo sano recorre las 31 etapas, termina en cleanup y conserva el run-id', async () => {
     const { resultado, conteo } = await correrStages({});
     assert.equal(resultado.ok, true);
     assert.equal(resultado.failedStage, null);
-    assert.equal(resultado.evidence.length, 29);
-    assert.equal(resultado.evidence[28].stage, 'cleanup');
-    assert.equal(resultado.evidence[28].outcome, 'pass');
+    assert.equal(resultado.evidence.length, 31);
+    assert.equal(resultado.evidence.at(-1)?.stage, 'cleanup');
+    assert.equal(resultado.evidence.at(-1)?.outcome, 'pass');
     assert.ok(resultado.evidence.every((e) => e.runId === RUN_ID));
     assert.equal(conteo.cleanup, 1);
     assert.equal(conteo.provision, 1);
@@ -474,7 +534,7 @@ describe('MP14 - ciclo completo con dobles inyectados', () => {
       env: ENV_VALIDA,
       loadEnv: async () => ENV_VALIDA,
       provision: async () => undefined,
-      preflight: async () => ({ problems: [] }),
+      preflight: healthyPreflight,
       cleanupDatabase: async () => {
         invocaciones += 1;
         return { cleaned: false };
@@ -484,8 +544,8 @@ describe('MP14 - ciclo completo con dobles inyectados', () => {
     assert.equal(invocaciones, 1);
     assert.equal(resultado.ok, false);
     assert.equal(resultado.failedStage, 'cleanup');
-    assert.equal(resultado.evidence[28].stage, 'cleanup');
-    assert.equal(resultado.evidence[28].outcome, 'fail');
+    assert.equal(resultado.evidence.at(-1)?.stage, 'cleanup');
+    assert.equal(resultado.evidence.at(-1)?.outcome, 'fail');
     assert.equal(resultado.cleanup?.cleaned, false);
   });
 
@@ -550,6 +610,7 @@ describe('MP14 - ciclo completo con dobles inyectados', () => {
       env: ENV_VALIDA,
       loadEnv: async () => ENV_VALIDA,
       execute: conEjecutor.execute,
+      preflight: healthyPreflight,
     })) as unknown as Resultado;
     assert.equal(conEjecutor.llamadas.length, 1);
     const argv = conEjecutor.llamadas[0].argv;

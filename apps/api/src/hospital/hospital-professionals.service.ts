@@ -537,6 +537,8 @@ export class HospitalProfessionalsService {
       data: buildHospitalOperationsAudit({
         tenantId: context.principal.tenantId,
         identityId: context.principal.identityId,
+
+        ...(context.principal.humanAccountId === undefined ? {} : { humanAccountId: context.principal.humanAccountId }),
         role: context.principal.role,
         eventType,
         resourceType,

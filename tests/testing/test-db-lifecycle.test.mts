@@ -53,8 +53,17 @@ import {
   evaluateCatalog,
   parseBehaviorOutput,
   parseCatalogOutput,
+  parseTrustedTenantContext,
   validatePolicyBaseline,
 } from '../../scripts/testing/test-db-preflight.mjs';
+
+test('MP04C: contexto privado único del tenant y rechazo de filas malformadas', () => {
+  const id = '11111111-2222-4333-8444-555555555555';
+  assert.deepEqual(parseTrustedTenantContext(`${id}|merdn-mvp\n`), { tenantId: id, tenantCode: 'merdn-mvp' });
+  for (const input of ['', `${id}|otro`, `no-uuid|merdn-mvp`, `${id}|merdn-mvp\n${id}|merdn-mvp`, `${id}|merdn-mvp|extra`]) {
+    assert.throws(() => parseTrustedTenantContext(input), /tenant aislado/u);
+  }
+});
 
 import {
   buildApprovedTopology,
@@ -293,14 +302,14 @@ const VALID_BEHAVIOR: Record<string, string> = {
   migrator_no_context: '0',
 };
 
-test('MP08 1 / S00-MP04B. la baseline completa son 28 policies sobre 27 tablas protegidas', () => {
+test('MP08 1 / S00-MP04B. la baseline completa son 30 policies sobre 29 tablas protegidas', () => {
   const baseline = validatePolicyBaseline();
   assert.deepEqual(baseline.problems, [], 'la baseline declarada no debe tener problemas');
   assert.equal(baseline.policyCount, EXPECTED_POLICY_COUNT);
-  assert.equal(EXPECTED_POLICY_COUNT, 28);
-  assert.equal(baseline.tableCount, 27);
-  assert.equal(PROTECTED_TABLES.length, 27);
-  assert.equal(new Set(RLS_POLICY_PAIRS.map((pair) => pair.policy)).size, 28);
+  assert.equal(EXPECTED_POLICY_COUNT, 30);
+  assert.equal(baseline.tableCount, 29);
+  assert.equal(PROTECTED_TABLES.length, 29);
+  assert.equal(new Set(RLS_POLICY_PAIRS.map((pair) => pair.policy)).size, 30);
 });
 
 test('MP08 2. el catalogo no consulta el puerto interno y el SQL es de solo lectura', () => {
@@ -316,9 +325,9 @@ test('MP08 3. un catalogo valido se evalua sin problemas y el conteo coincide', 
   const parsed = parseCatalogOutput(validCatalogStdout());
   const evaluated = evaluateCatalog(parsed);
   assert.deepEqual(evaluated.problems, [], `catalogo valido rechazado: ${evaluated.problems.join(' | ')}`);
-  assert.deepEqual(evaluated.counts, { tables: 27, policies: 28, roles: 2, migrations: evaluated.counts.migrations });
-  assert.equal(evaluated.counts.tables, 27);
-  assert.equal(evaluated.counts.policies, 28);
+  assert.deepEqual(evaluated.counts, { tables: 29, policies: 30, roles: 2, migrations: evaluated.counts.migrations });
+  assert.equal(evaluated.counts.tables, 29);
+  assert.equal(evaluated.counts.policies, 30);
 });
 
 for (const [name, original, replacement, problem] of [
@@ -420,7 +429,7 @@ test('MP08 8. el evaluador rechaza una conducta alterada', () => {
 test('MP08 9. la evidencia de preflight es minima, congelada y sin secretos', () => {
   const evidencia = buildPreflightEvidence({
     runId: 'corrida-ficticia-0001',
-    catalog: { problems: [], counts: { tables: 27, policies: 28, roles: 2, migrations: 17 } },
+    catalog: { problems: [], counts: { tables: 29, policies: 30, roles: 2, migrations: 23 } },
     behavior: { problems: [], outcomes: { noContextDenied: true } },
     durationMs: 12,
     tenantBefore: 1,

@@ -114,6 +114,13 @@ que auditar.
 
 | Número | Nombre | Estado | Prioridad | Responsable | Actualización |
 |---|---|---|---|---|---|
-| 039 | termino-s00-base-y-baseline | MP01 aceptado; MP02/03/04A verificados; MP04B catálogo/preflight reales correctos, baseline incompleta; MP04C propuesto; MP05 interfaz/test verificado, MP06 procedencia propuesto; Git local | Crítica | Product Owner / Codex | 2026-10-09 |
+| 039 | termino-s00-base-y-baseline | MP04C implementado; baseline 040 completa: 30 etapas/2596 pruebas, cero fallos u omisiones; aceptación e integración separadas | Crítica | Product Owner / Codex | 2026-10-12 |
 
 D-01 selecciona la copia fuera de OneDrive, rama S00 y base local 9980582. La spec 039 no hereda consentimiento de 025/038. Ver docs/plan-funcional/00-BASE-Y-BASELINE.md y el handoff S00-2026-10-08.md.
+
+| 040 | registro-unico-admin-institucional | Implementado y verificado localmente; E2E real y baseline correctas; pendiente aceptación PO | Alta | Product Owner / Codex | 2026-10-12 |
+
+La decisión del 2026-10-12 habilita funcionalmente un único administrador inicial
+por Hospital/Alcaldía y difiere otros empleados y roles. Véase
+`bitacora/decisiones/2026-10-12-registro-unico-admin-institucional.md`.
+| 041 | accesos-personales-reales | Implementado y aplicado a Docker local; E2E real y baseline 31 etapas/2626 pruebas correctas; 23 migraciones y datos conservados; pendiente aceptación PO | Alta | Codex y Product Owner | 2026-10-12 |

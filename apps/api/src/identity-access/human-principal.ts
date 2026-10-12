@@ -22,6 +22,8 @@ export interface HumanPrincipal {
   readonly humanAccountId: string;
   readonly personId: string;
   readonly tenantId: string;
+  /** Exact external binding that authenticated this session; absent on historical sessions. */
+  readonly externalAuthIdentityId?: string;
 }
 
 /**

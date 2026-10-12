@@ -6,6 +6,7 @@ import {
   HUMAN_AUTH_SCOPE,
 } from './human-auth.contract';
 import { type HumanOidcConfig } from './human-auth.config';
+import { FRESH_AUTHENTICATION_SECONDS, verifiedFreshAuthenticationTime } from './fresh-authentication';
 
 /**
  * ÚNICO adapter de autenticación de MERDN (AD-01).
@@ -43,6 +44,7 @@ import { type HumanOidcConfig } from './human-auth.config';
 export interface VerifiedExternalIdentity {
   readonly issuer: string;
   readonly subject: string;
+  readonly authenticatedAt?: Date;
 }
 
 /** Material de un intento en curso. El verifier NUNCA sale del servidor. */
@@ -58,6 +60,8 @@ export interface CallbackChecks {
   readonly state: string;
   readonly nonce: string;
   readonly codeVerifier: string;
+  /** From the persisted step-up attempt; never from request parameters. */
+  readonly freshAuthenticationRequestedAt?: Date;
 }
 
 @Injectable()
@@ -105,7 +109,7 @@ export class OidcAdapter {
         client.None(),
         {
           // Falla CERRADO: un proveedor que no responde a tiempo no autentica.
-          timeout: this.config.requestTimeoutMs,
+          timeout: this.config.requestTimeoutMs / 1000,
           /*
            * `http://` SOLO cuando la configuración ya demostró que el entorno es
            * `development` o `test` y el host es bucle local o el nombre Docker
@@ -144,7 +148,7 @@ export class OidcAdapter {
    * `state` se devuelve para persistirlo HASHEADO y el verifier para
    * persistirlo CIFRADO. Ninguno de los tres viaja al navegador.
    */
-  public async buildAuthorizationRequest(nonce: string): Promise<AuthorizationRequest> {
+  public async buildAuthorizationRequest(nonce: string, requireFreshAuthentication = false): Promise<AuthorizationRequest> {
     const configuration = await this.configuration();
 
     const codeVerifier = client.randomPKCECodeVerifier();
@@ -160,6 +164,7 @@ export class OidcAdapter {
       code_challenge_method: 'S256',
       state,
       nonce,
+      ...(requireFreshAuthentication ? { max_age: '0', prompt: 'login' } : {}),
     });
 
     return {
@@ -211,6 +216,7 @@ export class OidcAdapter {
           expectedNonce: checks.nonce,
           pkceCodeVerifier: checks.codeVerifier,
           idTokenExpected: true,
+          ...(checks.freshAuthenticationRequestedAt === undefined ? {} : { maxAge: FRESH_AUTHENTICATION_SECONDS }),
         },
         // `redirect_uri` explícito: el token endpoint debe recibir exactamente
         // el mismo valor que se envió en la autorización.
@@ -242,6 +248,11 @@ export class OidcAdapter {
         return null;
       }
 
+      if (checks.freshAuthenticationRequestedAt !== undefined) {
+        const authenticatedAt = verifiedFreshAuthenticationTime(claims.auth_time, checks.freshAuthenticationRequestedAt, new Date());
+        if (authenticatedAt === null) return null;
+        return { issuer: this.config.issuer, subject: sub, authenticatedAt };
+      }
       return { issuer: this.config.issuer, subject: sub };
     } catch (error) {
       /*

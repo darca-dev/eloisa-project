@@ -2,6 +2,10 @@ import { Module } from '@nestjs/common';
 
 import { AuditService } from '../audit/audit.service';
 import { InstitutionalAuthModule } from '../institutional-auth/institutional-auth.module';
+import { HumanSessionModule } from '../human-auth/human-session.module';
+import { AccessPasswordRecoveryController } from './access-password-recovery.controller';
+import { AccessPasswordRecoveryService } from './access-password-recovery.service';
+import { AccessRecoveryRateLimitGuard } from './access-recovery.rate-limit.guard';
 
 import { AccessProvisioningIdentityClient, SystemAccessProvisioningBackoff, ACCESS_PROVISIONING_BACKOFF } from './access-provisioning-identity.client';
 import { AccessProvisioningService } from './access-provisioning.service';
@@ -47,10 +51,12 @@ import { AccessRequestReviewService } from './access-request-review.service';
  * en silencio. El guard de origen se declara solo en la ruta que cambia estado.
  */
 @Module({
-  imports: [InstitutionalAuthModule],
-  controllers: [AccessRequestsController, HospitalAccessRequestReviewController],
+  imports: [InstitutionalAuthModule, HumanSessionModule],
+  controllers: [AccessRequestsController, HospitalAccessRequestReviewController, AccessPasswordRecoveryController],
   providers: [
     AccessRequestsService,
+    AccessPasswordRecoveryService,
+    AccessRecoveryRateLimitGuard,
     AccessRequestReviewService,
     AccessProvisioningService,
     AccessProvisioningIdentityClient,

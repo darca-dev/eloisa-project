@@ -32,8 +32,8 @@
 - [x] PostgreSQL real: 17 migraciones, 27 tablas/28 policies, ownership no privilegiado, RLS/FORCE y sondas de aislamiento correctos; cleanup exclusivo confirmado.
 - [x] Registrar baseline detenida en api-no-db-health y diagnóstico sin DB: falta MERDN_ACTIVE_TENANT_ID, 1 fallo/1 pase/8 skips; conteos del runner no concluyentes.
 - [x] Preparar propuesta acotada MP04C para contexto de tenant confiable; no modificar runner fuera de MP04B.
-- [ ] PO decide MP04C (cuarta clave de contexto validada); gates y contrato suficiente antes de implementar.
-- [ ] Validar DB/RLS/runtime y aislamiento real sin skips; identificar imagen exacta.
+- [x] PO autoriza ejecución de módulos reales; MP04C activado, gates y contrato verificados antes de implementar.
+- [x] Validar DB/RLS/runtime y aislamiento real sin skips: 30 etapas, 2596 pruebas, cero fallos/omisiones y cleanup correcto, 2026-10-12.
 - [ ] Codex verifica correcciones y reporta riesgos residuales.
 - [ ] Product Owner acepta S00; autoriza integración Git cuando proceda.
 

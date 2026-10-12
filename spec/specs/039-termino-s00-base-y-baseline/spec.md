@@ -138,3 +138,59 @@ Claude Code debe devolver Task ID/paquete, rama/HEAD, diff exacto, archivos y pr
 ## 14. MP05 — corrección PO de registro y usuarios test
 
 La decisión 2026-10-09-registro-real-usuarios-test.md y S00-MP05-TO-CODEX.md amplían únicamente la allowlist de interfaz/precarga descrita allí. El PO mantiene botones de usuarios test, precarga completa y pide contraseña. El contrato separa uso funcional real, datos de usuarios test y procedencia TEST_DATA aún limitada en backend. MP04C no queda aprobado por esta petición. No se declara S00/S01 aceptado ni se modifican permisos/migraciones.
+
+## 15. Activación MP04C — 2026-10-12
+
+La instrucción expresa de ejecutar todos los módulos reales con Codex activa
+MP04C según `spec/bitacora/handoffs/S00-MP04C-PROPOSAL.md`, cuyo contrato,
+allowlist y aceptación se incorporan por referencia. Evidencia literal en
+`spec/bitacora/decisiones/2026-10-12-ejecucion-modulos-reales-codex.md`.
+Implementación autorizada: contexto privado UUID/código de tenant proveniente
+exclusivamente del cluster aislado tras preflight correcto; cuarta clave derivada
+MERDN_ACTIVE_TENANT_ID para el hijo. Se conservan catálogos, RLS, matriz y cleanup.
+No se aprueba S00 completo por adelantado ni se modifican consentimientos históricos.
+
+## 16. Correcciones descubiertas por la baseline real, 2026-10-12
+
+La autorización actual incluye reparar defectos de funcionamiento real. Normalizar
+escapes ANSI antes de interpretar resúmenes y sumar conteos de todos los comandos;
+mantener rechazo de fallos/omisiones. Restaurar FK compuesta dirección/unidad local
+eliminada por 20260919051156 mediante migración aditiva y modelo Prisma coherente.
+No alterar migraciones aplicadas ni inventar correcciones de datos.
+Allowlist adicional: prisma/schema.prisma, nueva migración correctiva,
+scripts/testing/test-db-provision.mjs (catálogo exacto), test-db-preflight.mjs y
+tests/testing/test-db-lifecycle.test.mts. Validar rechazo cross-tenant contra
+PostgreSQL real, conservación de direcciones válidas y regresión. Base activa:
+backup y precomprobación obligatorios; datos inválidos impiden aplicar el cambio.
+
+La baseline completa encontró cuatro expectativas históricas de soporte que
+anteceden el endurecimiento y las migraciones posteriores: FORCE ahora activo
+en patient/audit_event, cinco capacidades institucionales existentes y FKs
+renombradas sin cambio de columnas. Allowlist: la prueba
+`apps/api/test/eloisa-admin-support-foundation.db.test.ts`; actualizar a las
+garantías actuales exactas y comprobar las doce FKs restrictivas, sin quitar
+casos de denegación ni reducir controles. El runner debe clasificar como fallo
+un resumen con tests failed aunque un título contenga la palabra disabled.
+La palabra DISABLED dentro de un valor de estado de cuenta en un error esperado
+de PostgreSQL no es una omisión: distinguirla del resumen/aviso de suite disabled.
+Conservar el rechazo de omisiones positivas, suites deshabilitadas, ausencia de
+tests y el banner explícito de PostgreSQL no ejecutado; probar ambos casos.
+
+La etapa human-auth conserva límites anteriores a la decisión 027: autorizar
+`apps/api/test/human-auth.api.test.ts` para derivar las fronteras de caducidad
+del contrato vigente (30 días absoluto / 72 horas inactividad), conservando
+los siete rechazos idénticos y verificando que el uso no extiende la vigencia.
+La misma corrección se aplica a `apps/api/test/patient-self.api.test.ts`: probar
+inactividad más allá de 72 horas con caducidad absoluta todavía futura, para
+aislar la causa sin confundir las dos fronteras.
+En `apps/api/test/runtime-fail-closed.db.test.ts`, el rol de conexión separada ya
+es merdn_runtime. Verificar que SET LOCAL vuelve al rol original y elimina el
+tenant, en lugar de exigir volver a una conexión privilegiada. No alterar las
+sondas de ausencia de rol, RLS ni permisos mínimos.
+La sonda equivalente de `apps/api/test/tenant-bootstrap.db.test.ts` debe
+comparar también con el rol original de la conexión separada, conservando
+tenant vacío fuera de transacción y las denegaciones cross-tenant.
+Vitest imprime títulos de pruebas lentas de forma variable. La palabra española
+«todo» en un título aprobado no es un marcador TODO de omisión. Delimitar los
+marcadores de omisión al resumen, líneas explícitas o símbolo de caso omitido;
+mantener rechazo de todo conteo positivo y agregar regresión del título español.

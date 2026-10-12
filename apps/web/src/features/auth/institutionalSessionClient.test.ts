@@ -584,6 +584,7 @@ describe('alcance del módulo compartido', () => {
     ].map((coincidencia) => coincidencia.groups?.nombre ?? '');
 
     expect(campos).toStrictEqual([
+      'administrator',
       'role',
       'expiresAt',
       'institution',

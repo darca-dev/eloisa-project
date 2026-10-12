@@ -195,7 +195,7 @@ export class CaregiverRelationshipService {
         await this.audit.recordCaregiverRelationshipCreatedWithin(
           tx,
           { tenantId, endpoint: context.endpoint, correlationId: context.correlationId },
-          { identityId: context.principal.identityId, relationshipId: created.id },
+          { ...context.principal, identityId: context.principal.identityId, relationshipId: created.id },
           now,
         );
 
@@ -281,7 +281,7 @@ export class CaregiverRelationshipService {
         await this.audit.recordCaregiverRelationshipValidatedWithin(
           tx,
           { tenantId, endpoint: context.endpoint, correlationId: context.correlationId },
-          { identityId: context.principal.identityId, relationshipId },
+          { ...context.principal, identityId: context.principal.identityId, relationshipId },
           now,
         );
 
@@ -346,7 +346,7 @@ export class CaregiverRelationshipService {
       await this.audit.recordCaregiverRelationshipRevokedWithin(
         tx,
         { tenantId, endpoint: context.endpoint, correlationId: context.correlationId },
-        { identityId: context.principal.identityId, relationshipId },
+        { ...context.principal, identityId: context.principal.identityId, relationshipId },
         now,
       );
 

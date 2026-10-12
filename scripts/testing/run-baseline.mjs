@@ -23,10 +23,11 @@ import { spawn as nodeSpawn } from 'node:child_process';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { stripVTControlCharacters } from 'node:util';
 
 import { EXPECTED_TEST_ENVIRONMENT, validateTestEnvironment } from './test-environment-guard.mjs';
 import { loadEnvFile, scrubSecrets } from './test-db-provision.mjs';
-import { buildApprovedTopology } from './test-db-preflight.mjs';
+import { buildApprovedTopology, parseTrustedTenantContext } from './test-db-preflight.mjs';
 import { createCleanupAdapter, runCleanupStep } from './test-db-cleanup.mjs';
 
 export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -89,6 +90,8 @@ export const BASELINE_STAGES = Object.freeze([
     'db/visits-materialization.db.test.ts',
     'db/visits-professional-transitions.db.test.ts',
     'db/access-request-registration.db.test.ts',
+    'db/institutional-administrator.api.test.ts',
+    'db/personal-registration.db.test.ts',
   ]),
   'cleanup',
 ]);
@@ -275,7 +278,8 @@ export function assertMatrixComplete(stageIds) {
 }
 
 const NO_TESTS_FOUND = /no test files? found|no tests? found/iu;
-const DISABLED_MARKER = /\bdisabled\b/iu;
+const DISABLED_MARKER = /^\s*(?:disabled\b|(?:Tests|Test Files)\b[^\r\n]*\bdisabled\b|[^\r\n]*\bsuites?\s+(?:(?:is|are)\s+)?disabled\b)/imu;
+const OMISSION_MARKER = /^\s*(?:(?:skipped|todo)\b|(?:Tests|Test Files)\b[^\r\n]*\b(?:skipped|todo)\b|[^\r\n]*[↓-][^\r\n]*\((?:skipped|todo)\))/imu;
 // Los seis ceros, en los dos ordenes: `0 skipped` y `skipped 0`, igual para
 // `todo` y `disabled`. Se eliminan ANTES de mirar marcadores.
 const ZERO_COUNT = /\b(?:0\s+(?:skipped|todo|disabled)|(?:skipped|todo|disabled)\s+0)\b/giu;
@@ -295,12 +299,13 @@ const TEST_SUMMARY = /^\s*(?:Test Files|Tests)\b/mu;
  */
 export function classifyStageOutcome({ exitCode, stdout = '', stderr = '', timedOut = false, expectTests = true } = {}) {
   if (timedOut === true) return 'timeout';
-  const salida = `${stdout}\n${stderr}`;
+  const salida = stripVTControlCharacters(`${stdout}\n${stderr}`);
   const sinCeros = salida.replace(ZERO_COUNT, '');
 
-  if (NO_TESTS_FOUND.test(sinCeros) || DISABLED_MARKER.test(sinCeros)) return 'disabled';
+  if (extractCounts(salida).failed > 0) return 'fail';
+  if (NO_TESTS_FOUND.test(sinCeros) || DISABLED_MARKER.test(sinCeros) || /PRUEBAS DE POSTGRESQL NO EJECUTADAS/u.test(sinCeros)) return 'disabled';
   if ([...sinCeros.matchAll(POSITIVE_COUNT)].length > 0) return 'skipped';
-  if (/\b(?:skipped|todo|disabled)\b/iu.test(sinCeros)) return 'skipped';
+  if (OMISSION_MARKER.test(sinCeros)) return 'skipped';
   if (exitCode !== 0) return 'fail';
   if (expectTests && !TEST_SUMMARY.test(salida)) return 'incomplete';
   return 'pass';
@@ -308,12 +313,11 @@ export function classifyStageOutcome({ exitCode, stdout = '', stderr = '', timed
 
 /** Conteos minimos extraidos del resumen de un runner de pruebas. */
 export function extractCounts(stdout = '') {
-  const match = /Tests\s+(?:(\d+)\s+passed\s*\|?\s*)?(?:(\d+)\s+failed\s*\|?\s*)?(?:(\d+)\s+skipped)?/iu.exec(String(stdout));
-  return Object.freeze({
-    passed: Number(match?.[1] ?? 0),
-    failed: Number(match?.[2] ?? 0),
-    skipped: Number(match?.[3] ?? 0),
-  });
+  const counts = { passed: 0, failed: 0, skipped: 0 };
+  for (const summary of stripVTControlCharacters(String(stdout)).matchAll(/^\s*Tests\s+([^\r\n]+)/gmu)) {
+    for (const count of summary[1].matchAll(/(\d+)\s+(passed|failed|skipped)\b/giu)) counts[count[2].toLowerCase()] += Number(count[1]);
+  }
+  return Object.freeze(counts);
 }
 
 /** Evidencia minima, congelada y sin secretos. */
@@ -382,7 +386,7 @@ export function assertBaselineEnvironment(env = {}) {
 export const SYSTEM_ENV_ALLOWLIST = Object.freeze(['SystemRoot', 'COMSPEC', 'PATHEXT', 'PATH', 'TEMP', 'TMP']);
 
 /** Variables de prueba derivadas que si puede recibir el hijo. */
-export const CHILD_TEST_KEYS = Object.freeze(['DATABASE_URL', 'RUNTIME_DATABASE_URL', 'MERDN_RUNTIME_ROLE']);
+export const CHILD_TEST_KEYS = Object.freeze(['DATABASE_URL', 'RUNTIME_DATABASE_URL', 'MERDN_RUNTIME_ROLE', 'MERDN_ACTIVE_TENANT_ID']);
 
 /** Claves del env-file cuyo valor nunca puede viajar al hijo ni a la evidencia. */
 export const BASELINE_SECRET_KEYS = Object.freeze([
@@ -402,7 +406,7 @@ export const BASELINE_SECRET_KEYS = Object.freeze([
  * @param {Record<string, string>} envCargado Env-file ya validado por el guard.
  * @param {Record<string, string>} parentEnv Entorno del proceso padre.
  */
-export function buildChildEnvironment(envCargado = {}, parentEnv = process.env) {
+export function buildChildEnvironment(envCargado = {}, parentEnv = process.env, trustedContext) {
   const hijo = {};
   // En Windows `process.env` conserva el casing original (`Path`, `SystemRoot`),
   // asi que la busqueda por clave es insensible a mayusculas y cada variable
@@ -421,6 +425,10 @@ export function buildChildEnvironment(envCargado = {}, parentEnv = process.env) 
   if (typeof admin === 'string' && admin !== '') hijo.DATABASE_URL = admin;
   if (typeof runtime === 'string' && runtime !== '') hijo.RUNTIME_DATABASE_URL = runtime;
   if (typeof role === 'string' && role !== '') hijo.MERDN_RUNTIME_ROLE = role;
+  if (trustedContext !== undefined) {
+    const context = parseTrustedTenantContext(`${trustedContext?.tenantId}|${trustedContext?.tenantCode}`);
+    hijo.MERDN_ACTIVE_TENANT_ID = context.tenantId;
+  }
   return Object.freeze(hijo);
 }
 
@@ -545,14 +553,27 @@ export async function runBaseline(options = {}) {
   await runCleanupStep('guard', () => assertBaselineEnvironment(envCargado), []);
 
   // El entorno hijo y el saneamiento nacen DESPUES de cargar y validar el env-file.
-  const secretos = collectSecrets(envCargado);
-  const childEnv = buildChildEnvironment(envCargado);
-  const runner = execute ?? createSpawnExecutor({ spawn: spawnImpl, secrets: secretos, env: childEnv });
+  const secretos = [...collectSecrets(envCargado)];
+  let trustedContext;
 
   const provisioner = provision ?? (await import('./test-db-provision.mjs')).provisionIsolatedTestDatabase;
   const preflightRunner = preflight ?? (await import('./test-db-preflight.mjs')).runRuntimeRlsPreflight;
   const cleaner = cleanupDatabase ?? (await import('./test-db-cleanup.mjs')).cleanupIsolatedTestDatabase;
   const cleanup = createCleanupAdapter(() => cleaner({ envFilePath: plan.envFilePath }));
+
+  const prepareContext = async () => {
+    const result = await preflightRunner({
+      envFilePath: plan.envFilePath,
+      onTrustedContext: (value) => {
+        trustedContext = parseTrustedTenantContext(`${value?.tenantId}|${value?.tenantCode}`);
+        secretos.push(trustedContext.tenantId);
+      },
+    });
+    if ((result?.problems?.length ?? 0) > 0 || trustedContext === undefined) {
+      throw new RunnerError('provision', 'preflight sin contexto institucional confiable');
+    }
+    return result;
+  };
 
   const evidencia = [];
 
@@ -567,7 +588,7 @@ export async function runBaseline(options = {}) {
           async () => {
             // Limpieza desactivada aqui: la owns el runner, una sola vez.
             await provisioner({ envFilePath: plan.envFilePath, cleanupOnFailure: false });
-            return preflightRunner({ envFilePath: plan.envFilePath });
+            return prepareContext();
           },
           secretos,
         );
@@ -586,6 +607,12 @@ export async function runBaseline(options = {}) {
         continue;
       }
 
+      // También las etapas individuales validan el recurso antes de crear hijos.
+      if (trustedContext === undefined) await prepareContext();
+      const runner = execute ?? createSpawnExecutor({
+        spawn: spawnImpl, secrets: secretos,
+        env: buildChildEnvironment(envCargado, process.env, trustedContext),
+      });
       const salida = await executeStageCommands({ stage, commands: stage.commands, execute: runner });
       const outcome = classifyStageOutcome({
         exitCode: salida.exitCode,

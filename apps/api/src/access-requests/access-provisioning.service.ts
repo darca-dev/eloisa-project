@@ -53,7 +53,6 @@ import {
 import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../database/prisma.service';
 import { type PrismaTransaction } from '../database/prisma-transaction';
-import { findProfessionByCode } from '../hospital/hospital.contract';
 import { findEpsByCode } from '../patients/enrollment.catalogs';
 
 import {
@@ -76,9 +75,6 @@ const ENDPOINT_REGISTRO = 'POST /api/v1/access-requests';
 /** Participación mínima de un solicitante PATIENT. Catálogos del SERVIDOR. */
 const EPS_NO_SABE = 'NO_SABE';
 
-/** Participación mínima de un solicitante FIELD_PROFESSIONAL. */
-const PROFESSION_MEDICINA_GENERAL = 'MEDICINA_GENERAL';
-
 /**
  * Resultado de la desactivación, para que quien decidió pueda construir su
  * traza sin volver a leer la base.
@@ -89,7 +85,6 @@ export interface AccessProvisioningDeactivationResult {
   /** Vínculos externos que había que deshabilitar en el proveedor. */
   readonly externalSubjects: readonly string[];
 }
-
 @Injectable()
 export class AccessProvisioningService {
   /**
@@ -173,20 +168,25 @@ export class AccessProvisioningService {
     const { tenantId, personId, accessRequestId, reference, password } = contexto;
 
     const vinculada = await this.prisma.withTenant(tenantId, async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "access_request" WHERE "id" = ${accessRequestId}::uuid AND "tenantId" = ${tenantId}::uuid FOR UPDATE`;
       const previa = await tx.accessRequest.findFirst({
         where: { id: accessRequestId, tenantId },
-        select: { humanAccountId: true },
+        select: { humanAccountId: true, externalAuthIdentityId: true, personId: true, source: true },
       });
 
       if (previa === null) {
         throw new Error('la solicitud a preparar no existe en el tenant');
       }
 
+      if (previa.personId !== personId) throw new Error('registration person mismatch');
+      if (previa.externalAuthIdentityId !== null) return true;
+      // Only this request may reuse its reserved account after a provider failure.
       if (previa.humanAccountId !== null) {
-        return true;
+        if (previa.source !== 'SELF_REGISTRATION') throw new Error('legacy binding requires reconciliation');
+        return { humanAccountId: previa.humanAccountId };
       }
-
       const cuenta = await this.reservarCuenta(tx, tenantId, personId);
+      await this.enlazarSolicitud(tx, tenantId, accessRequestId, cuenta.id);
       return { humanAccountId: cuenta.id };
     });
 
@@ -212,8 +212,16 @@ export class AccessProvisioningService {
     }
 
     await this.prisma.withTenant(tenantId, async (tx) => {
-      await this.vincularIdentidad(tx, tenantId, humanAccountId, subject);
-      await this.enlazarSolicitud(tx, tenantId, accessRequestId, humanAccountId);
+      const identityId = await this.vincularIdentidad(tx, tenantId, humanAccountId, subject);
+      const linked = await tx.accessRequest.updateMany({
+        where: { id: accessRequestId, tenantId, humanAccountId, externalAuthIdentityId: null },
+        data: { externalAuthIdentityId: identityId },
+      });
+      if (linked.count === 0) {
+        const current = await tx.accessRequest.findFirst({ where: { id: accessRequestId, tenantId }, select: { externalAuthIdentityId: true } });
+        if (current?.externalAuthIdentityId !== identityId) throw new Error('registration binding mismatch');
+        return;
+      }
 
       await this.audit.recordAccessIdentityPreparedWithin(
         tx,
@@ -264,7 +272,7 @@ export class AccessProvisioningService {
     });
 
     if (existente !== null) {
-      return existente;
+      throw new Error('existing person account requires authenticated ownership');
     }
 
     const creada = await tx.humanAccount.create({
@@ -286,32 +294,20 @@ export class AccessProvisioningService {
 
   /** Persiste el `sub` real, reutilizando el vínculo si ya existe. */
   private async vincularIdentidad(
-    tx: PrismaTransaction,
-    tenantId: string,
-    humanAccountId: string,
-    subject: string,
-  ): Promise<void> {
+    tx: PrismaTransaction, tenantId: string, humanAccountId: string, subject: string,
+  ): Promise<string> {
     const issuer = this.emisor();
-
     const previo = await tx.externalAuthIdentity.findFirst({
-      where: { tenantId, issuer, subject },
-      select: { id: true },
+      where: { tenantId, issuer, subject }, select: { id: true, humanAccountId: true, status: true },
     });
-
     if (previo !== null) {
-      return;
+      if (previo.humanAccountId !== humanAccountId || previo.status !== 'ACTIVE') throw new Error('external binding mismatch');
+      return previo.id;
     }
-
-    await tx.externalAuthIdentity.create({
-      data: {
-        tenantId,
-        humanAccountId,
-        issuer,
-        subject,
-        status: 'ACTIVE',
-      },
-      select: { id: true },
+    const created = await tx.externalAuthIdentity.create({
+      data: { tenantId, humanAccountId, issuer, subject, status: 'ACTIVE' }, select: { id: true },
     });
+    return created.id;
   }
 
   /** Apunta la solicitud a su cuenta. Condicional: una carrera no reescribe. */
@@ -392,246 +388,101 @@ export class AccessProvisioningService {
    * `DISABLED` en el mismo movimiento que `PROVISIONING_FAILED`.
    */
   public async aprovisionar(
-    contexto: {
-      readonly tenantId: string;
-      readonly accessRequestId: string;
-      readonly endpoint: string;
-    },
+    contexto: { readonly tenantId: string; readonly accessRequestId: string; readonly endpoint: string },
     now: Date,
   ): Promise<AccessProvisioningOutcome> {
     const { tenantId, accessRequestId, endpoint } = contexto;
-
-    const previo = await this.prisma.withTenant(tenantId, (tx) =>
-      tx.accessRequest.findFirst({
-        where: { id: accessRequestId, tenantId },
-        select: {
-          status: true,
-          personId: true,
-          requestedProfile: true,
-          humanAccountId: true,
-          provisioningAttempts: true,
+    const operationId = randomUUID();
+    const leaseExpiresAt = new Date(now.getTime() + 5 * 60_000);
+    const claimed = await this.prisma.withTenant(tenantId, async tx => {
+      const changed = await tx.accessRequest.updateMany({
+        where: { id: accessRequestId, tenantId, status: SAGA_ENTRY_STATUS,
+          OR: [{ provisioningOperationId: null }, { provisioningOperationExpiresAt: { lte: now } }],
         },
-      }),
-    );
-
-    if (previo === null || previo.status !== SAGA_ENTRY_STATUS) {
-      return this.fallar(
-        tenantId,
-        accessRequestId,
-        endpoint,
-        now,
-        ACCESS_PROVISIONING_ERROR_CODES.identityNotFound,
-      );
-    }
-
-    if (previo.humanAccountId === null) {
-      /*
-       * No hay cuenta porque la preparación nunca concluyó. Este servicio NO
-       * tiene la contraseña —nunca la guarda— y crear un usuario sin ella
-       * produciría una cuenta inaccesible. Se falla con un código que dice
-       * exactamente eso, y la solicitud queda reintentable.
-       */
-      return this.fallar(
-        tenantId,
-        accessRequestId,
-        endpoint,
-        now,
-        ACCESS_PROVISIONING_ERROR_CODES.passwordUnavailable,
-      );
-    }
-
-    if (previo.provisioningAttempts >= ACCESS_PROVISIONING_MAX_ATTEMPTS) {
-      return this.fallar(
-        tenantId,
-        accessRequestId,
-        endpoint,
-        now,
-        ACCESS_PROVISIONING_ERROR_CODES.retryLimitReached,
-      );
-    }
-
-    /*
-     * Se fija en una `const` LOCAL. El estrechamiento de un campo sobre una
-     * variable que un cierre vuelve a leer no sobrevive al cuerpo del cierre, y
-     * aquí el identificador es exactamente lo que no puede ser `null` dentro de
-     * las tres fases siguientes: sin esta copia, TypeScript o no lo sabe, o lo
-     * sabe y lo olvida en cuanto empieza el callback.
-     */
-    const humanAccountId = previo.humanAccountId;
-
-    // --- Fase A: contabilizar el intento -----------------------------------
-    const inicio = await this.prisma.withTenant(tenantId, async (tx) => {
-      const contado = await tx.accessRequest.updateMany({
-        where: {
-          id: accessRequestId,
-          tenantId,
-          status: SAGA_ENTRY_STATUS,
-          provisioningAttempts: { lt: ACCESS_PROVISIONING_MAX_ATTEMPTS },
-        },
-        data: {
-          provisioningAttempts: { increment: 1 },
-          provisioningStartedAt: now,
-          provisioningStatus: 'PENDING',
-        },
+        data: { provisioningOperationId: operationId, provisioningOperationExpiresAt: leaseExpiresAt },
       });
-
-      if (contado.count === 0) {
-        return false;
-      }
-
-      const vinculo = await tx.externalAuthIdentity.findFirst({
-        where: {
-          tenantId,
-          humanAccountId,
-          status: 'ACTIVE',
-        },
-        select: { subject: true },
-        orderBy: { createdAt: 'asc' },
+      if (changed.count !== 1) return null;
+      const row = await tx.accessRequest.findFirst({
+        where: { id: accessRequestId, tenantId, provisioningOperationId: operationId },
+        select: { personId: true, requestedProfile: true, humanAccountId: true, externalAuthIdentityId: true, provisioningAttempts: true },
       });
-
-      return vinculo === null ? null : vinculo.subject;
-    });
-
-    if (inicio === false) {
-      // Otra saga corrió por delante: se devuelve su resultado vigente.
-      return this.leerResultado(tenantId, accessRequestId);
-    }
-
-    if (inicio === null) {
-      return this.fallar(
-        tenantId,
-        accessRequestId,
-        endpoint,
-        now,
-        ACCESS_PROVISIONING_ERROR_CODES.identityNotFound,
-      );
-    }
-
-    // --- Fase B: llamada EXTERNA, fuera de cualquier transacción ------------
-    try {
-      await this.identity.getUser(inicio);
-      await this.identity.setEnabled(inicio, true);
-    } catch (error) {
-      return this.fallar(
-        tenantId,
-        accessRequestId,
-        endpoint,
-        now,
-        error instanceof AccessProvisioningIdentityError
-          ? error.code
-          : ACCESS_PROVISIONING_ERROR_CODES.unavailable,
-      );
-    }
-
-    // --- Fase C: escritura final -------------------------------------------
-    try {
-      await this.prisma.withTenant(tenantId, async (tx) => {
-        await this.crearParticipacionMinima(
-          tx,
-          tenantId,
-          previo.personId,
-          previo.requestedProfile,
-          now,
-        );
-
-        await tx.humanAccount.updateMany({
-          where: { id: humanAccountId, tenantId },
-          data: { status: 'ACTIVE' },
-        });
-
-        const cerrada = await tx.accessRequest.updateMany({
-          where: { id: accessRequestId, tenantId, status: SAGA_ENTRY_STATUS },
-          data: {
-            status: 'APPROVED',
-            provisioningStatus: 'SUCCEEDED',
-            provisioningErrorCode: null,
-            provisioningLastErrorAt: null,
-            version: { increment: 1 },
-          },
-        });
-
-        if (cerrada.count === 0) {
-          throw new Error('la solicitud dejo de esperar provision durante la saga');
+      if (row === null) throw new Error('provisioning claim missing');
+      if (row.humanAccountId !== null) {
+        await tx.$queryRaw`SELECT "id" FROM "human_account" WHERE "id" = ${row.humanAccountId}::uuid AND "tenantId" = ${tenantId}::uuid FOR UPDATE`;
+        const account = await tx.humanAccount.findFirst({ where: { id: row.humanAccountId, tenantId }, select: { passwordRecoveryBlocked: true } });
+        if (account?.passwordRecoveryBlocked === true) {
+          await tx.accessRequest.updateMany({ where: { id: accessRequestId, tenantId, provisioningOperationId: operationId }, data: { provisioningOperationId: null, provisioningOperationExpiresAt: null } });
+          return null;
         }
-
-        await this.audit.recordAccessProvisioningSucceededWithin(
-          tx,
-          { tenantId, accessRequestId, endpoint, correlationId: randomUUID() },
-          now,
-        );
+      }
+      if (row.provisioningAttempts < ACCESS_PROVISIONING_MAX_ATTEMPTS) await tx.accessRequest.updateMany({
+        where: { id: accessRequestId, tenantId, provisioningOperationId: operationId },
+        data: { provisioningAttempts: { increment: 1 }, provisioningStartedAt: now, provisioningStatus: 'PENDING' },
       });
+      return row;
+    });
+    if (claimed === null) return this.leerResultado(tenantId, accessRequestId);
+    const fail = (code: AccessProvisioningErrorCode) => this.fallar(tenantId, accessRequestId, operationId, endpoint, now, code);
+    if (claimed.provisioningAttempts >= ACCESS_PROVISIONING_MAX_ATTEMPTS) return fail(ACCESS_PROVISIONING_ERROR_CODES.retryLimitReached);
+    if (claimed.humanAccountId === null) return fail(ACCESS_PROVISIONING_ERROR_CODES.passwordUnavailable);
+    if (claimed.externalAuthIdentityId === null) return fail(ACCESS_PROVISIONING_ERROR_CODES.identityNotFound);
+    const humanAccountId = claimed.humanAccountId;
+    const binding = await this.prisma.withTenant(tenantId, tx => tx.externalAuthIdentity.findFirst({
+      where: { id: claimed.externalAuthIdentityId!, tenantId, humanAccountId, issuer: this.emisor(), status: 'ACTIVE' },
+      select: { subject: true },
+    }));
+    if (binding === null) return fail(ACCESS_PROVISIONING_ERROR_CODES.identityNotFound);
+    try {
+      const remote = await this.identity.getUser(binding.subject);
+      if (remote.id !== binding.subject || remote.marker !== accessRequestId) return fail(ACCESS_PROVISIONING_ERROR_CODES.identityNotFound);
+      await this.identity.setEnabled(binding.subject, true);
+      await this.identity.verifyEnabledUser(binding.subject, accessRequestId);
     } catch (error) {
-      return this.fallar(
-        tenantId,
-        accessRequestId,
-        endpoint,
-        now,
-        error instanceof AccessProvisioningIdentityError
-          ? error.code
-          : ACCESS_PROVISIONING_ERROR_CODES.participationFailed,
-      );
+      return fail(error instanceof AccessProvisioningIdentityError ? error.code : ACCESS_PROVISIONING_ERROR_CODES.unavailable);
     }
-
+    try {
+      const completed = await this.prisma.withTenant(tenantId, async tx => {
+        // Claim the outcome BEFORE changing the account. A late worker has no authority.
+        const closed = await tx.accessRequest.updateMany({
+          where: { id: accessRequestId, tenantId, status: SAGA_ENTRY_STATUS, provisioningOperationId: operationId },
+          data: { status: 'APPROVED', provisioningStatus: 'SUCCEEDED', provisioningErrorCode: null,
+            provisioningLastErrorAt: null, provisioningOperationId: null, provisioningOperationExpiresAt: null, version: { increment: 1 } },
+        });
+        if (closed.count !== 1) return false;
+        await tx.$queryRaw`SELECT "id" FROM "human_account" WHERE "id" = ${humanAccountId}::uuid AND "tenantId" = ${tenantId}::uuid FOR UPDATE`;
+        const account = await tx.humanAccount.findFirst({ where: { id: humanAccountId, tenantId }, select: { passwordRecoveryBlocked: true } });
+        if (account === null || account.passwordRecoveryBlocked === true) throw new Error('account recovery block');
+        await this.crearParticipacionMinima(tx, tenantId, claimed.personId, claimed.requestedProfile, now);
+        await tx.humanAccount.updateMany({ where: { id: humanAccountId, tenantId }, data: { status: 'ACTIVE' } });
+        await this.audit.recordAccessProvisioningSucceededWithin(tx,
+          { tenantId, accessRequestId, endpoint, correlationId: operationId }, now);
+        return true;
+      });
+      if (!completed) return this.leerResultado(tenantId, accessRequestId);
+    } catch (error) {
+      return fail(error instanceof AccessProvisioningIdentityError ? error.code : ACCESS_PROVISIONING_ERROR_CODES.participationFailed);
+    }
     return { ok: true, status: 'APPROVED' };
   }
 
-  /**
-   * Escribe el desenlace FRACASADO de la saga.
-   *
-   * Todo en UNA transacción: estado `PROVISIONING_FAILED`, provisión `FAILED`,
-   * código cerrado, Cuenta `DISABLED` y auditoría. Si la auditoría no puede
-   * escribirse, la transacción se revierte entera y la solicitud sigue esperando
-   * en `APPROVED_PENDING_PROVISIONING`, que es un estado también reintentable:
-   * no existe un fallo de provisión sin su traza.
-   *
-   * `version` se incrementa porque la fila CAMBIÓ: un cliente que reenviara la
-   * versión anterior debe recibir `409`, no una aprobación aparente.
-   */
   private async fallar(
-    tenantId: string,
-    accessRequestId: string,
-    endpoint: string,
-    now: Date,
-    code: AccessProvisioningErrorCode,
+    tenantId: string, accessRequestId: string, operationId: string, endpoint: string,
+    now: Date, code: AccessProvisioningErrorCode,
   ): Promise<AccessProvisioningOutcome> {
-    await this.prisma.withTenant(tenantId, async (tx) => {
-      const cuenta = await tx.accessRequest.findFirst({
-        where: { id: accessRequestId, tenantId },
-        select: { humanAccountId: true },
+    const failed = await this.prisma.withTenant(tenantId, async tx => {
+      const changed = await tx.accessRequest.updateMany({
+        where: { id: accessRequestId, tenantId, status: SAGA_ENTRY_STATUS, provisioningOperationId: operationId },
+        data: { status: 'PROVISIONING_FAILED', provisioningStatus: 'FAILED', provisioningErrorCode: code,
+          provisioningLastErrorAt: now, provisioningOperationId: null, provisioningOperationExpiresAt: null, version: { increment: 1 } },
       });
-
-      if (cuenta !== null && cuenta.humanAccountId !== null) {
-        await tx.humanAccount.updateMany({
-          where: { id: cuenta.humanAccountId, tenantId },
-          data: { status: 'DISABLED' },
-        });
-      }
-
-      const fallida = await tx.accessRequest.updateMany({
-        where: { id: accessRequestId, tenantId, status: SAGA_ENTRY_STATUS },
-        data: {
-          status: 'PROVISIONING_FAILED',
-          provisioningStatus: 'FAILED',
-          provisioningErrorCode: code,
-          provisioningLastErrorAt: now,
-          version: { increment: 1 },
-        },
-      });
-
-      if (fallida.count === 0) {
-        // Otra saga ya cerró esta solicitud. No hay nada que registrar aquí:
-        // el resultado vigente es el de esa otra saga.
-        return;
-      }
-
-      await this.audit.recordAccessProvisioningFailedWithin(
-        tx,
-        { tenantId, accessRequestId, endpoint, correlationId: randomUUID() },
-        now,
-      );
+      if (changed.count !== 1) return false;
+      const row = await tx.accessRequest.findFirst({ where: { id: accessRequestId, tenantId }, select: { humanAccountId: true } });
+      if (row?.humanAccountId !== null && row?.humanAccountId !== undefined) await tx.humanAccount.updateMany({ where: { id: row.humanAccountId, tenantId }, data: { status: 'DISABLED', accessLifecycleVersion: { increment: 1 } } });
+      await this.audit.recordAccessProvisioningFailedWithin(tx,
+        { tenantId, accessRequestId, endpoint, correlationId: operationId }, now);
+      return true;
     });
-
-    return { ok: false, status: 'PROVISIONING_FAILED', code };
+    return failed ? { ok: false, status: 'PROVISIONING_FAILED', code } : this.leerResultado(tenantId, accessRequestId);
   }
 
   /** Lee el resultado vigente cuando otra saga ganó la carrera. */
@@ -675,10 +526,9 @@ export class AccessProvisioningService {
    * experiencia neutra; sin relación declarada no hay contexto, no hay datos
    * nominales y no hay visitas que mostrar.
    *
-   * FIELD_PROFESSIONAL: perfil `MEDICINA_GENERAL` y afiliación ficticia
-   * `THIRD_PARTY` vigente desde la fecha UTC de hoy. NO se crea asignación,
-   * paciente, visita ni permiso clínico: cada recurso profesional sigue
-   * exigiendo su propia asignación.
+   * FIELD_PROFESSIONAL: solo portal aprobado. El registro no acredita una
+   * profesión ni un contrato; no crear perfil, afiliación o asignación.
+   * Los recursos profesionales siguen exigiendo vínculos reales vigentes.
    */
   private async crearParticipacionMinima(
     tx: PrismaTransaction,
@@ -687,7 +537,7 @@ export class AccessProvisioningService {
     requestedProfile: string,
     now: Date,
   ): Promise<void> {
-    if (requestedProfile === 'CAREGIVER') {
+    if (requestedProfile === 'CAREGIVER' || requestedProfile === 'FIELD_PROFESSIONAL') {
       return;
     }
 
@@ -719,62 +569,6 @@ export class AccessProvisioningService {
           origin: 'PUBLIC_SELF_ENROLLMENT',
           enrolledAt: now,
           createdByUserId: null,
-        },
-        select: { id: true },
-      });
-
-      return;
-    }
-
-    if (requestedProfile === 'FIELD_PROFESSIONAL') {
-      const profesion = findProfessionByCode(PROFESSION_MEDICINA_GENERAL);
-
-      if (profesion === undefined) {
-        // Mismo criterio que con la EPS: si el catálogo controlado desapareciera,
-        // no se alta con un nombre inventado.
-        throw new Error('el catalogo controlado de profesiones no contiene MEDICINA_GENERAL');
-      }
-
-      let perfil = await tx.professionalProfile.findFirst({
-        where: { tenantId, personId },
-        select: { id: true },
-      });
-
-      if (perfil === null) {
-        perfil = await tx.professionalProfile.create({
-          data: {
-            tenantId,
-            personId,
-            professionCode: profesion.code,
-            professionNameControlled: profesion.name,
-            status: 'ACTIVE',
-          },
-          select: { id: true },
-        });
-      }
-
-      const previa = await tx.professionalAffiliation.findFirst({
-        where: {
-          tenantId,
-          professionalId: perfil.id,
-          engagementType: 'THIRD_PARTY',
-          status: 'ACTIVE',
-        },
-        select: { id: true },
-      });
-
-      if (previa !== null) {
-        return;
-      }
-
-      await tx.professionalAffiliation.create({
-        data: {
-          tenantId,
-          professionalId: perfil.id,
-          engagementType: 'THIRD_PARTY',
-          status: 'ACTIVE',
-          startsOn: aFechaUtc(now),
-          endsOn: null,
         },
         select: { id: true },
       });
@@ -819,7 +613,7 @@ export class AccessProvisioningService {
 
     await tx.humanAccount.updateMany({
       where: { id: humanAccountId, tenantId },
-      data: { status: 'DISABLED' },
+      data: { status: 'DISABLED', accessLifecycleVersion: { increment: 1 } },
     });
 
     const vivas = await tx.humanSession.findMany({
@@ -882,11 +676,4 @@ export class AccessProvisioningService {
   /* ---------------------------------------------------------------------- */
   /* Utilidades                                                              */
   /* ---------------------------------------------------------------------- */
-}
-
-/** Fecha UTC SIN componente horario, para `ProfessionalAffiliation.startsOn`. */
-function aFechaUtc(now: Date): Date {
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  );
 }

@@ -1,14 +1,10 @@
 import { Module } from '@nestjs/common';
 
-import { AuditModule } from '../audit/audit.module';
 import { IdentityAccessModule } from '../identity-access/identity-access.module';
 
-import { HumanAuthRateLimitGuard } from './human-auth-rate-limit.guard';
 import { HumanAuthController } from './human-auth.controller';
-import { HumanAuthService } from './human-auth.service';
-import { HumanSessionGuard } from './human-session.guard';
 import { MeContextsController } from './me-contexts.controller';
-import { SameOriginGuard } from './same-origin.guard';
+import { HumanSessionModule } from './human-session.module';
 
 /**
  * Identidad y sesión HUMANA (IDENTITY-RELATIONSHIPS-CORE-01 §4, §8.1).
@@ -31,14 +27,8 @@ import { SameOriginGuard } from './same-origin.guard';
  * humano sin reimplementar la validación de sesión.
  */
 @Module({
-  imports: [AuditModule, IdentityAccessModule],
+  imports: [HumanSessionModule, IdentityAccessModule],
   controllers: [HumanAuthController, MeContextsController],
-  providers: [
-    HumanAuthService,
-    HumanSessionGuard,
-    HumanAuthRateLimitGuard,
-    SameOriginGuard,
-  ],
-  exports: [HumanAuthService, HumanSessionGuard],
+  exports: [HumanSessionModule],
 })
 export class HumanAuthModule {}

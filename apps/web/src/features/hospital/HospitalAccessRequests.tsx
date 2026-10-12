@@ -10,6 +10,7 @@ import {
 } from 'react';
 
 import styles from './hospitalAccessRequests.module.css';
+import { AccessPasswordRecovery } from './AccessPasswordRecovery';
 import {
   APOYOS_OPCIONES,
   CONDICIONES_OPCIONES,
@@ -715,6 +716,14 @@ export function HospitalAccessRequests({
               ))}
             </section>
           )}
+
+          {detail.status === 'APPROVED' && <AccessPasswordRecovery key={detail.requestId} requestId={detail.requestId}
+            version={detail.version} fetchImpl={fetchImpl} onSessionInvalid={() => { clearSensitiveState(); sessionInvalid.current?.(); }}
+            onChanged={async () => {
+              const refreshed = await getHospitalAccessRequest(detail.requestId, fetchImpl);
+              if (refreshed.kind === 'ok') setDetail(current => current?.requestId === detail.requestId ? refreshed.data : current);
+              else if (refreshed.kind === 'session-required') { clearSensitiveState(); sessionInvalid.current?.(); }
+            }} />}
 
           {(() => {
             const acciones = validActionsFor(detail.status, detail.provisioningAttempts);

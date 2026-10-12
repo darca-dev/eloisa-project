@@ -1,4 +1,6 @@
 'use client';
+import { InstitutionalAccess } from '@/features/auth/InstitutionalAccess';
+import { consultarAdministradorMunicipal, cerrarSesionAdministrador } from '@/features/auth/institutionalAdministratorClient';
 
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 
@@ -347,6 +349,7 @@ export function MunicipalityShell({
   vistaInicial = MUNICIPALITY_VISTA_INICIAL,
   periodoInicial = MUNICIPALITY_PERIODO_INICIAL,
   sesionInicial = null,
+  administracionHumana = false,
   fetchImpl,
 }: {
   readonly config?: MunicipalityConfig;
@@ -360,8 +363,11 @@ export function MunicipalityShell({
    * concreto, y un contexto fija la superficie autorizada.
    */
   readonly sesionInicial?: SesionInstitucionalDto | EstadoSesionMunicipal | null;
+  readonly administracionHumana?: boolean;
   readonly fetchImpl?: typeof fetch;
 }): ReactNode {
+  const consultarContexto = administracionHumana ? consultarAdministradorMunicipal : consultarSesionInstitucional;
+  const cerrarContexto = administracionHumana ? cerrarSesionAdministrador : cerrarSesionInstitucional;
   const resuelto = sesionInicial !== null && typeof sesionInicial !== 'string';
   const contextoInicial = resuelto ? sesionInicial : null;
 
@@ -399,7 +405,7 @@ export function MunicipalityShell({
     const controller = new AbortController();
     let vigente = true;
 
-    void consultarSesionInstitucional(fetchImpl ?? fetch, controller.signal).then(
+    void consultarContexto(fetchImpl ?? fetch, controller.signal).then(
       (resultado) => {
         if (!vigente || resultado.kind === 'cancelado') {
           return;
@@ -417,7 +423,7 @@ export function MunicipalityShell({
       vigente = false;
       controller.abort();
     };
-  }, [fetchImpl, sesionInicial, intento]);
+  }, [fetchImpl, sesionInicial, intento, consultarContexto]);
 
   /** Reintento REAL: vuelve a preguntar al servidor, no cambia solo la pantalla. */
   const reintentar = useCallback((): void => {
@@ -465,7 +471,7 @@ export function MunicipalityShell({
         return;
       }
 
-      const contexto = await consultarSesionInstitucional(red);
+      const contexto = await consultarContexto(red);
 
       setOcupado(false);
 
@@ -517,7 +523,7 @@ export function MunicipalityShell({
     setOcupado(true);
     setAviso(null);
 
-    const cierre = await cerrarSesionInstitucional(red);
+    const cierre = await cerrarContexto(red);
     const decision = resolverCierre(cierre.kind, 'cerrar');
 
     if (decision.retirarSesion) {
@@ -530,7 +536,7 @@ export function MunicipalityShell({
       return;
     }
 
-    const contexto = await consultarSesionInstitucional(red);
+    const contexto = await consultarContexto(red);
     const tras = resolverReconfirmacion(contexto.kind, 'cerrar');
 
     setOcupado(false);
@@ -546,7 +552,7 @@ export function MunicipalityShell({
 
     // La sesión sigue EN PIE: la superficie autorizada se conserva, y se dice.
     setAviso(MUNICIPALITY_MENSAJE_CIERRE_NO_CONFIRMADO);
-  }, [fetchImpl]);
+  }, [fetchImpl, cerrarContexto]);
 
   if (estado !== 'autorizada' || sesion === null) {
     /*
@@ -555,7 +561,7 @@ export function MunicipalityShell({
      * sabe explicar lo correcto es no abrir.
      */
     return (
-      <MunicipalitySuperficieDenegada
+      administracionHumana && estado === 'sin-sesion' ? <main><InstitutionalAccess experience="municipality" /></main> : <MunicipalitySuperficieDenegada
         aviso={aviso}
         estado={estado === 'autorizada' ? 'error' : estado}
         ocupado={ocupado}

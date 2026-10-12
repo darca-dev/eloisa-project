@@ -1,4 +1,6 @@
 'use client';
+import { InstitutionalAccess } from '@/features/auth/InstitutionalAccess';
+import { consultarAdministradorHospital, cerrarSesionAdministrador } from '@/features/auth/institutionalAdministratorClient';
 
 import { useEffect, useState, type ReactNode } from 'react';
 
@@ -415,6 +417,7 @@ export function HospitalShell({
   filaFinancieraInicial = null,
   visitaInicial = null,
   sesionInicial = null,
+  administracionHumana = false,
   accesoDemo,
   modoDemoLocal = false,
   fetchImpl,
@@ -472,8 +475,11 @@ export function HospitalShell({
   /** Solo `/hospital` lo activa: datos en memoria, sin API institucional. */
   readonly modoDemoLocal?: boolean;
   /** Implementación de `fetch` usada para consultar el contexto de sesión. */
+  readonly administracionHumana?: boolean;
   readonly fetchImpl?: typeof fetch;
 }): ReactNode {
+  const consultarContexto = administracionHumana ? consultarAdministradorHospital : consultarSesionInstitucional;
+  const cerrarContexto = administracionHumana ? cerrarSesionAdministrador : cerrarSesionInstitucional;
   const inicial =
     vistaInicial ?? (esVistaImplementada(config.itemActivoId) ? config.itemActivoId : 'inicio');
   const [navegacion, setNavegacion] = useState<HospitalNavegacion>(() =>
@@ -521,7 +527,7 @@ export function HospitalShell({
   /** Estado del menú lateral en pantallas móviles. */
   const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
   const { vista, intencion } = navegacion;
-  const esRevisorAccesos = sesion?.role === 'HOSPITAL_ACCESS_REVIEWER';
+  const esRevisorAccesos = sesion?.administrator !== true && sesion?.role === 'HOSPITAL_ACCESS_REVIEWER';
   const vistaVisible: HospitalVistaId = esRevisorAccesos ? 'administracion' : vista;
   const pestanaVisible: HospitalAdminPestanaId = esRevisorAccesos
     ? 'Solicitudes de acceso'
@@ -554,7 +560,7 @@ export function HospitalShell({
     const controller = new AbortController();
     let vigente = true;
 
-    void consultarSesionInstitucional(fetchImpl ?? fetch, controller.signal).then(
+    void consultarContexto(fetchImpl ?? fetch, controller.signal).then(
       (resultado) => {
         if (!vigente || resultado.kind === 'cancelado') {
           return;
@@ -578,7 +584,7 @@ export function HospitalShell({
       vigente = false;
       controller.abort();
     };
-  }, [fetchImpl, sesionInicial]);
+  }, [fetchImpl, sesionInicial, consultarContexto]);
 
   /**
    * Identidad institucional del sidebar.
@@ -641,7 +647,7 @@ export function HospitalShell({
       return;
     }
 
-    const contexto = await consultarSesionInstitucional(red);
+    const contexto = await consultarContexto(red);
 
     setOcupado(false);
     setSesionResuelta(true);
@@ -673,7 +679,7 @@ export function HospitalShell({
     setOcupado(true);
     setAviso(null);
 
-    const cierre = await cerrarSesionInstitucional(red);
+    const cierre = await cerrarContexto(red);
     const decision = resolverCierre(cierre.kind, intencion);
 
     if (decision.retirarSesion) {
@@ -689,7 +695,7 @@ export function HospitalShell({
      * Revocación NO confirmada: se vuelve a preguntar al servidor antes de
      * decidir nada. La identidad mostrada sigue teniendo una sola procedencia.
      */
-    const contexto = await consultarSesionInstitucional(red);
+    const contexto = await consultarContexto(red);
     const tras = resolverReconfirmacion(contexto.kind, intencion);
 
     setOcupado(false);
@@ -739,14 +745,14 @@ export function HospitalShell({
   if (sesion === null) {
     return (
       <HospitalMarcoNeutral etiquetaPlataforma={etiquetaPlataforma}>
-        <HospitalAccesoInstitucional
+        {administracionHumana ? <InstitutionalAccess experience="hospital" /> : <HospitalAccesoInstitucional
           accesoDemo={accesoDemo}
           aviso={aviso}
           ocupado={ocupado}
           onEntrar={(identityCode, accessSecret) => {
             void entrar(identityCode, accessSecret);
           }}
-        />
+        />}
       </HospitalMarcoNeutral>
     );
   }
@@ -814,7 +820,7 @@ export function HospitalShell({
             filaFinanciera={filaFinancieraInicial}
             visita={visita}
             modoDemoLocal={modoDemoLocal}
-            canReviewAccessRequests={esRevisorAccesos}
+            canReviewAccessRequests={esRevisorAccesos || sesion.administrator === true}
             fetchImpl={fetchImpl}
             onSessionInvalid={() => {
               setSesion(null);

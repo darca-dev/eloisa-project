@@ -115,7 +115,10 @@ export function HospitalAdministration({
 
   return (
     <div className={compartido.view}>
-      <HospitalViewHeader encabezado={config.encabezado} tituloId={TITULO_ID} />
+      <HospitalViewHeader encabezado={canReviewAccessRequests ? {
+        titulo: 'Configuración',
+        descripcion: 'Gestione las solicitudes de acceso y la recuperación de cuentas personales. Las decisiones se guardan y auditan; cada operación exige autorización institucional.',
+      } : config.encabezado} tituloId={TITULO_ID} />
 
       <div className={compartido.pills} role="group" aria-label={config.etiquetaPestanas}>
         {pestanas.map((opcion) => (

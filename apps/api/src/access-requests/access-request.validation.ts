@@ -178,7 +178,7 @@ const NAMES_PATTERN = /^[\p{L}\p{M}\p{Zs}.'-]+$/u;
  * tal cual si cumple y `null` si no; el FALLA solo añade el nombre del campo, y
  * jamás el valor recibido, a la lista de campos con problema.
  */
-function validarPassword(bruto: unknown): string | null {
+export function validarPassword(bruto: unknown): string | null {
   if (typeof bruto !== 'string') {
     return null;
   }

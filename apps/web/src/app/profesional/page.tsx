@@ -2,11 +2,9 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 import { platformNameInSentence } from '@/config/branding';
-import { humanAccessDemoLocalEnabled } from '@/features/access/humanAccessDemoLocal';
-import { ProfesionalDemoPresentation } from '@/features/profesional/ProfesionalDemoPresentation';
 import { ProfesionalPortalProtegido } from '@/features/profesional/ProfesionalPortal';
 
-/* La bandera demo se lee al atender la solicitud, no al construir la imagen. */
+/* La sesión y los recursos se consultan al atender la solicitud. */
 export const dynamic = 'force-dynamic';
 
 /**
@@ -22,9 +20,6 @@ export const dynamic = 'force-dynamic';
  * muestra la lista vacía: nunca deniega por falta de trabajo, porque no tener
  * visitas asignadas no es una denegación de acceso.
  *
- * `MERDN_HUMAN_ACCESS_DEMO_LOCAL=true` habilita únicamente una presentación
- * local con visitas ficticias fijas; no crea sesión, ni consulta o escribe en
- * la API, y no puede activarse mediante la URL.
  */
 export const metadata: Metadata = {
   title: `${platformNameInSentence()} — Profesional en Salud`,
@@ -34,9 +29,5 @@ export const metadata: Metadata = {
 };
 
 export default function ProfesionalPage(): ReactNode {
-  if (humanAccessDemoLocalEnabled()) {
-    return <ProfesionalDemoPresentation />;
-  }
-
   return <ProfesionalPortalProtegido />;
 }

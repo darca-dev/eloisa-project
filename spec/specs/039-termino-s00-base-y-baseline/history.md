@@ -1,5 +1,13 @@
 # Historial 039
 
+## 2026-10-12 — ejecución autorizada y hallazgos reales
+
+Instrucción expresa del PO activa MP04C. Se transmite contexto privado solo tras
+preflight completo. Pruebas unitarias iniciales 81/81. La ejecución real verifica
+1901 web, 55 OpenAPI y 6 cold-start; detecta escapes ANSI en resúmenes y FK territorial
+eliminada por una migración posterior. Se corrige sin relajar aserciones. Baseline
+completa todavía pendiente hasta resolver todos sus fallos; cleanup exclusivo correcto.
+
 ## 2026-10-08 — creación prospectiva por Codex
 
 El PO eligió Eloisa-develop, autorizó nueva rama y continuar fuera de OneDrive. Se tomó origin/develop local 9980582, se conservó main 1aa1201 y el original como respaldo. Fetch del origin arvtechv no accesible con credenciales actuales.

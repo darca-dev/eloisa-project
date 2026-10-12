@@ -70,7 +70,7 @@ export class HospitalPatientViewerGuard implements CanActivate {
     let principal: InstitutionalPrincipal | null;
 
     try {
-      principal = await this.auth.validate(token, new Date());
+      principal = await this.auth.validate(token, new Date(), request.headers.cookie, 'HOSPITAL_PATIENT_VIEWER');
     } catch (error) {
       if (error instanceof RuntimeContextUnavailableError) {
         /*

@@ -91,6 +91,8 @@ export class HospitalPatientAccessGuard implements CanActivate {
           {
             tenantId,
             identityId: principal?.identityId ?? null,
+
+            ...(principal?.humanAccountId === undefined ? {} : { humanAccountId: principal?.humanAccountId }),
             role: principal?.role ?? null,
             resource: resourceOf(request),
             endpoint: endpointOf(request),

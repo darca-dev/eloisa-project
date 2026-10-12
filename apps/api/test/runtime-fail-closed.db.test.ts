@@ -125,6 +125,7 @@ describe.skipIf(!puedeEjecutarse)('Contexto de ejecución fail-closed', () => {
     });
 
     it('el contexto no sobrevive a la transacción', async () => {
+      const [antes] = await servicio.$queryRaw<{ readonly rol: string }[]>`SELECT current_user::text AS rol`;
       await servicio.withTenant(tenantId, async () => undefined);
 
       const [fuera] = await servicio.$queryRaw<
@@ -133,7 +134,8 @@ describe.skipIf(!puedeEjecutarse)('Contexto de ejecución fail-closed', () => {
 
       // Fuera de la transacción vuelve el rol de la conexión y no queda tenant:
       // una conexión reutilizada del pool nunca hereda el contexto anterior.
-      expect(fuera?.rol).not.toBe(RUNTIME_ROLE_NAME);
+      expect(antes?.rol).toBeDefined();
+      expect(fuera?.rol).toBe(antes?.rol);
       expect(fuera?.tenant === null || fuera?.tenant === '').toBe(true);
     });
   });

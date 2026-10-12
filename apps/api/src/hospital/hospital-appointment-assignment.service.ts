@@ -228,6 +228,8 @@ export class HospitalAppointmentAssignmentService {
           data: buildHospitalOperationsAudit({
             tenantId,
             identityId: context.principal.identityId,
+
+            ...(context.principal.humanAccountId === undefined ? {} : { humanAccountId: context.principal.humanAccountId }),
             role: context.principal.role,
             eventType: 'CARE_ASSIGNMENT_CREATED',
             resourceType: HOSPITAL_OPERATIONS_RESOURCES.careAssignment,
@@ -244,6 +246,8 @@ export class HospitalAppointmentAssignmentService {
         data: buildHospitalOperationsAudit({
           tenantId,
           identityId: context.principal.identityId,
+
+          ...(context.principal.humanAccountId === undefined ? {} : { humanAccountId: context.principal.humanAccountId }),
           role: context.principal.role,
           eventType: 'APPOINTMENT_ASSIGNED',
           resourceType: HOSPITAL_OPERATIONS_RESOURCES.appointment,

@@ -696,6 +696,7 @@ export const ACCESS_PROVISIONING_REALM = 'merdn-local';
 export const ACCESS_PROVISIONING_LOCAL_HOSTS: readonly string[] = [
   '127.0.0.1',
   'localhost',
+  'merdn.localhost',
   '::1',
   '[::1]',
   'host.docker.internal',

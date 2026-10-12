@@ -19,7 +19,7 @@ import { type IdentityAccessService } from './identity-access.service';
  * 1. la cuenta DESHABILITADA no obtiene experiencia aunque sus solicitudes
  *    sigan diciendo `APPROVED`;
  * 2. `CAREGIVER` se concede SIN relación —la portada de cuidador vive de esto—
- *    mientras que `PATIENT` y `FIELD_PROFESSIONAL` exigen su participación;
+ *    igual que FIELD_PROFESSIONAL; PATIENT exige su participación;
  * 3. solo el estado `APPROVED` cuenta, y siempre de la MISMA cuenta y tenant;
  * 4. el desenlace se audita DENTRO de la misma transacción que la lectura;
  * 5. un fallo de contexto runtime se propaga y nunca se convierte en lista.
@@ -77,6 +77,7 @@ function crearDoble(opciones: Opciones): Doble {
   };
 
   const tx = {
+    institutionalAdministratorRegistration: { findMany: async () => [] },
     humanAccount: {
       findFirst: async (args: { where: Record<string, unknown> }) => {
         modelos.push('humanAccount');
@@ -146,6 +147,8 @@ describe('ApprovedExperiencesService.resolve', () => {
       'PATIENT',
       'CAREGIVER',
       'FIELD_PROFESSIONAL',
+      'HOSPITAL',
+      'MUNICIPALITY',
     ]);
   });
 
@@ -177,7 +180,7 @@ describe('ApprovedExperiencesService.resolve', () => {
     ).resolves.toEqual([]);
   });
 
-  it('no concede FIELD_PROFESSIONAL aprobado sin perfil y afiliación vigentes', async () => {
+  it('concede solo el portal FIELD_PROFESSIONAL aprobado sin fabricar participación clínica', async () => {
     const doble = crearDoble({
       cuentaActiva: true,
       perfiles: ['FIELD_PROFESSIONAL'],
@@ -187,7 +190,7 @@ describe('ApprovedExperiencesService.resolve', () => {
 
     await expect(
       doble.service.resolve(PRINCIPAL, AHORA, CORRELACION),
-    ).resolves.toEqual([]);
+    ).resolves.toEqual(['FIELD_PROFESSIONAL']);
   });
 
   it('la cuenta DESHABILITADA no obtiene experiencia y ni siquiera se consultan solicitudes', async () => {
@@ -234,7 +237,7 @@ describe('ApprovedExperiencesService.resolve', () => {
       tenantId: PRINCIPAL.tenantId,
       humanAccountId: PRINCIPAL.humanAccountId,
       status: 'APPROVED',
-      requestedProfile: { in: [...APPROVED_EXPERIENCE_ORDER] },
+      requestedProfile: { in: ['PATIENT', 'CAREGIVER', 'FIELD_PROFESSIONAL'] },
     });
   });
 

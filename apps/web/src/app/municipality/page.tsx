@@ -19,5 +19,5 @@ export const metadata: Metadata = {
 };
 
 export default function MunicipalityPage(): ReactNode {
-  return <MunicipalityShell />;
+  return <MunicipalityShell administracionHumana />;
 }

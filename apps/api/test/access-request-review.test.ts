@@ -235,6 +235,8 @@ function nextUuid(): string {
 
 function buildTransaction(store: Store) {
   return {
+    $queryRaw: async () => [],
+    humanAccount: { findFirst: async () => ({ passwordRecoveryBlocked: false }) },
     accessRequest: {
       findMany: async (args: { where: Row; select?: Row; orderBy?: unknown; take?: number }) => {
         store.queries.push('accessRequest.findMany');
@@ -581,7 +583,7 @@ const SEMILLAS_A: readonly Seed[] = [
     documentNumber: 'CC 5.555.555',
     documentNumberNormalized: '5555555',
     decidedAt: '2026-09-06T10:00:00.000Z',
-    decisionReasonCode: 'DEMO_NOT_ELIGIBLE',
+    decisionReasonCode: 'ACCESS_REJECTED',
     reviewedBy: REVISOR_A,
   },
   {
@@ -598,7 +600,7 @@ const SEMILLAS_A: readonly Seed[] = [
     documentNumber: 'CC 6.666.666',
     documentNumberNormalized: '6666666',
     decidedAt: '2026-08-02T10:00:00.000Z',
-    decisionReasonCode: 'DEMO_ELIGIBLE',
+    decisionReasonCode: 'ACCESS_APPROVED',
     reviewedBy: REVISOR_A,
   },
   {
@@ -617,7 +619,7 @@ const SEMILLAS_A: readonly Seed[] = [
     documentNumber: 'CC 7.777.777',
     documentNumberNormalized: '7777777',
     decidedAt: '2026-08-03T10:00:00.000Z',
-    decisionReasonCode: 'DEMO_ELIGIBLE',
+    decisionReasonCode: 'ACCESS_APPROVED',
     reviewedBy: REVISOR_A,
   },
   {
@@ -635,7 +637,7 @@ const SEMILLAS_A: readonly Seed[] = [
     documentNumber: 'CC 8.888.888',
     documentNumberNormalized: '8888888',
     decidedAt: '2026-08-04T10:00:00.000Z',
-    decisionReasonCode: 'DEMO_ACCESS_SUSPENDED',
+    decisionReasonCode: 'ACCESS_SUSPENDED',
     reviewedBy: REVISOR_A,
   },
   {
@@ -652,7 +654,7 @@ const SEMILLAS_A: readonly Seed[] = [
     documentNumber: 'CC 1.010.101',
     documentNumberNormalized: '1010101',
     decidedAt: '2026-08-05T10:00:00.000Z',
-    decisionReasonCode: 'DEMO_ELIGIBLE',
+    decisionReasonCode: 'ACCESS_APPROVED',
     reviewedBy: REVISOR_A,
   },
 ];
@@ -1114,7 +1116,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     await decision(TOKEN_PACIENT, SEMILLAS_A[0]!.id, {
       action: 'APPROVE',
       expectedVersion: 1,
-      reasonCode: 'DEMO_ELIGIBLE',
+      reasonCode: 'ACCESS_APPROVED',
     }).expect(403);
 
     expect(harness.store.accessRequests[0]?.['status']).toBe('PENDING');
@@ -1512,7 +1514,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     const respuesta = await decision(TOKEN_REVISOR_A, SEMILLAS_A[0]!.id, {
       action: 'APPROVE',
       expectedVersion: 1,
-      reasonCode: 'DEMO_ELIGIBLE',
+      reasonCode: 'ACCESS_APPROVED',
     }).expect(200);
 
     expect(respuesta.body).toStrictEqual({
@@ -1520,7 +1522,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
       reference: SEMILLAS_A[0]!.reference,
       status: 'APPROVED',
       version: 3,
-      decisionReasonCode: 'DEMO_ELIGIBLE',
+      decisionReasonCode: 'ACCESS_APPROVED',
       decidedAt: expect.any(String),
     });
 
@@ -1544,7 +1546,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     expect(aprobaciones).toHaveLength(1);
     expect(aprobaciones[0]?.['resourceId']).toBe(SEMILLAS_A[0]!.id);
     expect(aprobaciones[0]?.['actorRole']).toBe('HOSPITAL_ACCESS_REVIEWER');
-    expect(JSON.stringify(aprobaciones[0])).not.toContain('DEMO_ELIGIBLE');
+    expect(JSON.stringify(aprobaciones[0])).not.toContain('ACCESS_APPROVED');
     expect(eventosDe('ACCESS_PROVISIONING_SUCCEEDED')).toHaveLength(1);
   });
 
@@ -1554,7 +1556,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     const fallo = await decision(TOKEN_REVISOR_A, SEMILLAS_A[2]!.id, {
       action: 'APPROVE',
       expectedVersion: 1,
-      reasonCode: 'DEMO_ELIGIBLE',
+      reasonCode: 'ACCESS_APPROVED',
     }).expect(200);
 
     expect(fallo.body.status).toBe('PROVISIONING_FAILED');
@@ -1563,7 +1565,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     const reintento = await decision(TOKEN_REVISOR_A, SEMILLAS_A[2]!.id, {
       action: 'RETRY_PROVISIONING',
       expectedVersion: 3,
-      reasonCode: 'DEMO_PROVISIONING_RETRIED',
+      reasonCode: 'PROVISIONING_RETRIED',
     }).expect(200);
 
     expect(reintento.body.status).toBe('APPROVED');
@@ -1588,7 +1590,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     const suspender = await decision(TOKEN_REVISOR_A, SEMILLAS_A[5]!.id, {
       action: 'SUSPEND',
       expectedVersion: 3,
-      reasonCode: 'DEMO_ACCESS_SUSPENDED',
+      reasonCode: 'ACCESS_SUSPENDED',
     }).expect(200);
 
     expect(suspender.body.status).toBe('SUSPENDED');
@@ -1622,7 +1624,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     const reactivar = await decision(TOKEN_REVISOR_A, SEMILLAS_A[7]!.id, {
       action: 'REACTIVATE',
       expectedVersion: 4,
-      reasonCode: 'DEMO_ACCESS_REACTIVATED',
+      reasonCode: 'ACCESS_REACTIVATED',
     }).expect(200);
 
     expect(reactivar.body.status).toBe('APPROVED');
@@ -1641,7 +1643,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     const revocar = await decision(TOKEN_REVISOR_A, SEMILLAS_A[8]!.id, {
       action: 'REVOKE',
       expectedVersion: 3,
-      reasonCode: 'DEMO_ACCESS_REVOKED',
+      reasonCode: 'ACCESS_REVOKED',
     }).expect(200);
 
     expect(revocar.body.status).toBe('REVOKED');
@@ -1660,21 +1662,21 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     await decision(TOKEN_REVISOR_A, SEMILLAS_A[5]!.id, {
       action: 'REACTIVATE',
       expectedVersion: 3,
-      reasonCode: 'DEMO_ACCESS_REACTIVATED',
+      reasonCode: 'ACCESS_REACTIVATED',
     }).expect(409);
 
     // RETRY_PROVISIONING solo desde PROVISIONING_FAILED.
     await decision(TOKEN_REVISOR_A, SEMILLAS_A[0]!.id, {
       action: 'RETRY_PROVISIONING',
       expectedVersion: 1,
-      reasonCode: 'DEMO_PROVISIONING_RETRIED',
+      reasonCode: 'PROVISIONING_RETRIED',
     }).expect(409);
 
     // SUSPEND solo desde APPROVED.
     await decision(TOKEN_REVISOR_A, SEMILLAS_A[0]!.id, {
       action: 'SUSPEND',
       expectedVersion: 1,
-      reasonCode: 'DEMO_ACCESS_SUSPENDED',
+      reasonCode: 'ACCESS_SUSPENDED',
     }).expect(409);
 
     expect(harness.provisioning.aprovisionarCalls).toHaveLength(0);
@@ -1684,10 +1686,10 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     const rechazada = SEMILLAS_A[4]!.id;
 
     for (const cuerpo of [
-      { action: 'APPROVE', reasonCode: 'DEMO_ELIGIBLE' },
-      { action: 'REJECT', reasonCode: 'DEMO_NOT_ELIGIBLE' },
-      { action: 'SUSPEND', reasonCode: 'DEMO_ACCESS_SUSPENDED' },
-      { action: 'REVOKE', reasonCode: 'DEMO_ACCESS_REVOKED' },
+      { action: 'APPROVE', reasonCode: 'ACCESS_APPROVED' },
+      { action: 'REJECT', reasonCode: 'ACCESS_REJECTED' },
+      { action: 'SUSPEND', reasonCode: 'ACCESS_SUSPENDED' },
+      { action: 'REVOKE', reasonCode: 'ACCESS_REVOKED' },
     ]) {
       await decision(TOKEN_REVISOR_A, rechazada, { ...cuerpo, expectedVersion: 2 }).expect(409);
     }
@@ -1696,13 +1698,13 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     await decision(TOKEN_REVISOR_A, revocada, {
       action: 'REVOKE',
       expectedVersion: 3,
-      reasonCode: 'DEMO_ACCESS_REVOKED',
+      reasonCode: 'ACCESS_REVOKED',
     }).expect(200);
 
     await decision(TOKEN_REVISOR_A, revocada, {
       action: 'APPROVE',
       expectedVersion: 4,
-      reasonCode: 'DEMO_ELIGIBLE',
+      reasonCode: 'ACCESS_APPROVED',
     }).expect(409);
 
     expect(harness.provisioning.aprovisionarCalls).toHaveLength(0);
@@ -1712,11 +1714,11 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     const respuesta = await decision(TOKEN_REVISOR_A, SEMILLAS_A[1]!.id, {
       action: 'REJECT',
       expectedVersion: 1,
-      reasonCode: 'DEMO_NOT_ELIGIBLE',
+      reasonCode: 'ACCESS_REJECTED',
     }).expect(200);
 
     expect(respuesta.body.status).toBe('REJECTED');
-    expect(respuesta.body.decisionReasonCode).toBe('DEMO_NOT_ELIGIBLE');
+    expect(respuesta.body.decisionReasonCode).toBe('ACCESS_REJECTED');
     expect(eventosDe('ACCESS_REQUEST_REJECTED')).toHaveLength(1);
   });
 
@@ -1724,7 +1726,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     const sinCabecera = await decision(
       TOKEN_REVISOR_A,
       SEMILLAS_A[2]!.id,
-      { action: 'APPROVE', expectedVersion: 1, reasonCode: 'DEMO_ELIGIBLE' },
+      { action: 'APPROVE', expectedVersion: 1, reasonCode: 'ACCESS_APPROVED' },
       null,
     ).expect(403);
 
@@ -1733,7 +1735,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     const ajeno = await decision(
       TOKEN_REVISOR_A,
       SEMILLAS_A[2]!.id,
-      { action: 'APPROVE', expectedVersion: 1, reasonCode: 'DEMO_ELIGIBLE' },
+      { action: 'APPROVE', expectedVersion: 1, reasonCode: 'ACCESS_APPROVED' },
       'http://sitio-ajeno.example',
     ).expect(403);
 
@@ -1755,40 +1757,40 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     await decision(TOKEN_REVISOR_A, fila, {
       action: 'APPROVE',
       expectedVersion: 1,
-      reasonCode: 'DEMO_ELIGIBLE',
+      reasonCode: 'ACCESS_APPROVED',
       motivo: 'porque sí',
     }).expect(400);
 
     await decision(TOKEN_REVISOR_A, fila, {
       action: 'APPROVE',
       expectedVersion: 1,
-      reasonCode: 'DEMO_NOT_ELIGIBLE',
+      reasonCode: 'ACCESS_REJECTED',
     }).expect(400);
 
     await decision(TOKEN_REVISOR_A, fila, {
       action: 'REJECT',
       expectedVersion: 1,
-      reasonCode: 'DEMO_ELIGIBLE',
+      reasonCode: 'ACCESS_APPROVED',
     }).expect(400);
 
     await decision(TOKEN_REVISOR_A, fila, {
       action: 'SUSPEND',
       expectedVersion: 1,
-      reasonCode: 'DEMO_ELIGIBLE',
+      reasonCode: 'ACCESS_APPROVED',
     }).expect(400);
 
-    await decision(TOKEN_REVISOR_A, fila, { action: 'APPROVE', reasonCode: 'DEMO_ELIGIBLE' }).expect(400);
+    await decision(TOKEN_REVISOR_A, fila, { action: 'APPROVE', reasonCode: 'ACCESS_APPROVED' }).expect(400);
 
     await decision(TOKEN_REVISOR_A, fila, {
       action: 'APPROVE',
       expectedVersion: 0,
-      reasonCode: 'DEMO_ELIGIBLE',
+      reasonCode: 'ACCESS_APPROVED',
     }).expect(400);
 
     await decision(TOKEN_REVISOR_A, fila, {
       action: 'APPROVE',
       expectedVersion: 1.5,
-      reasonCode: 'DEMO_ELIGIBLE',
+      reasonCode: 'ACCESS_APPROVED',
     }).expect(400);
 
     // `expectedVersion` llega como texto: la versión es un entero y un texto no
@@ -1797,7 +1799,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     const personaIncorrecta = await decision(TOKEN_REVISOR_A, fila, {
       action: 'APPROVE',
       expectedVersion: '1',
-      reasonCode: 'DEMO_ELIGIBLE',
+      reasonCode: 'ACCESS_APPROVED',
     }).expect(400);
     expect(personaIncorrecta.body.fields).toEqual(['expectedVersion']);
 
@@ -1810,7 +1812,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
   // --- Decisión: replay, conflicto y concurrencia ----------------------------
 
   it('una repetición exacta devuelve el resultado vigente sin escribir ni auditar de nuevo', async () => {
-    const cuerpo = { action: 'APPROVE', expectedVersion: 1, reasonCode: 'DEMO_ELIGIBLE' };
+    const cuerpo = { action: 'APPROVE', expectedVersion: 1, reasonCode: 'ACCESS_APPROVED' };
 
     const primera = await decision(TOKEN_REVISOR_A, SEMILLAS_A[3]!.id, cuerpo).expect(200);
     const repeticion = await decision(TOKEN_REVISOR_A, SEMILLAS_A[3]!.id, cuerpo).expect(200);
@@ -1829,13 +1831,13 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     await decision(TOKEN_REVISOR_A, SEMILLAS_A[3]!.id, {
       action: 'APPROVE',
       expectedVersion: 1,
-      reasonCode: 'DEMO_ELIGIBLE',
+      reasonCode: 'ACCESS_APPROVED',
     }).expect(200);
 
     const vencida = await decision(TOKEN_REVISOR_A, SEMILLAS_A[3]!.id, {
       action: 'REJECT',
       expectedVersion: 1,
-      reasonCode: 'DEMO_NOT_ELIGIBLE',
+      reasonCode: 'ACCESS_REJECTED',
     }).expect(409);
 
     expect(vencida.body.code).toBe('ACCESS_REQUEST_REVIEW_CONFLICT');
@@ -1850,7 +1852,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
   });
 
   it('otro actor que repite la acción con la versión vencida NO es una repetición', async () => {
-    const cuerpo = { action: 'APPROVE', expectedVersion: 1, reasonCode: 'DEMO_ELIGIBLE' };
+    const cuerpo = { action: 'APPROVE', expectedVersion: 1, reasonCode: 'ACCESS_APPROVED' };
     // Una solicitud PENDING: repetir la acción sobre una ya cerrada probaría el
     // conflicto de estado, no la identidad de la decisión.
     const pendiente = SEMILLAS_A[1]!;
@@ -1871,7 +1873,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     await decision(TOKEN_REVISOR_A, SEMILLAS_A[4]!.id, {
       action: 'REJECT',
       expectedVersion: 2,
-      reasonCode: 'DEMO_NOT_ELIGIBLE',
+      reasonCode: 'ACCESS_REJECTED',
     }).expect(409);
 
     const fila = harness.store.accessRequests.find((row) => row['id'] === SEMILLAS_A[4]!.id);
@@ -1884,12 +1886,12 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
       decision(TOKEN_REVISOR_A, SEMILLAS_A[0]!.id, {
         action: 'APPROVE',
         expectedVersion: 1,
-        reasonCode: 'DEMO_ELIGIBLE',
+        reasonCode: 'ACCESS_APPROVED',
       }),
       decision(TOKEN_REVISOR_A_OTRO, SEMILLAS_A[0]!.id, {
         action: 'REJECT',
         expectedVersion: 1,
-        reasonCode: 'DEMO_NOT_ELIGIBLE',
+        reasonCode: 'ACCESS_REJECTED',
       }),
     ]);
 
@@ -1914,7 +1916,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     const respuesta = await decision(TOKEN_REVISOR_A, SEMILLA_B.id, {
       action: 'APPROVE',
       expectedVersion: 1,
-      reasonCode: 'DEMO_ELIGIBLE',
+      reasonCode: 'ACCESS_APPROVED',
     }).expect(404);
 
     expect(respuesta.body.code).toBe('ACCESS_REQUEST_REVIEW_NOT_FOUND');
@@ -1932,7 +1934,7 @@ describe('superficie institucional de revisión de solicitudes (SPEC 038 MP03-C1
     const respuesta = await decision(TOKEN_REVISOR_A, SEMILLAS_A[2]!.id, {
       action: 'APPROVE',
       expectedVersion: 1,
-      reasonCode: 'DEMO_ELIGIBLE',
+      reasonCode: 'ACCESS_APPROVED',
     }).expect(503);
 
     expect(respuesta.body.code).toBe('ACCESS_REQUEST_REVIEW_UNAVAILABLE');

@@ -1,4 +1,8 @@
 import { Module } from '@nestjs/common';
+import { HumanSessionModule } from '../human-auth/human-session.module';
+import { AccessProvisioningIdentityClient } from '../access-requests/access-provisioning-identity.client';
+import { InstitutionalAdministratorController } from './institutional-administrator.controller';
+import { InstitutionalAdministratorService } from './institutional-administrator.service';
 
 import { HospitalPatientViewerGuard } from './hospital-patient-viewer.guard';
 import { InstitutionalAuditService } from './institutional-audit.service';
@@ -42,8 +46,11 @@ import { MunicipalViewerGuard } from './municipal-viewer.guard';
  * Municipality y de las relaciones de cuidado sigue en sus guards de rol.
  */
 @Module({
-  controllers: [InstitutionalAuthController],
+  imports: [HumanSessionModule],
+  controllers: [InstitutionalAuthController, InstitutionalAdministratorController],
   providers: [
+    InstitutionalAdministratorService,
+    AccessProvisioningIdentityClient,
     InstitutionalAuditService,
     InstitutionalAuthService,
     InstitutionalSignInRateLimitGuard,

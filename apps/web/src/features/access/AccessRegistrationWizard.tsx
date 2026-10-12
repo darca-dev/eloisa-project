@@ -13,8 +13,8 @@ import {
   type AccessRequestOutcome,
   type AccessRequestPasswordProblem,
 } from './accessRequestClient';
-import { ACCESS_REGISTRATION_DEMOS } from './accessRequestDemoFixtures';
-import { precargarUsuarioTest } from './accessRegistrationTestUser';
+
+
 import {
   cambiarPaso,
   construirCuerpo,
@@ -45,7 +45,7 @@ import styles from './accessRegistration.module.css';
  * Inscripción guiada de cinco pasos por perfil (SPEC 038, MP04-C3).
  *
  * SELECTOR y RAMA, nada más. Cada rama muestra sus cinco títulos exactos, su
- * barra `Paso N de 5`, sus cinco pasos navegables, tres usuarios test por perfil y la
+ * barra `Paso N de 5`, sus cinco pasos navegables y la
  * iconografía de Elí de la referencia (guía en cabecera, escucha por paso,
  * agradece en el cierre y burbuja flotante con saludo).
  *
@@ -91,6 +91,7 @@ const MENSAJE_AUTORIZACION =
 const MENSAJES_SALIDA: Readonly<
   Record<Exclude<AccessRequestOutcome['kind'], 'accepted' | 'invalid'>, string>
 > = {
+  conflict: 'No se puede completar este registro. Si ya tiene una cuenta, inicie sesión o contacte al administrador. Para repetir una solicitud use el mismo navegador y los mismos datos.',
   forbidden:
     'La solicitud no se envió porque su navegador no está en un origen habilitado por la plataforma.',
   rateLimited:
@@ -108,8 +109,8 @@ const AUTORIZACION_POR_PERFIL: Readonly<Record<RegistrationProfile, string>> = {
 const TEMAS_AYUDA: readonly EliTopic[] = [
   {
     id: 'datos-registro',
-    question: '¿Para qué son los botones de usuarios test?',
-    answer: 'Precargan los campos y una contraseña para probar el registro. No envían la solicitud ni aprueban el acceso.',
+    question: '¿Qué datos debo registrar?',
+    answer: 'Complete sus propios datos. El Hospital revisará la solicitud antes de habilitar el acceso.',
   },
   {
     id: 'aprobacion-hospital',
@@ -141,7 +142,7 @@ export function AccessRegistrationWizard(): ReactNode {
   const [sinContacto, setSinContacto] = useState(false);
   const [sinAutorizacion, setSinAutorizacion] = useState(false);
   const [campoInvalido, setCampoInvalido] = useState<string | null>(null);
-  const [testUserError, setTestUserError] = useState(false);
+
 
   const tituloRef = useRef<HTMLHeadingElement | null>(null);
   const bloqueoRef = useRef<BloqueoEnvio | null>(null);
@@ -180,7 +181,7 @@ export function AccessRegistrationWizard(): ReactNode {
   }
 
   function limpiarErrores(): void {
-    setTestUserError(false);
+
     setPasswordProblem(null);
     setSinContacto(false);
     setSinAutorizacion(false);
@@ -310,25 +311,6 @@ export function AccessRegistrationWizard(): ReactNode {
           : [...sinNinguna, codigo],
       },
     });
-  }
-
-  function cargarUsuarioTest(id: string): void {
-    if (rama === null || enviando) {
-      return;
-    }
-
-    try {
-      const precarga = precargarUsuarioTest(rama, id);
-      if (precarga === null) {
-        return;
-      }
-      setEstado(precarga);
-      setOutcome(null);
-      setVerPassword(false);
-      limpiarErrores();
-    } catch {
-      setTestUserError(true);
-    }
   }
 
   function senalar(campo: string): void {
@@ -523,9 +505,7 @@ export function AccessRegistrationWizard(): ReactNode {
 
   const meta = ramaDe(rama.perfil);
   const tituloPaso = meta.pasos[rama.paso - 1]?.titulo ?? '';
-  const fixtures = ACCESS_REGISTRATION_DEMOS.filter(
-    (fixture) => fixture.perfil === rama.perfil,
-  );
+
   const comunes = {
     campoInvalido,
     enviando,
@@ -601,7 +581,10 @@ export function AccessRegistrationWizard(): ReactNode {
             <p className={styles.confirmation} role="status">
               Solicitud registrada. Su referencia es <strong>{outcome.accepted.reference}</strong>,
               y esa misma referencia es el nombre de usuario que usará para entrar. Estado:{' '}
-              <strong>{outcome.accepted.status}</strong>. Conserve esta referencia. Todavía NO puede iniciar sesión: el Hospital debe aprobar la solicitud antes de que pueda entrar. Esta pantalla no crea sesión ni cuenta.
+              <strong>{outcome.accepted.status === 'PENDING' ? 'Pendiente de revisión' : outcome.accepted.status === 'APPROVED_PENDING_PROVISIONING' ? 'Aprobada; creación de acceso pendiente' : 'Creación de acceso no confirmada'}</strong>.
+              {' '}Conserve esta referencia. Todavía no puede iniciar sesión. {outcome.accepted.status === 'PENDING'
+                ? 'El Hospital debe aprobar la solicitud antes de que pueda entrar.'
+                : 'El Hospital debe completar la creación del acceso antes de que pueda entrar.'}
             </p>
             <p className={styles.note}>
               Una solicitud no concede acceso hasta la revisión institucional.
@@ -619,26 +602,7 @@ export function AccessRegistrationWizard(): ReactNode {
             </div>
             <p className={styles.etiquetaSeccion}>{meta.pasos[rama.paso - 1]?.seccion ?? ''}</p>
 
-            <section className={styles.demo} aria-labelledby="registro-demo-title">
-              <h2 id="registro-demo-title">Precargar usuario test</h2>
-              <p>Complete los campos de este perfil con un usuario test. La contraseña también se precarga; puede verla en el paso Confirmación antes de enviar.</p>
-              <div className={styles.demoActions}>
-                {fixtures.map((fixture) => (
-                  <button
-                    className={styles.demoButton}
-                    disabled={enviando}
-                    key={fixture.id}
-                    onClick={() => cargarUsuarioTest(fixture.id)}
-                    type="button"
-                  >
-                    {fixture.label}
-                  </button>
-                ))}
-              </div>
-              {testUserError ? (
-                <p role="alert">No fue posible preparar el usuario test. Puede completar los campos manualmente.</p>
-              ) : null}
-            </section>
+
 
             {rama.paso === 1 ? (
               <div className={styles.form}>
@@ -817,7 +781,7 @@ export function AccessRegistrationWizard(): ReactNode {
                 <ResumenExpediente base={rama.base} perfil={rama.perfil} reg={rama.reg} />
 
                 <div className={styles.field}>
-                  <label htmlFor={idDeCampo('password')}>Contraseña de prueba</label>
+                  <label htmlFor={idDeCampo('password')}>Contraseña</label>
                   <div className={styles.passwordRow}>
                     <input
                       aria-describedby={`registro-password-ayuda${

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { branding, platformNameInSentence } from '@/config/branding';
+import { InstitutionalRegistrationLink } from '@/features/auth/InstitutionalRegistrationLink';
 import styles from './hub.module.css';
 
 /**
@@ -88,6 +89,7 @@ export function HubAccessPortal(): ReactNode {
               </p>
               <div className={styles.cardActions}>
                 <Link href="/hospital" className={styles.btnPrimary}>Ingresar al Hospital</Link>
+                <InstitutionalRegistrationLink experience="hospital" className={styles.btnSecondary} />
               </div>
             </article>
 
@@ -104,6 +106,7 @@ export function HubAccessPortal(): ReactNode {
               </p>
               <div className={styles.cardActions}>
                 <Link href="/municipality" className={styles.btnPrimary}>Ingresar a Alcaldía</Link>
+                <InstitutionalRegistrationLink experience="municipality" className={styles.btnSecondary} />
               </div>
             </article>
           </div>

@@ -50,7 +50,7 @@ describe('ProfesionalPortal — vista sin datos', () => {
     expect(html).toContain('No tiene visitas asignadas en esta ventana.');
     expect(html).toContain('Sin visitas asignadas en esta ventana');
     expect(html).toContain('Visitas (0)');
-    expect(html).toContain('aria-pressed="false"');
+    expect(html).toContain('aria-pressed="true"');
 
     // Las visitas estáticas de antes de MP04 ya no existen en ninguna parte.
     for (const estatica of ['VIS-001', 'VIS-002', 'Mercedes Roa', 'Pedro Nel', 'Calle 14']) {
@@ -70,10 +70,10 @@ describe('ProfesionalPortal — vista sin datos', () => {
     expect(html).not.toContain('3 visitas programadas');
   });
 
-  it('solo conserva la entrada de liquidaciones, sin montarla por defecto', () => {
+  it('no muestra pagos ficticios en la portada real', () => {
     const html = renderToStaticMarkup(<ProfesionalPortal />);
 
-    expect(html).toContain('Mis pagos y liquidaciones');
+    expect(html).not.toContain('Mis pagos y liquidaciones');
     expect(html).not.toContain('data-liquidations-demo-local="visitador"');
   });
 });

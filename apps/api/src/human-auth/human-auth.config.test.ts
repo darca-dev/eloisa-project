@@ -85,6 +85,17 @@ function variables(
 
 describe('Configuración del acceso humano', () => {
   describe('emisor local y allowlist de host', () => {
+    it('admite merdn.localhost exacto solo en entornos locales', () => {
+      for (const name of ['development', 'test'] as const) {
+        expect(loadHumanAuthConfig(variables({ [HUMAN_AUTH_ENV.issuer]: 'http://merdn.localhost:8081/realms/merdn-local' }), entorno(name)).enabled).toBe(true);
+      }
+      for (const issuer of ['http://merdn.localhost:8081/realms/merdn-local', 'https://merdn.localhost:8081/realms/merdn-local']) {
+        expect(() => loadHumanAuthConfig(variables({ [HUMAN_AUTH_ENV.issuer]: issuer }), entorno('mvp'))).toThrow(HumanAuthConfigurationError);
+      }
+      for (const host of ['merdn.localhost.invalid', 'other.localhost', 'prefix-merdn.localhost']) {
+        expect(() => loadHumanAuthConfig(variables({ [HUMAN_AUTH_ENV.issuer]: `http://${host}:8081/realms/merdn-local` }), entorno('test'))).toThrow(HumanAuthConfigurationError);
+      }
+    });
     it('admite el emisor local sin TLS en development y en test', () => {
       for (const nombre of ['development', 'test'] as const) {
         const config = loadHumanAuthConfig(variables(), entorno(nombre));

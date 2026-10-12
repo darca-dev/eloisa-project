@@ -41,8 +41,11 @@ import {
   HttpStatus,
   Logger,
   Post,
+  Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import { type Request, type Response } from 'express';
 import {
   ApiAcceptedResponse,
   ApiBadRequestResponse,
@@ -52,9 +55,11 @@ import {
   ApiServiceUnavailableResponse,
   ApiTags,
   ApiTooManyRequestsResponse,
+  ApiResponse,
 } from '@nestjs/swagger';
 
 import { ACCESS_REQUEST_ERROR_CODES } from './access-request.contract';
+import { accessRegistrationAttempt, accessRegistrationAttemptCookie } from './access-registration-attempt';
 import {
   AccessRequestAcceptedDto,
   AccessRequestErrorDto,
@@ -77,6 +82,16 @@ export class AccessRequestsController {
 
   constructor(private readonly service: AccessRequestsService) {}
 
+  @Post('registration-attempt')
+  @HttpCode(204)
+  @UseGuards(AccessRequestOriginGuard, AccessRequestRateLimitGuard)
+  @ApiOperation({ summary: 'Prepara el intento de registro personal mediante cookie HttpOnly' })
+  @ApiResponse({ status: 204, description: 'Intento preparado; no crea persona, cuenta ni solicitud.' })
+  public attempt(@Req() request: Request, @Res({ passthrough: true }) response: Response): void {
+    response.setHeader('Cache-Control', 'private, no-store');
+    response.setHeader('Set-Cookie', accessRegistrationAttemptCookie(request.headers.cookie));
+  }
+
   @Post()
   @HttpCode(HttpStatus.ACCEPTED)
   @UseGuards(AccessRequestOriginGuard, AccessRequestRateLimitGuard)
@@ -85,12 +100,13 @@ export class AccessRequestsController {
       'Registra el interés de una persona en el entorno funcional y devuelve una ' +
       'referencia opaca.',
     description:
-      'Crea o recupera de forma idempotente una persona ficticia del tenant del ' +
+      'Crea una persona nueva del tenant del ' +
       'servidor y una solicitud en estado PENDING, y prepara su identidad en el proveedor ' +
       'como un usuario DESHABILITADO. No crea paciente, perfil, relación ni asignación, y ' +
       'no otorga acceso a ningún servicio: la cuenta solo se activa cuando una revisión ' +
-      'apueba la solicitud. Repetir la petición con la misma persona y el mismo perfil ' +
-      'devuelve la misma referencia.',
+      'aprueba la solicitud. Repetir una solicitud abierta exige el mismo intento ' +
+      'propietario vigente, perfil y datos; no reemplaza su contraseña. Un documento ' +
+      'existente no autoriza vincular ni recuperar una cuenta.',
   })
   @ApiBody({ type: AccessRequestSubmissionDto })
   @ApiAcceptedResponse({
@@ -124,9 +140,10 @@ export class AccessRequestsController {
       'tenant, proveedor ni existencia de datos.',
     type: AccessRequestErrorDto,
   })
-  public async submit(@Body() body: unknown): Promise<AccessRequestAcceptedDto> {
+  public async submit(@Body() body: unknown, @Req() request: Request, @Res({ passthrough: true }) response: Response): Promise<AccessRequestAcceptedDto> {
+    response.setHeader('Cache-Control', 'private, no-store');
     try {
-      const result = await this.service.submit(body, new Date());
+      const result = await this.service.submit(body, new Date(), accessRegistrationAttempt(request.headers.cookie));
 
       if (!result.ok) {
         /*

@@ -1,3 +1,4 @@
+import { institutionalAuditActor } from '../institutional-auth/institutional-audit-actor';
 /**
  * Contrato de la superficie hospitalaria de Pacientes
  * (TASK-HOSPITAL-CORE-01 §8).
@@ -684,6 +685,7 @@ export type HospitalOperationsEventType =
 export interface HospitalOperationsAuditInput {
   readonly tenantId: string;
   /** Identificador OPACO de la identidad institucional, o `null` si no la hubo. */
+  readonly humanAccountId?: string;
   readonly identityId: string | null;
   readonly role: InstitutionalRoleCode | null;
   readonly eventType: HospitalOperationsEventType;
@@ -709,7 +711,7 @@ export interface HospitalOperationsAuditInput {
 export function buildHospitalOperationsAudit(input: HospitalOperationsAuditInput): {
   readonly tenantId: string;
   readonly eventType: HospitalOperationsEventType;
-  readonly actorType: 'INSTITUTIONAL_IDENTITY' | 'UNAUTHENTICATED';
+  readonly actorType: 'HUMAN_ACCOUNT' | 'INSTITUTIONAL_IDENTITY' | 'UNAUTHENTICATED';
   readonly actorUserId: string | null;
   readonly actorRole: InstitutionalRoleCode | null;
   readonly resourceType: HospitalOperationsResource;
@@ -724,10 +726,7 @@ export function buildHospitalOperationsAudit(input: HospitalOperationsAuditInput
   return {
     tenantId: input.tenantId,
     eventType: input.eventType,
-    actorType: input.identityId === null ? 'UNAUTHENTICATED' : 'INSTITUTIONAL_IDENTITY',
-    actorUserId: input.identityId,
-    // El rol solo acompaña a un actor institucional: la base lo exige.
-    actorRole: input.identityId === null ? null : input.role,
+    ...institutionalAuditActor(input),
     resourceType: input.resourceType,
     /*
      * Una DENEGACIÓN nunca nombra el recurso: hacerlo permitiría deducir qué

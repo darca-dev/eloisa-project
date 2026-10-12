@@ -38,11 +38,11 @@ describe('/hospital — ruta protegida y modo demo (spec 022, spec 038)', () => 
     }
   });
 
-  it('el modo demo solo se habilita mediante configuración de servidor explícita', () => {
+  it('la ruta real usa autenticación humana sin activar demos', () => {
     const codigo = codigoRuta();
 
-    expect(codigo).toContain('process.env.MERDN_HOSPITAL_DEMO_LOCAL');
-    expect(codigo).toContain("=== 'true'");
+    expect(codigo).toContain('administracionHumana');
+    expect(codigo).not.toContain('MERDN_HOSPITAL_DEMO_LOCAL');
   });
 
   it('por defecto resuelve la sesión del servidor: sin sesión no monta el panel', () => {
@@ -58,14 +58,14 @@ describe('/hospital — ruta protegida y modo demo (spec 022, spec 038)', () => 
     expect(html).not.toContain('Datos ficticios de demostración local');
   });
 
-  it('con la configuración server-side activa sí muestra la demostración local', () => {
+  it('una bandera heredada no convierte la ruta real en demostración', () => {
     process.env.MERDN_HOSPITAL_DEMO_LOCAL = 'true';
 
     try {
       const html = renderRuta();
 
-      expect(html).toContain('Datos ficticios de demostración local');
-      expect(html).toContain('data-hospital-content');
+      expect(html).not.toContain('Datos ficticios de demostración local');
+      expect(html).not.toContain('data-hospital-content');
     } finally {
       delete process.env.MERDN_HOSPITAL_DEMO_LOCAL;
     }

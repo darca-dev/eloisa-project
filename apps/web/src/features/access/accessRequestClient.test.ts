@@ -56,6 +56,8 @@ function fetchQueDevuelve(
   return (async (url: string, init: RequestInit) => {
     registro?.push({ url: String(url), init });
 
+    if (String(url).endsWith('/registration-attempt')) return { status: 204 } as Response;
+
     return {
       status,
       json: async () => body,
@@ -71,29 +73,41 @@ function fetchQueFalla(registro?: Llamada[]): typeof fetch {
 }
 
 describe('cliente de POST /api/v1/access-requests', () => {
+  it('presenta conflictos sin copiar detalles ni referencias ajenas', async () => {
+    expect(await submitAccessRequest(CUERPO, fetchQueDevuelve(409, { reference: RESPUESTA_202.reference })))
+      .toEqual({ kind: 'conflict' });
+  });
+
+  it.each(['PENDING', 'APPROVED_PENDING_PROVISIONING', 'PROVISIONING_FAILED'])('recupera referencia propia en %s', async status => {
+    expect(await submitAccessRequest(CUERPO, fetchQueDevuelve(202, { ...RESPUESTA_202, source: 'SELF_REGISTRATION', status })))
+      .toEqual({ kind: 'accepted', accepted: { ...RESPUESTA_202, source: 'SELF_REGISTRATION', status } });
+  });
   it('llama exactamente a la ruta pública de solicitudes de acceso', async () => {
     const llamadas: Llamada[] = [];
     await submitAccessRequest(CUERPO, fetchQueDevuelve(202, RESPUESTA_202, llamadas));
 
-    expect(llamadas).toHaveLength(1);
-    expect(llamadas[0]?.url).toBe(`${resolvePublicApiBaseUrl()}${RUTA}`);
-    expect(llamadas[0]?.init.method).toBe('POST');
-    expect(llamadas[0]?.init.headers).toEqual({ 'Content-Type': 'application/json' });
+    expect(llamadas).toHaveLength(2);
+    expect(llamadas[0]?.url).toBe(`${resolvePublicApiBaseUrl()}${RUTA}/registration-attempt`);
+    expect(llamadas[0]?.init.body).toBeUndefined();
+    expect(llamadas[1]?.url).toBe(`${resolvePublicApiBaseUrl()}${RUTA}`);
+    expect(llamadas[1]?.init.method).toBe('POST');
+    expect(llamadas[1]?.init.headers).toEqual({ 'Content-Type': 'application/json' });
   });
 
-  it('no envía cookie explícita ni credenciales', async () => {
+  it('envía la cookie HttpOnly mediante credentials include sin leerla ni copiarla', async () => {
     const llamadas: Llamada[] = [];
     await submitAccessRequest(CUERPO, fetchQueDevuelve(202, RESPUESTA_202, llamadas));
 
-    expect(llamadas[0]?.init.credentials).toBeUndefined();
-    expect(JSON.stringify(llamadas[0]?.init)).not.toContain('credentials');
+    expect(llamadas[0]?.init.credentials).toBe('include');
+    expect(llamadas[1]?.init.credentials).toBe('include');
+    expect(JSON.stringify(llamadas[1]?.init.headers)).not.toContain('Cookie');
   });
 
   it('envía los diez campos del contrato más el expediente de la rama', async () => {
     const llamadas: Llamada[] = [];
     await submitAccessRequest(CUERPO, fetchQueDevuelve(202, RESPUESTA_202, llamadas));
 
-    const enviado = JSON.parse(String(llamadas[0]?.init.body)) as Record<string, unknown>;
+    const enviado = JSON.parse(String(llamadas[1]?.init.body)) as Record<string, unknown>;
 
     expect(Object.keys(enviado).sort()).toStrictEqual([
       'birthDate',
@@ -119,7 +133,7 @@ describe('cliente de POST /api/v1/access-requests', () => {
 
     for (const llamada of llamadas) {
       expect(llamada.url).not.toContain('claveFicticia7');
-      expect(JSON.stringify(llamada.init.headers)).not.toContain('claveFicticia7');
+      expect(JSON.stringify(llamada.init.headers ?? {})).not.toContain('claveFicticia7');
     }
   });
 
@@ -127,7 +141,7 @@ describe('cliente de POST /api/v1/access-requests', () => {
     const llamadas: Llamada[] = [];
     await submitAccessRequest(CUERPO, fetchQueDevuelve(202, RESPUESTA_202, llamadas));
 
-    const enviado = String(llamadas[0]?.init.body);
+    const enviado = String(llamadas[1]?.init.body);
 
     for (const prohibido of [
       'token',
@@ -172,8 +186,8 @@ describe('cliente de POST /api/v1/access-requests', () => {
     const segundo = await submitAccessRequest(CUERPO, cliente);
 
     expect(segundo).toStrictEqual(primero);
-    expect(llamadas).toHaveLength(2);
-    expect((llamadas[0]?.init.body as string)).toBe(llamadas[1]?.init.body as string);
+    expect(llamadas).toHaveLength(4);
+    expect((llamadas[1]?.init.body as string)).toBe(llamadas[3]?.init.body as string);
   });
 
   it('asocia los campos señalados por un 400 sin repetir el valor recibido', async () => {
@@ -241,7 +255,7 @@ describe('cliente de POST /api/v1/access-requests', () => {
     }
   });
 
-  it('rechaza un 202 cuyo source no sea exactamente TEST_DATA', async () => {
+  it('rechaza un 202 cuyo source no sea TEST_DATA o SELF_REGISTRATION', async () => {
     /*
      * La procedencia declara que el registro es ficticio. Aceptar otra —o una
      * cadena vacía que «parece» no decir nada— permitiría presentar como dato de
@@ -310,13 +324,12 @@ describe('cliente de POST /api/v1/access-requests', () => {
       'sessionStorage',
       'indexedDB',
       'document.cookie',
-      'credentials:',
       'Authorization',
     ]) {
       expect(fuente).not.toContain(prohibido);
     }
 
-    expect(llamadas[0]?.url).not.toContain('?');
+    expect(llamadas[1]?.url).not.toContain('?');
   });
 });
 

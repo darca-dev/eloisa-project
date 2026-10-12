@@ -13,7 +13,6 @@ import {
   consultarSesionHumana,
   urlDeLoginHumano,
 } from '@/features/auth/humanSessionClient';
-import { LiquidationsDemo } from '@/features/liquidations/LiquidationsDemo';
 import {
   consultarWorklistProfesional,
   ventanaUtc,
@@ -93,19 +92,12 @@ export function ProfesionalPortal({
   ventana,
   onCerrarSesion,
 }: ProfesionalPortalProps): ReactNode {
-  const [seccionActiva, setSeccionActiva] = useState<'visitas' | 'liquidaciones'>('visitas');
   const [seleccion, setSeleccion] = useState<string | null>(null);
 
   const visitas = items;
   const seleccionada = visitas.find((item) => claveDe(item) === seleccion) ?? null;
 
   const abrirVisitas = (): void => {
-    setSeccionActiva('visitas');
-    setSeleccion(null);
-  };
-
-  const abrirLiquidaciones = (): void => {
-    setSeccionActiva('liquidaciones');
     setSeleccion(null);
   };
 
@@ -143,7 +135,7 @@ export function ProfesionalPortal({
       <main className={styles.mainContent}>
         <div className={styles.connectionBanner}>
           <span className={styles.connectionBadge}>
-            🏥 Dirigido y coordinado por: <strong>Hospital Departamental San Rafael (ESE)</strong>
+            Coordinación hospitalaria de visitas asignadas
           </span>
           <div style={{ display: 'flex', gap: 16 }}>
             <Link href="/" className={styles.linkBackHospital}>
@@ -172,25 +164,14 @@ export function ProfesionalPortal({
           <div className={styles.tabNav}>
             <button
               type="button"
-              className={`${styles.tabButton} ${seccionActiva === 'visitas' ? styles.tabButtonActive : ''}`}
-              aria-pressed={seccionActiva === 'visitas'}
+              className={`${styles.tabButton} ${styles.tabButtonActive}`}
+              aria-pressed={true}
               onClick={abrirVisitas}
             >
               Visitas ({String(total)})
             </button>
-            <button
-              type="button"
-              className={`${styles.tabButton} ${seccionActiva === 'liquidaciones' ? styles.tabButtonActive : ''}`}
-              aria-pressed={seccionActiva === 'liquidaciones'}
-              onClick={abrirLiquidaciones}
-            >
-              Mis pagos y liquidaciones
-            </button>
           </div>
 
-          {seccionActiva === 'liquidaciones' ? (
-            <LiquidationsDemo role="visitador" />
-          ) : (
             <div className={styles.visitsList}>
               {total === 0 ? (
                 <p className={styles.turnoTitle} role="status" aria-live="polite">
@@ -243,10 +224,9 @@ export function ProfesionalPortal({
                 );
               })}
             </div>
-          )}
         </div>
 
-        {seccionActiva === 'visitas' && seleccionada !== null ? (
+        {seleccionada !== null ? (
           <div className={styles.bitacoraPanel}>
             <div className={styles.bitacoraHeader}>
               <div>
@@ -342,9 +322,9 @@ export function ProfesionalPortalProtegido(): ReactNode {
     }
 
     /*
-     * El contexto `PROFESSIONAL` solo certifica perfil y afiliación; la
-     * ASIGNACIÓN la resuelve el servidor dentro de la propia worklist y su
-     * ausencia se pinta como lista vacía, nunca como denegación.
+     * La aprobación abre el portal neutro. El contexto PROFESSIONAL acredita
+     * participación clínica; su ausencia conserva una worklist vacía. El
+     * servidor exige afiliación y asignación para devolver cualquier visita.
      */
     const sesion = await consultarSesionHumana(CONTEXTOS_HUMANOS.profesional);
 
@@ -357,8 +337,8 @@ export function ProfesionalPortalProtegido(): ReactNode {
       return;
     }
 
-    if (sesion !== 'activa-con-contexto') {
-      setFase(sesion === 'activa-sin-contexto' ? 'sin-experiencia' : 'indisponible');
+    if (sesion !== 'activa-con-contexto' && sesion !== 'activa-sin-contexto') {
+      setFase('indisponible');
       return;
     }
 

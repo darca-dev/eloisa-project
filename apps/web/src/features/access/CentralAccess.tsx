@@ -28,8 +28,8 @@ import styles from "./centralAccessRedesign.module.css";
  * DOS RAMAS y ninguna más:
  *
  * - `accion=registro` monta `AccessRegistrationWizard`: inscripcion guiada por
- *   perfil (selector, tres pasos, confirmacion) que envia la solicitud de datos
- *   ficticios al endpoint persistente y muestra la referencia opaca que el
+ *   perfil (selector, cinco pasos, confirmación) que envía los datos declarados
+ *   al endpoint persistente y muestra la referencia opaca que el
  *   servidor devuelve;
  * - el resto es el SELECTOR de experiencias que MP04 exige. Al volver del flujo
  *   OIDC consulta `GET /api/v1/me/experiences` en el servidor —nunca en el
@@ -69,6 +69,8 @@ const EXPERIENCIAS_LABEL: Readonly<Record<ExperienciaAprobada, string>> = {
   PATIENT: "Paciente",
   CAREGIVER: "Cuidador",
   FIELD_PROFESSIONAL: "Visitador médico",
+  HOSPITAL: "Hospital",
+  MUNICIPALITY: "Alcaldía",
 };
 
 const AVISOS: Readonly<Record<Fase, string>> = {
@@ -80,12 +82,7 @@ const AVISOS: Readonly<Record<Fase, string>> = {
   redirigiendo: "Abriendo su espacio…",
 };
 
-export interface CentralAccessProps {
-  /** Recorrido de presentación fijo, habilitado únicamente por el servidor local. */
-  readonly modoDemoLocal?: boolean;
-}
-
-export function CentralAccess({ modoDemoLocal = false }: CentralAccessProps): ReactNode {
+export function CentralAccess(): ReactNode {
   const search = useSearchParams();
   const registration = search.get("accion") === "registro";
   const router = useRouter();
@@ -94,7 +91,6 @@ export function CentralAccess({ modoDemoLocal = false }: CentralAccessProps): Re
   const [experiencias, setExperiencias] = useState<
     readonly ExperienciaAprobada[]
   >([]);
-  const [perfilDemo, setPerfilDemo] = useState<ExperienciaAprobada | null>(null);
   const bloqueRef = useRef<HTMLDivElement | null>(null);
 
   const consultar = useCallback(async (): Promise<void> => {
@@ -126,12 +122,12 @@ export function CentralAccess({ modoDemoLocal = false }: CentralAccessProps): Re
   }, []);
 
   useEffect(() => {
-    if (registration || modoDemoLocal) {
+    if (registration) {
       return;
     }
 
     void consultar();
-  }, [consultar, modoDemoLocal, registration]);
+  }, [consultar, registration]);
 
   /*
    * La redirección va en un EFECTO aparte y no dentro del `switch`: hacer
@@ -139,7 +135,7 @@ export function CentralAccess({ modoDemoLocal = false }: CentralAccessProps): Re
    * navegación al render y deja la pantalla en un estado que ya no existe.
    */
   useEffect(() => {
-    if (modoDemoLocal || fase !== "redirigiendo" || experiencias.length !== 1) {
+    if (fase !== "redirigiendo" || experiencias.length !== 1) {
       return;
     }
 
@@ -148,14 +144,14 @@ export function CentralAccess({ modoDemoLocal = false }: CentralAccessProps): Re
     if (unica !== undefined) {
       router.replace(RUTAS_EXPERIENCIA[unica]);
     }
-  }, [fase, experiencias, modoDemoLocal, router]);
+  }, [fase, experiencias, router]);
 
   /* El Portal Central ya separa iniciar sesión de registrarse. */
   useEffect(() => {
-    if (!modoDemoLocal && fase === "sin-sesion") {
+    if (fase === "sin-sesion") {
       window.location.assign(urlDeLoginHumano());
     }
-  }, [fase, modoDemoLocal]);
+  }, [fase]);
 
   /*
    * FOCO: cuando el selector cambia de una pantalla a otra, el foco se mueve al
@@ -164,22 +160,17 @@ export function CentralAccess({ modoDemoLocal = false }: CentralAccessProps): Re
    * ahora hay una lista que elegir.
    */
   useEffect(() => {
-    if (modoDemoLocal || fase === "sin-sesion" || registration) {
+    if (fase === "sin-sesion" || registration) {
       return;
     }
 
     bloqueRef.current?.focus();
-  }, [fase, modoDemoLocal, registration]);
+  }, [fase, registration]);
 
   if (registration) {
     return <AccessRegistrationWizard />;
   }
 
-  const iniciarDemo = (): void => {
-    if (perfilDemo !== null) {
-      router.push(RUTAS_EXPERIENCIA[perfilDemo]);
-    }
-  };
 
   return (
     <main className={styles.page}>
@@ -219,36 +210,9 @@ export function CentralAccess({ modoDemoLocal = false }: CentralAccessProps): Re
             </div>
 
             <div className={styles.roleList} aria-label="Perfiles disponibles">
-              <button
-                aria-pressed={perfilDemo === "PATIENT"}
-                className={`${styles.roleChip} ${styles.patientChip} ${perfilDemo === "PATIENT" ? styles.roleChipSelected : ""}`}
-                disabled={!modoDemoLocal}
-                onClick={() => setPerfilDemo("PATIENT")}
-                type="button"
-              >
-                <span aria-hidden="true">P</span>
-                <strong>Paciente</strong>
-              </button>
-              <button
-                aria-pressed={perfilDemo === "CAREGIVER"}
-                className={`${styles.roleChip} ${styles.caregiverChip} ${perfilDemo === "CAREGIVER" ? styles.roleChipSelected : ""}`}
-                disabled={!modoDemoLocal}
-                onClick={() => setPerfilDemo("CAREGIVER")}
-                type="button"
-              >
-                <span aria-hidden="true">C</span>
-                <strong>Cuidador</strong>
-              </button>
-              <button
-                aria-pressed={perfilDemo === "FIELD_PROFESSIONAL"}
-                className={`${styles.roleChip} ${styles.visitorChip} ${perfilDemo === "FIELD_PROFESSIONAL" ? styles.roleChipSelected : ""}`}
-                disabled={!modoDemoLocal}
-                onClick={() => setPerfilDemo("FIELD_PROFESSIONAL")}
-                type="button"
-              >
-                <span aria-hidden="true">V</span>
-                <strong>Visitador médico</strong>
-              </button>
+              <div className={`${styles.roleChip} ${styles.patientChip}`}><span aria-hidden="true">P</span><strong>Paciente</strong></div>
+              <div className={`${styles.roleChip} ${styles.caregiverChip}`}><span aria-hidden="true">C</span><strong>Cuidador</strong></div>
+              <div className={`${styles.roleChip} ${styles.visitorChip}`}><span aria-hidden="true">V</span><strong>Visitador médico</strong></div>
             </div>
           </aside>
 
@@ -263,50 +227,24 @@ export function CentralAccess({ modoDemoLocal = false }: CentralAccessProps): Re
               Acceso para pacientes, cuidadores y visitadores médicos.
             </p>
 
-            {modoDemoLocal ? (
-              <>
-                <div className={styles.approvalNotice} role="status">
-                  <span aria-hidden="true" className={styles.approvalIcon}>i</span>
-                  <p>
-                    Seleccione un perfil para recorrer una demostración con información ficticia.
-                  </p>
-                </div>
-                <div className={styles.actions}>
-                  <button
-                    className={styles.primary}
-                    disabled={perfilDemo === null}
-                    onClick={iniciarDemo}
-                    type="button"
-                  >
-                    Iniciar sesión <span aria-hidden="true">→</span>
-                  </button>
-                </div>
-                <p className={styles.securityNote}>
-                  <span aria-hidden="true">◆</span>
-                  Esta demostración no consulta ni guarda información real.
-                </p>
-              </>
-            ) : null}
-
-            {modoDemoLocal ? null : (
               <div className={styles.liveRegion} aria-live="polite">
                 {AVISOS[fase] === "" ? null : <p>{AVISOS[fase]}</p>}
               </div>
-            )}
 
-            {!modoDemoLocal && fase === "sin-sesion" ? (
+
+            {fase === "sin-sesion" ? (
               <div className={styles.statusPanel} ref={bloqueRef} tabIndex={-1}>
                 Abriendo el formulario seguro de correo y contraseña…
               </div>
             ) : null}
 
-            {!modoDemoLocal && fase === "consultando" ? (
+            {fase === "consultando" ? (
               <div className={styles.statusPanel} ref={bloqueRef} tabIndex={-1}>
                 Comprobando sus experiencias aprobadas…
               </div>
             ) : null}
 
-            {!modoDemoLocal && fase === "redirigiendo" ? (
+            {fase === "redirigiendo" ? (
               <div className={styles.statusPanel} ref={bloqueRef} tabIndex={-1}>
                 Abriendo su espacio… Si la página no cambia,{" "}
                 <a href={RUTAS_EXPERIENCIA[experiencias[0] ?? "PATIENT"]}>
@@ -316,7 +254,7 @@ export function CentralAccess({ modoDemoLocal = false }: CentralAccessProps): Re
               </div>
             ) : null}
 
-            {!modoDemoLocal && fase === "selector" ? (
+            {fase === "selector" ? (
               <div className={styles.choices} ref={bloqueRef} tabIndex={-1}>
                 {experiencias.map((experiencia) => (
                   <Link
@@ -334,7 +272,7 @@ export function CentralAccess({ modoDemoLocal = false }: CentralAccessProps): Re
               </div>
             ) : null}
 
-            {!modoDemoLocal && fase === "denegado" ? (
+            {fase === "denegado" ? (
               <div ref={bloqueRef} tabIndex={-1}>
                 <p className={styles.errorMessage}>
                   Su cuenta no tiene ninguna experiencia aprobada. Puede revisar
@@ -349,7 +287,7 @@ export function CentralAccess({ modoDemoLocal = false }: CentralAccessProps): Re
               </div>
             ) : null}
 
-            {!modoDemoLocal && fase === "indisponible" ? (
+            {fase === "indisponible" ? (
               <div ref={bloqueRef} tabIndex={-1}>
                 <p className={styles.errorMessage}>
                   No fue posible comprobar sus experiencias aprobadas. No se

@@ -94,6 +94,7 @@ const CODIGO_SIN_COMENTARIOS = FUENTES.map(({ archivo, codigo }) => ({
  * fachadas tienen su propia lista cerrada, más abajo.
  */
 const CLIENTES_AUTORIZADOS: readonly string[] = [
+  'accessPasswordRecoveryClient.ts',
   'hospitalAccessRequestsClient.ts',
   'hospitalAgendaClient.ts',
   'hospitalPatientsClient.ts',
@@ -217,6 +218,7 @@ const REFERENCIA_A_RED = /\bfetch\b/u;
  * es un adaptador en memoria que nunca delega a la red y se comprueba aparte.
  */
 const INYECCION_AUTORIZADA: readonly string[] = [
+  'AccessPasswordRecovery.tsx',
   'HospitalAccessRequests.tsx',
   'HospitalAdministration.tsx',
   'HospitalAgenda.tsx',
@@ -307,10 +309,10 @@ describe('T-06 — Alcance del módulo Hospital', () => {
 });
 
 describe('T-06B — Conexión autorizada: sesión, Pacientes, Profesionales, Agenda, Visitas y sesión humana', () => {
-  it('la red se llama EXACTAMENTE en los cuatro clientes autorizados', () => {
+  it('la red se llama EXACTAMENTE en los clientes autorizados, incluida recuperación 041', () => {
     /*
      * Igualdad exacta, no inclusión. Falla en los dos sentidos que importan:
-     * si aparece un consumidor de red nuevo, y si uno de los cuatro clientes
+     * si aparece un consumidor de red nuevo, y si uno de los clientes
      * deja de conectarse —lo que dejaría esta autorización obsoleta sin que
      * nadie se enterase—.
      */
@@ -439,7 +441,7 @@ describe('T-06B — Conexión autorizada: sesión, Pacientes, Profesionales, Age
 
     expect(solapamiento).toEqual([]);
     // Ambas siguen siendo CERRADAS, con su cardinalidad declarada.
-    expect(CLIENTES_AUTORIZADOS).toHaveLength(5);
+    expect(CLIENTES_AUTORIZADOS).toHaveLength(6);
     expect(FACHADAS_AUTORIZADAS).toHaveLength(2);
   });
 

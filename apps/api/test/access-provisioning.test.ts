@@ -78,6 +78,7 @@ const siguienteId = (): string => {
 function coincide(row: Row, where: Row): boolean {
   return Object.entries(where).every(([clave, esperado]) => {
     const actual = row[clave];
+    if (clave === 'OR') return (esperado as Row[]).some(condition => coincide(row, condition));
 
     if (esperado === null) {
       return actual === null || actual === undefined;
@@ -90,6 +91,7 @@ function coincide(row: Row, where: Row): boolean {
     if (typeof esperado === 'object') {
       const condicion = esperado as Row;
 
+      if ('lte' in condicion) return actual instanceof Date && actual.getTime() <= (condicion['lte'] as Date).getTime();
       if ('lt' in condicion) {
         return typeof actual === 'number' && actual < (condicion['lt'] as number);
       }
@@ -269,6 +271,14 @@ function crearCliente(
 }
 
 describe('cliente administrativo de identidad (MP04)', () => {
+  it.each([true, false, undefined])('confirma activación solamente cuando enabled es true (%s)', async enabled => {
+    conFetch(llamada => llamada.url.includes('/protocol/openid-connect/token')
+      ? respuesta(200, { access_token: 'tok', expires_in: 60 })
+      : respuesta(200, { ...usuarioRemoto(), enabled }));
+    const { cliente } = crearCliente(CONFIG);
+    if (enabled === true) await expect(cliente.verifyEnabledUser(SUBJECT, SOLICITUD)).resolves.toBeUndefined();
+    else await expect(cliente.verifyEnabledUser(SUBJECT, SOLICITUD)).rejects.toBeInstanceOf(AccessProvisioningIdentityError);
+  });
   it('crea el usuario DESHABILITADO con la referencia exacta y su marcador', async () => {
     const llamadas = conFetch(manejadorPorDefecto());
     const { cliente } = crearCliente(CONFIG);
@@ -326,6 +336,9 @@ describe('cliente administrativo de identidad (MP04)', () => {
     }
 
     const token = llamadas.find((l) => l.url.includes('/protocol/openid-connect/token'));
+    expect(token?.headers['Content-Type']).toBe('application/x-www-form-urlencoded');
+    const creation = llamadas.find(call => call.method === 'POST' && call.url.endsWith('/users'));
+    expect(creation?.headers['Content-Type']).toBe('application/json');
     expect(token?.body).not.toContain(CENTINELA);
     expect(token?.headers['Authorization']).toBeUndefined();
   });
@@ -721,6 +734,7 @@ function crearClienteFalso(): ClienteFalso {
       }
       return { id: SUBJECT };
     },
+    async verifyEnabledUser() {},
     async getUser(userId: string) {
       getUserCalls.push(userId);
       return { id: userId, marker: SOLICITUD };
@@ -754,6 +768,10 @@ function sembrarSolicitud(store: Store, cambios: Row = {}): void {
     provisioningStatus: 'PENDING',
     provisioningErrorCode: null,
     humanAccountId: null,
+    externalAuthIdentityId: null,
+    provisioningOperationId: null,
+    provisioningOperationExpiresAt: null,
+    source: 'SELF_REGISTRATION',
     version: 2,
     ...cambios,
   });
@@ -883,7 +901,8 @@ describe('saga de provisi\u00f3n de cuentas (MP04)', () => {
     // un v\u00ednculo apuntando a una cuenta que quiz\u00e1 no exista.
     expect(store.humanAccounts).toHaveLength(1);
     expect(store.externalAuthIdentities).toHaveLength(0);
-    expect(store.accessRequests[0]?.['humanAccountId']).toBeNull();
+    expect(store.accessRequests[0]?.['humanAccountId']).toBe(store.humanAccounts[0]?.['id']);
+    expect(store.accessRequests[0]?.['externalAuthIdentityId']).toBeNull();
 
     expect(store.auditEvents.map((e) => e['eventType'])).toContain(
       'ACCESS_IDENTITY_PREPARATION_FAILED',
@@ -907,8 +926,10 @@ describe('saga de provisi\u00f3n de cuentas (MP04)', () => {
       status: 'DISABLED',
     });
     store.accessRequests[0]!['humanAccountId'] = cuenta;
+    const bindingId = siguienteId();
+    if (store.accessRequests[0]) store.accessRequests[0]['externalAuthIdentityId'] = bindingId;
     store.externalAuthIdentities.push({
-      id: siguienteId(),
+      id: bindingId,
       tenantId: TENANT,
       humanAccountId: cuenta,
       issuer: CONFIG.issuer,
@@ -954,8 +975,10 @@ describe('saga de provisi\u00f3n de cuentas (MP04)', () => {
     const cuenta = siguienteId();
     store.humanAccounts.push({ id: cuenta, tenantId: TENANT, personId: PERSONA, status: 'DISABLED' });
     store.accessRequests[0]!['humanAccountId'] = cuenta;
+    const bindingId = siguienteId();
+    if (store.accessRequests[0]) store.accessRequests[0]['externalAuthIdentityId'] = bindingId;
     store.externalAuthIdentities.push({
-      id: siguienteId(),
+      id: bindingId,
       tenantId: TENANT,
       humanAccountId: cuenta,
       issuer: CONFIG.issuer,
@@ -974,7 +997,7 @@ describe('saga de provisi\u00f3n de cuentas (MP04)', () => {
     expect(store.professionalAffiliations).toHaveLength(0);
   });
 
-  it('FIELD_PROFESSIONAL crea perfil y aficiaci\u00f3n, nunca asignaci\u00f3n', async () => {
+  it('FIELD_PROFESSIONAL aprueba el portal sin fabricar perfil ni afiliación', async () => {
     const store = crearStore();
     sembrarSolicitud(store, { requestedProfile: 'FIELD_PROFESSIONAL' });
     const { servicio } = montarServicio(store);
@@ -982,8 +1005,10 @@ describe('saga de provisi\u00f3n de cuentas (MP04)', () => {
     const cuenta = siguienteId();
     store.humanAccounts.push({ id: cuenta, tenantId: TENANT, personId: PERSONA, status: 'DISABLED' });
     store.accessRequests[0]!['humanAccountId'] = cuenta;
+    const bindingId = siguienteId();
+    if (store.accessRequests[0]) store.accessRequests[0]['externalAuthIdentityId'] = bindingId;
     store.externalAuthIdentities.push({
-      id: siguienteId(),
+      id: bindingId,
       tenantId: TENANT,
       humanAccountId: cuenta,
       issuer: CONFIG.issuer,
@@ -996,11 +1021,9 @@ describe('saga de provisi\u00f3n de cuentas (MP04)', () => {
       AHORA,
     );
 
-    expect(store.professionalProfiles).toHaveLength(1);
-    expect(store.professionalProfiles[0]?.['professionCode']).toBe('MEDICINA_GENERAL');
-    expect(store.professionalAffiliations).toHaveLength(1);
-    expect(store.professionalAffiliations[0]?.['engagementType']).toBe('THIRD_PARTY');
-    expect(store.professionalAffiliations[0]?.['status']).toBe('ACTIVE');
+    expect(store.professionalProfiles).toHaveLength(0);
+    expect(store.professionalAffiliations).toHaveLength(0);
+    expect(store.accessRequests[0]?.['status']).toBe('APPROVED');
     expect(store.patients).toHaveLength(0);
   });
 
@@ -1012,8 +1035,10 @@ describe('saga de provisi\u00f3n de cuentas (MP04)', () => {
     const cuenta = siguienteId();
     store.humanAccounts.push({ id: cuenta, tenantId: TENANT, personId: PERSONA, status: 'DISABLED' });
     store.accessRequests[0]!['humanAccountId'] = cuenta;
+    const bindingId = siguienteId();
+    if (store.accessRequests[0]) store.accessRequests[0]['externalAuthIdentityId'] = bindingId;
     store.externalAuthIdentities.push({
-      id: siguienteId(),
+      id: bindingId,
       tenantId: TENANT,
       humanAccountId: cuenta,
       issuer: CONFIG.issuer,
@@ -1110,7 +1135,7 @@ describe('saga de provisi\u00f3n de cuentas (MP04)', () => {
 
     expect(resultado).toMatchObject({
       ok: false,
-      code: ACCESS_PROVISIONING_ERROR_CODES.identityNotFound,
+      code: ACCESS_PROVISIONING_ERROR_CODES.unavailable,
     });
     expect(identity.getUserCalls).toHaveLength(0);
     // Una solicitud revocada no vuelve a ser aprobada por la saga: la escritura
@@ -1149,8 +1174,10 @@ describe('saga de provisi\u00f3n de cuentas (MP04)', () => {
     const cuenta = siguienteId();
     store.humanAccounts.push({ id: cuenta, tenantId: TENANT, personId: PERSONA, status: 'DISABLED' });
     store.accessRequests[0]!['humanAccountId'] = cuenta;
+    const bindingId = siguienteId();
+    if (store.accessRequests[0]) store.accessRequests[0]['externalAuthIdentityId'] = bindingId;
     store.externalAuthIdentities.push({
-      id: siguienteId(),
+      id: bindingId,
       tenantId: TENANT,
       humanAccountId: cuenta,
       issuer: CONFIG.issuer,
@@ -1188,8 +1215,10 @@ describe('saga de provisi\u00f3n de cuentas (MP04)', () => {
       { id: siguienteId(), tenantId: TENANT, humanAccountId: cuenta, revokedAt: null },
       { id: siguienteId(), tenantId: TENANT, humanAccountId: 'otra-cuenta', revokedAt: null },
     );
+    const bindingId = siguienteId();
+    if (store.accessRequests[0]) store.accessRequests[0]['externalAuthIdentityId'] = bindingId;
     store.externalAuthIdentities.push({
-      id: siguienteId(),
+      id: bindingId,
       tenantId: TENANT,
       humanAccountId: cuenta,
       issuer: CONFIG.issuer,
@@ -1228,8 +1257,10 @@ describe('saga de provisi\u00f3n de cuentas (MP04)', () => {
     const cuenta = siguienteId();
 
     store.humanAccounts.push({ id: cuenta, tenantId: TENANT, personId: PERSONA, status: 'ACTIVE' });
+    const bindingId = siguienteId();
+    if (store.accessRequests[0]) store.accessRequests[0]['externalAuthIdentityId'] = bindingId;
     store.externalAuthIdentities.push({
-      id: siguienteId(),
+      id: bindingId,
       tenantId: TENANT,
       humanAccountId: cuenta,
       issuer: CONFIG.issuer,

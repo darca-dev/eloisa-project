@@ -100,7 +100,7 @@ export class HospitalAccessReviewerGuard implements CanActivate {
     let principal: InstitutionalPrincipal | null;
 
     try {
-      principal = await this.auth.validate(token, new Date());
+      principal = await this.auth.validate(token, new Date(), request.headers.cookie, 'HOSPITAL_ACCESS_REVIEWER');
     } catch (error) {
       if (error instanceof RuntimeContextUnavailableError) {
         /*
@@ -171,6 +171,8 @@ export class HospitalAccessReviewerGuard implements CanActivate {
           {
             tenantId: principal.tenantId,
             identityId: principal.identityId,
+
+            ...(principal.humanAccountId === undefined ? {} : { humanAccountId: principal.humanAccountId }),
             role: principal.role,
             endpoint: endpointOf(request),
             correlationId: correlationOf(request),

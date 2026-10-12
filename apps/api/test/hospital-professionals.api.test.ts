@@ -538,7 +538,19 @@ describe.skipIf(!puedeEjecutarse)('API Hospital · Profesionales', () => {
         birthDate: new Date(Date.UTC(1950, 3, 10)),
       });
 
-      const futuro = new Date(Date.now() + 60 * 60 * 1000);
+      // Una hora después puede ser mañana UTC. Comprobar por separado la
+      // actividad del día y la próxima cita evita esa dependencia horaria.
+      const hoy = new Date();
+      hoy.setUTCHours(0, 0, 0, 0);
+      const futuro = new Date(hoy.getTime() + 25 * 60 * 60 * 1000);
+
+      await crearCitaAsignada(prisma, {
+        tenantId,
+        patientId: paciente.patientId,
+        professionalId: medica,
+        identityId,
+        scheduledStart: hoy,
+      });
 
       await crearCitaAsignada(prisma, {
         tenantId,

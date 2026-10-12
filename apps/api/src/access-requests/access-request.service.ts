@@ -1,39 +1,6 @@
-/**
- * Registro de solicitudes de acceso (SPEC 038; MP02-C1, ampliado por MP04).
- *
- * QUÉ HACE EXACTAMENTE: registra el INTERÉS de una persona en el entorno
- * funcional. Crea o recupera una `Person` ficticia del tenant resuelto en el
- * servidor y una fila `AccessRequest` en estado `PENDING`, devuelve una
- * referencia opaca y —MP04— prepara la identidad de esa solicitud en el
- * proveedor: una `HumanAccount` DESHABILITADA y un usuario externo también
- * deshabilitado, enlazados por el `sub` real.
- *
- * QUÉ NO HACE —y no debe crecer sin un paquete aprobado—:
- * - NO crea `Patient`, `ProfessionalProfile`, relación, sesión, token, cookie ni
- *   asignación, y NO activa la cuenta que prepara. La activación —y con ella el
- *   acceso— es exclusiva de la aprobación y de su saga.
- * - NO decide ni revisa. `status` y `provisioningStatus` los fija el servidor y
- *   solo nacen; ningún método de este servicio los transiciona.
- * - NO acepta tenant del cliente. `tenantId` sale siempre de
- *   `TenantContextService` y cada lectura y escritura ocurre dentro de
- *   `PrismaService.withTenant()`.
- * - NO consulta Row Level Security, roles, permisos ni Audit genérico.
- * - NO conserva la contraseña. Vive el tiempo de una llamada a la preparación y
- *   no se copia a este servicio, a un log, a una excepción ni a la respuesta.
- *
- * IDEMPOTENCIA: la clave natural es `(tenantId, persona, requestedProfile)`. Si
- * ya existe una solicitud ABIERTA, la respuesta repite la MISMA referencia en
- * lugar de crear una segunda fila. Esa no es una cortesía: la migración declara
- * un índice único parcial por persona y perfil, de modo que la carrera de dos
- * peticiones simultáneas con la misma persona se resuelve en la base de datos y
- * el perdedor debe releer, no reintentar a ciegas. La preparación de identidad
- * es idempotente por el mismo motivo: si la solicitud ya tiene cuenta, no vuelve
- * a crear usuario ni a llamar al proveedor.
- *
- * LA `Person` EXISTE SIN `Patient`. Es deliberado: el formulario del entorno
- * funcional es más corto que el de inscripción y una `Person` sin `Patient` no es
- * un paciente. Confundir ambos modelos convertiría este paquete en un alta
- * clínica, que es exactamente lo que la especificación prohíbe.
+/** Public personal registration (041). Creates a new person and a disabled identity.
+ * An existing document is reusable only by its unexpired browser attempt and exact payload.
+ * Approval and participation remain separate, protected operations. Passwords never persist.
  */
 
 import { ConflictException, Injectable } from '@nestjs/common';
@@ -52,6 +19,8 @@ import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../database/prisma.service';
 import { type PrismaTransaction } from '../database/prisma-transaction';
 import { TenantContextService } from '../database/tenant-context.service';
+import { attemptHashesMatch, hashAttemptValue, isWellFormedAttemptToken } from '../human-auth/human-auth-attempt.crypto';
+import { ACCESS_REGISTRATION_ATTEMPT_SECONDS } from './access-registration-attempt';
 
 import {
   ACCESS_REQUEST_REFERENCE_PREFIX,
@@ -66,14 +35,8 @@ import {
 import { validateAccessRequestBody, type ValidatedAccessRequest } from './access-request.validation';
 import { AccessProvisioningService } from './access-provisioning.service';
 
-/**
- * Origen de toda solicitud creada por este paquete.
- *
- * Fijado por decisión OD-11 y NO configurable: un despliegue de demostración no
- * debe poder presentar datos ficticios como si fueran producción. Los paquetes
- * posteriores (MP05) introducirán los demás orígenes con su propio paquete.
- */
-const ACCESS_REQUEST_SOURCE = 'TEST_DATA' as const;
+/** Server-owned provenance for new registrations; historical rows remain unchanged. */
+const ACCESS_REQUEST_SOURCE = 'SELF_REGISTRATION' as const;
 
 /** Estado y aprovisionamiento iniciales. Los fija el servidor, no el cliente. */
 const INITIAL_STATUS = 'PENDING' as const;
@@ -111,7 +74,7 @@ const ENDPOINT = '/api/v1/access-requests';
  * toca ningún dato personal.
  */
 const SNAPSHOT_READ_SQL = [
-  '-- access-request snapshot read',
+  '/* access-request snapshot read */',
   'SELECT "registrationSchemaVersion", "registrationData"',
   'FROM "access_request"',
   'WHERE "id" = $1 AND "tenantId" = $2',
@@ -126,7 +89,7 @@ const SNAPSHOT_READ_SQL = [
  * parte del objeto validado y la columna además la prohíbe por CHECK.
  */
 const SNAPSHOT_WRITE_SQL = [
-  '-- access-request snapshot write',
+  '/* access-request snapshot write */',
   'UPDATE "access_request"',
   `SET "registrationSchemaVersion" = ${ACCESS_REQUEST_REGISTRATION_SCHEMA_VERSION}, "registrationData" = CAST($1 AS jsonb)`,
   'WHERE "id" = $2 AND "tenantId" = $3',
@@ -261,12 +224,14 @@ export class AccessRequestsService {
    * @param now  Instante del servidor. Define qué fecha de nacimiento es futura
    *             y queda persistido como `submittedAt`.
    */
-  public async submit(body: unknown, now: Date): Promise<AccessRequestSubmission> {
+  public async submit(body: unknown, now: Date, attemptToken: string | null): Promise<AccessRequestSubmission> {
     const validation = validateAccessRequestBody(body, now);
 
     if (!validation.ok) {
       return { ok: false, failure: { kind: 'INVALID_BODY', fields: validation.fields } };
     }
+    if (attemptToken === null || !isWellFormedAttemptToken(attemptToken)) this.registrationConflict();
+    const attemptHash = hashAttemptValue(attemptToken);
 
     // El tenant se resuelve UNA vez, en el servidor, antes de abrir la
     // transacción. El cliente no puede elegirlo ni insistir con otro.
@@ -277,7 +242,7 @@ export class AccessRequestsService {
     for (let attempt = 1; attempt <= MAX_UNIQUE_RACE_ATTEMPTS; attempt += 1) {
       try {
         persistido = await this.prisma.withTenant(tenantId, (tx) =>
-          this.persistWithin(tx, { tenantId, input: validation.value, now }),
+          this.persistWithin(tx, { tenantId, input: validation.value, now, attemptHash }),
         );
         break;
       } catch (error) {
@@ -356,9 +321,10 @@ export class AccessRequestsService {
       readonly tenantId: string;
       readonly input: ValidatedAccessRequest;
       readonly now: Date;
+      readonly attemptHash: string;
     },
   ): Promise<AccessRequestPersistResult | AccessRequestReplayConflict> {
-    const { tenantId, input, now } = context;
+    const { tenantId, input, now, attemptHash } = context;
 
     const person = await this.resolvePerson(tx, tenantId, input);
 
@@ -369,18 +335,14 @@ export class AccessRequestsService {
         requestedProfile: input.requestedProfile,
         status: { in: [...OPEN_ACCESS_REQUEST_STATUSES] },
       },
-      select: { id: true, reference: true, status: true, source: true },
+      select: { id: true, reference: true, status: true, source: true, registrationAttemptTokenHash: true, registrationAttemptExpiresAt: true },
     });
 
+    if (!person.created && open === null) this.registrationConflict();
     if (open !== null) {
-      /*
-       * Comparación material del expediente. La identidad (documento, nombres,
-       * contacto) conserva el comportamiento histórico: repetir con otros
-       * nombres devuelve la misma referencia sin corregir nada. El EXPEDIENTE
-       * sí se compara: ausente contra ausente es idéntico; cualquier otra
-       * diferencia —incluido presente contra ausente— es material y no puede
-       * resolverse ni creando (índice parcial) ni sobrescribiendo en silencio.
-       */
+      if (typeof open.registrationAttemptTokenHash !== 'string' || !attemptHashesMatch(open.registrationAttemptTokenHash, attemptHash)
+        || open.registrationAttemptExpiresAt === null || open.registrationAttemptExpiresAt.getTime() <= now.getTime()) this.registrationConflict();
+      /* Ownership and identity have already matched. Compare the declared profile payload. */
       const stored = await readAccessRequestSnapshot(tx, tenantId, open.id);
       const entrante = canonicalRegistration(input.registration);
       const existente = canonicalRegistration(stored === null ? null : stored.registrationData);
@@ -428,6 +390,8 @@ export class AccessRequestsService {
         status: INITIAL_STATUS,
         provisioningStatus: INITIAL_PROVISIONING_STATUS,
         source: ACCESS_REQUEST_SOURCE,
+        registrationAttemptTokenHash: attemptHash,
+        registrationAttemptExpiresAt: new Date(now.getTime() + ACCESS_REGISTRATION_ATTEMPT_SECONDS * 1000),
         reference: generateAccessRequestReference(),
         version: INITIAL_VERSION,
         submittedAt: now,
@@ -505,21 +469,29 @@ export class AccessRequestsService {
     tx: PrismaTransaction,
     tenantId: string,
     input: ValidatedAccessRequest,
-  ): Promise<{ readonly id: string }> {
+  ): Promise<{ readonly id: string; readonly created: boolean }> {
     const existing = await tx.person.findFirst({
       where: {
         tenantId,
         documentType: input.documentType,
         documentNumberNormalized: input.documentNumberNormalized,
       },
-      select: { id: true },
+      select: { id: true, givenNames: true, familyNames: true, birthDate: true, sexGenderCode: true, phone: true, email: true },
     });
 
     if (existing !== null) {
-      return existing;
+      await tx.$queryRaw`SELECT "id" FROM "person" WHERE "id" = ${existing.id}::uuid AND "tenantId" = ${tenantId}::uuid FOR UPDATE`;
+      const administrator = await tx.institutionalAdministratorRegistration.findFirst({
+        where: { tenantId, account: { personId: existing.id } }, select: { id: true },
+      });
+      if (administrator !== null) this.registrationConflict();
+      if (existing.givenNames !== input.givenNames || existing.familyNames !== input.familyNames
+        || existing.birthDate.getTime() !== input.birthDate.getTime() || existing.sexGenderCode !== input.sexGenderCode
+        || (existing.phone ?? null) !== (input.phone ?? null) || (existing.email ?? null) !== (input.email ?? null)) this.registrationConflict();
+      return { id: existing.id, created: false };
     }
 
-    return tx.person.create({
+    const created = await tx.person.create({
       data: {
         tenantId,
         documentType: input.documentType,
@@ -534,5 +506,10 @@ export class AccessRequestsService {
       },
       select: { id: true },
     });
+    return { id: created.id, created: true };
+  }
+
+  private registrationConflict(): never {
+    throw new ConflictException({ code: 'ACCESS_REQUEST_REGISTRATION_CONFLICT', message: 'No se puede completar este registro. Si ya tiene una cuenta, inicie sesión o contacte al administrador.' });
   }
 }

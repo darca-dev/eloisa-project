@@ -34,6 +34,7 @@ import { type PrismaClient } from '../src/generated/prisma/client';
 import {
   HUMAN_AUTH_ATTEMPT_COOKIE_NAME,
   HUMAN_SESSION_COOKIE_NAME,
+  HUMAN_SESSION_IDLE_SECONDS,
 } from '../src/human-auth/human-auth.contract';
 import { MalformedJsonFilter } from '../src/patients/malformed-json.filter';
 
@@ -208,7 +209,8 @@ describe.skipIf(!puedeEjecutarse)('Superficie humana y de relaciones', () => {
       expect(respuesta.headers['cache-control']).toBe('private, no-store');
       expect(respuesta.headers['vary']).toContain('Cookie');
       expect(typeof respuesta.body.expiresAt).toBe('string');
-      expect(respuesta.body.idleExpiresInSeconds).toBeLessThanOrEqual(1800);
+      expect(respuesta.body.idleExpiresInSeconds).toBeGreaterThan(0);
+      expect(respuesta.body.idleExpiresInSeconds).toBeLessThanOrEqual(HUMAN_SESSION_IDLE_SECONDS);
       expect(respuesta.body.contexts).toEqual([]);
 
       const cuerpo = JSON.stringify(respuesta.body);
@@ -268,8 +270,9 @@ describe.skipIf(!puedeEjecutarse)('Superficie humana y de relaciones', () => {
           nombre: 'inactividad',
           token: (
             await sesionViva({
-              createdAt: new Date(ahora - 2 * 60 * 60 * 1000),
-              lastUsedAt: new Date(ahora - 31 * 60 * 1000),
+              createdAt: new Date(ahora - (HUMAN_SESSION_IDLE_SECONDS + 120) * 1000),
+              lastUsedAt: new Date(ahora - (HUMAN_SESSION_IDLE_SECONDS + 60) * 1000),
+              expiresAt: new Date(ahora + 60 * 60 * 1000),
             })
           ).token,
         },

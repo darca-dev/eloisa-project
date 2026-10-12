@@ -85,7 +85,7 @@ export class CaregiverRelationshipManagerGuard implements CanActivate {
     let principal: InstitutionalPrincipal | null;
 
     try {
-      principal = await this.auth.validate(token, new Date());
+      principal = await this.auth.validate(token, new Date(), request.headers.cookie, 'CAREGIVER_RELATIONSHIP_MANAGER');
     } catch (error) {
       if (error instanceof RuntimeContextUnavailableError) {
         /*

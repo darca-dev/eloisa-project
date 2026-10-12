@@ -32,6 +32,7 @@ describe('documento OpenAPI', () => {
   it('documenta exactamente las rutas aprobadas', () => {
     expect(Object.keys(document.paths).sort()).toStrictEqual([
       '/api/v1/access-requests',
+      '/api/v1/access-requests/registration-attempt',
       '/api/v1/caregiver-relationships',
       '/api/v1/caregiver-relationships/{relationshipId}',
       '/api/v1/caregiver-relationships/{relationshipId}/activate',
@@ -39,6 +40,8 @@ describe('documento OpenAPI', () => {
       '/api/v1/hospital/access-requests',
       '/api/v1/hospital/access-requests/{requestId}',
       '/api/v1/hospital/access-requests/{requestId}/decision',
+      '/api/v1/hospital/access-requests/{requestId}/password-recovery',
+      '/api/v1/hospital/access-requests/{requestId}/password-recovery/reconcile',
       '/api/v1/hospital/agenda',
       '/api/v1/hospital/appointments/{appointmentId}/assignment',
       '/api/v1/hospital/patients',
@@ -47,9 +50,14 @@ describe('documento OpenAPI', () => {
       '/api/v1/hospital/professionals',
       '/api/v1/hospital/professionals/{professionalId}',
       '/api/v1/human-auth/logout',
+      '/api/v1/human-auth/reauthenticate',
       '/api/v1/human-auth/session',
       '/api/v1/institutional/sessions',
       '/api/v1/institutional/sessions/current',
+      '/api/v1/institutional/{experience}/administrator/current',
+      '/api/v1/institutional/{experience}/claim',
+      '/api/v1/institutional/{experience}/registration',
+      '/api/v1/institutional/{experience}/registration-attempt',
       '/api/v1/me/contexts',
       '/api/v1/me/experiences',
       '/api/v1/municipality/population-summary',
@@ -65,6 +73,18 @@ describe('documento OpenAPI', () => {
       '/api/v1/visits/materialize',
       '/health',
     ]);
+  });
+
+  it('el registro institucional documenta cuerpo cerrado y credenciales solo de escritura', () => {
+    const operation = document.paths['/api/v1/institutional/{experience}/registration']?.post;
+    const body = operation?.requestBody as { content?: Record<string, { schema?: { additionalProperties?: unknown; properties?: Record<string, { writeOnly?: boolean }> } }> };
+    const schema = body.content?.['application/json']?.schema;
+    expect(schema?.additionalProperties).toBe(false);
+    expect(Object.keys(schema?.properties ?? {}).sort()).toStrictEqual(['birthDate', 'confirmPassword', 'documentNumber', 'documentType', 'email', 'familyNames', 'givenNames', 'password', 'sexGenderCode']);
+    expect(schema?.properties?.password?.writeOnly).toBe(true);
+    expect(schema?.properties?.confirmPassword?.writeOnly).toBe(true);
+    expect(Object.keys(operation?.responses ?? {}).sort()).toStrictEqual(['201', '409', '503']);
+    expect(Object.keys(document.paths['/api/v1/institutional/{experience}/registration'] ?? {}).sort()).toStrictEqual(['get', 'post']);
   });
 
   it('documenta solo los métodos aprobados en cada ruta', () => {
@@ -218,10 +238,10 @@ describe('documento OpenAPI', () => {
 
     // No es documentación: un consumidor que lea otra cosa creería que este
     // endpoint emite estados o procedencias que no emite.
-    expect(aceptada?.properties?.['status']?.enum).toStrictEqual(['PENDING']);
+    expect(aceptada?.properties?.['status']?.enum).toStrictEqual(['PENDING', 'APPROVED_PENDING_PROVISIONING', 'PROVISIONING_FAILED']);
     expect(aceptada?.properties?.['status']?.example).toBe('PENDING');
-    expect(aceptada?.properties?.['source']?.enum).toStrictEqual(['TEST_DATA']);
-    expect(aceptada?.properties?.['source']?.example).toBe('TEST_DATA');
+    expect(aceptada?.properties?.['source']?.enum).toStrictEqual(['TEST_DATA', 'SELF_REGISTRATION']);
+    expect(aceptada?.properties?.['source']?.example).toBe('SELF_REGISTRATION');
   });
 
   it('describe los desenlaces de fallo de la inscripción', () => {
@@ -1394,8 +1414,8 @@ describe('documento OpenAPI de la revisión institucional de solicitudes', () =>
     const cuerpo = JSON.stringify(
       document.components?.schemas?.['AccessRequestReviewDecisionRequestDto'],
     );
-    expect(cuerpo).toContain('DEMO_ELIGIBLE');
-    expect(cuerpo).toContain('DEMO_NOT_ELIGIBLE');
+    expect(cuerpo).toContain('ACCESS_APPROVED');
+    expect(cuerpo).toContain('ACCESS_REJECTED');
     expect(cuerpo).toContain('expectedVersion');
   });
 

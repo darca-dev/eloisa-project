@@ -221,6 +221,8 @@ export class VisitsMaterializationController {
         {
           tenantId: principal.tenantId,
           identityId: principal.identityId,
+
+          ...(principal.humanAccountId === undefined ? {} : { humanAccountId: principal.humanAccountId }),
           role: principal.role,
           // El instante lo fija el SERVIDOR: el cuerpo no lo admite.
           now: new Date(),
