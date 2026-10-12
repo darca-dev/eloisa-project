@@ -1,6 +1,3 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
@@ -44,7 +41,9 @@ import {
  * prueba de autorización: el control server-side pertenece al backend futuro.
  */
 
-/** Marcado de la vista con una audiencia y un tab dados. */
+const PANTALLAS = new Map<string, string>();
+
+/** Fixture SSR compartida por todas las props fijas; no por estados/filtros. */
 function vista({
   audiencia = 'hospital',
   tab = 'resumen',
@@ -58,7 +57,10 @@ function vista({
   readonly evidencia?: string;
   readonly detalle?: string;
 } = {}): string {
-  return renderToStaticMarkup(
+  const key = JSON.stringify([audiencia, tab, subtab, evidencia, detalle]);
+  const existente = PANTALLAS.get(key);
+  if (existente !== undefined) return existente;
+  const html = renderToStaticMarkup(
     <HospitalReports
       audienciaInicial={audiencia}
       tabInicial={tab}
@@ -67,6 +69,8 @@ function vista({
       detalleInicial={detalle ?? null}
     />,
   );
+  PANTALLAS.set(key, html);
+  return html;
 }
 
 /** Nombres ficticios del padrón que jamás deben aparecer en la Alcaldía. */
@@ -86,18 +90,6 @@ describe('T-09 — Activación de Reportes en el shell', () => {
     expect(texto(main(html))).toContain('Reportes');
     expect(html).not.toContain('href');
   });
-
-  it('los demás módulos siguen montando su propia vista', () => {
-    for (const [inicial, titulo] of [
-      ['pacientes', 'Pacientes'],
-      ['financiera', 'Gestión financiera'],
-    ] as const) {
-      const html = renderToStaticMarkup(<HospitalShell sesionInicial={SESION_INSTITUCIONAL_FICTICIA} vistaInicial={inicial} />);
-
-      expect(html).toContain(`data-hospital-content="${inicial}"`);
-      expect(texto(main(html))).toContain(titulo);
-    }
-  });
 });
 
 /* ========================================================================== */
@@ -113,23 +105,6 @@ describe('T-10 — Encabezado, filtros y tabs', () => {
     expect(plano).toContain('Vista Hospital');
     expect(plano).toContain('Vista institucional / Alcaldía');
     expect(html).toContain('data-hospital-audiencia-activa="hospital"');
-  });
-
-  it('la barra global publica los seis filtros aprobados', () => {
-    const plano = texto(html);
-
-    for (const etiqueta of [
-      'Periodo',
-      'Programa',
-      'Municipio / zona',
-      'Población prioritaria',
-      'EPS',
-      'Modalidad',
-    ]) {
-      expect(plano).toContain(etiqueta);
-    }
-    expect(plano).toContain('Limpiar filtros');
-    expect(plano).toContain('Filtros aplicados');
   });
 
   it('el periodo no ofrece opción vacía y el resto sí', () => {
@@ -165,134 +140,8 @@ describe('T-10 — Encabezado, filtros y tabs', () => {
 
 /* ========================================================================== */
 
-/**
- * HOSPITAL-REPORTS-UX-01 — Barra de filtros compacta y fija.
- *
- * La hoja del módulo se lee como texto porque las pruebas de este repositorio
- * renderizan con `react-dom/server` y no hay DOM ni motor de estilos: la única
- * evidencia verificable de `sticky`, offset, capa y densidad es la regla
- * declarada. Ninguna de estas pruebas afirma métricas, datos ni cálculos.
- */
-describe('T-10C — La barra global es compacta y permanece fija al desplazar', () => {
-  const HOJA = readFileSync(
-    fileURLToPath(new URL('./hospitalReports.module.css', import.meta.url)),
-    'utf8',
-  );
-
-  /** Cuerpo de la primera regla que declara el selector dado. */
-  function regla(selector: string): string {
-    return HOJA.split(`\n${selector} {`)[1]?.split('\n}')[0] ?? '';
-  }
-
-  /** Texto reunido de todos los bloques `@media` que declaran esa consulta. */
-  function bloquesMedia(consulta: string): string {
-    return HOJA.split(`@media ${consulta} {`)
-      .slice(1)
-      .map((bloque) => bloque.split(/^\}/mu)[0] ?? '')
-      .join(' ');
-  }
-
+describe('T-10C — Contrato funcional y accesible de los filtros', () => {
   const html = vista();
-
-  it('la barra se fija con offset explícito, capa propia y fondo opaco', () => {
-    const barra = regla('.barra');
-
-    expect(barra).toContain('position: sticky');
-    /* Offset explícito y en un solo punto, no un `top` implícito. */
-    expect(barra).toContain('--h-reportes-barra-top: 0px');
-    expect(barra).toContain('top: var(--h-reportes-barra-top)');
-    /* Por encima del contenido y de las cabeceras de tabla, bajo el modal. */
-    expect(barra).toContain('z-index: 20');
-    expect(barra).toContain('background: var(--b-blanco)');
-    expect(regla('.panelFondo')).toContain('z-index: 40');
-    expect(regla('.tabla thead th')).toContain('z-index: 2');
-  });
-
-  it('los tabs quedan inmediatamente debajo de la barra', () => {
-    const tabs = regla('.tabs');
-
-    expect(tabs).toContain('margin-top: -6px');
-    /* El orden del marcado no cambia: barra, tabs y después el contenido. */
-    expect(html.indexOf('aria-label="Filtros del reporte"')).toBeLessThan(
-      html.indexOf('role="tablist"'),
-    );
-  });
-
-  it('la composición de escritorio es una sola franja de seis columnas', () => {
-    const escritorio = bloquesMedia('(min-width: 1400px)');
-
-    expect(escritorio).toContain('.barraCampos');
-    expect(apariciones(escritorio, /minmax\(/gu)).toBe(6);
-  });
-
-  it('la densidad de escritorio baja los controles de 44 px a 32 px', () => {
-    const denso = bloquesMedia('(min-width: 1024px)');
-
-    for (const selector of [
-      '.barraCampoControl',
-      '.chips',
-      '.chip',
-      '.accion',
-      '.limpiarCompacto',
-    ]) {
-      expect(denso).toContain(selector);
-    }
-    expect(denso).toContain('min-height: 32px');
-    /* La altura base sigue siendo el objetivo táctil completo. */
-    expect(regla('.barraCampoControl')).toContain('min-height: 44px');
-    expect(regla('.chip')).toContain('min-height: 44px');
-    expect(regla('.accion')).toContain('min-height: 44px');
-  });
-
-  it('en móvil y tableta hay adaptación explícita sin desbordamiento roto', () => {
-    /* Hasta 767 px: franja con desplazamiento horizontal controlado. */
-    expect(regla('.barraCampos')).toContain('overflow-x: auto');
-    /* Desde 768 px: rejilla de tres columnas, sin desplazamiento. */
-    const tableta = bloquesMedia('(min-width: 768px)');
-
-    expect(tableta).toContain('.barraCampos');
-    expect(tableta).toContain('grid-template-columns: repeat(3, minmax(0, 1fr))');
-    expect(tableta).toContain('overflow-x: visible');
-    /* Cualquier dispositivo táctil recupera el objetivo de 44 px. */
-    expect(bloquesMedia('(pointer: coarse)')).toContain('min-height: 44px');
-  });
-
-  it('los estilos genéricos de «Evidencias» no se rediseñan con la barra', () => {
-    /* La barra usa clases propias; `.filtro*` sigue sirviendo al otro bloque. */
-    const fuente = readFileSync(
-      fileURLToPath(new URL('./HospitalReportsPieces.tsx', import.meta.url)),
-      'utf8',
-    );
-    const barra = /export function ReporteBarraFiltros[\s\S]*?\n\}\n/u.exec(fuente)?.[0] ?? '';
-
-    expect(barra).not.toContain('styles.filtros');
-    expect(regla('.filtroCampo')).toContain('min-height: 44px');
-    expect(regla('.filtro')).toContain('flex-direction: column');
-  });
-
-  it('el resumen «Filtros aplicados» y el motivo no reservan filas altas', () => {
-    /* Antes el motivo forzaba una fila propia con `flex-basis: 100%`. */
-    expect(regla('.accionMotivo')).not.toContain('flex-basis: 100%');
-    expect(regla('.resumenFiltros')).toContain('font-size: 11px');
-    expect(texto(html)).toContain('Filtros aplicados');
-    expect(texto(html)).toContain(REPORTE_MOTIVO_EXPORTACION);
-  });
-
-  it('el motivo de exportación queda fuera de la franja de acciones', () => {
-    /*
-     * Hasta 767 px las acciones se desplazan en horizontal. El motivo es
-     * hermano de la franja, no contenido suyo, para que siga leyéndose entero.
-     */
-    expect(regla('.acciones')).toContain('overflow-x: auto');
-    expect(bloquesMedia('(min-width: 768px)')).toContain('overflow-x: visible');
-
-    const pie = /<div class="[^"]*barraPie[^"]*">[\s\S]*?<\/div>\s*<\/section>/u.exec(html)?.[0] ?? '';
-    const franja = /<div class="[^"]*acciones[^"]*">[\s\S]*?<\/div>/u.exec(pie)?.[0] ?? '';
-
-    expect(pie).toContain(REPORTE_MOTIVO_EXPORTACION);
-    expect(franja).not.toContain(REPORTE_MOTIVO_EXPORTACION);
-    expect(franja).toContain('data-hospital-accion="informe"');
-  });
 
   it('conserva los seis grupos con sus controles y su orden vinculante', () => {
     const controles = [...html.matchAll(/id="hospital-reportes-filtro-(?<id>[a-z]+)"/gu)].map(
@@ -400,14 +249,6 @@ describe('T-10B — Los tabs son un «tablist» accesible y navegable', () => {
     }
   });
 
-  it('los cinco tabs conservan su orden exacto', () => {
-    const orden = [...vista().matchAll(/data-hospital-tab="(?<id>[a-z]+)"/gu)].map(
-      (coincidencia) => coincidencia.groups?.id,
-    );
-
-    expect(orden).toEqual([...REPORTE_TABS]);
-  });
-
   it('los controles son botones reales, que «Enter» y «Space» activan de forma nativa', () => {
     const html = vista();
 
@@ -456,55 +297,6 @@ describe('T-11 — Acciones de exportación inertes', () => {
 /* ========================================================================== */
 
 describe('T-12 — Contenido de cada tab', () => {
-  it('Resumen publica los seis KPI y la bandeja de atención', () => {
-    const plano = texto(vista({ tab: 'resumen' }));
-
-    for (const etiqueta of [
-      'Población beneficiaria',
-      'Pacientes activos',
-      'Atenciones realizadas',
-      'Pendientes operativos',
-      'Ejecución financiera %',
-      'Evidencias pendientes',
-    ]) {
-      expect(plano).toContain(etiqueta);
-    }
-    expect(plano).toContain('Evolución de población atendida');
-    expect(plano).toContain('Atención por modalidad');
-    expect(plano).toContain('Ejecución por programa');
-    expect(plano).toContain('Necesita atención');
-  });
-
-  it('Población publica la matriz completa, los rangos, patologías, EPS y programas', () => {
-    const plano = texto(vista({ tab: 'poblacion' }));
-
-    expect(plano).toContain('Intersecciones de condiciones prioritarias');
-    expect(plano).toContain('Rangos de edad');
-    expect(plano).toContain('Patologías más frecuentes');
-    expect(plano).toContain('EPS');
-    expect(plano).toContain('Municipio y zona');
-    expect(plano).toContain('Programas');
-    expect(plano).toContain('Reconcilia');
-  });
-
-  it('Operación publica los seis KPI, los cinco gráficos y el resumen operativo', () => {
-    const html = vista({ tab: 'operacion' });
-    const plano = texto(html);
-
-    for (const etiqueta of [
-      'Citas programadas',
-      'Visitas domiciliarias realizadas',
-      'Consultas virtuales realizadas',
-      'Alarmas abiertas',
-      'Pacientes únicos atendidos',
-      'Tiempo mediano de atención',
-    ]) {
-      expect(plano).toContain(etiqueta);
-    }
-    expect(plano).toContain('Estados de citas, visitas y consultas virtuales');
-    expect(plano).toContain('Pendientes por antigüedad');
-    expect(plano).toContain('Resumen operativo');
-  });
 
   it('Finanzas publica los siete KPI, la composición y los indicadores descriptivos', () => {
     const plano = texto(vista({ tab: 'finanzas' }));

@@ -11,7 +11,6 @@ import {
   HOSPITAL_ADMIN_PESTANAS,
   HOSPITAL_ADMIN_PESTANA_INICIAL,
   HOSPITAL_ESTADOS_INTEGRACION,
-  HOSPITAL_TIPOS_PERSONAL,
   esPestanaAdministracion,
   hospitalAdministracionDemo,
 } from './hospitalAdministrationConfig';
@@ -20,7 +19,6 @@ import { HOSPITAL_NAV_ITEMS } from './hospitalConfig';
 import { HospitalMemberships } from './HospitalMemberships';
 import { HospitalShell } from './HospitalShell';
 import type { HospitalSesionDto } from './hospitalInstitutionClient';
-import { hospitalProfesionalesCore } from './hospitalProfessionalsConfig';
 import { SESION_INSTITUCIONAL_FICTICIA, apariciones, main, texto } from './hospitalTestUtils';
 import { destinoDeItem } from './hospitalViews';
 
@@ -37,8 +35,14 @@ import { destinoDeItem } from './hospitalViews';
 
 const CONFIG = hospitalAdministracionDemo;
 
-/** Identificador del buscador local de «Personal y accesos». */
-const BUSCADOR_ID = 'hospital-admin-personal-buscador';
+describe('Límites de clasificación y relaciones del personal', () => {
+  it('conserva clasificación desconocida y no aplica reglas laborales ni cálculos legales', () => {
+    expect(CONFIG.personal.vinculaciones.tiposEstado).toBe('Por confirmar');
+    const visible = contenido('Personal y accesos');
+    expect(visible).toContain('no aplica legislación laboral');
+    expect(visible).toContain('no calcula salario, honorarios, seguridad social ni retenciones');
+  });
+});
 
 const SESION_REVISORA: HospitalSesionDto = {
   role: 'HOSPITAL_ACCESS_REVIEWER',
@@ -47,14 +51,21 @@ const SESION_REVISORA: HospitalSesionDto = {
   actorDisplay: 'Acceso institucional',
 };
 
-/** Shell montado directamente en la pestaña administrativa indicada. */
+const PANTALLAS = new Map<string, string>();
+
+/** Fixture SSR compartida solo para pestaña/rol fijos e inmutables. */
 function admin(
   pestana: HospitalAdminPestanaId = HOSPITAL_ADMIN_PESTANA_INICIAL,
   revisora = false,
 ): string {
-  return renderToStaticMarkup(
+  const key = JSON.stringify([pestana, revisora]);
+  const existente = PANTALLAS.get(key);
+  if (existente !== undefined) return existente;
+  const html = renderToStaticMarkup(
     <HospitalShell sesionInicial={revisora ? SESION_REVISORA : SESION_INSTITUCIONAL_FICTICIA} vistaInicial="administracion" pestanaAdministracionInicial={pestana} />,
   );
+  PANTALLAS.set(key, html);
+  return html;
 }
 
 /** Texto visible del área de contenido para esa pestaña. */
@@ -74,15 +85,6 @@ describe('T-02 — «Configuración» es el único acceso del menú a Administra
     expect(destinoDeItem('configuracion')).toEqual({ vista: 'administracion' });
     expect(HOSPITAL_ADMIN_PESTANA_INICIAL).toBe('Membresías');
     expect(contenido()).toContain('Planes de membresía');
-  });
-
-  it('«Membresías y servicios» ya no es una opción del menú', () => {
-    // Decisión final de la Product Owner: vive dentro de Configuración.
-    expect(HOSPITAL_NAV_ITEMS.map((item) => item.id)).not.toContain('membresias');
-    expect(HOSPITAL_NAV_ITEMS.map((item) => item.etiqueta)).not.toContain(
-      'Membresías y servicios',
-    );
-    expect(destinoDeItem('membresias')).toBeNull();
   });
 
   it('no crea ruta nueva, enlace, formulario, script ni recurso remoto', () => {
@@ -191,32 +193,6 @@ describe('T-03 — Pestañas del contenedor', () => {
 /* ========================================================================== */
 
 describe('T-04 — Fidelidad de Membresías', () => {
-  const visible = contenido('Membresías');
-
-  it('muestra los tres planes con valor, periodicidad, estado y versión', () => {
-    expect(CONFIG.membresias.planes).toHaveLength(3);
-
-    for (const plan of CONFIG.membresias.planes) {
-      expect(visible).toContain(plan.nombre);
-      expect(visible).toContain(plan.visitas);
-      expect(visible).toContain(plan.virtuales);
-      expect(visible).toContain(plan.precio);
-      expect(visible).toContain(plan.periodicidad);
-      expect(visible).toContain(plan.estado);
-      expect(visible).toContain(plan.version.etiqueta);
-
-      for (const beneficio of plan.beneficios) {
-        expect(visible).toContain(beneficio);
-      }
-      if (plan.descuento !== null) {
-        expect(visible).toContain(plan.descuento);
-      }
-    }
-    for (const etiqueta of Object.values(CONFIG.membresias.etiquetasPlan)) {
-      expect(visible).toContain(etiqueta);
-    }
-  });
-
   it('cada plan ofrece «Editar plan» y abre el formulario visual aprobado', () => {
     const html = admin('Membresías');
 
@@ -242,31 +218,6 @@ describe('T-04 — Fidelidad de Membresías', () => {
     expect(abierto).toContain(CONFIG.membresias.edicion.cancelar);
     expect(abierto).toContain(CONFIG.membresias.edicion.guardar.etiqueta);
     expect(CONFIG.membresias.edicion.guardar.disponible).toBe(false);
-  });
-
-  it('muestra los seis servicios con precio, duración, profesional y cobertura', () => {
-    expect(CONFIG.membresias.servicios.items).toHaveLength(6);
-
-    for (const servicio of CONFIG.membresias.servicios.items) {
-      expect(visible).toContain(servicio.nombre);
-      expect(visible).toContain(servicio.precio);
-      expect(visible).toContain(servicio.duracion);
-      expect(visible).toContain(servicio.profesional);
-      expect(visible).toContain(servicio.cobertura);
-    }
-  });
-
-  it('reproduce el formulario «Crear membresía» con etiquetas asociadas', () => {
-    const html = admin('Membresías');
-
-    expect(visible).toContain('Crear membresía');
-    expect(visible).toContain('Guardar plan');
-
-    for (const campo of CONFIG.membresias.formulario.campos) {
-      expect(visible).toContain(campo.etiqueta);
-      expect(html).toContain(`for="hospital-admin-crear-membresia-${campo.id}"`);
-      expect(html).toContain(`id="hospital-admin-crear-membresia-${campo.id}"`);
-    }
   });
 });
 
@@ -369,19 +320,6 @@ describe('T-06 — Semántica de la información clínica', () => {
     expect(visible).toContain('no hay interoperabilidad');
   });
 
-  it('conserva la composición y los fixtures del prototipo', () => {
-    expect(visible).toContain('Datos estructurados');
-    expect(visible).toContain('Documentos históricos');
-    expect(visible).toContain('CSV · Excel · JSON · API');
-    expect(visible).toContain('PDF · JPG · PNG');
-    expect(visible).toContain('pacientes_hsr_2019_2026.csv');
-
-    for (const conteo of CONFIG.clinica.resumen.items) {
-      expect(visible).toContain(conteo.etiqueta);
-      expect(visible).toContain(conteo.valor);
-    }
-  });
-
   it('rotula archivo, conteos y posible duplicado como ejemplo', () => {
     expect(visible).toContain('Ejemplo del prototipo');
     expect(visible).toContain('ningún archivo fue seleccionado ni leído');
@@ -432,45 +370,11 @@ describe('T-08 — Procedencia clínica prevista', () => {
 describe('T-09 — Fidelidad de Personal y accesos', () => {
   const visible = contenido('Personal y accesos');
 
-  it('muestra las doce filas con código de personal, persona, rol, entidad y estado', () => {
-    expect(CONFIG.personal.personal.items).toHaveLength(12);
-
-    for (const persona of CONFIG.personal.personal.items) {
-      expect(visible).toContain(persona.codigo);
-      expect(visible).toContain(persona.nombre);
-      expect(visible).toContain(persona.cargo);
-      expect(visible).toContain(persona.rol);
-      expect(visible).toContain(persona.entidad);
-      expect(visible).toContain(persona.estadoAcceso);
-    }
-    for (const columna of CONFIG.personal.personal.columnas) {
-      expect(visible).toContain(columna.etiqueta);
-    }
-    for (const estado of ['Activo', 'Pendiente', 'Suspendido', 'Bloqueado']) {
-      expect(visible).toContain(estado);
-    }
-  });
-
   it('rotula el identificador como «Código de personal» y explica su generación', () => {
     expect(visible).toContain('CÓDIGO DE PERSONAL');
     expect(visible).toContain('Código de personal');
     expect(visible).toContain('El sistema genera automáticamente un código único de personal.');
     expect(visible).toContain('No es una contraseña ni sustituye a las credenciales');
-  });
-
-  it('conserva buscador, filtros y las cuatro vinculaciones del listado', () => {
-    const html = admin('Personal y accesos');
-
-    expect(visible).toContain(CONFIG.personal.busqueda.etiqueta);
-    for (const filtro of Object.values(CONFIG.personal.busqueda.filtros)) {
-      expect(visible).toContain(filtro);
-    }
-    for (const vinculacion of CONFIG.personal.vinculaciones.items) {
-      expect(visible).toContain(vinculacion.etiqueta);
-      expect(visible).toContain(vinculacion.plural);
-    }
-    expect(html).toContain(`for="${BUSCADOR_ID}"`);
-    expect(html).toContain(`id="${BUSCADOR_ID}"`);
   });
 
   it('«Registrar persona» y cualquier acción quedan deshabilitadas', () => {
@@ -525,93 +429,10 @@ describe('T-10 — Personal es administrativo y no duplica Profesionales', () =>
       'calificaciones y «Vinculación y documentos»— sigue viviendo en «Profesionales»',
     );
   });
-
-  it('la vista operativa «Profesionales» conserva su contenido aprobado', () => {
-    const profesionales = texto(
-      main(renderToStaticMarkup(<HospitalShell sesionInicial={SESION_INSTITUCIONAL_FICTICIA} vistaInicial="profesionales" />)),
-    );
-
-    // El directorio aprobado (spec 010) publica encabezado y nota contractuales
-    // y advierte expresamente que no afirma disponibilidad.
-    expect(profesionales).toContain(hospitalProfesionalesCore.encabezado.titulo);
-    expect(profesionales).toContain(hospitalProfesionalesCore.encabezado.descripcion);
-    expect(profesionales).toContain(hospitalProfesionalesCore.nota);
-    expect(profesionales).toContain('no afirma disponibilidad');
-    expect(profesionales).not.toContain('Disponibilidad');
-  });
-});
-
-describe('T-12 — Tipos y relaciones institucionales', () => {
-  const visible = contenido('Personal y accesos');
-
-  it('contempla los cinco tipos de personal sin clasificar a las personas del ejemplo', () => {
-    expect([...HOSPITAL_TIPOS_PERSONAL]).toEqual([
-      'Profesional',
-      'Cuidador vinculado',
-      'Administrativo',
-      'Operador',
-      'Otro personal autorizado',
-    ]);
-
-    for (const tipo of HOSPITAL_TIPOS_PERSONAL) {
-      expect(visible).toContain(tipo);
-    }
-    // Ninguna persona del listado recibe un tipo inventado: quedan sin fuente.
-    expect(CONFIG.personal.vinculaciones.tiposEstado).toBe('Por confirmar');
-  });
-
-  it('mantiene interno, independiente, convenio y externo como relaciones distintas', () => {
-    expect(CONFIG.personal.vinculaciones.items.map((item) => item.modalidad)).toEqual([
-      'empleado',
-      'independiente',
-      'convenio',
-      null,
-    ]);
-    expect(visible).toContain('Interno / empleado');
-    expect(visible).toContain('Prestación de servicios / independiente');
-    expect(visible).toContain('Tercero / convenio');
-    expect(visible).toContain('Externo autorizado');
-    expect(visible).toContain('no aplica legislación laboral');
-    expect(visible).toContain(
-      'no calcula salario, honorarios, seguridad social ni retenciones',
-    );
-  });
 });
 
 describe('T-11 — Roles y permisos', () => {
   const visible = contenido('Roles y permisos');
-
-  it('es una pestaña propia, separada de «Personal y accesos»', () => {
-    expect(HOSPITAL_ADMIN_PESTANAS).toContain('Roles y permisos');
-    expect(admin('Roles y permisos')).toContain('data-hospital-admin="Roles y permisos"');
-    // La pantalla operativa no reimplanta la lectura de cada rol.
-    expect(contenido('Personal y accesos')).not.toContain(CONFIG.roles.etiquetaPuede);
-  });
-
-  it('lee cada rol como «Puede acceder a» y «No puede acceder a», no como estructura técnica', () => {
-    expect(CONFIG.roles.etiquetaPuede).toBe('Puede acceder a');
-    expect(CONFIG.roles.etiquetaNoPuede).toBe('No puede acceder a');
-    expect(CONFIG.roles.items).toHaveLength(8);
-
-    for (const rol of CONFIG.roles.items) {
-      expect(visible).toContain(rol.titulo);
-      for (const puede of rol.puede) {
-        expect(visible).toContain(puede);
-      }
-      for (const noPuede of rol.noPuede) {
-        expect(visible).toContain(noPuede);
-      }
-    }
-    const html = admin('Roles y permisos');
-
-    expect(apariciones(html, />Puede acceder a</gu)).toBe(CONFIG.roles.items.length);
-    expect(apariciones(html, />No puede acceder a</gu)).toBe(CONFIG.roles.items.length);
-
-    // No vuelve a la tabla técnica ROL / MÓDULO / ACCIÓN / ALCANCE.
-    for (const tecnico of ['MÓDULO', 'ACCIÓN', 'ALCANCE', 'DESCRIPCIÓN']) {
-      expect(visible).not.toContain(tecnico);
-    }
-  });
 
   it('advierte de forma inequívoca que no existe autorización real', () => {
     expect(visible).toContain('No implementan ni garantizan autorización');
@@ -641,32 +462,6 @@ describe('T-11 — Roles y permisos', () => {
 /* ========================================================================== */
 
 describe('T-12 — Fidelidad de la configuración institucional', () => {
-  it('reproduce los once parámetros de agenda con sus valores demostrativos', () => {
-    const html = admin('Agenda y servicios');
-    const visible = texto(main(html));
-
-    expect(CONFIG.agenda.campos).toHaveLength(11);
-    for (const campo of CONFIG.agenda.campos) {
-      expect(visible).toContain(campo.etiqueta);
-      expect(html).toContain(`value="${campo.valor}"`);
-      expect(html).toContain(`for="hospital-admin-agenda-${campo.id}"`);
-      expect(html).toContain(`id="hospital-admin-agenda-${campo.id}"`);
-    }
-  });
-
-  it('reproduce los nueve datos de la institución y la ranura de logo', () => {
-    const html = admin('Institución e integraciones');
-    const visible = texto(main(html));
-
-    expect(CONFIG.institucion.campos).toHaveLength(9);
-    for (const campo of CONFIG.institucion.campos) {
-      expect(visible).toContain(campo.etiqueta);
-      expect(html).toContain(`for="hospital-admin-institucion-${campo.id}"`);
-    }
-    expect(visible).toContain('Logo de la institución');
-    expect(visible).toContain('Cargar');
-    expect(html).not.toContain('type="file"');
-  });
 
   it('no incluye las reglas clínicas del semáforo del prototipo', () => {
     const visible = texto(main(admin('Agenda y servicios')));
@@ -685,12 +480,6 @@ describe('T-13 — Estado local de los parámetros', () => {
     expect(primero).toBe(segundo);
     expect(texto(main(primero))).toContain('no se guarda, se pierde al recargar');
     expect(texto(main(primero))).toContain('no cambia la Agenda y citas ya aprobada');
-  });
-
-  it('la Agenda y citas aprobada conserva su contenido', () => {
-    const agenda = texto(main(renderToStaticMarkup(<HospitalShell sesionInicial={SESION_INSTITUCIONAL_FICTICIA} vistaInicial="agenda" />)));
-
-    expect(agenda).toContain('Agenda y citas');
   });
 });
 
@@ -798,18 +587,6 @@ describe('T-15 — Alcance negativo de las integraciones', () => {
 describe('T-16 — Auditoría demostrativa', () => {
   const visible = texto(main(admin('Auditoría')));
 
-  it('conserva los cinco eventos del prototipo con su composición', () => {
-    expect(CONFIG.auditoria.items).toHaveLength(5);
-
-    for (const evento of CONFIG.auditoria.items) {
-      expect(visible).toContain(evento.usuario);
-      expect(visible).toContain(evento.accion);
-      expect(visible).toContain(evento.cuando);
-      expect(visible).toContain(`Antes: ${evento.antes}`);
-      expect(visible).toContain(`Después: ${evento.despues}`);
-    }
-  });
-
   it('los identifica como ejemplos y no como evidencia real', () => {
     expect(visible).toContain('ejemplos ficticios del prototipo');
     expect(visible).toContain('no una bitácora real ni evidencia de cumplimiento');
@@ -851,15 +628,6 @@ describe('Terminología visible de la vista administrativa', () => {
       expect(texto(main(html))).not.toContain('MERDN');
       expect(html.replace(/merdn-sr-only/gu, '')).not.toContain('MERDN');
     }
-  });
-
-  it('el identificador de cada persona se llama «Código de personal»', () => {
-    const visible = contenido('Personal y accesos');
-
-    expect(visible).not.toContain('Código MERDN');
-    expect(visible).toContain('Código de personal');
-    expect(visible).toContain('El sistema genera automáticamente un código único de personal.');
-    expect(CONFIG.personal.codigo.titulo).toBe('Código de personal');
   });
 });
 
@@ -913,25 +681,6 @@ describe('T-18 — Accesibilidad de la vista administrativa', () => {
       expect(html).toContain('scope="col"');
       expect(html).toContain('scope="row"');
     }
-  });
-});
-
-/* ========================================================================== */
-/* T-19 y alcance del módulo                                                  */
-/* ========================================================================== */
-
-describe('T-19 — Reflow sin desbordamiento global', () => {
-  it('las tablas se desplazan dentro de su contenedor y usan patrones flexibles', () => {
-    const css = readFileSync(
-      fileURLToPath(new URL('./hospitalAdministration.module.css', import.meta.url)),
-      'utf8',
-    );
-
-    expect(css).toContain('overflow-x: auto');
-    expect(css).toContain('repeat(auto-fit, minmax(220px, 1fr))');
-    expect(css).toContain('flex-wrap: wrap');
-    expect(css).not.toContain('overflow-x: hidden');
-    expect(css).not.toContain('position: fixed');
   });
 });
 

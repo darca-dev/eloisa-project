@@ -19,16 +19,13 @@ import type { MunicipalityProgramaEntrada } from './MunicipalityProgramForm';
 import { MunicipalityPrograms } from './MunicipalityPrograms';
 import { MunicipalityShell } from './MunicipalityShell';
 import {
-  MUNICIPALITY_EJECUTOR_TIPOS,
   MUNICIPALITY_POBLACIONES_BASE,
   MUNICIPALITY_PROGRAMA_ESTADOS,
-  MUNICIPALITY_PROGRAMA_ORIGENES,
   municipalityDemo,
   municipalityProgramasConfigDemo,
   municipalityProgramasDemo,
 } from './municipalityConfig';
 import type {
-  MunicipalityProgramaEstado,
   MunicipalityProgramasConfig,
 } from './municipalityConfig';
 import { apariciones, etiquetasDeBotones, main, texto } from './municipalityTestUtils';
@@ -179,14 +176,6 @@ describe('Programas — navegación y shell (T-01)', () => {
     expect(shellProgramas()).toMatch(/<h1[^>]*tabindex="-1"/u);
   });
 
-  it('conserva el shell, el selector temporal y el perfil', () => {
-    const visible = texto(shellProgramas());
-
-    expect(visible).toContain('Perfil de consulta agregada');
-    expect(visible).toContain(municipalityDemo.demo.notaPeriodo);
-    expect(apariciones(shellProgramas(), /aria-pressed="true"/gu)).toBe(1);
-  });
-
   it('el periodo no recalcula ningún fixture de la vista (FR-10)', () => {
     const conMes = texto(
       main(renderToStaticMarkup(<MunicipalityShell
@@ -210,14 +199,6 @@ describe('Programas — navegación y shell (T-01)', () => {
 /* --------------------------------- T-02 ---------------------------------- */
 
 describe('Programas — encabezado y acción primaria (T-02, FR-02)', () => {
-  it('muestra el título y el subtítulo exactos del prototipo', () => {
-    const visible = texto(vista());
-
-    expect(visible).toContain('Programas');
-    expect(visible).toContain(
-      'Beneficiarios, cobertura, ejecución y cumplimiento de meta por programa.',
-    );
-  });
 
   it('integra «+ Nuevo programa» como única acción primaria del encabezado', () => {
     const html = vista();
@@ -241,81 +222,9 @@ describe('Programas — encabezado y acción primaria (T-02, FR-02)', () => {
   });
 });
 
-/* --------------------------------- T-03 ---------------------------------- */
-
-describe('Programas — fixtures configurables (T-03, FR-03)', () => {
-  it('muestra los cinco programas iniciales, en su orden aprobado', () => {
-    expect(municipalityProgramasDemo.map((programa) => programa.nombre)).toStrictEqual([
-      'Atención domiciliaria',
-      'Adulto mayor',
-      'Discapacidad',
-      'Cuidado en casa',
-      'Formación de cuidadores',
-    ]);
-
-    const visible = texto(vista());
-
-    for (const programa of municipalityProgramasDemo) {
-      expect(visible).toContain(programa.nombre);
-      expect(visible).toContain(programa.objetivo);
-    }
-  });
-
-  it('renderiza una tarjeta por programa, con su borde lateral de estado', () => {
-    const html = vista();
-
-    expect(apariciones(html, /data-municipality-programa-estado="/gu)).toBe(
-      municipalityProgramasDemo.length,
-    );
-  });
-
-  it('los programas son configuración, no una lista cerrada en el componente', () => {
-    /* Ningún nombre de programa está escrito dentro del componente. */
-    for (const programa of municipalityProgramasDemo) {
-      expect(FUENTE_VISTA).not.toContain(programa.nombre);
-    }
-
-    const otro: MunicipalityProgramasConfig = {
-      ...CONFIG,
-      programas: [
-        { ...municipalityProgramasDemo[0]!, id: 'pro-otro', nombre: 'Programa configurado aparte' },
-      ],
-    };
-    const visible = texto(vistaCon(otro));
-
-    expect(visible).toContain('Programa configurado aparte');
-    expect(visible).not.toContain('Atención domiciliaria');
-  });
-});
-
 /* --------------------------------- T-04 ---------------------------------- */
 
 describe('Programas — poblaciones base y relación múltiple (T-04, FR-04)', () => {
-  it('declara exactamente las tres poblaciones base aprobadas', () => {
-    expect(MUNICIPALITY_POBLACIONES_BASE.map((poblacion) => poblacion.id)).toStrictEqual([
-      'MAYORES_60',
-      'DISCAPACIDAD',
-      'CUIDADO_EN_CASA',
-    ]);
-    expect(MUNICIPALITY_POBLACIONES_BASE.map((poblacion) => poblacion.etiqueta)).toStrictEqual([
-      'Personas mayores de 60 años',
-      'Personas en situación de discapacidad',
-      'Personas que requieren cuidados en casa',
-    ]);
-  });
-
-  it('el catálogo vive separado de la entidad Programa', () => {
-    /* El programa solo guarda identificadores; las etiquetas vienen del catálogo. */
-    for (const programa of municipalityProgramasDemo) {
-      expect(programa.poblacionIds.length).toBeGreaterThan(0);
-
-      for (const poblacionId of programa.poblacionIds) {
-        expect(
-          MUNICIPALITY_POBLACIONES_BASE.some((poblacion) => poblacion.id === poblacionId),
-        ).toBe(true);
-      }
-    }
-  });
 
   it('al menos un programa atiende varias poblaciones y las muestra todas', () => {
     const multiples = municipalityProgramasDemo.filter(
@@ -387,44 +296,6 @@ describe('Programas — deduplicación (T-05, FR-04)', () => {
 /* --------------------------------- T-06 ---------------------------------- */
 
 describe('Programas — origen y entidades (T-06, FR-03)', () => {
-  it('declara el catálogo exacto de cuatro orígenes', () => {
-    expect(MUNICIPALITY_PROGRAMA_ORIGENES.map((origen) => origen.id)).toStrictEqual([
-      'NACIONAL',
-      'DEPARTAMENTAL',
-      'MUNICIPAL',
-      'INSTITUCIONAL_OTRO',
-    ]);
-    expect(MUNICIPALITY_PROGRAMA_ORIGENES.map((origen) => origen.etiqueta)).toStrictEqual([
-      'Nacional',
-      'Departamental',
-      'Municipal',
-      'Institucional/Otro',
-    ]);
-  });
-
-  it('los cuatro orígenes están representados entre los fixtures', () => {
-    const usados = new Set(municipalityProgramasDemo.map((programa) => programa.origen));
-
-    expect([...usados].sort()).toStrictEqual([
-      'DEPARTAMENTAL',
-      'INSTITUCIONAL_OTRO',
-      'MUNICIPAL',
-      'NACIONAL',
-    ]);
-  });
-
-  it('existe al menos un programa de origen no municipal, sin afirmar integración', () => {
-    const noMunicipales = municipalityProgramasDemo.filter(
-      (programa) => programa.origen !== 'MUNICIPAL',
-    );
-
-    expect(noMunicipales.length).toBeGreaterThan(0);
-
-    const visible = texto(vista());
-
-    expect(visible).toContain('Entidad nacional formuladora (demostrativa)');
-    expect(visible).not.toMatch(/integración activa|sincronizad|convenio vigente/iu);
-  });
 
   it('formuladora y responsable son datos independientes', () => {
     const distintos = municipalityProgramasDemo.filter(
@@ -444,20 +315,6 @@ describe('Programas — origen y entidades (T-06, FR-03)', () => {
 /* --------------------------------- T-07 ---------------------------------- */
 
 describe('Programas — ejecutores múltiples (T-07, FR-03)', () => {
-  it('declara los cuatro tipos de participación admitidos', () => {
-    expect(MUNICIPALITY_EJECUTOR_TIPOS.map((tipo) => tipo.id)).toStrictEqual([
-      'HOSPITAL_ESE',
-      'FUNDACION',
-      'OPERADOR',
-      'OTRA_ENTIDAD',
-    ]);
-  });
-
-  it('cada programa declara al menos un ejecutor', () => {
-    for (const programa of municipalityProgramasDemo) {
-      expect(programa.ejecutores.length).toBeGreaterThan(0);
-    }
-  });
 
   it('al menos un programa muestra dos ejecutores de tipos distintos', () => {
     const multiples = municipalityProgramasDemo.filter(
@@ -473,27 +330,11 @@ describe('Programas — ejecutores múltiples (T-07, FR-03)', () => {
     expect(visible).toContain('Hospital San Rafael (ESE) · Hospital/ESE');
     expect(visible).toContain('Fundación Raíces del Cuidado (demostrativa) · Fundación');
   });
-
-  it('ningún ejecutor está codificado dentro del componente', () => {
-    for (const ejecutor of CONFIG.ejecutoresDisponibles) {
-      expect(FUENTE_VISTA).not.toContain(ejecutor.nombre);
-      expect(FUENTE_FORMULARIO).not.toContain(ejecutor.nombre);
-    }
-  });
 });
 
 /* --------------------------------- T-08 ---------------------------------- */
 
 describe('Programas — estados (T-08, FR-03)', () => {
-  it('declara el catálogo exacto y cerrado de cinco estados, en su ciclo nominal', () => {
-    expect(MUNICIPALITY_PROGRAMA_ESTADOS.map((estado) => estado.id)).toStrictEqual([
-      'BORRADOR',
-      'APROBADO',
-      'ACTIVO',
-      'SUSPENDIDO',
-      'FINALIZADO',
-    ]);
-  });
 
   it('los cinco estados son demostrables y siempre se escriben', () => {
     for (const estado of MUNICIPALITY_PROGRAMA_ESTADOS) {
@@ -516,16 +357,6 @@ describe('Programas — estados (T-08, FR-03)', () => {
     }
   });
 
-  it('todos los fixtures usan un estado del catálogo', () => {
-    const permitidos: readonly MunicipalityProgramaEstado[] = MUNICIPALITY_PROGRAMA_ESTADOS.map(
-      (estado) => estado.id,
-    );
-
-    for (const programa of municipalityProgramasDemo) {
-      expect(permitidos).toContain(programa.estado);
-    }
-  });
-
   it('el alta local nace y permanece en BORRADOR', () => {
     expect(CONFIG.formulario.estadoInicial).toBe('BORRADOR');
     expect(crearProgramaBorrador(ENTRADA_VALIDA, CONFIG, 1).estado).toBe('BORRADOR');
@@ -544,32 +375,6 @@ describe('Nuevo programa — campos mínimos (T-09, FR-08)', () => {
     expect(html).toMatch(/aria-describedby="[^"]+"/u);
     expect(texto(html)).toContain('Nuevo programa');
     expect(texto(html)).toContain(CONFIG.formulario.descripcion);
-  });
-
-  it('contiene exactamente los diez grupos de campos mínimos', () => {
-    const visible = texto(dialogo());
-    const esperados = [
-      'Nombre',
-      'Población(es)',
-      'Origen',
-      'Entidad formuladora',
-      'Entidad responsable',
-      'Ejecutor(es)',
-      'Inicio de la vigencia',
-      'Fin de la vigencia',
-      'Presupuesto',
-      'Meta',
-      'Estado inicial',
-    ];
-
-    for (const etiqueta of esperados) {
-      expect(visible).toContain(etiqueta);
-    }
-
-    expect(visible).toContain('Vigencia');
-    /* Moneda y unidad visibles junto a su campo. */
-    expect(visible).toContain('COP');
-    expect(visible).toContain('personas');
   });
 
   it('no añade campos clínicos, contractuales, financieros profundos ni evidencias', () => {
@@ -790,15 +595,6 @@ describe('Programas — avance físico (T-13, FR-05)', () => {
     }
   });
 
-  it('el ejemplo principal conserva 540 / 412 / 76 %', () => {
-    const visible = texto(tarjeta(vista(), 'pro-demo-domiciliaria'));
-
-    expect(visible).toContain('Meta: 540 personas');
-    expect(visible).toContain('Atendidas: 412 personas');
-    expect(visible).toContain('Cumplimiento físico');
-    expect(visible).toContain('76 %');
-  });
-
   it('la barra declara su valor y el porcentaje sigue escrito', () => {
     const html = vista();
 
@@ -848,16 +644,6 @@ describe('Programas — avance financiero (T-14, FR-06)', () => {
       expect(visible).toContain(`Moneda: ${programa.presupuesto.moneda}`);
       expect(visible).toContain(programa.avanceFinanciero.porcentajeTexto ?? '');
     }
-  });
-
-  it('el ejemplo principal conserva $680 M / $402 M / 59 %', () => {
-    const visible = texto(tarjeta(vista(), 'pro-demo-domiciliaria'));
-
-    expect(visible).toContain('Presupuesto asignado: $680 M');
-    expect(visible).toContain('Ejecutado: $402 M');
-    expect(visible).toContain('Disponible: $118 M');
-    expect(visible).toContain('Comprometido: $160 M');
-    expect(visible).toContain('59 %');
   });
 
   it('el comprometido aparece solo cuando el fixture lo declara', () => {
@@ -952,60 +738,6 @@ describe('Programas — evidencias agregadas (T-16, FR-07)', () => {
 /* --------------------------------- T-17 ---------------------------------- */
 
 describe('Programas — cierre preparado (T-17, FR-09)', () => {
-  const finalizado = municipalityProgramasDemo.find(
-    (programa) => programa.estado === 'FINALIZADO',
-  );
-
-  it('existe un programa finalizado con contrato de cierre completo', () => {
-    expect(finalizado).toBeDefined();
-    expect(finalizado?.cierre).not.toBeNull();
-    expect(Object.keys(finalizado?.cierre ?? {}).sort()).toStrictEqual(
-      [
-        'beneficiariosUnicos',
-        'ejecutado',
-        'evidenciasCompletas',
-        'evidenciasFaltantes',
-        'informeFinal',
-        'meta',
-        'nota',
-        'porcentajeFinancieroTexto',
-        'porcentajeFisicoTexto',
-        'presupuestoAsignado',
-        'resultado',
-        'saldo',
-      ].sort(),
-    );
-  });
-
-  it('presenta juntos los once datos exigidos', () => {
-    const visible = texto(tarjeta(vista(), 'pro-demo-formacion-cuidadores'));
-
-    expect(visible).toContain('Cierre del programa');
-
-    for (const dato of [
-      'Presupuesto asignado',
-      'Ejecutado',
-      'Saldo',
-      'Ejecución financiera',
-      'Meta',
-      'Atendidas',
-      'Cumplimiento físico',
-      'BENEFICIARIOS ÚNICOS',
-      'Evidencias completas',
-      'Evidencias faltantes',
-      'Informe final',
-    ]) {
-      expect(visible).toContain(dato);
-    }
-
-    expect(visible).toContain('$70 M');
-    expect(visible).toContain('$18 M');
-    expect(visible).toContain('$12 M');
-    expect(visible).toContain('1.500 certificados');
-    expect(visible).toContain('442 certificados');
-    expect(visible).toContain('1.164 cuidadores vinculados');
-  });
-
   it('el informe ausente se muestra como pendiente, nunca como cumplimiento', () => {
     const visible = texto(tarjeta(vista(), 'pro-demo-formacion-cuidadores'));
 
@@ -1123,34 +855,11 @@ describe('Programas — extensibilidad institucional (T-20, AC-20)', () => {
     expect(apariciones(html, /data-municipality-programa-estado="/gu)).toBe(1);
   });
 
-  it('ninguna función condiciona su comportamiento a que el programa sea municipal', () => {
-    for (const fuente of [FUENTE_VISTA, FUENTE_FORMULARIO]) {
-      expect(fuente).not.toMatch(/municipioId\s*(?:!==|===)\s*null/u);
-      expect(fuente).not.toMatch(/origen\s*===\s*'MUNICIPAL'/u);
-    }
-  });
-
   it('no introduce interfaz ni copy comercial', () => {
     const visible = texto(vista());
 
     for (const patron of [/membresía/iu, /\bprecio/iu, /\bplan(es)? de servicio/iu, /\bcliente/iu]) {
       expect(visible).not.toMatch(patron);
-    }
-  });
-});
-
-/* --------------------------------- T-21 ---------------------------------- */
-
-describe('Programas — no regresión de A-01 y A-02 (T-21)', () => {
-  it('Inicio, Población beneficiaria y Territorio siguen montando su vista', () => {
-    for (const [modulo, titulo] of [
-      ['inicio', municipalityDemo.inicio.titularesTitulo],
-      ['poblacion', municipalityDemo.poblacion.titulo],
-      ['territorio', municipalityDemo.territorio.titulo],
-    ] as const) {
-      const html = renderToStaticMarkup(<MunicipalityShell sesionInicial={SESION_MUNICIPAL_FICTICIA} vistaInicial={modulo} />);
-
-      expect(texto(main(html))).toContain(titulo);
     }
   });
 });

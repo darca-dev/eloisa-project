@@ -124,3 +124,4 @@ La decisión del 2026-10-12 habilita funcionalmente un único administrador inic
 por Hospital/Alcaldía y difiere otros empleados y roles. Véase
 `bitacora/decisiones/2026-10-12-registro-unico-admin-institucional.md`.
 | 041 | accesos-personales-reales | Implementado y aplicado a Docker local; E2E real y baseline 31 etapas/2626 pruebas correctas; 23 migraciones y datos conservados; pendiente aceptación PO | Alta | Codex y Product Owner | 2026-10-12 |
+| 042 | optimizacion-pruebas-esenciales | Primera reducción verificada: 72 casos netos; web 1846 y baseline 2554/31 etapas correctas; publicación pendiente de destino PO | Media | Codex y Product Owner | 2026-10-12 |

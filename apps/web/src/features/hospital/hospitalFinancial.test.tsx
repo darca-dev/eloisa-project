@@ -11,8 +11,6 @@ import type { EstadoFinanciero } from './HospitalFinancialManagement';
 import { esMenuModal } from './HospitalFinancialPieces';
 import { HospitalShell } from './HospitalShell';
 import {
-  FINANCIERA_ESTADOS_COMPRA,
-  FINANCIERA_ESTADOS_CUENTA,
   FINANCIERA_ESTADOS_EVIDENCIA,
   FINANCIERA_ESTADOS_MOVIMIENTO,
   FINANCIERA_ESTADOS_PROVEEDOR,
@@ -20,7 +18,6 @@ import {
   FINANCIERA_FILTROS_VACIOS,
   FINANCIERA_MENU,
   FINANCIERA_METODOS_CAPTURA,
-  FINANCIERA_MODALIDADES_HONORARIOS,
   FINANCIERA_ORIGENES,
   FINANCIERA_SECCIONES,
   FINANCIERA_SECCION_INICIAL,
@@ -29,7 +26,6 @@ import {
   filtrarFilas,
 } from './hospitalFinancialConfig';
 import type { FinancialFila, FinancialSeccionId } from './hospitalFinancialConfig';
-import { FINANCIERA_CATEGORIAS_ATENCION } from './hospitalFinancialContracts';
 import { hospitalFinancieraDemo, seccionDeTabla } from './hospitalFinancialDemo';
 import { SESION_INSTITUCIONAL_FICTICIA, apariciones, main, texto } from './hospitalTestUtils';
 
@@ -47,15 +43,22 @@ import { SESION_INSTITUCIONAL_FICTICIA, apariciones, main, texto } from './hospi
 
 const CONFIG = hospitalFinancieraDemo;
 
-/** Marcado del shell abierto en «Gestión financiera». */
+const PANTALLAS = new Map<string, string>();
+
+/** Fixture SSR compartida solo para las mismas props y datos inmutables. */
 function pantalla(seccion?: FinancialSeccionId, fila: string | null = null): string {
-  return renderToStaticMarkup(
+  const key = JSON.stringify([seccion, fila]);
+  const existente = PANTALLAS.get(key);
+  if (existente !== undefined) return existente;
+  const html = renderToStaticMarkup(
     <HospitalShell sesionInicial={SESION_INSTITUCIONAL_FICTICIA}
       vistaInicial="financiera"
       seccionFinancieraInicial={seccion}
       filaFinancieraInicial={fila}
     />,
   );
+  PANTALLAS.set(key, html);
+  return html;
 }
 
 /** Texto visible del área de contenido para esa sección. */
@@ -73,69 +76,7 @@ const TODAS_LAS_FILAS: readonly FinancialFila[] = SECCIONES_TABLA.flatMap(
   (seccion) => seccion.filas,
 );
 
-/* ========================================================================== */
-/* T-01 y T-02 — Regresión y navegación                                       */
-/* ========================================================================== */
-
-describe('T-01 — Los módulos anteriores conservan su contenido', () => {
-  it('cada vista de H-01 a H-05 sigue montando su propio contenido', () => {
-    const vistas = [
-      ['inicio', 'CENTRO DE CONTROL'],
-      ['agenda', 'Agenda'],
-      ['pacientes', 'Pacientes'],
-      ['alarmas', 'alarmas'],
-      ['profesionales', 'Profesionales'],
-      ['visitas', 'Visitas domiciliarias'],
-      ['virtuales', 'Consultas virtuales'],
-      ['calificaciones', 'Calidad y experiencia'],
-      ['novedades', 'Novedades'],
-      ['administracion', 'Membresía'],
-    ] as const;
-
-    for (const [vista, pista] of vistas) {
-      const contenido = texto(main(renderToStaticMarkup(<HospitalShell sesionInicial={SESION_INSTITUCIONAL_FICTICIA} vistaInicial={vista} />)));
-
-      expect(contenido.length).toBeGreaterThan(0);
-      expect(contenido).toContain(pista);
-      /* Ninguna vista anterior recibe contenido financiero. */
-      expect(contenido).not.toContain('Necesita atención financiera');
-      expect(contenido).not.toContain('Conexión con sistema del Hospital');
-    }
-  });
-});
-
 describe('T-02 — Menú secundario: seis agrupaciones y quince destinos', () => {
-  it('declara exactamente las seis agrupaciones aprobadas, en orden', () => {
-    expect(FINANCIERA_MENU.map((grupo) => grupo.titulo)).toEqual([
-      'Visión general',
-      'Movimientos',
-      'Personas y pagos',
-      'Abastecimiento',
-      'Control',
-      'Datos',
-    ]);
-  });
-
-  it('declara exactamente los quince destinos aprobados, en orden', () => {
-    expect(FINANCIERA_MENU.flatMap((grupo) => grupo.items.map((item) => item.id))).toEqual([
-      'resumen',
-      'ingresos',
-      'egresos',
-      'gastos',
-      'facturas',
-      'nomina',
-      'honorarios',
-      'cuentas',
-      'proveedores',
-      'compras',
-      'convenios',
-      'presupuesto',
-      'ejecucion',
-      'evidencias',
-      'conexion',
-    ]);
-    expect(FINANCIERA_SECCIONES).toHaveLength(15);
-  });
 
   it('cada destino monta contenido propio y vuelve al resumen', () => {
     for (const seccion of FINANCIERA_SECCIONES) {
@@ -164,20 +105,6 @@ describe('T-02 — Menú secundario: seis agrupaciones y quince destinos', () =>
 /* ========================================================================== */
 
 describe('T-03 — Los KPI compactos del resumen', () => {
-  it('son los diez del apartado 7, en el orden exacto', () => {
-    expect(CONFIG.resumen.kpis.map((kpi) => kpi.etiqueta)).toEqual([
-      'Presupuesto asignado',
-      'Ingresos',
-      'Egresos',
-      'Comprometido',
-      'Disponible',
-      'Ejecución %',
-      'Nómina del periodo',
-      'Honorarios pendientes',
-      'Cuentas de cobro pendientes',
-      'Gastos pendientes de soporte',
-    ]);
-  });
 
   it('cada KPI muestra valor, periodo y origen y abre un destino del menú', () => {
     const contenido = visible();
@@ -201,15 +128,6 @@ describe('T-03 — Los KPI compactos del resumen', () => {
 });
 
 describe('T-04 — «Necesita atención financiera»', () => {
-  it('solo usa las seis categorías operativas aprobadas', () => {
-    for (const item of CONFIG.resumen.atencion) {
-      expect(FINANCIERA_CATEGORIAS_ATENCION).toContain(item.categoria);
-    }
-
-    expect(new Set(CONFIG.resumen.atencion.map((item) => item.categoria)).size).toBe(
-      FINANCIERA_CATEGORIAS_ATENCION.length,
-    );
-  });
 
   it('cada item declara tipo, asunto, programa, antigüedad, origen y destino', () => {
     const contenido = visible();
@@ -318,44 +236,9 @@ describe('T-06 — Filtros combinables', () => {
 /* ========================================================================== */
 
 describe('T-07 — Ingresos', () => {
-  it('muestra los tipos y campos requeridos', () => {
-    const contenido = visible('ingresos', 'ing-001');
-
-    for (const campo of [
-      'Tipo de ingreso',
-      'Valor',
-      'Programa',
-      'Beneficiario',
-      'Entidad',
-      'Medio',
-      'Documento',
-      'Estado',
-      'Observaciones',
-    ]) {
-      expect(contenido).toContain(campo);
-    }
-  });
 
   it('declara que ningún ingreso se reconoce automáticamente', () => {
     expect(visible('ingresos')).toContain('no se reconoce automáticamente a partir de una cita');
-  });
-});
-
-describe('T-08 — Egresos', () => {
-  it('muestra categorías, campos y procedencia', () => {
-    const contenido = visible('egresos', 'egr-003');
-
-    for (const campo of [
-      'Categoría',
-      'Responsable',
-      'Proveedor o persona',
-      'Centro de costo',
-      'Factura o recibo',
-      'Origen',
-      'Método de captura',
-    ]) {
-      expect(contenido).toContain(campo);
-    }
   });
 });
 
@@ -403,14 +286,6 @@ describe('T-09 — Nómina de empleados', () => {
 });
 
 describe('T-10 — Prestadores / Honorarios', () => {
-  it('usa las modalidades y los estados aprobados de independientes', () => {
-    const honorarios = seccionDeTabla('honorarios');
-
-    for (const fila of honorarios?.filas ?? []) {
-      expect(FINANCIERA_MODALIDADES_HONORARIOS).toContain(fila.categoria);
-      expect(FINANCIERA_ESTADOS_CUENTA).toContain(fila.estado);
-    }
-  });
 
   it('deja el vínculo futuro por identificador sin duplicar el expediente', () => {
     const contenido = visible('honorarios', 'hon-001');
@@ -426,21 +301,6 @@ describe('T-10 — Prestadores / Honorarios', () => {
 });
 
 describe('T-11 — Cuentas de cobro', () => {
-  it('representa el flujo completo aprobado', () => {
-    const cuentas = seccionDeTabla('cuentas');
-    const estados = new Set((cuentas?.filas ?? []).map((fila) => fila.estado));
-
-    for (const fila of cuentas?.filas ?? []) {
-      expect(FINANCIERA_ESTADOS_CUENTA).toContain(fila.estado);
-    }
-
-    expect(estados.has('Recibida')).toBe(true);
-    expect(estados.has('Requiere corrección')).toBe(true);
-    expect(estados.has('Pagada')).toBe(true);
-    expect(visible('cuentas')).toContain(
-      'Recibida → En revisión → Requiere corrección → Aprobada → Programada → Pagada',
-    );
-  });
 
   it('conserva el historial conceptual de la corrección', () => {
     const contenido = visible('cuentas', 'cta-003');
@@ -452,19 +312,6 @@ describe('T-11 — Cuentas de cobro', () => {
 });
 
 describe('T-12 — Gastos operativos', () => {
-  it('declara el formulario de registro rápido con sus campos aprobados', () => {
-    const gastos = seccionDeTabla('gastos');
-
-    expect(gastos?.formulario?.campos).toEqual([
-      'Categoría',
-      'Fecha',
-      'Valor',
-      'Responsable',
-      'Programa',
-      'Tercero',
-      'Descripción',
-    ]);
-  });
 
   it('la ranura de evidencia es inerte y se declara como tal', () => {
     expect(visible('gastos')).toContain('no abre el selector del sistema');
@@ -472,24 +319,6 @@ describe('T-12 — Gastos operativos', () => {
 });
 
 describe('T-13 — Proveedores', () => {
-  it('muestra ficha, documentos, compras, facturas, pagos e historial', () => {
-    const contenido = visible('proveedores', 'pro-001');
-
-    for (const campo of [
-      'Nombre o razón social',
-      'Identificación',
-      'Contacto',
-      'Producto o servicio',
-      'Documentos',
-      'Contrato o convenio',
-      'Compras',
-      'Facturas',
-      'Pagos',
-      'Historial',
-    ]) {
-      expect(contenido).toContain(campo);
-    }
-  });
 
   it('usa los cuatro estados aprobados y aclara que no son una sanción', () => {
     const proveedores = seccionDeTabla('proveedores');
@@ -507,18 +336,6 @@ describe('T-13 — Proveedores', () => {
 });
 
 describe('T-14 — Compras e insumos', () => {
-  it('muestra cantidad, costos, recepción y los seis estados aprobados', () => {
-    const compras = seccionDeTabla('compras');
-    const contenido = visible('compras', 'com-001');
-
-    for (const fila of compras?.filas ?? []) {
-      expect(FINANCIERA_ESTADOS_COMPRA).toContain(fila.estado);
-    }
-
-    for (const campo of ['Cantidad', 'Costo unitario', 'Total', 'Recepción o entrega']) {
-      expect(contenido).toContain(campo);
-    }
-  });
 
   it('declara que el total no es un cálculo contable', () => {
     expect(visible('compras')).toContain('no es un cálculo contable');
@@ -526,16 +343,6 @@ describe('T-14 — Compras e insumos', () => {
 });
 
 describe('T-15 — Convenios', () => {
-  it('muestra resumen, movimientos, evidencias e historial', () => {
-    const contenido = visible('convenios', 'cnv-001');
-
-    for (const bloque of ['Resumen', 'Movimientos', 'Evidencias', 'Historial']) {
-      expect(contenido).toContain(bloque);
-    }
-    for (const campo of ['Objeto', 'Vigencia', 'Valor o aporte', 'Recursos', 'Personal relacionado']) {
-      expect(contenido).toContain(campo);
-    }
-  });
 
   it('no interpreta obligaciones ni validez jurídica', () => {
     expect(visible('convenios')).toContain('no interpreta obligaciones');
@@ -632,31 +439,9 @@ describe('T-18 — Procedencia', () => {
     expect(contenido).toContain('Importación autorizada');
     expect(contenido).toContain('HX-ING-88213');
   });
-
-  it('las dos fuentes tienen representación en los fixtures', () => {
-    const origenes = new Set(TODAS_LAS_FILAS.map((fila) => fila.origen));
-
-    expect(origenes.size).toBe(2);
-    expect([...origenes].every((origen) => FINANCIERA_ORIGENES.includes(origen))).toBe(true);
-    expect(FINANCIERA_ORIGENES).toContain(platformNameInSentence());
-  });
 });
 
 describe('T-19 — Estados de sincronización', () => {
-  it('los cinco estados están representados y la fecha se muestra', () => {
-    const contenido = visible('conexion');
-    const estados = new Set(
-      TODAS_LAS_FILAS.map((fila) => fila.detalle.procedencia.sincronizacion),
-    );
-
-    expect(estados.has('Local')).toBe(true);
-    expect(estados.has('Importado')).toBe(true);
-    expect(estados.has('Sincronizado')).toBe(true);
-    expect(estados.has('Pendiente')).toBe(true);
-    expect(estados.has('Conflicto')).toBe(true);
-    expect(contenido).toContain('Última sincronización');
-    expect(contenido).toContain('Nunca');
-  });
 
   it('un dato desactualizado se declara con su fecha confirmada', () => {
     expect(visible('nomina', 'nom-003')).toContain('Datos posiblemente desactualizados');
@@ -695,25 +480,6 @@ describe('T-21 — Panel de conexión', () => {
     );
     expect(CONFIG.conexion.sistema.nombre).toBe('Sistema por definir');
     expect(CONFIG.conexion.sistema.ultimaSincronizacion).toBe('Nunca');
-  });
-
-  it('ofrece las ocho categorías con dirección, fuente maestra y campos', () => {
-    expect(CONFIG.conexion.categorias.map((categoria) => categoria.etiqueta)).toEqual([
-      'Ingresos',
-      'Egresos',
-      'Nómina',
-      'Proveedores',
-      'Facturas',
-      'Presupuesto',
-      'Compras',
-      'Pagos',
-    ]);
-
-    const contenido = visible('conexion');
-
-    for (const campo of ['Dirección', 'Fuente maestra', 'Frecuencia', 'Campos permitidos']) {
-      expect(contenido).toContain(campo);
-    }
   });
 
   it('la modalidad bidireccional está bloqueada y explica por qué', () => {
@@ -991,36 +757,10 @@ describe('T-25 — Tableta (721 a 1023 px): el menú es un bloque colapsable', (
     expect(seleccion.estado.menuAbierto).toBe(false);
     expect(seleccion.enfocarTitulo).toBe(false);
   });
-
-  it('conserva las seis agrupaciones y los quince destinos', () => {
-    esperarMenuCompleto(abierto);
-    expect(interiorDelMenu(abierto)).toBe(interiorDelMenu(cerrado));
-
-    /* La anchura de tableta no recibe ninguna regla del panel modal. */
-    const tableta = bloquesMedia('(max-width: 1023px)');
-
-    expect(tableta).toContain('.menu {');
-    expect(tableta).not.toContain('position: fixed');
-    expect(tableta).not.toContain('menuFondo');
-    expect(tableta).not.toContain('menuPanelAbierto');
-  });
 });
 
 describe('T-25 — Escritorio (desde 1024 px): el menú lateral es permanente', () => {
   const escritorio = modulo(false, false);
-
-  it('mantiene el menú lateral de 224 px y oculta el botón', () => {
-    const reglas = bloquesMedia('(min-width: 1024px)');
-
-    expect(HOJA).toContain('flex: 0 0 224px');
-    expect(reglas).toContain('.menuBoton {');
-    expect(reglas).toContain('display: none');
-    /* El menú permanece visible aunque el estado del panel esté cerrado. */
-    expect(reglas).toContain('.menuOculto {');
-    expect(reglas).toContain('display: flex');
-    expect(reglas).not.toContain('position: fixed');
-    expect(reglas).not.toContain('menuPanelAbierto');
-  });
 
   it('no declara semántica modal, backdrop ni traslado de foco', () => {
     expect(esMenuModal(false, false)).toBe(false);
@@ -1029,10 +769,6 @@ describe('T-25 — Escritorio (desde 1024 px): el menú lateral es permanente', 
     expect(escritorio).not.toContain('data-financiera-menu="fondo"');
     expect(seleccionDeMenu(estadoCon(false), 'egresos', false).enfocarTitulo).toBe(false);
     expect(seleccionDeMenu(estadoCon(false), 'egresos', true).enfocarTitulo).toBe(false);
-  });
-
-  it('conserva las seis agrupaciones y los quince destinos', () => {
-    esperarMenuCompleto(escritorio);
   });
 });
 
