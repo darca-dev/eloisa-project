@@ -16,3 +16,13 @@ por caso retirado. Mantiene pruebas funcionales, privacidad, autorización,
 aislamiento, carreras, auditoría, validación y accesibilidad. No se cambia el
 producto, no se ocultan fallos con skips/excludes ni se fija una cuota arbitraria.
 S02–S14 quedan fuera de esta rama.
+
+## Destino confirmado y publicación
+
+El PO respondió: «Usar eloisa-platform/Eloisa sin modificar main ni develop».
+Se añadió el remoto `eloisa` conservando `origin`. Se publicaron atómicamente
+`feat/termino-01-registro-institucional` en `d0be21e` y
+`chore/optimizar-pruebas-esenciales` en `8cfc442`, con seguimiento remoto.
+La consulta posterior confirmó ambos commits y los mismos hashes de main/develop
+que antes del push. No se fusionaron historias ni se abrieron pull requests.
+El cierre documental se añade después en la rama de optimización.

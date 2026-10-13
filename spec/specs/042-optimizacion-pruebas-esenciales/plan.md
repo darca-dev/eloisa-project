@@ -16,8 +16,8 @@ casos de comportamiento y riesgo. No alterar producto ni descubrimiento de tests
 
 ## Dependencias
 
-041 entregado, Vitest/TypeScript y runner aislado existentes. La publicación
-remota depende de que PO indique destino accesible; no bloquea trabajo local.
+041 entregado, Vitest/TypeScript y runner aislado existentes. PO confirmó
+eloisa-platform/Eloisa; ambas ramas publicadas y hashes remotos verificados.
 
 ## Riesgos y mitigación
 

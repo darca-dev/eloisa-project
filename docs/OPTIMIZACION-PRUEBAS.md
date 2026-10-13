@@ -155,6 +155,9 @@ benchmark ni una garantía de aceleración.
 
 La entrega del producto quedó en `d0be21e`, rama
 `feat/termino-01-registro-institucional`. El remoto configurado
-`arvtechv/eloisa_project` responde Repository not found. Se confirmó acceso de
-lectura a `eloisa-platform/Eloisa`; destino de publicación pendiente de respuesta
-del PO. No se modifican main/develop ni se fusionan historias.
+`arvtechv/eloisa_project` responde Repository not found. El PO confirmó
+`eloisa-platform/Eloisa` como destino y se añadió el remoto `eloisa`, conservando
+`origin`. Ambas ramas se publicaron atómicamente: entrega `d0be21e` y optimización
+`8cfc442`; sus hashes remotos se verificaron. El cierre documental se añade después
+en la rama de optimización. Main/develop conservan sus hashes anteriores y no se
+fusionaron historias.
