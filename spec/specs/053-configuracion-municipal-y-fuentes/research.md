@@ -13,4 +13,4 @@ Fuentes primarias revisadas el2026-10-15:
 - SENA, consulta de certificados: https://certificados.sena.edu.co/
 - Corte Constitucional, texto T-319/25: https://www.corteconstitucional.gov.co/relatoria/2025/t-319-25.htm
 
-Las fuentes permiten consultar documentos/resultados, pero no prueban que un dato pertenezca al municipio actual ni habilitan inferencias de cumplimiento. No se ingieren datos individuales. Se solicita municipio/departamento/vigencia al PO antes de capturar cifras externas.
+Las fuentes permiten consultar documentos/resultados, pero no prueban que un dato pertenezca al municipio actual ni habilitan inferencias de cumplimiento. No se ingieren datos individuales. El PO aclaró que se lea la información previa y solo se busquen sus páginas reales; no se requiere otra respuesta territorial para entregar estos enlaces y no se precargan cifras del prototipo.

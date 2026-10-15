@@ -1,10 +1,12 @@
 # Plan de término funcional de MERDN / Eloisa
 
-Fecha: **8 de octubre de 2026**. Responsable de producto: Product Owner. Arquitectura, especificación y auditoría: Codex. Implementación: Claude Code/OpenCode bajo Task Specification aprobada.
+Creado: **8 de octubre de 2026**. Corte vigente: **15 de octubre de 2026**. Responsable de producto: Product Owner. Arquitectura, especificación y auditoría: Codex. Implementación autorizada por el PO a Codex en la conversación vigente, bajo especificación y controles del repositorio.
 
 **Objetivo:** terminar las capacidades existentes como operaciones reales de punta a punta. El trabajo se divide en 15 secciones, cada una con una rama Git propia, dependencias, pruebas y aceptación. La primera entrega funcional será el acceso real para todos los perfiles e instituciones.
 
-**Estado actualizado 2026-10-12:** Codex autorizado a implementar los módulos reales. MP04C implementado. 040 y 041 implementados, verificados y aplicados a Docker local: registro inicial Hospital/Municipalidad, tres perfiles personales y recuperación gestionada por administrador. Baseline actual: 31 etapas, 2626 pruebas correctas, cero fallos u omisiones. E2E con PostgreSQL/Keycloak reales correcta; 23 migraciones, backup restaurado y cuentas existentes conservadas; cupos iniciales libres. S01 en revisión del Product Owner; S02–S14 pendientes. Evidencia y límites en [REVISION-MODULOS-REALES.md](REVISION-MODULOS-REALES.md). No se declara aceptación PO ni despliegue público.
+**Estado vigente 2026-10-15:** checkpoint `d1bf434` publicado en `eloisa-platform/Eloisa`, rama `feat/completar-modulos-reales`, antes de la revisión de entrega solicitada por el PO. Docker sirve API050/web052. Hospital052 está aplicado y verificado; Configuración municipal053 está escrita pero no ha completado pruebas PostgreSQL, builds del candidato, revisión final ni despliegue. Hay25migraciones en código;053 no se ha aplicado en este trabajo. S01 requiere cerrar inscripción legada y aprobación en APIs propias; S02–S14 conservan trabajo funcional pendiente. No se declara el proyecto listo para entrega integral. Hallazgos, matriz actual y orden de cierre en [REVISION-PREENTREGA-2026-10-15.md](REVISION-PREENTREGA-2026-10-15.md).
+
+**Referencia histórica 2026-10-12:**040/041 tuvieron baseline de31etapas/2626pruebas y23migraciones. Esa evidencia no valida el candidato053. Las menciones posteriores a cupos libres, cero cuentas y defectos iniciales son registros históricos; ya se crearon las cuentas locales Hospital/Alcaldía/Paciente solicitadas por el PO. Sus credenciales permanecen privadas.
 
 ## 1. Instrucción de producto y contrato de entrega
 
@@ -59,13 +61,13 @@ Trabajaremos secuencialmente S00 a S14. El número indica el orden normal. Las d
 
 | Sección | Resultado | Rama nueva al iniciar | Dependencias mínimas | Estado actual |
 |---|---|---|---|---|
-| S00 | Base de trabajo y entorno verificable | `feat/termino-00-base-y-baseline` y ramas por MP | — | MP04C implementado; baseline 040 completa y correcta |
-| S01 | Accesos, registro y ciclo de cuenta | `feat/termino-01-accesos-reales` | S00 | EN REVISIÓN: 040/041 implementados, verificados y aplicados localmente |
+| S00 | Base de trabajo y entorno verificable | `feat/termino-00-base-y-baseline` y ramas por MP | — | Base y runner operativos; repetir baseline del candidato final |
+| S01 | Accesos, registro y ciclo de cuenta | `feat/termino-01-accesos-reales` | S00 | PARCIAL: login/registro/recovery operativos; bloqueos PE-01/02 abiertos |
 | S02 | Personas, relaciones y consentimientos | `feat/termino-02-personas-relaciones-y-consentimientos` | S01 | PLANIFICADA |
-| S03 | Alcaldía, programas y población | `feat/termino-03-alcaldia-programas-y-poblacion` | S02 | PLANIFICADA |
+| S03 | Alcaldía, programas y población | `feat/termino-03-alcaldia-programas-y-poblacion` | S02 | PARCIAL: agregados reales; captura053 en curso, sin desplegar |
 | S04 | Documentos y evidencia institucional | `feat/termino-04-documentos-y-evidencias` | S02, S03 | PLANIFICADA |
-| S05 | Hospital, agenda y visitas domiciliarias | `feat/termino-05-hospital-agenda-y-visitas` | S02 | PLANIFICADA |
-| S06 | Portales y continuidad del cuidado | `feat/termino-06-portales-y-continuidad-de-cuidado` | S05, S04 | PLANIFICADA |
+| S05 | Hospital, agenda y visitas domiciliarias | `feat/termino-05-hospital-agenda-y-visitas` | S02 | PARCIAL: consultas/asignación/transiciones; falta cerrar gestión de citas y recorrido profesional |
+| S06 | Portales y continuidad del cuidado | `feat/termino-06-portales-y-continuidad-de-cuidado` | S05, S04 | PARCIAL: consultas propias/worklist; acciones persistentes y PE-03 pendientes |
 | S07 | Finanzas, presupuesto y contratos | `feat/termino-07-finanzas-presupuestos-y-contratos` | S03, S04 | PLANIFICADA |
 | S08 | Hub, indicadores y gestión institucional | `feat/termino-08-hub-indicadores-y-gestion-institucional` | S03, S04, S07 | PLANIFICADA |
 | S09 | Formación, cuidadores y SENA | `feat/termino-09-formacion-cuidadores-y-sena` | S02, S04, S08 | PLANIFICADA |
@@ -221,6 +223,7 @@ Entregables:
 - Presupuesto, fuente, periodo, asignación, movimiento y ejecución; relaciones a actividad/programa/servicio.
 - Proveedores, contratos y versiones; gasto, solicitud, aprobación, soporte y seguimiento.
 - Separación creador/aprobador y permisos FIN; anulaciones/ajustes conservan historial.
+- Antes de implementar aprobaciones, conciliar ese requisito con la decisión vigente de un único administrador institucional y sin nuevos empleados/roles. No crear otro rol ni permitir autoaprobación por defecto; definir el flujo autorizado del paquete financiero.
 - Totales y conciliación reproducibles; contrato financiero de indicadores consumido en S08; liquidaciones y cargos cerrados en S10 desde hechos persistidos.
 
 **Cierre verificable:** Una ejecución ficticia de prueba recorre asignación→gasto→aprobación→soporte→reporte; totales coinciden y no se duplican por reintento; sin datos clínicos innecesarios; ninguna liquidación se confirma solo en React.
@@ -475,9 +478,9 @@ Los hallazgos CMP-02/CMP-03 (provisión legada), CMP-04 (aprobación en acceso d
 
 | ID | Decisión | Recomendación para revisión | Bloquea |
 |---|---|---|---|
-| D-01 RESUELTA | Repositorio y base local | Proyecto fuera de OneDrive, rama S00 desde `origin/develop` local `9980582`; conservar respaldo e historias separadas. Sincronización remota pendiente | Base fijada; no autoriza cambios de permisos ni producción |
+| D-01 RESUELTA | Repositorio y base local | Base S00 inicial9980582; remoto elegido posteriormente por PO `eloisa-platform/Eloisa`. Checkpoint d1bf434 publicado en `feat/completar-modulos-reales`; main/develop intactas | Base y remoto fijados; no autoriza merge, producción ni cambios de permisos |
 | D-02 | Actor institucional individual, relación a organización/capacidad y compatibilidad de cuentas anteriores | OIDC compartido para autenticación, autorización local por capacidad/institución; denegar legado sin aprobación hasta reconciliación explícita; conservar separación de guards/cookies donde el contrato la requiera | Paquetes de acceso institucional y acceso legado S01 |
-| D-03 | TTL/idle por riesgo, MFA, recuperación y efecto de revocación | Política por perfil/riesgo; revocación crítica inmediata; recuperación real de IdP o administración nominal auditada si no hay mensajería aprobada; fijar valores sin extender automáticamente 30 días a todos | Cierre S01 |
+| D-03 PARCIAL | TTL/idle por riesgo, MFA, recuperación y efecto de revocación | Recuperación administrada ya elegida e implementada en041; conservar sus controles y no exigir SMTP. Completar matriz de expiración/revocación del candidato y resolver pendientes por riesgo sin cambiar TTL/MFA implícitamente | Cierre S01 y pruebas053 |
 | D-04 | Seed/test, realms/DB autorizados, cleanup y entrega segura | Dos tenants ficticios aislados; runId, contraseñas por cuenta, archivo local ignorado, reset conservador e idempotente | Provisión real del catálogo S01 |
 | D-05 | Campos/reglas clínicas, institucionales, financieras/comerciales, fórmulas y retención aplicables | Especificar por dominio con fuentes autorizadas y aprobación del responsable; no copiar reglas del prototipo | Solo sección/flujo afectado |
 | D-06 | Entorno de entrega, backup/RPO/RTO y alcance futuro con datos reales | Primero aceptación funcional con datos ficticios y pruebas reales; producción/datos reales/gateway mediante sus aprobaciones independientes | S14 y uso productivo |
