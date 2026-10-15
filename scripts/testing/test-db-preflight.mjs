@@ -65,6 +65,7 @@ export { EXPECTED_POLICY_COUNT, EXPECTED_TEST_ENVIRONMENT, FICTIONAL_TENANT, PRO
  * `validatePolicyBaseline()`, que es puro y no necesita base.
  */
 export const RLS_POLICY_PAIRS = Object.freeze([
+  Object.freeze({ policy: 'municipality_section_revision_tenant', table: 'municipality_section_revision' }),
   Object.freeze({ policy: 'access_request_tenant', table: 'access_request' }),
   Object.freeze({ policy: 'institutional_administrator_registration_tenant', table: 'institutional_administrator_registration' }),
   Object.freeze({ policy: 'access_password_recovery_tenant', table: 'access_password_recovery' }),

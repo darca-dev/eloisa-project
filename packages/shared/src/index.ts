@@ -12,3 +12,4 @@ export {
   type HealthResponse,
   type HealthStatus,
 } from './health';
+export * from './municipality-management';

@@ -17,25 +17,25 @@ const schema = readFileSync(path.join(root, 'prisma', 'schema.prisma'), 'utf8');
 const stripComments = (source) => source.replace(/\/\*[\s\S]*?\*\//gu, '').replace(/--[^\r\n]*/gu, '');
 const sql = migrations.map((name) => stripComments(readFileSync(path.join(migrationsRoot, name, 'migration.sql'), 'utf8'))).join('\n');
 
-test('el catalogo completo cubre exactamente los 29 modelos/tablas del esquema', () => {
+test('el catalogo completo cubre exactamente los 30 modelos/tablas del esquema', () => {
   const modelTables = [...schema.matchAll(/@@map\("([^"]+)"\)/gu)].map((match) => match[1]);
-  assert.equal(modelTables.length, 29);
+  assert.equal(modelTables.length, 30);
   assert.deepEqual([...PROTECTED_TABLES].sort(), modelTables.sort());
   const createdTables = [...sql.matchAll(/CREATE\s+TABLE\s+"([^"]+)"/giu)].map((match) => match[1]);
   assert.deepEqual(createdTables.sort(), [...PROTECTED_TABLES].sort());
 });
 
-test('las 24 migraciones exigidas corresponden exactamente al arbol versionado', () => {
-  assert.equal(migrations.length, 24);
+test('las 25 migraciones exigidas corresponden exactamente al arbol versionado', () => {
+  assert.equal(migrations.length, 25);
   assert.deepEqual([...REQUIRED_MIGRATIONS].sort(), migrations);
 });
 
-test('los 30 pares de policy/tabla corresponden a las migraciones sin excepciones', () => {
+test('los 31 pares de policy/tabla corresponden a las migraciones sin excepciones', () => {
   assert.doesNotMatch(sql, /DROP\s+POLICY/iu, 'un cambio de policies requiere revisar este inventario');
   const actual = [...sql.matchAll(/CREATE\s+POLICY\s+"([^"]+)"\s+ON\s+"([^"]+)"/giu)]
     .map((match) => `${match[1]}::${match[2]}`).sort();
-  assert.equal(actual.length, 30);
-  assert.equal(EXPECTED_POLICY_COUNT, 30);
+  assert.equal(actual.length, 31);
+  assert.equal(EXPECTED_POLICY_COUNT, 31);
   assert.deepEqual(RLS_POLICY_PAIRS.map(({ policy, table }) => `${policy}::${table}`).sort(), actual);
 });
 

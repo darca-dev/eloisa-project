@@ -2,7 +2,7 @@
 import { InstitutionalAccess } from '@/features/auth/InstitutionalAccess';
 import { consultarAdministradorHospital, cerrarSesionAdministrador } from '@/features/auth/institutionalAdministratorClient';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 
 import styles from './hospital.module.css';
 import { HospitalAdministration } from './HospitalAdministration';
@@ -12,6 +12,8 @@ import { HospitalAgenda } from './HospitalAgenda';
 import { HospitalAgendaDemo } from './HospitalAgendaDemo';
 import { HospitalAlerts } from './HospitalAlerts';
 import { HospitalDashboard } from './HospitalDashboard';
+import { HospitalOperationalHome } from './HospitalOperationalHome';
+import { HospitalPendingModule, HOSPITAL_PENDING_MODULES } from './HospitalPendingModule';
 import { hospitalDemoFetch } from './hospitalDemoLocal';
 import { HospitalFinancialManagement } from './HospitalFinancialManagement';
 import type { FinancialSeccionId } from './hospitalFinancialConfig';
@@ -191,6 +193,11 @@ function HospitalContenido({
   readonly fetchImpl?: typeof fetch;
   readonly onSessionInvalid: () => void;
 }): ReactNode {
+  if (!modoDemoLocal) {
+    if (vista === 'inicio') return <HospitalOperationalHome onNavegar={onNavegar} fetchImpl={fetchImpl} onSessionInvalid={onSessionInvalid} />;
+    if (vista === 'administracion' && !canReviewAccessRequests) return <HospitalPendingModule modulo="administracion" />;
+    if (vista !== 'administracion' && vista in HOSPITAL_PENDING_MODULES) return <HospitalPendingModule modulo={vista as keyof typeof HOSPITAL_PENDING_MODULES} />;
+  }
   switch (vista) {
     case 'agenda':
       return modoDemoLocal ? <HospitalAgendaDemo /> : <HospitalAgenda onVisitaMaterializada={onVisitaMaterializada} />;
@@ -596,7 +603,13 @@ export function HospitalShell({
   const institucion =
     sesion === null
       ? config.institucion
-      : { nombre: sesion.institution.name, tipo: '', municipio: '', logo: null };
+      : { nombre: nombreVisibleHospital(sesion.institution.name), tipo: '', municipio: '', logo: null };
+
+  const invalidarSesion = useCallback(() => {
+    setSesion(null);
+    setSesionResuelta(true);
+    setAviso('La sesión institucional terminó. Ingrese nuevamente.');
+  }, []);
 
   /**
    * Único punto de transición: sidebar, KPI, acciones y accesos pasan por aquí.
@@ -822,11 +835,7 @@ export function HospitalShell({
             modoDemoLocal={modoDemoLocal}
             canReviewAccessRequests={esRevisorAccesos || sesion.administrator === true}
             fetchImpl={fetchImpl}
-            onSessionInvalid={() => {
-              setSesion(null);
-              setSesionResuelta(true);
-              setAviso('La sesión institucional terminó. Ingrese nuevamente.');
-            }}
+            onSessionInvalid={invalidarSesion}
             onNavegar={navegar}
             onSeleccionarPestana={setPestanaAdministracion}
             onVisitaMaterializada={(materializada) => {
@@ -843,4 +852,10 @@ export function HospitalShell({
       </div>
     </div>
   );
+}
+
+/** A technical bootstrap label is not a verified institutional name. */
+export function nombreVisibleHospital(nombre: string): string {
+  const limpio = nombre.trim();
+  return limpio === '' || /^MERDN\s*[-–—]\s*Tenant institucional MVP$/iu.test(limpio) ? 'Hospital' : limpio;
 }

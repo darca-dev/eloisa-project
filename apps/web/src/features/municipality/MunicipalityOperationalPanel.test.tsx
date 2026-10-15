@@ -4,7 +4,6 @@ import { MunicipalityShell } from './MunicipalityShell';
 import { MunicipalityOperationalHomeView } from './MunicipalityOperationalPanel';
 import type { PopulationSummary, EstadoAgregado } from './municipalityAggregates';
 import { MUNICIPALITY_MODULOS } from './municipalityViews';
-import { MUNICIPALITY_MODULE_LAYOUTS, type MunicipalityPendingModule } from './municipalityModuleLayouts';
 
 const SESION_MUNICIPAL_FICTICIA = { role: 'MUNICIPAL_VIEWER', expiresAt: '2030-01-01T00:00:00Z', institution: { name: 'Institución de pruebas' }, actorDisplay: 'Administrador institucional', administrator: true } as const;
 
@@ -47,12 +46,11 @@ describe('Municipality operativa con registros guardados', () => {
       expect(html).toContain(SESION_MUNICIPAL_FICTICIA.institution.name);
       expect(html).not.toMatch(/Datos demostrativos|Alcaldía de Soacha|Secretaría de Salud|3\.050|37,5|1\.284|92,8|Agosto de 2026/u);
       if (!['inicio', 'poblacion', 'territorio'].includes(vista)) {
-        const definition = MUNICIPALITY_MODULE_LAYOUTS[vista as MunicipalityPendingModule];
-        expect(html).toContain('Pendiente de habilitar'); expect(html).not.toMatch(/<form\b/u);
-        expect(html).toContain('Este apartado todavía no permite consultar registros ni realizar operaciones.');
-        for (const section of definition.sections) expect(html).toContain(section.title);
+        expect(html).toContain('Consultando registros guardados'); expect(html).not.toMatch(/<form\b/u);
+        expect(html).toContain('Completar en Configuración');
         expect(html).not.toMatch(/Descargar|Exportar|Guardar|type="submit"|role="progressbar"/u);
       }
+      expect(html).toContain('Configuración');
     }
     const denied = renderToStaticMarkup(<MunicipalityShell administracionHumana sesionInicial="sin-sesion" />);
     expect(denied).not.toContain('data-municipality-content'); expect(denied).not.toContain('Resumen municipal');

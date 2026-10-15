@@ -223,6 +223,7 @@ const INYECCION_AUTORIZADA: readonly string[] = [
   'HospitalAdministration.tsx',
   'HospitalAgenda.tsx',
   'HospitalHomeVisits.tsx',
+  'HospitalOperationalHome.tsx',
   'HospitalPatients.tsx',
   'HospitalProfessionals.tsx',
   'HospitalShell.tsx',
@@ -487,16 +488,15 @@ describe('T-06C — Fecha y reloj: un único instante actual, bajo control', () 
     expect(FECHA_DETERMINISTA.test('new Date()')).toBe(false);
   });
 
-  it('el único reloj actual es el default del reloj inyectable de Agenda', () => {
+  it('solo Agenda e Inicio leen la fecha para consultar sus ventanas reales (052)', () => {
     /*
      * `HospitalAgenda.tsx` recibe el reloj por parámetro para poder probarse
-     * con un instante fijo; su default es la única lectura de «ahora» del
-     * módulo. El Dashboard NO lee el reloj: su fecha es un valor de
-     * presentación fijo de la configuración. Se comprueban archivo y CANTIDAD:
-     * dos defaults en el mismo archivo también serían dos relojes.
+     * con un instante fijo. 052 autoriza otra lectura en Inicio al consultar
+     * o actualizar el día UTC de la agenda. Se comprueban archivo y cantidad;
+     * los demás módulos no pueden introducir relojes para cifras de ejemplo.
      */
-    expect(infractores(RELOJ_ACTUAL)).toEqual(['HospitalAgenda.tsx']);
-    expect(ocurrencias(RELOJ_ACTUAL_GLOBAL)).toBe(1);
+    expect(infractores(RELOJ_ACTUAL)).toEqual(['HospitalAgenda.tsx', 'HospitalOperationalHome.tsx']);
+    expect(ocurrencias(RELOJ_ACTUAL_GLOBAL)).toBe(2);
   });
 
   it('las construcciones deterministas de fecha solo transforman valores recibidos', () => {
@@ -509,6 +509,7 @@ describe('T-06C — Fecha y reloj: un único instante actual, bajo control', () 
       'HospitalAccessRequests.tsx',
       'hospitalAccessRequestsClient.ts',
       'hospitalAgendaClient.ts',
+      'HospitalOperationalHome.tsx',
     ]);
   });
 });

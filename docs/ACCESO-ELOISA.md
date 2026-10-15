@@ -1,6 +1,56 @@
 # Acceso Eloisa y panel municipal con registros guardados
 
-Actualizado: 2026-10-14. Rama local: `fix/acceso-eloisa-local`.
+Actualizado: 2026-10-15. Rama local: `feat/completar-modulos-reales`.
+
+## Avance de Configuración municipal — 053, aún sin aplicar
+
+El respaldo Git del15deoctubre incluye formularios, contratos y API de captura
+municipal versionada en desarrollo. No están desplegados: la instancia local
+conserva API050 y web052. Falta ejecutar la migración y pruebas contra la base
+aislada, completar revisión, builds y E2E antes de aplicar053 con respaldo.
+No se declara que el administrador ya pueda guardar desde Docker.
+
+## Hospital sin datos demostrativos — 052
+
+El Hospital operativo presenta «Hospital» cuando la sesión devuelve el nombre
+técnico inicial «MERDN — Tenant institucional MVP». Una razón social real se
+conserva. No se renombra el tenant ni se inventan municipio o logo.
+
+Inicio consulta la agenda institucional existente para la fecha UTC indicada.
+El total y las citas proceden de esa respuesta; las solicitudes pendientes sin
+fecha no se cuentan como citas de hoy. Se indica el corte de consulta. Solo una
+respuesta correcta permite mostrar cero o lista vacía; carga, error y denegación
+no publican cifras ni conservan filas anteriores. Se permite actualizar o
+reintentar, y un401 desmonta el contenido y perfil autenticados.
+
+Agenda, pacientes, profesionales, visitas y solicitudes/recuperación conservan
+sus operaciones reales. Alarmas, consultas virtuales, calificaciones, novedades,
+finanzas y reportes conservan sus destinos, con estado pendiente explícito y sin
+datos o acciones simuladas. Una sesión sin capacidad administrativa tampoco
+recibe las antiguas pestañas de ejemplo. Estas seis pantallas pendientes no
+constituyen módulos funcionales terminados. Los componentes de referencia solo
+se montan en modo de demostración explícito; /hospital no lo habilita.
+
+Se sustituye solo web por `merdn-web:eloisa-hospital052`, con imagen/configuración
+anterior respaldadas privadamente. API050, PostgreSQL e IdP conservan sus IDs y
+configuración; no hay migración, eliminación de datos, nuevas cuentas ni Git.
+Rollback: restaurar solo web con su configuración e imagen previas.
+
+Validación focal:877casos en27archivos Hospital, incluido aislamiento de fixtures,
+nombre institucional, carga/error/denegación y representación de citas. Las
+pruebas históricas de presentación financiera y administrativa requieren ahora
+modo de demostración explícito; las pruebas operativas siguen sin activarlo.
+Build web con tipos y revisión estática independiente sin bloqueantes. Evidencia
+local ignorada: `.tmp/hospital052-tests.txt`, `build-web052.txt`, `lint052.txt`,
+`docker-build052.txt`, `deploy052.txt`, `e2e052.txt` y capturas `.tmp/ui052/`.
+
+E2E real correcto con la cuenta Hospital existente: doce destinos a1340/768/320
+sin desborde; catorce comprobaciones axe sin infracciones; total y filas de
+Inicio contrastados con API; error503 elimina cifras y reintento recupera la
+consulta,403 sin cifras,401 limpia perfil/contenido, respuesta tardía tras
+navegar sin alterar destino, Configuración real conservada y logout204/post401.
+En la comprobación actual, la API publica cero citas asignadas para la fecha
+consultada; se muestra como resultado real, no como sustitución de un error.
 
 ## Composición municipal vigente — 051
 

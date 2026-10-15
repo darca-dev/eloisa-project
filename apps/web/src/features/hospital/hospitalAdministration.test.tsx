@@ -62,7 +62,7 @@ function admin(
   const existente = PANTALLAS.get(key);
   if (existente !== undefined) return existente;
   const html = renderToStaticMarkup(
-    <HospitalShell sesionInicial={revisora ? SESION_REVISORA : SESION_INSTITUCIONAL_FICTICIA} vistaInicial="administracion" pestanaAdministracionInicial={pestana} />,
+    <HospitalShell modoDemoLocal={!revisora} sesionInicial={revisora ? SESION_REVISORA : SESION_INSTITUCIONAL_FICTICIA} vistaInicial="administracion" pestanaAdministracionInicial={pestana} />,
   );
   PANTALLAS.set(key, html);
   return html;
@@ -292,7 +292,7 @@ describe('T-17 — Gestión financiera no vive dentro de Configuración', () => 
   it('es un módulo principal del menú y abre su propio módulo, no Configuración', () => {
     const financiera = HOSPITAL_NAV_ITEMS.find((item) => item.id === 'financiera');
     const posiciones = HOSPITAL_NAV_ITEMS.map((item) => item.id);
-    const html = renderToStaticMarkup(<HospitalShell sesionInicial={SESION_INSTITUCIONAL_FICTICIA} vistaInicial="financiera" />);
+    const html = renderToStaticMarkup(<HospitalShell modoDemoLocal sesionInicial={SESION_INSTITUCIONAL_FICTICIA} vistaInicial="financiera" />);
     const visible = texto(main(html));
 
     expect(financiera?.etiqueta).toBe('Gestión financiera');

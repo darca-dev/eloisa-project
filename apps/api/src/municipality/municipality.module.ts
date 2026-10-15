@@ -5,6 +5,9 @@ import { InstitutionalAuthModule } from '../institutional-auth/institutional-aut
 import { MunicipalAggregateAccessGuard } from './municipal-aggregate-access.guard';
 import { MunicipalityController } from './municipality.controller';
 import { MunicipalityService } from './municipality.service';
+import { HumanSessionModule } from '../human-auth/human-session.module';
+import { MunicipalityManagementController } from './municipality-management.controller';
+import { MunicipalityManagementService } from './municipality-management.service';
 
 /**
  * Superficie municipal agregada (TASK-MUNICIPALITY-CORE-01).
@@ -18,8 +21,8 @@ import { MunicipalityService } from './municipality.service';
  * personas cuidadoras y cualquier acceso a un paciente concreto.
  */
 @Module({
-  imports: [InstitutionalAuthModule],
-  controllers: [MunicipalityController],
-  providers: [MunicipalityService, MunicipalAggregateAccessGuard],
+  imports: [InstitutionalAuthModule, HumanSessionModule],
+  controllers: [MunicipalityController, MunicipalityManagementController],
+  providers: [MunicipalityService, MunicipalAggregateAccessGuard, MunicipalityManagementService],
 })
 export class MunicipalityModule {}

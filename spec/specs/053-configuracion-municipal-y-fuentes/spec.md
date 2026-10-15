@@ -1,0 +1,27 @@
+# 053 — Configuración municipal y procedencia de la información
+
+## Estado de aprobación / Approval status
+
+- Estado / Status: `Aprobado para implementación y aplicación local`.
+- Fecha: 2026-10-15.
+- Aprobado por: Product Owner, conversación vigente.
+- Evidencia: ../../bitacora/decisiones/2026-10-15-configuracion-municipal-y-fuentes.md.
+
+## Contrato
+
+1. Objetivo: permitir al administrador de Alcaldía llenar los apartados desde Configuración, mantener vacíos los datos manuales aún no registrados e identificar fuentes oficiales externas.
+2. Actor: únicamente la cuenta humana del primer administrador municipal confirmado, con su binding externo exacto y capacidad municipal activa. No el administrador de plataforma, Hospital, paciente ni una credencial municipal legada.
+3. Secciones editables: identificación institucional y registros administrativos de programas, presupuesto, evidencias, FURAG/MIPG, ADRES, cuidado, brechas, formación, indicadores y referencias de reportes. Catálogo cerrado de campos tipados; no formulario JSON libre. Cada registro tiene título, periodo, procedencia y los campos específicos pertinentes.
+4. Procedencia: declaración institucional o transcripción externa. Toda transcripción requiere URL HTTPS de dominio oficial admitido y fecha de corte. Puntajes FURAG requieren referencia oficial y no son calculados ni certificados por Eloisa. Catálogo de enlaces públicos DANE/Función Pública/ADRES/SENA/Corte verificado en esta sesión; no cifras precargadas ni integración automática declarada.
+5. Límites: las capturas son registros administrativos agregados y referencias de soporte, no contabilidad, historia clínica, nómina, verificación SENA, carga física de documentos ni cálculo oficial. Montos se conservan como decimales exactos en texto; no se inventan fórmulas de ejecución o cumplimiento. No sobrescriben población/territorio/supresión de API.
+6. Datos: nuevo MunicipalitySectionRevision append-only, tenant y actor por contexto servidor, sección controlada, version positiva, payloadSchemaVersion=1, payload validado, createdAt y FKs compuestas. UNIQUE tenant/sección/version, RLS+FORCE y grants SELECT/INSERT sin UPDATE/DELETE. Sin seeds manuales ni valores de prototipo.
+7. API: GET/PUT /api/v1/municipality/management/:section; PUT requiere HumanSessionGuard y SameOriginGuard. Dentro de la transacción se revalidan cuenta, sesión/binding, reserva y capacidad. Límite50registros por apartado (institución1), campos limitados y payload64KB. Rechazo de claves desconocidas, URLs inseguras, fechas inválidas y números no canónicos.
+8. Concurrencia: expectedVersion entero seguro,0 para documento inexistente; lock transaccional tenant/sección antes de lectura-comparación-inserción. Conflicto409 exige recarga explícita; no sobrescribir silenciosamente el trabajo de otra ventana. Cada guardado crea revisión, incluso al retirar registros de la vista actual; historial persistente.
+9. Auditoría: lecturas, guardados y denegaciones diferenciados. Evento y revisión en la misma transacción; sin payload, URL, nombres ni importes en auditoría/logs. Error de auditoría revierte guardado. Denegación se registra antes de lanzar fuera de la transacción. No borrar histórico.
+10. UI: Configuración accesible en panel operativo y formularios vacíos; elegir apartado, agregar/editar/retirar registro en borrador, guardar, cancelar y recargar. Un cambio de apartado no pierde silenciosamente borrador. Vista del apartado muestra solo la revisión guardada, procedencia y fecha; estados de carga, vacío, error y denegación distintos. Enlaces externos seguros y fecha de verificación visibles; sin fetch del servidor a URLs de usuario.
+11. Privacidad: no capturar pacientes, documentos personales o historias clínicas; responsables se expresan como dependencia institucional. El servidor no amplía accesos nominales. Errores no exponen SQL ni entorno.
+12. Aceptación: guardar en Configuración se refleja en el apartado y persiste tras recargar; sin registros sigue vacío. Dos ventanas producen conflicto controlado; otras cuentas y tenants no leen ni escriben. La sesión municipal no obtiene acceso Hospital.
+13. Archivos: contratos compartidos, módulo municipal API/web, esquema/migración aditiva, inventarios de baseline/RLS y pruebas correspondientes, docs y artefactos053. Hospital052 se conserva; prototipos y archivos históricos intactos. Sin nuevos servicios/dependencias ni Git.
+14. Pruebas: validación de contratos, API real en DB aislada, permisos/CSRF/binding exacto, RLS entre tenants, revisión positiva/negativa/concurrencia/auditoría; UI estados y persistencia E2E con cuenta existente. Registros E2E ficticios identificados se retiran de revisión actual al terminar; histórico de prueba permanece trazable.
+15. Operación: backup privado DB/config/imágenes, migración aditiva sin borrar datos, builds API/web y reemplazo solo aplicación. PG/IdP conservan contenedores/volúmenes. Si falla, restaurar imágenes previas (tabla aditiva puede quedar sin usar); no borrar nuevas revisiones. Validar salud y capacidades anteriores.
+16. Aclaración PO: «lee la informacion que ya tenia solo busca sus paginas reales». Se usan los conceptos del prototipo (Soacha/agosto2026, FURAG2025, ADRES BDUA/LMA y SENA) para localizar páginas oficiales, sin importar cifras del prototipo ni convertir sus fechas en vigencia real. No se requiere otra respuesta territorial para entregar los enlaces.

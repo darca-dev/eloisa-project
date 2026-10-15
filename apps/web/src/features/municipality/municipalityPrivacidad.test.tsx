@@ -271,6 +271,7 @@ describe('Alcaldía — sin red, persistencia ni integraciones', () => {
       '@/features/auth/InstitutionalAccess',
       '@/features/auth/institutionalAdministratorClient',
       '@/features/auth/institutionalSessionClient',
+      '@merdn/shared',
       'react',
     ]);
   });
@@ -280,12 +281,12 @@ describe('Alcaldía — sin red, persistencia ni integraciones', () => {
    * `@/config/environment` estaría abriendo una segunda frontera de red fuera
    * del cliente municipal, y esta prueba lo impide.
    */
-  it('la configuración de entorno solo entra por el cliente municipal', () => {
+  it('la configuración de entorno solo entra por los clientes municipales autorizados (053)', () => {
     const importadores = FUENTES.filter(({ contenido }) =>
       contenido.includes("from '@/config/environment'"),
     ).map(({ archivo }) => archivo);
 
-    expect(importadores).toStrictEqual(['municipalityAggregatesClient.ts']);
+    expect(importadores).toStrictEqual(['municipalityAggregatesClient.ts', 'municipalityManagementClient.ts']);
   });
 
   it('no importa ningún módulo de otra experiencia', () => {

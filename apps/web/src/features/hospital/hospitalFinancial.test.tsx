@@ -51,7 +51,7 @@ function pantalla(seccion?: FinancialSeccionId, fila: string | null = null): str
   const existente = PANTALLAS.get(key);
   if (existente !== undefined) return existente;
   const html = renderToStaticMarkup(
-    <HospitalShell sesionInicial={SESION_INSTITUCIONAL_FICTICIA}
+    <HospitalShell modoDemoLocal sesionInicial={SESION_INSTITUCIONAL_FICTICIA}
       vistaInicial="financiera"
       seccionFinancieraInicial={seccion}
       filaFinancieraInicial={fila}

@@ -18,6 +18,7 @@ import { type PrismaClient } from '../src/generated/prisma/client';
 import { MalformedJsonFilter } from '../src/patients/malformed-json.filter';
 
 import { createTestPrismaClient, unavailableBanner } from './database-availability';
+import { municipalManagementApiCases } from './municipality-management.api.cases';
 import {
   DEPARTMENT_CODE,
   MUNICIPALITY_CODE,
@@ -57,6 +58,7 @@ const ORIGEN_WEB_AUTORIZADO = 'http://127.0.0.1:3000';
 
 const availability = inject('databaseAvailability');
 const puedeEjecutarse = availability.available && availability.migrated;
+municipalManagementApiCases(puedeEjecutarse);
 
 if (!puedeEjecutarse) {
   // eslint-disable-next-line no-console

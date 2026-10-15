@@ -51,7 +51,7 @@ function shell(vistaInicial?: HospitalVistaId, intencionInicial?: HospitalIntenc
 
 /** Título visible que cada vista debe montar como encabezado principal. */
 const TITULO_DE_LA_VISTA: Record<HospitalVistaId, string> = {
-  inicio: 'Atención domiciliaria de hoy',
+  inicio: 'Inicio',
   agenda: 'Agenda y citas',
   pacientes: 'Pacientes',
   alarmas: 'Semáforo de alarmas',
@@ -87,18 +87,16 @@ function tituloPrincipal(html: string): string {
 }
 
 describe('T-01 — Carga inicial de /hospital', () => {
-  it('abre en Inicio con el Dashboard y los KPIs de TASK-003H-02', () => {
+  it('abre en Inicio consultando la agenda, sin indicadores demostrativos', () => {
     const html = shell();
     const contenido = main(html);
 
     expect(HOSPITAL_VISTA_INICIAL).toBe('inicio');
     expect(html).toContain('data-hospital-content="dashboard"');
-    expect(contenido).toContain('CENTRO DE CONTROL OPERATIVO');
-    expect(contenido).toContain('Atención domiciliaria de hoy');
-    expect(contenido).toContain('CITAS PENDIENTES DE ASIGNACIÓN');
-    expect(contenido).toContain('Necesita atención ahora');
-    expect(contenido).toContain('Acciones rápidas');
-    expect(contenido).toContain('Ir a');
+    expect(contenido).toContain('Gestión hospitalaria');
+    expect(contenido).toContain('Consultando las citas registradas');
+    expect(contenido).toContain('Accesos a la operación');
+    expect(contenido).not.toContain('CITAS PENDIENTES DE ASIGNACIÓN');
   });
 
   it('conserva sidebar, topbar, buscador y perfil', () => {

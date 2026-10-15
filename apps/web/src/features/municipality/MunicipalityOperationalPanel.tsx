@@ -6,7 +6,9 @@ import { MunicipalityPopulation } from './MunicipalityPopulation';
 import { MunicipalitySidebar } from './MunicipalitySidebar';
 import { MunicipalityProfileBadge } from './MunicipalityTopbar';
 import { MunicipalityTerritory } from './MunicipalityTerritory';
-import { MunicipalityModuleLayout } from './MunicipalityModuleLayout';
+import type { MunicipalSectionId } from '@merdn/shared';
+import { MunicipalityManagedSection } from './MunicipalityManagedSection';
+import { MunicipalitySettings } from './MunicipalitySettings';
 import { MUNICIPALITY_NAV_ITEMS } from './municipalityConfig';
 import { ETIQUETAS_POBLACION, TEXTOS_AGREGADOS, textoDeCorte, type EstadoAgregado, type PopulationSummary } from './municipalityAggregates';
 import { fetchPopulationSummary } from './municipalityAggregatesClient';
@@ -92,14 +94,18 @@ function MunicipalityOperationalHome(props: Omit<Parameters<typeof MunicipalityO
   return <MunicipalityOperationalHomeView {...props} estado={estado} />;
 }
 
-export function MunicipalityOperationalPanel({ vistaInicial = 'inicio', institutionName = 'Alcaldía', cerrando, avisoSesion, onCerrarSesion }: {
+export function MunicipalityOperationalPanel({ vistaInicial = 'inicio', institutionName = 'Alcaldía', cerrando, avisoSesion, onCerrarSesion, onSessionInvalid }: {
   readonly vistaInicial?: MunicipalityModuloId;
   readonly institutionName?: string;
   readonly cerrando: boolean;
   readonly avisoSesion: string | null;
   readonly onCerrarSesion: () => void;
+  readonly onSessionInvalid: () => void;
 }) {
-  const [vista, setVista] = useState<MunicipalityModuloId>(vistaInicial);
+  const [vista, setVista] = useState<MunicipalityModuloId | 'configuracion'>(vistaInicial);
+  const [apartado, setApartado] = useState<MunicipalSectionId>('institucion');
+  const [sucio, setSucio] = useState(false);
+  const [avisoNavegacion, setAvisoNavegacion] = useState('');
   const [intento, setIntento] = useState(0);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const menuBoton = useRef<HTMLButtonElement>(null);
@@ -114,33 +120,35 @@ export function MunicipalityOperationalPanel({ vistaInicial = 'inicio', institut
     document.addEventListener('keydown', cerrarConEscape);
     return () => document.removeEventListener('keydown', cerrarConEscape);
   }, [menuAbierto]);
-  const navegar = (solicitada: MunicipalityModuloId) => {
+  const navegar = (solicitada: MunicipalityModuloId | 'configuracion') => {
+    if (sucio && solicitada !== vista) { setAvisoNavegacion('Hay cambios sin guardar. Guarda o descarta el borrador en Configuración antes de salir.'); return; }
     setMenuAbierto(false);
     if (solicitada === vista) tituloRef.current?.focus();
-    setVista(actual => siguienteVista(actual, solicitada));
+    setVista(actual => solicitada === 'configuracion' ? solicitada : siguienteVista(actual === 'configuracion' ? 'inicio' : actual, solicitada));
   };
   const nombreInstitucion = /\bmerdn\b/iu.test(institutionName) ? 'Alcaldía' : institutionName;
   return <div className={`${layout.shell} ${styles.frame}`}>
     <a className={styles.skip} href="#municipality-main">Saltar al contenido</a>
     <div className={styles.mobileBar}><strong>{branding.platformDisplayName} · Alcaldía</strong><button ref={menuBoton} className={styles.secondary} type="button" aria-expanded={menuAbierto} aria-controls="municipality-navigation" onClick={() => setMenuAbierto(actual => !actual)}>{menuAbierto ? 'Cerrar menú' : 'Abrir menú'}</button></div>
     <div className={styles.navigation} id="municipality-navigation" data-open={menuAbierto}>
-      <MunicipalitySidebar identidad={{ plataforma: branding.platformDisplayName, entidad: nombreInstitucion, bajada: 'Gestión territorial y evidencia' }} navegacion={MUNICIPALITY_NAV_ITEMS} itemActivoId={vista} onSeleccionar={navegar} />
+      <MunicipalitySidebar identidad={{ plataforma: branding.platformDisplayName, entidad: nombreInstitucion, bajada: 'Gestión territorial y evidencia' }} navegacion={MUNICIPALITY_NAV_ITEMS} itemActivoId={vista} onSeleccionar={navegar} onConfiguracion={() => { setApartado('institucion'); navegar('configuracion'); }} />
     </div>
     <div className={layout.main}>
       <header className={`${layout.topbar} ${styles.header}`} aria-label="Encabezado del panel municipal">
         <div className={layout.topbarHeadings}><p className={layout.topbarEyebrow}>PANEL DE GESTIÓN TERRITORIAL, RESULTADOS Y EVIDENCIA</p><p className={layout.topbarPrivacy}>Datos agregados y anonimizados · sin acceso a historias clínicas individuales</p></div>
         <span className={styles.periodStatus}>Consulta actual</span>
         <div className={styles.sessionControls}>
-          <MunicipalityProfileBadge perfil={{ iniciales: 'AM', nombre: 'Administrador municipal', perfil: 'Perfil de consulta agregada' }} />
+          <MunicipalityProfileBadge perfil={{ iniciales: 'AM', nombre: 'Administrador municipal', perfil: 'Gestión y consulta institucional' }} />
           <button className={styles.logout} disabled={cerrando} type="button" aria-label="Cerrar sesión institucional" onClick={onCerrarSesion}>{cerrando ? 'Cerrando…' : 'Cerrar sesión'}</button>
         </div>
-        <p role="alert" className={styles.sessionNotice}>{avisoSesion ?? ''}</p>
+        <p role="alert" className={styles.sessionNotice}>{avisoSesion ?? (sucio ? avisoNavegacion : '')}</p>
       </header>
       <main className={layout.content} id="municipality-main" tabIndex={-1} data-municipality-content={vista}>
         {vista === 'inicio' ? <MunicipalityOperationalHome key={intento} tituloRef={tituloRef} onNavegar={navegar} onReintentar={() => setIntento(value => value + 1)} />
           : vista === 'poblacion' ? <MunicipalityPopulation tituloRef={tituloRef} />
           : vista === 'territorio' ? <MunicipalityTerritory tituloRef={tituloRef} />
-          : <MunicipalityModuleLayout vista={vista} tituloRef={tituloRef} onVolver={() => navegar('inicio')} />}
+          : vista === 'configuracion' ? <MunicipalitySettings initialSection={apartado} tituloRef={tituloRef} onDirtyChange={setSucio} onSessionInvalid={onSessionInvalid} />
+          : <MunicipalityManagedSection key={vista} section={vista} tituloRef={tituloRef} onConfigure={() => { setApartado(vista); navegar('configuracion'); }} onSessionInvalid={onSessionInvalid} />}
       </main>
     </div>
   </div>;

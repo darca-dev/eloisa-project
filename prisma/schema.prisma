@@ -143,6 +143,9 @@ enum AuditEventType {
   INSTITUTIONAL_SESSION_REVOKED
   MUNICIPAL_AGGREGATE_ACCESS_GRANTED
   MUNICIPAL_AGGREGATE_ACCESS_DENIED
+  MUNICIPAL_CONFIGURATION_READ
+  MUNICIPAL_CONFIGURATION_SAVED
+  MUNICIPAL_CONFIGURATION_DENIED
   HOSPITAL_PATIENT_LIST_ACCESS_GRANTED
   HOSPITAL_PATIENT_DETAIL_ACCESS_GRANTED
   HOSPITAL_PATIENT_ANALYTICS_ACCESS_GRANTED
@@ -335,6 +338,7 @@ model Tenant {
   consentRecords     ConsentRecord[]
   enrollmentSessions EnrollmentSession[]
   auditEvents        AuditEvent[]        @relation("AuditEventTenant")
+  municipalSectionRevisions MunicipalitySectionRevision[]
 
   institutionalIdentities InstitutionalIdentity[]
   institutionalSessions   InstitutionalSession[]
@@ -1203,6 +1207,7 @@ model HumanAccount {
   /// profesional ni cuidadora, y NINGUN rol institucional la concede.
   platformSupportCapabilities PlatformSupportCapability[]
   supportContextSessions      SupportContextSession[]
+  municipalSectionRevisions MunicipalitySectionRevision[]
 
   /// Permite FKs compuestas que impiden asociaciones entre tenants distintos.
   @@unique([id, tenantId], map: "human_account_id_tenant_unique")
@@ -1953,4 +1958,20 @@ model AccessPasswordRecovery {
   @@unique([id, tenantId, targetHumanAccountId], map: "access_password_recovery_account_tenant_unique")
   @@index([tenantId, accessRequestId, createdAt])
   @@map("access_password_recovery")
+}
+
+/// Administrative snapshots; canonical aggregates and territorial data are separate.
+model MunicipalitySectionRevision {
+  id String @id @default(uuid(7)) @db.Uuid
+  tenantId String @db.Uuid
+  section String
+  version Int
+  payloadSchemaVersion Int
+  payload Json @db.JsonB
+  createdByHumanAccountId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  author HumanAccount @relation(fields: [createdByHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  @@unique([tenantId, section, version], map: "municipality_section_revision_version_unique")
+  @@map("municipality_section_revision")
 }

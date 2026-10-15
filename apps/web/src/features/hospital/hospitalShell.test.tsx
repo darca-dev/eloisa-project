@@ -175,17 +175,14 @@ describe('T-01 — Estructura del shell', () => {
     expect(html).toContain('data-hospital-content="dashboard"');
   });
 
-  it('el área principal contiene únicamente el bloque superior del Dashboard', () => {
+  it('el área principal espera datos de agenda sin publicar indicadores de ejemplo', () => {
     const html = shell();
     const contenido = mainDe(html);
 
-    expect(contenido).toContain('CENTRO DE CONTROL OPERATIVO');
-    expect(contenido).toContain('Atención domiciliaria de hoy');
-    expect(contenido).toContain('CITAS PENDIENTES DE ASIGNACIÓN');
-
-    // Nada por debajo de la cuadrícula: la sección del Dashboard la cierra.
-    const despuesDeLaSeccion = contenido.slice(contenido.lastIndexOf('</section>') + 10);
-    expect(despuesDeLaSeccion.trim()).toBe('');
+    expect(contenido).toContain('Gestión hospitalaria');
+    expect(contenido).toContain('Consultando las citas registradas');
+    expect(contenido).not.toContain('CITAS PENDIENTES DE ASIGNACIÓN');
+    expect(contenido).not.toContain('<dd>');
   });
 });
 
@@ -446,7 +443,7 @@ describe('T-04 — Alcance negativo', () => {
     ]) {
       expect(html).not.toContain(prohibido);
     }
-    expect(html).toContain('CENTRO DE CONTROL OPERATIVO');
+    expect(html).toContain('Gestión hospitalaria');
   });
 
   it('no incluye formularios, recursos remotos ni scripts', () => {
@@ -739,7 +736,7 @@ describe('H-FID-A — El shell autenticado no sufre regresión', () => {
     expect(html).toContain('<header');
     expect(html).toContain('data-hospital-content="dashboard"');
     expect(html).toContain('aria-label="Panel de Institución ficticia de pruebas"');
-    expect(html).toContain('CENTRO DE CONTROL OPERATIVO');
+    expect(html).toContain('Gestión hospitalaria');
   });
 
   it('el menú autenticado sigue siendo operable, ya sin badge demostrativo', () => {

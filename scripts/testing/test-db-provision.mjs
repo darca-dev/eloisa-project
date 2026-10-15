@@ -125,6 +125,7 @@ export const REQUIRED_MIGRATIONS = Object.freeze([
   '20261012180000_administrator_managed_recovery',
   '20261012190000_recovery_authentication_cutoff',
   '20261014190000_institutional_login_return_targets',
+  '20261015170000_municipal_section_revisions',
 ]);
 
 /**
@@ -148,6 +149,7 @@ export const PROTECTED_TABLES = Object.freeze([
   'institutional_identity',
   'institutional_administrator_registration',
   'institutional_session',
+  'municipality_section_revision',
   'patient',
   'patient_address',
   'patient_caregiver_relationship',
@@ -164,7 +166,7 @@ export const PROTECTED_TABLES = Object.freeze([
 ]);
 
 /** Numero de policies esperado sobre las 27 tablas del catalogo completo. */
-export const EXPECTED_POLICY_COUNT = 30;
+export const EXPECTED_POLICY_COUNT = 31;
 
 /**
  * Familia de nombres de contenedor admitida. Es deliberadamente estrecha:

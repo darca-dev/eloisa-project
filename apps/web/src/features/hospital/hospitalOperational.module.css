@@ -1,0 +1,20 @@
+.home { display: grid; gap: 22px; min-width: 0; color: var(--b-tinta); }
+.home h2 { font-size: 1.1rem; margin: 0 0 10px; }
+.home p { line-height: 1.6; margin: 6px 0; }
+.title { color: var(--b-azul); font-size: clamp(1.5rem, 3vw, 2rem); margin: 4px 0 8px; }
+.eyebrow { font-size: .8rem; font-weight: 800; color: var(--b-petroleo-texto); }
+.card { background: var(--b-blanco); border: 1px solid var(--b-borde); border-radius: 16px; padding: clamp(16px, 3vw, 24px); min-width: 0; }
+.sectionHeader { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+.sectionHeader p, .note { color: var(--b-gris); font-size: .85rem; overflow-wrap: anywhere; }
+.button { border: 1px solid var(--b-celeste-borde-fuerte); background: var(--b-celeste); color: var(--b-azul); border-radius: 10px; font: inherit; font-weight: 700; padding: 10px 14px; cursor: pointer; }
+.button:disabled { cursor: wait; opacity: .7; }
+.button:focus-visible, .tableScroll:focus-visible { outline: 3px solid var(--b-azul); outline-offset: 3px; }
+.count { margin: 20px 0; }
+.count dt { color: var(--b-gris); }
+.count dd { color: var(--b-azul); font-size: 2rem; font-weight: 800; margin: 4px 0; }
+.shortcuts { display: flex; flex-wrap: wrap; gap: 12px; }
+.tableScroll { overflow-x: auto; margin: 18px 0; }
+.table { width: 100%; border-collapse: collapse; text-align: left; font-size: .9rem; }
+.table caption { text-align: left; color: var(--b-gris); padding: 0 0 12px; }
+.table th, .table td { padding: 12px; border-bottom: 1px solid var(--b-borde); min-width: 110px; }
+.table th { color: var(--b-azul); background: var(--b-panel); }

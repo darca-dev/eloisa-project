@@ -373,6 +373,7 @@ export function MunicipalityShell({
   const contextoInicial = resuelto ? sesionInicial : null;
 
   const [sesion, setSesion] = useState<SesionInstitucionalDto | null>(contextoInicial);
+  const invalidarAdministracion = useCallback(() => { setSesion(null); }, []);
   const [estado, setEstado] = useState<EstadoSesionMunicipal>(() => {
     if (contextoInicial !== null) {
       /*
@@ -575,6 +576,7 @@ export function MunicipalityShell({
   }
 
   return administracionHumana ? <MunicipalityOperationalPanel
+    onSessionInvalid={invalidarAdministracion}
     institutionName={sesion.institution.name}
     avisoSesion={aviso}
     cerrando={ocupado}
