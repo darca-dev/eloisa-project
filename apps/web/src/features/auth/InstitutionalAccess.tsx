@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { urlDeLoginHumano } from './humanSessionClient';
-import { institutionalAdministratorUrl, type InstitutionalExperience } from './institutionalAdministratorClient';
+import { institutionalAdministratorUrl, urlDeLoginAdministrador, type InstitutionalExperience } from './institutionalAdministratorClient';
 import styles from './institutionalAdministrator.module.css';
 
 export function InstitutionalAccess({ experience }: { readonly experience: InstitutionalExperience }) {
@@ -18,7 +17,7 @@ export function InstitutionalAccess({ experience }: { readonly experience: Insti
   return <section className={styles.card} aria-labelledby={`access-${experience}`}>
     <h1 id={`access-${experience}`}>{experience === 'hospital' ? 'Acceso al Hospital' : 'Acceso a la Alcaldía'}</h1>
     <p>Ingrese con la cuenta del administrador de su institución.</p>
-    <a className={styles.primary} href={urlDeLoginHumano()}>Iniciar sesión</a>
+    <a className={styles.primary} href={urlDeLoginAdministrador(experience)}>Iniciar sesión</a>
     {available === true ? <Link href={`/${experience}/registro`}>Registrar primer administrador</Link> : null}
     {available === false ? <p>El registro inicial ya está cerrado.</p> : null}
     <Link href="/">Volver al portal</Link>

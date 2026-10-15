@@ -112,6 +112,31 @@ describe.skipIf(!availability.available || !availability.migrated)('041 personal
   const reset = (cookie: string, id: string, input: ReturnType<typeof resetBody>) => request(app.getHttpServer())
     .post(recoveryUrl(id)).set('Origin', ORIGIN).set('Cookie', cookie).send(input);
 
+  it.each(['/hospital', '/municipality', '/acceso', '/'] as const)('preserves callback destination %s without granting step-up', async returnTo => {
+    const admin = await administrator();
+    const binding = await prisma.externalAuthIdentity.findUniqueOrThrow({ where: { id: admin.principal.externalAuthIdentityId } });
+    const state = randomUUID();
+    const authorize = vi.spyOn(OidcAdapter.prototype, 'buildAuthorizationRequest').mockResolvedValue({ state, codeVerifier: randomBytes(32).toString('hex'), authorizationUrl: 'http://provider.invalid/authorize' });
+    vi.spyOn(OidcAdapter.prototype, 'exchangeAndVerify').mockResolvedValue({ issuer: ISSUER, subject: binding.subject });
+    const start = await app.get(HumanAuthService).startLogin(returnTo, new Date());
+    expect(authorize).toHaveBeenCalledWith(expect.any(String), returnTo !== '/');
+    const attempt = await prisma.humanAuthAttempt.findFirstOrThrow({ where: { tenantId } });
+    expect(attempt.returnTarget).toBe(returnTo);
+    expect(attempt.freshAuthenticationRequestedAt).toBeNull(); expect(attempt.stepUpSessionId).toBeNull();
+    const callback = await request(app.getHttpServer()).get('/api/v1/human-auth/callback').query({ state, code: 'fictional-provider-code' })
+      .set('Cookie', start.setCookieHeader.split(';')[0]!).expect(302);
+    expect(callback.headers.location).toBe(`${ORIGIN}${returnTo}`);
+  });
+
+  it('rejects hostile or non-literal login destinations before persistence', async () => {
+    vi.spyOn(OidcAdapter.prototype, 'buildAuthorizationRequest').mockImplementation(async () => ({ state: randomUUID(), codeVerifier: randomBytes(32).toString('hex'), authorizationUrl: 'http://provider.invalid/authorize' }));
+    for (const value of ['https://other.invalid', '//other.invalid', '/hospital?role=admin', '/municipality/other', ['/hospital', '/municipality']]) {
+      await app.get(HumanAuthService).startLogin(value, new Date());
+    }
+    const attempts = await prisma.humanAuthAttempt.findMany({ where: { tenantId } });
+    expect(attempts).toHaveLength(5); expect(attempts.every(attempt => attempt.returnTarget === '/')).toBe(true);
+  });
+
   it('approves the real professional portal without fabricating clinical participation or access', async () => {
     const target = await approved('FIELD_PROFESSIONAL');
     const user = await session(target.humanAccountId!, target.externalAuthIdentityId!);
@@ -247,14 +272,32 @@ describe.skipIf(!availability.available || !availability.migrated)('041 personal
   it('requires fresh admin authentication, same-origin and closed validated input before writing', async () => {
     const admin = await administrator(false); const target = await approved(); const input = resetBody(target.version);
     expect((await reset(admin.cookie, target.id, input).expect(403)).body.code).toBe('ACCESS_RECOVERY_REAUTHENTICATE');
-    await prisma.humanSession.update({ where: { id: admin.principal.sessionId }, data: { freshAuthenticatedAt: new Date() } });
-    await request(app.getHttpServer()).post(recoveryUrl(target.id)).set('Cookie', admin.cookie).set('Origin', 'https://other.invalid').send(input).expect(403);
-    await reset(admin.cookie, target.id, { ...input, identityVerified: false } as unknown as ReturnType<typeof resetBody>).expect(400);
-    await reset(admin.cookie, target.id, { ...input, expectedVersion: target.version + 1 }).expect(409);
+    const binding = await prisma.externalAuthIdentity.findUniqueOrThrow({ where: { id: admin.principal.externalAuthIdentityId } });
+    const state = randomUUID();
+    const authorize = vi.spyOn(OidcAdapter.prototype, 'buildAuthorizationRequest').mockResolvedValue({ state, codeVerifier: randomBytes(32).toString('hex'), authorizationUrl: 'http://provider.invalid/authorize' });
+    vi.spyOn(OidcAdapter.prototype, 'exchangeAndVerify').mockResolvedValue({ issuer: ISSUER, subject: binding.subject, authenticatedAt: new Date() });
+    const reauthentication = await request(app.getHttpServer()).post('/api/v1/human-auth/reauthenticate')
+      .set('Origin', ORIGIN).set('Cookie', admin.cookie).expect(200);
+    expect(authorize).toHaveBeenCalledWith(expect.any(String), true);
+    const attempt = await prisma.humanAuthAttempt.findFirstOrThrow({ where: { tenantId } });
+    expect(attempt.returnTarget).toBe('/hospital'); expect(attempt.freshAuthenticationRequestedAt).not.toBeNull();
+    expect(attempt.stepUpSessionId).toBe(admin.principal.sessionId);
+    expect(attempt.stepUpHumanAccountId).toBe(admin.principal.humanAccountId);
+    expect(attempt.stepUpExternalIdentityId).toBe(admin.principal.externalAuthIdentityId);
+    const callback = await request(app.getHttpServer()).get('/api/v1/human-auth/callback').query({ state, code: 'fictional-provider-code' })
+      .set('Cookie', reauthentication.headers['set-cookie'][0]!.split(';')[0]!).expect(302);
+    expect(callback.headers.location).toBe(`${ORIGIN}/hospital`);
+    expect((await prisma.humanSession.findUniqueOrThrow({ where: { id: admin.principal.sessionId } })).revokedAt).not.toBeNull();
+    const fresh = await prisma.humanSession.findFirstOrThrow({ where: { tenantId, humanAccountId: admin.principal.humanAccountId, revokedAt: null } });
+    expect(fresh.freshAuthenticatedAt).not.toBeNull();
+    const freshCookie = callback.headers['set-cookie'][0]!.split(';')[0]!;
+    await request(app.getHttpServer()).post(recoveryUrl(target.id)).set('Cookie', freshCookie).set('Origin', 'https://other.invalid').send(input).expect(403);
+    await reset(freshCookie, target.id, { ...input, identityVerified: false } as unknown as ReturnType<typeof resetBody>).expect(400);
+    await reset(freshCookie, target.id, { ...input, expectedVersion: target.version + 1 }).expect(409);
     expect(provider.resetCalls).toHaveLength(0); expect(await prisma.accessPasswordRecovery.count({ where: { tenantId } })).toBe(0);
     const personal = await session(target.humanAccountId!, target.externalAuthIdentityId!);
     await reset(personal.cookie, target.id, input).expect(403);
-    await reset(admin.cookie, randomUUID(), input).expect(404);
+    await reset(freshCookie, randomUUID(), input).expect(404);
   });
 
   it('initial audit failure rolls back the block and prevents any provider effect', async () => {
@@ -311,7 +354,7 @@ describe.skipIf(!availability.available || !availability.migrated)('041 personal
       release(); expect((await pending).body.state).toBe('UNCERTAIN');
       const account = await prisma.humanAccount.findUniqueOrThrow({ where: { id: target.humanAccountId! } });
       expect(account.status).toBe('DISABLED'); expect(account.passwordRecoveryBlocked).toBe(true); expect(account.accessLifecycleVersion).toBe(1);
-      expect((await row()).status).toBe('APPROVED');
+      expect((await prisma.accessRequest.findUniqueOrThrow({ where: { id: target.id } })).status).toBe('APPROVED');
     } finally { release(); }
   });
 

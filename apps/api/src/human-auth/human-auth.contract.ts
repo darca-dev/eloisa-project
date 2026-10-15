@@ -81,7 +81,8 @@ export type HumanContext = (typeof HUMAN_CONTEXTS)[number];
  * superficie de redirección; por eso se escribe aquí y no se deriva de un query
  * param libre.
  */
-export const HUMAN_AUTH_RETURN_TARGETS = ['/', '/acceso'] as const;
+// 049: institutional entry preserves its exact protected destination.
+export const HUMAN_AUTH_RETURN_TARGETS = ['/', '/acceso', '/hospital', '/municipality'] as const;
 
 export type HumanAuthReturnTarget = (typeof HUMAN_AUTH_RETURN_TARGETS)[number];
 

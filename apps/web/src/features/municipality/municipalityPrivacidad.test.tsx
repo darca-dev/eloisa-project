@@ -444,7 +444,7 @@ describe('Alcaldía — frontera de sesión institucional (spec 022)', () => {
     }
   });
 
-  it('solo Población y Territorio consultan agregados, y solo dentro de la sesión', () => {
+  it('solo Inicio operativo, Población y Territorio consultan agregados dentro de la sesión', () => {
     const consumidores = FUENTES.filter(
       ({ archivo, contenido }) =>
         // El propio hook no es un consumidor: es la pieza que consultan.
@@ -455,6 +455,7 @@ describe('Alcaldía — frontera de sesión institucional (spec 022)', () => {
       .sort((a, b) => a.localeCompare(b, 'es-CO'));
 
     expect(consumidores).toStrictEqual([
+      'MunicipalityOperationalPanel.tsx',
       'MunicipalityPopulation.tsx',
       'MunicipalityTerritory.tsx',
     ]);

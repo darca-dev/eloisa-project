@@ -1,9 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { consultarAdministrador, cerrarSesionAdministrador } from './institutionalAdministratorClient';
+import { consultarAdministrador, cerrarSesionAdministrador, urlDeLoginAdministrador } from './institutionalAdministratorClient';
 
 const context = { experience: 'HOSPITAL', administrator: true, expiresAt: '2026-10-12T18:00:00.000Z', institution: { name: 'Institución de prueba' } };
 const responder = (value: unknown, status = 200): typeof fetch => (async () => new Response(JSON.stringify(value), { status })) as typeof fetch;
 describe('sesión del primer administrador', () => {
+  it('cada entrada conserva su propio destino sin parámetros de identidad ni permisos', () => {
+    for (const [experience, target] of [['hospital', '/hospital'], ['municipality', '/municipality']] as const) {
+      const url = new URL(urlDeLoginAdministrador(experience));
+      expect(url.pathname).toBe('/api/v1/human-auth/login');
+      expect(Array.from(url.searchParams.entries())).toEqual([['returnTo', target]]);
+    }
+  });
   it('consulta al servidor con cookie, sin caché ni identidad declarada', async () => {
     let request: RequestInit | undefined;
     const result = await consultarAdministrador('hospital', (async (_url, init) => { request = init; return new Response(JSON.stringify(context)); }) as typeof fetch);

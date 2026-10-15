@@ -293,6 +293,18 @@ export const EXPERIENCIAS_APROBADAS = ['PATIENT', 'CAREGIVER', 'FIELD_PROFESSION
 
 export type ExperienciaAprobada = (typeof EXPERIENCIAS_APROBADAS)[number];
 
+/** Perfiles de Atención Domiciliaria; las instituciones tienen entradas propias. */
+export type ExperienciaPersonal = Extract<ExperienciaAprobada, 'PATIENT' | 'CAREGIVER' | 'FIELD_PROFESSIONAL'>;
+
+/** Solo limita la navegación personal; nunca añade aprobaciones del servidor. */
+export function filtrarExperienciasPersonales(
+  experiencias: readonly ExperienciaAprobada[],
+): readonly ExperienciaPersonal[] {
+  return experiencias.filter((experiencia): experiencia is ExperienciaPersonal =>
+    experiencia === 'PATIENT' || experiencia === 'CAREGIVER' || experiencia === 'FIELD_PROFESSIONAL',
+  );
+}
+
 /** Las TRES portadas que una experiencia puede abrir. Ninguna otra. */
 export const RUTAS_EXPERIENCIA: Readonly<Record<ExperienciaAprobada, string>> = {
   PATIENT: '/paciente',

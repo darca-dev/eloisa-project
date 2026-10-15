@@ -192,7 +192,8 @@ export class HumanAuthController {
     noStore(response);
     const principal = humanPrincipalOf(request);
     if (principal === null) throw new UnauthorizedException();
-    const started = await this.protegido(() => this.auth.startLogin('/acceso', new Date(), principal));
+    // Recovery administration resumes in Hospital, outside the personal selector.
+    const started = await this.protegido(() => this.auth.startLogin('/hospital', new Date(), principal));
     response.setHeader('Set-Cookie', started.setCookieHeader);
     return { authorizationUrl: started.authorizationUrl };
   }

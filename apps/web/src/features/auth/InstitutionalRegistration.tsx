@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { urlDeLoginHumano } from './humanSessionClient';
-import { institutionalAdministratorUrl, type InstitutionalExperience } from './institutionalAdministratorClient';
+import { institutionalAdministratorUrl, urlDeLoginAdministrador, type InstitutionalExperience } from './institutionalAdministratorClient';
 import styles from './institutionalAdministrator.module.css';
 
 const DOCUMENT_TYPES = [['CEDULA_CIUDADANIA', 'Cédula de ciudadanía'], ['CEDULA_EXTRANJERIA', 'Cédula de extranjería'], ['PASAPORTE', 'Pasaporte'], ['PERMISO_PROTECCION_TEMPORAL', 'Permiso de protección temporal']] as const;
@@ -80,7 +79,7 @@ export function InstitutionalRegistration({ experience }: { readonly experience:
       </form>
       <button type="button" disabled={busy} onClick={() => { void claim(); }}>Usar mi cuenta actual como primer administrador</button>
     </> : null}
-    <a className={styles.primary} href={urlDeLoginHumano()}>Iniciar sesión</a>
+    <a className={styles.primary} href={urlDeLoginAdministrador(experience)}>Iniciar sesión</a>
     <Link href={`/${experience}`}>Volver a {experience === 'hospital' ? 'Hospital' : 'Alcaldía'}</Link>
   </section></main>;
 }

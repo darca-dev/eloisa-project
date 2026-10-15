@@ -1,8 +1,11 @@
 import { resolvePublicApiBaseUrl } from '@/config/environment';
-import { cerrarSesionHumana, esCancelacion } from './humanSessionClient';
+import { cerrarSesionHumana, esCancelacion, RUTAS_SESION_HUMANA } from './humanSessionClient';
 import { type ResultadoCierre, type ResultadoSesion } from './institutionalSessionClient';
 
 export type InstitutionalExperience = 'hospital' | 'municipality';
+/** Fixed destination only: this link selects a page, never a permission. */
+export const urlDeLoginAdministrador = (experience: InstitutionalExperience): string =>
+  `${resolvePublicApiBaseUrl()}${RUTAS_SESION_HUMANA.login}?returnTo=${experience === 'hospital' ? '/hospital' : '/municipality'}`;
 export const institutionalAdministratorUrl = (experience: InstitutionalExperience, resource: string): string =>
   `${resolvePublicApiBaseUrl()}/api/v1/institutional/${experience}/${resource}`;
 

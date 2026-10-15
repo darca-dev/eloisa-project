@@ -6,6 +6,8 @@ import type { ReactNode } from 'react';
 
 import { branding, platformNameInSentence } from '@/config/branding';
 import { InstitutionalRegistrationLink } from '@/features/auth/InstitutionalRegistrationLink';
+import { urlDeLoginAdministrador } from '@/features/auth/institutionalAdministratorClient';
+import { urlDeLoginHumano } from '@/features/auth/humanSessionClient';
 import styles from './hub.module.css';
 
 /**
@@ -71,7 +73,7 @@ export function HubAccessPortal(): ReactNode {
                 <li className={styles.featureItem}><span className={styles.featureCheck}>✓</span> Visitador médico</li>
               </ul>
               <div className={styles.cardActions}>
-                <Link href="/acceso" className={styles.btnPrimary}>Iniciar sesión</Link>
+                <a href={urlDeLoginHumano()} className={styles.btnPrimary}>Iniciar sesión</a>
                 <Link href="/acceso?accion=registro" className={styles.btnSecondary}>Regístrate</Link>
               </div>
             </article>
@@ -88,7 +90,7 @@ export function HubAccessPortal(): ReactNode {
                 Gestión de la operación hospitalaria, solicitudes de acceso y coordinación de atención.
               </p>
               <div className={styles.cardActions}>
-                <Link href="/hospital" className={styles.btnPrimary}>Ingresar al Hospital</Link>
+                <a href={urlDeLoginAdministrador('hospital')} className={styles.btnPrimary}>Ingresar al Hospital</a>
                 <InstitutionalRegistrationLink experience="hospital" className={styles.btnSecondary} />
               </div>
             </article>
@@ -105,7 +107,7 @@ export function HubAccessPortal(): ReactNode {
                 Información territorial, indicadores, programas, evidencias y seguimiento institucional.
               </p>
               <div className={styles.cardActions}>
-                <Link href="/municipality" className={styles.btnPrimary}>Ingresar a Alcaldía</Link>
+                <a href={urlDeLoginAdministrador('municipality')} className={styles.btnPrimary}>Ingresar a Alcaldía</a>
                 <InstitutionalRegistrationLink experience="municipality" className={styles.btnSecondary} />
               </div>
             </article>

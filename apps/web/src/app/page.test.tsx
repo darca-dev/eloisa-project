@@ -18,9 +18,9 @@ describe('Portal Central de Acceso (Página Raíz /)', () => {
     expect(html).toContain('Atención Domiciliaria');
     expect(html).toContain('/acceso');
     expect(html).toContain('Hospital');
-    expect(html).toContain('/hospital');
+    expect(html).toContain('>Ingresar al Hospital</a>');
     expect(html).toContain('Alcaldía');
-    expect(html).toContain('/municipality');
+    expect(html).toContain('>Ingresar a Alcaldía</a>');
     expect(html).toContain('Paciente');
     expect(html).toContain('Cuidador');
     expect(html).toContain('Visitador médico');
@@ -33,15 +33,14 @@ describe('Portal Central de Acceso (Página Raíz /)', () => {
     const html = markupHub();
 
     // Destinos exactos de las dos unicas acciones.
-    expect(html).toContain('href="/acceso"');
+    expect(html).toContain('/api/v1/human-auth/login?returnTo=/acceso');
     expect(html).toContain('href="/acceso?accion=registro"');
     expect(html).toContain('>Iniciar sesión<');
     expect(html).toContain('>Regístrate<');
 
-    // Inicio y Registro pasan por /acceso; el primero abre el selector demo
-    // cuando está habilitado y el segundo abre el registro guiado.
+    // Solo el registro navega directamente a /acceso; iniciar sesión abre OIDC.
     const enlacesAcceso = html.match(/href="\/acceso[^"]*"/gu) ?? [];
-    expect(enlacesAcceso).toHaveLength(2);
+    expect(enlacesAcceso).toHaveLength(1);
 
     // Vocabulario retirado de esta superficie (MP04-C1).
     for (const retirado of [
@@ -55,9 +54,6 @@ describe('Portal Central de Acceso (Página Raíz /)', () => {
       expect(html).not.toContain(retirado);
     }
 
-    // Hospital y Alcaldia conservan su unico acceso.
-    expect(html).toContain('href="/hospital"');
-    expect(html).toContain('href="/municipality"');
   });
 
   it('conserva el branding institucional y el logotipo', () => {

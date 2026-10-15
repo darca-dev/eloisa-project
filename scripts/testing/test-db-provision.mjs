@@ -124,6 +124,7 @@ export const REQUIRED_MIGRATIONS = Object.freeze([
   '20261012170000_personal_registration_ownership',
   '20261012180000_administrator_managed_recovery',
   '20261012190000_recovery_authentication_cutoff',
+  '20261014190000_institutional_login_return_targets',
 ]);
 
 /**

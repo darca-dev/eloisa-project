@@ -125,3 +125,12 @@ por Hospital/Alcaldía y difiere otros empleados y roles. Véase
 `bitacora/decisiones/2026-10-12-registro-unico-admin-institucional.md`.
 | 041 | accesos-personales-reales | Implementado y aplicado a Docker local; E2E real y baseline 31 etapas/2626 pruebas correctas; 23 migraciones y datos conservados; pendiente aceptación PO | Alta | Codex y Product Owner | 2026-10-12 |
 | 042 | optimizacion-pruebas-esenciales | Primera reducción verificada: 72 casos netos; web 1846 y baseline 2554/31 etapas correctas; entrega y optimización publicadas en eloisa-platform/Eloisa, main/develop intactos | Media | Codex y Product Owner | 2026-10-12 |
+| 043 | acceso-eloisa-local | Aplicado Eloisa/es en IdP vivo; cuenta/OIDC preservados, E2E/axe0/320px correctos y rollback revisado | Alta | Codex y Product Owner | 2026-10-14 |
+| 044 | municipality-registros-guardados | Aplicado en Docker: Inicio/Población/Territorio usan registros guardados, diez apartados pendientes sin fixtures; web1849 y E2E13vistas correctos | Alta | Codex y Product Owner | 2026-10-14 |
+| 045 | interfaz-municipal-profesional | Revertido por corrección expresa PO en 046; se conserva historial de verificación | Alta | Codex y Product Owner | 2026-10-14 |
+| 046 | login-profesional-y-reversion-panel | Aplicado localmente: login profesional, panel restaurado a044; E2E real/axe0/responsive correctos, cuentas y datos conservados | Alta | Codex y Product Owner | 2026-10-14 |
+| 047 | login-directo-desde-hub | Aplicado en Docker: ambos botones abren login en un clic; registro conservado,91pruebas/build/E2E correctos, paneles intactos | Alta | Codex y Product Owner | 2026-10-14 |
+| 048 | municipality-fidelidad-prototipo | Aplicado conforme referencia:1849casos/E2E/axe0; datos reales, revisión estática inicial y cierre visual Codex, último cierre externo no disponible | Alta | Codex y Product Owner | 2026-10-14 |
+| 049 | destino-login-institucional | Implementada y verificada en Docker: destino por institución y petición de credenciales; sin nuevos permisos | Alta | Codex y Product Owner | 2026-10-14 |
+| 050 | acceso-personal-sin-cruce-institucional | Implementada y verificada en Docker: login personal interactivo y selector sin cruce institucional | Alta | Codex y Product Owner | 2026-10-14 |
+| 051 | municipality-composicion-alcaldia | Aplicada en Docker: composición de diez pendientes según referencia,93casos/E2E13vistas/axe0; consultas pendientes explícitas | Alta | Codex y Product Owner | 2026-10-14 |

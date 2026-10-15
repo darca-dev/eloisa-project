@@ -16,6 +16,7 @@ import {
   cierreHumanoConfirmado,
   consultarExperienciasAprobadas,
   consultarSesionHumana,
+  filtrarExperienciasPersonales,
   urlDeLoginHumano,
   type CierreSesionHumana,
   type DesenlaceExperiencias,
@@ -37,6 +38,14 @@ import {
 
 const DIRECTORIO = fileURLToPath(new URL('.', import.meta.url));
 const CODIGO = readFileSync(`${DIRECTORIO}humanSessionClient.ts`, 'utf8');
+
+it('el acceso personal conserva solo perfiles personales aprobados, sin convertir instituciones en pacientes', () => {
+  expect(filtrarExperienciasPersonales(['MUNICIPALITY', 'HOSPITAL'])).toEqual([]);
+  expect(filtrarExperienciasPersonales([])).toEqual([]);
+  expect(filtrarExperienciasPersonales(['MUNICIPALITY', 'PATIENT', 'HOSPITAL'])).toEqual(['PATIENT']);
+  expect(filtrarExperienciasPersonales(['CAREGIVER', 'HOSPITAL', 'FIELD_PROFESSIONAL', 'PATIENT']))
+    .toEqual(['CAREGIVER', 'FIELD_PROFESSIONAL', 'PATIENT']);
+});
 
 const PACIENTE = CONTEXTOS_HUMANOS.paciente;
 const PROFESIONAL = CONTEXTOS_HUMANOS.profesional;

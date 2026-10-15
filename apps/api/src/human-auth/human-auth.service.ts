@@ -189,7 +189,10 @@ export class HumanAuthService implements OnModuleInit {
     const attemptId = randomUUID();
     const nonce = deriveAttemptNonce(attemptId, config.attemptKey);
 
-    const request = await adapter.buildAuthorizationRequest(nonce, stepUp !== undefined);
+    // Explicit portal entries ask for credentials rather than silently reusing
+    // another experience's SSO. This alone does not establish privileged step-up.
+    const portalEntry = returnTarget === '/acceso' || returnTarget === '/hospital' || returnTarget === '/municipality';
+    const request = await adapter.buildAuthorizationRequest(nonce, stepUp !== undefined || portalEntry);
 
     const browserToken = generateAttemptToken();
     const sealed = sealVerifier(request.codeVerifier, config.attemptKey);

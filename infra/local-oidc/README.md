@@ -1,5 +1,12 @@
 # Proveedor OIDC local (desarrollo)
 
+Presentación vigente (049, 2026-10-14): login Eloisa profesional en escritorio y
+móvil, base `keycloak.v2` y parche mínimo de etiqueta accesible para el usuario
+de reautenticación (procedencia/licencia en THEME-PROVENANCE.md), estilos base y recurso
+`css/eloisa.css?v=046`. Se aplica con `node scripts/identity/apply-local-login-theme.mjs`
+desde la raíz, sin reiniciar ni recrear IdP y sin cambiar autenticación/cuentas.
+Detalle, rollback y verificaciones: `docs/ACCESO-ELOISA.md`.
+
 IDENTITY-RELATIONSHIPS-CORE-01 §4.1. Keycloak `26.7.1` como contenedor local
 **desechable**, publicado únicamente en `127.0.0.1`, para poder implementar,
 ejecutar y probar el flujo OIDC **sin Entra y sin red externa**.
@@ -54,6 +61,21 @@ Para retirarlo: `docker compose --profile oidc-local down`.
 > nada.
 
 ## Topología y emisor canónico
+
+### Presentación Eloisa en contenedor existente (043, 2026-10-14)
+
+El archivo de importación no actualiza un realm ya creado. Para aplicar el tema
+versionado al proveedor local activo, sin recrear usuarios ni contenedor:
+
+```powershell
+node scripts/identity/apply-local-login-theme.mjs
+```
+
+La operación conserva cuentas, contraseñas, issuer y controles de acceso. Solo
+instala el tema y cambia presentación/locales, con backup privado, mutex y
+rollback verificado. El script no recrea el servicio. El mount de temas de
+Compose sirve en nuevas instalaciones; no recrear el IdP existente para añadirlo.
+Véase [acceso aplicado y límites](../../docs/ACCESO-ELOISA.md).
 
 ### Corrección de integración 040 (2026-10-12)
 

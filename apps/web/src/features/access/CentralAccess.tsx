@@ -16,8 +16,9 @@ import { EliFigure, eliAvatarAlt } from "@/components/ui/Eli";
 import {
   RUTAS_EXPERIENCIA,
   consultarExperienciasAprobadas,
+  filtrarExperienciasPersonales,
   urlDeLoginHumano,
-  type ExperienciaAprobada,
+  type ExperienciaPersonal,
 } from "@/features/auth/humanSessionClient";
 import { AccessRegistrationWizard } from "./AccessRegistrationWizard";
 import styles from "./centralAccessRedesign.module.css";
@@ -33,8 +34,8 @@ import styles from "./centralAccessRedesign.module.css";
  *   servidor devuelve;
  * - el resto es el SELECTOR de experiencias que MP04 exige. Al volver del flujo
  *   OIDC consulta `GET /api/v1/me/experiences` en el servidor —nunca en el
- *   navegador— y decide: una experiencia redirige, varias muestran un selector y
- *   ninguna muestra una denegación neutral.
+ *   navegador— y conserva solo perfiles personales: uno redirige, varios
+ *   muestran un selector y ninguno muestra una denegación neutral (050).
  *
  * QUÉ NO HACE:
  *
@@ -65,19 +66,17 @@ type Fase =
   | "selector"
   | "redirigiendo";
 
-const EXPERIENCIAS_LABEL: Readonly<Record<ExperienciaAprobada, string>> = {
+const EXPERIENCIAS_LABEL: Readonly<Record<ExperienciaPersonal, string>> = {
   PATIENT: "Paciente",
   CAREGIVER: "Cuidador",
   FIELD_PROFESSIONAL: "Visitador médico",
-  HOSPITAL: "Hospital",
-  MUNICIPALITY: "Alcaldía",
 };
 
 const AVISOS: Readonly<Record<Fase, string>> = {
   consultando: "Comprobando sus experiencias aprobadas…",
   "sin-sesion": "",
   indisponible: "No fue posible comprobar sus experiencias en este momento.",
-  denegado: "Su cuenta no tiene ninguna experiencia aprobada.",
+  denegado: "Su cuenta no tiene un perfil personal aprobado.",
   selector: "Varias experiencias están aprobadas. Elija cuál desea abrir.",
   redirigiendo: "Abriendo su espacio…",
 };
@@ -89,7 +88,7 @@ export function CentralAccess(): ReactNode {
 
   const [fase, setFase] = useState<Fase>("consultando");
   const [experiencias, setExperiencias] = useState<
-    readonly ExperienciaAprobada[]
+    readonly ExperienciaPersonal[]
   >([]);
   const bloqueRef = useRef<HTMLDivElement | null>(null);
 
@@ -104,18 +103,20 @@ export function CentralAccess(): ReactNode {
         // Primera visita o sesión caducada: se muestra el acceso normal.
         setFase("sin-sesion");
         return;
-      case "ok":
-        if (desenlace.experiencias.length === 0) {
+      case "ok": {
+        const personales = filtrarExperienciasPersonales(desenlace.experiencias);
+        if (personales.length === 0) {
           // Hay persona y ninguna aprobación: denegación neutral, sin motivo.
           setFase("denegado");
           return;
         }
 
-        setExperiencias(desenlace.experiencias);
+        setExperiencias(personales);
         setFase(
-          desenlace.experiencias.length === 1 ? "redirigiendo" : "selector",
+          personales.length === 1 ? "redirigiendo" : "selector",
         );
         return;
+      }
       default:
         setFase("indisponible");
     }
@@ -275,9 +276,12 @@ export function CentralAccess(): ReactNode {
             {fase === "denegado" ? (
               <div ref={bloqueRef} tabIndex={-1}>
                 <p className={styles.errorMessage}>
-                  Su cuenta no tiene ninguna experiencia aprobada. Puede revisar
-                  el estado de su solicitud o registrar una nueva.
+                  Su cuenta no tiene un perfil personal aprobado. Ingrese con
+                  otra cuenta o registre una solicitud para Atención Domiciliaria.
                 </p>
+                <a className={styles.textLink} href={urlDeLoginHumano()}>
+                  Ingresar con otra cuenta
+                </a>{" "}
                 <Link
                   className={styles.textLink}
                   href="/acceso?accion=registro"

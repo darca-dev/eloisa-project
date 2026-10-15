@@ -25,6 +25,7 @@ import { MunicipalityEvidence } from './MunicipalityEvidence';
 import { MunicipalityFurag } from './MunicipalityFurag';
 import { MunicipalityGaps } from './MunicipalityGaps';
 import { MunicipalityHome } from './MunicipalityHome';
+import { MunicipalityOperationalPanel } from './MunicipalityOperationalPanel';
 import { MunicipalityIndicators } from './MunicipalityIndicators';
 import { MunicipalityPopulation } from './MunicipalityPopulation';
 import { MunicipalityPrograms } from './MunicipalityPrograms';
@@ -573,7 +574,13 @@ export function MunicipalityShell({
     );
   }
 
-  return (
+  return administracionHumana ? <MunicipalityOperationalPanel
+    institutionName={sesion.institution.name}
+    avisoSesion={aviso}
+    cerrando={ocupado}
+    onCerrarSesion={() => { void cerrarSesion(); }}
+    vistaInicial={vistaInicial}
+  /> : (
     <MunicipalityShellAutorizado
       avisoSesion={aviso}
       cerrando={ocupado}

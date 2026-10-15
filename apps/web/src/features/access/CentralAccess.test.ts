@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 import { describe, expect, it } from 'vitest';
+import { HubAccessPortal } from '../hub/HubAccessPortal';
 
 const directory = fileURLToPath(new URL('.', import.meta.url));
 const source = readFileSync(`${directory}DemoNavigation.tsx`, 'utf8');
@@ -29,14 +32,19 @@ describe('Navegación demo local', () => {
     }
   });
 
-  it('opens Hospital and Alcaldia without an intermediate login; home entry goes through /acceso', () => {
+  it('abre los tres logins desde el hub sin tarjeta intermedia y conserva el destino elegido', () => {
     const hub = readFileSync(`${directory}../hub/HubAccessPortal.tsx`, 'utf8');
-
-    expect(hub).toContain('href="/hospital"');
-    expect(hub).toContain('href="/municipality"');
-    // La entrada pasa primero por /acceso: allí se muestra el selector demo
-    // o, fuera de demo, la redirección OIDC controlada.
-    expect(hub).toContain('href="/acceso"');
+    const html = renderToStaticMarkup(createElement(HubAccessPortal));
+    const links = Array.from(html.matchAll(/<a\b([^>]*)>(Iniciar sesión|Ingresar al Hospital|Ingresar a Alcaldía)<\/a>/gu));
+    expect(links.map(match => match[2])).toEqual(['Iniciar sesión', 'Ingresar al Hospital', 'Ingresar a Alcaldía']);
+    for (const [, attributes, label] of links) {
+      const href = /href="([^"]+)"/u.exec(attributes)?.[1];
+      expect(href).toBeDefined();
+      const destination = new URL(href!.replaceAll('&amp;', '&'));
+      expect(destination.pathname).toBe('/api/v1/human-auth/login');
+      expect(Array.from(destination.searchParams.entries())).toEqual([['returnTo', label === 'Iniciar sesión' ? '/acceso' : label === 'Ingresar al Hospital' ? '/hospital' : '/municipality']]);
+    }
+    // El registro sigue separado y no inicia autenticación.
     expect(hub).toContain('href="/acceso?accion=registro"');
     expect(hub).toContain('>Iniciar sesión<');
     expect(hub).toContain('>Regístrate<');
@@ -471,7 +479,9 @@ describe('selector de experiencias de /acceso', () => {
     }
 
     // La denegación es neutral: no dice POR QUÉ la cuenta no tiene aprobaciones.
-    expect(codigo).toContain('Su cuenta no tiene ninguna experiencia aprobada.');
+    expect(codigo).toContain('Su cuenta no tiene un perfil personal aprobado.');
+    expect(codigo).toContain('filtrarExperienciasPersonales(desenlace.experiencias)');
+    expect(codigo).toContain('Ingresar con otra cuenta');
     expect(codigo.toLowerCase()).not.toContain('motivo');
   });
 
