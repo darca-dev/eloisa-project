@@ -136,4 +136,4 @@ por Hospital/Alcaldía y difiere otros empleados y roles. Véase
 | 051 | municipality-composicion-alcaldia | Aplicada en Docker: composición de diez pendientes según referencia,93casos/E2E13vistas/axe0; consultas pendientes explícitas | Alta | Codex y Product Owner | 2026-10-14 |
 | 052 | hospital-sin-datos-demostrativos | Aplicado en Docker: Inicio con agenda real, fixtures excluidos y nombre técnico neutral;877pruebas/E2E12vistas/axe0 correctos | Alta | Codex y Product Owner | 2026-10-15 |
 | 053 | configuracion-municipal-y-fuentes | Aprobado; captura municipal versionada y fuentes oficiales en curso | Alta | Codex y Product Owner | 2026-10-15 |
-| 054 | cierre-registro-heredado-y-acceso-paciente | Implementación existente en verificación; publicación de rama autorizada, aceptación final pendiente | Alta | Codex y Product Owner | 2026-10-20 |
+| 054 | cierre-registro-heredado-y-acceso-paciente | Código publicado y aplicado localmente; 279 pruebas focales/API/DB correctas, revisión independiente y aceptación final pendientes | Alta | Codex y Product Owner | 2026-10-20 |
