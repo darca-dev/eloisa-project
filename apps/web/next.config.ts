@@ -29,6 +29,15 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(import.meta.dirname, '../..'),
   reactStrictMode: true,
   poweredByHeader: false,
+  async redirects() {
+    return [
+      {
+        source: '/inscripcion',
+        destination: '/acceso?accion=registro',
+        permanent: true,
+      },
+    ];
+  },
   // Next genera `AGENTS.md`/`CLAUDE.md` en `apps/web` al arrancar. Esos nombres
   // están reservados en este repositorio para documentos protegidos de la raíz,
   // así que la generación queda desactivada.
