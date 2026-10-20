@@ -118,6 +118,8 @@ describe.skipIf(!puedeEjecutarse)('Aislamiento self-scope del Paciente en Postgr
      * no es la que la sesión resolvió.
      */
     readonly humanAccountId: string;
+    /** Vínculo OIDC exacto con el que fue creada la sesión humana. */
+    readonly externalAuthIdentityId: string;
     readonly documentNumber: string;
     readonly appointmentFuturo: string;
     readonly appointmentPasado: string;
@@ -354,6 +356,7 @@ describe.skipIf(!puedeEjecutarse)('Aislamiento self-scope del Paciente en Postgr
       personId,
       patientId: patient.id,
       humanAccountId: cuenta.humanAccountId,
+      externalAuthIdentityId: cuenta.bindingId,
       documentNumber: documento.documentNumber,
       appointmentFuturo: citaFutura.id,
       appointmentPasado: citaPasada.id,
@@ -394,6 +397,9 @@ describe.skipIf(!puedeEjecutarse)('Aislamiento self-scope del Paciente en Postgr
     if (sembrado.cuentas.size > 0) {
       // ORDEN OBLIGATORIO: las FK son `RESTRICT`, de modo que sesiones y
       // vínculos se van antes que su cuenta, y las cuentas antes que su persona.
+      await owner.accessRequest.deleteMany({
+        where: { humanAccountId: { in: ids(sembrado.cuentas) } },
+      });
       await owner.humanSession.deleteMany({
         where: { humanAccountId: { in: ids(sembrado.cuentas) } },
       });
@@ -937,6 +943,104 @@ describe.skipIf(!puedeEjecutarse)('Aislamiento self-scope del Paciente en Postgr
 
       expect(resuelto).toBeNull();
     });
+  });
+
+  /* ====================================================================== */
+  /* Barrera de revocación — orden de bloqueos sin TOCTOU ni interbloqueo    */
+  /* ====================================================================== */
+
+  describe('autorización aprobada: barrera transaccional contra revocación', () => {
+    it('FOR SHARE retiene la cuenta hasta terminar la lectura y serializa la revocación', async () => {
+      const solicitud = await owner.accessRequest.create({
+        data: {
+          tenantId: tenantA,
+          personId: pacienteA1.personId,
+          requestedProfile: 'PATIENT',
+          status: 'APPROVED',
+          provisioningStatus: 'SUCCEEDED',
+          source: 'TEST_DATA',
+          reference: `AR-LOCK-${randomUUID()}`,
+          humanAccountId: pacienteA1.humanAccountId,
+          externalAuthIdentityId: pacienteA1.externalAuthIdentityId,
+        },
+        select: { id: true },
+      });
+
+      let anunciarLectura!: () => void;
+      let liberarLectura!: () => void;
+      let anunciarSolicitudBloqueada!: () => void;
+      const lecturaLista = new Promise<void>((resolve) => {
+        anunciarLectura = resolve;
+      });
+      const lecturaLiberada = new Promise<void>((resolve) => {
+        liberarLectura = resolve;
+      });
+      const solicitudBloqueada = new Promise<void>((resolve) => {
+        anunciarSolicitudBloqueada = resolve;
+      });
+
+      const lectura = owner.$transaction(async (tx) => {
+        const cuentas = await tx.$queryRaw<{ readonly id: string }[]>`
+          SELECT "id"
+            FROM "human_account"
+           WHERE "id" = ${pacienteA1.humanAccountId}::uuid
+             AND "tenantId" = ${tenantA}::uuid
+           FOR SHARE
+        `;
+
+        expect(cuentas).toHaveLength(1);
+        anunciarLectura();
+        await lecturaLiberada;
+      });
+
+      await lecturaLista;
+
+      const revocacion = owner.$transaction(async (tx) => {
+        await tx.$queryRaw`
+          SELECT "id"
+            FROM "access_request"
+           WHERE "id" = ${solicitud.id}::uuid
+           FOR UPDATE
+        `;
+        anunciarSolicitudBloqueada();
+
+        await tx.$queryRaw`
+          SELECT "id"
+            FROM "human_account"
+           WHERE "id" = ${pacienteA1.humanAccountId}::uuid
+           FOR UPDATE
+        `;
+
+        await tx.accessRequest.update({
+          where: { id: solicitud.id },
+          data: { status: 'REVOKED' },
+        });
+      });
+
+      try {
+        await solicitudBloqueada;
+
+        const estadoTemprano = await Promise.race([
+          revocacion.then(() => 'terminada' as const),
+          new Promise<'bloqueada'>((resolve) => {
+            setTimeout(() => resolve('bloqueada'), 150);
+          }),
+        ]);
+
+        expect(estadoTemprano).toBe('bloqueada');
+      } finally {
+        liberarLectura();
+      }
+
+      await Promise.all([lectura, revocacion]);
+
+      await expect(
+        owner.accessRequest.findUniqueOrThrow({
+          where: { id: solicitud.id },
+          select: { status: true },
+        }),
+      ).resolves.toEqual({ status: 'REVOKED' });
+    }, 15_000);
   });
 
   /* ====================================================================== */

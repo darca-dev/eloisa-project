@@ -60,6 +60,7 @@ describe('documento OpenAPI', () => {
       '/api/v1/institutional/{experience}/registration-attempt',
       '/api/v1/me/contexts',
       '/api/v1/me/experiences',
+      '/api/v1/municipality/management/{section}',
       '/api/v1/municipality/population-summary',
       '/api/v1/municipality/territory-summary',
       '/api/v1/patient-self/appointments',
@@ -244,13 +245,11 @@ describe('documento OpenAPI', () => {
     expect(aceptada?.properties?.['source']?.example).toBe('SELF_REGISTRATION');
   });
 
-  it('describe los desenlaces de fallo de la inscripción', () => {
+  it('declara la inscripción heredada como retirada', () => {
     const operation = document.paths['/api/v1/patients/enrollments']?.post;
 
     expect(operation?.operationId).toBe('createPatientEnrollment');
-    for (const status of ['201', '400', '409', '422', '429']) {
-      expect(operation?.responses[status]).toBeDefined();
-    }
+    expect(Object.keys(operation?.responses ?? {})).toEqual(['410']);
   });
 
   it('describe la denegación de la recuperación sin sesión', () => {

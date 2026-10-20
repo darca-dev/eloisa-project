@@ -154,6 +154,7 @@ if (puedeEjecutarse && !rolRuntimeAplicado) {
 interface PersonaSembrada {
   readonly personId: string;
   readonly humanAccountId: string;
+  readonly externalAuthIdentityId: string;
   readonly documentNumber: string;
   /** Valor de la cookie de sesión humana. Solo existe en memoria. */
   readonly cookie: string;
@@ -190,6 +191,8 @@ describe.skipIf(!puedeEjecutarse)('API self-scope del Paciente', () => {
   let otroPaciente: PacienteSembrado;
   /** Persona con sesión humana y SIN participación de paciente. */
   let sinContextoPaciente: PersonaSembrada;
+  /** Participación activa sin solicitud aprobada: nunca debe abrir self-scope. */
+  let pacienteSinAprobacion: PacienteSembrado;
   /** Paciente del OTRO tenant, con sesión sembrada en SU tenant. */
   let pacienteOtroTenant: PacienteSembrado;
 
@@ -245,6 +248,7 @@ describe.skipIf(!puedeEjecutarse)('API self-scope del Paciente', () => {
     paciente = await sembrarPaciente(tenantId, 'Ana María');
     otroPaciente = await sembrarPaciente(tenantId, 'Beatriz Elena');
     sinContextoPaciente = await sembrarPersona(tenantId, 'Carmen Lucía');
+    pacienteSinAprobacion = await sembrarPaciente(tenantId, 'Estela', false);
     pacienteOtroTenant = await sembrarPaciente(otroTenantId, 'Diana Sofía');
 
     await sembrarAgenda(tenantId, paciente.patientId);
@@ -285,11 +289,13 @@ describe.skipIf(!puedeEjecutarse)('API self-scope del Paciente', () => {
     const sesion = await crearSesionHumana(prisma, {
       tenantId: tenant,
       humanAccountId: cuenta.humanAccountId,
+      externalAuthIdentityId: cuenta.bindingId,
     });
 
     return {
       personId,
       humanAccountId: cuenta.humanAccountId,
+      externalAuthIdentityId: cuenta.bindingId,
       documentNumber,
       cookie: `${HUMAN_COOKIE}=${sesion.token}`,
     };
@@ -299,6 +305,7 @@ describe.skipIf(!puedeEjecutarse)('API self-scope del Paciente', () => {
   async function sembrarPaciente(
     tenant: string,
     nombres: string,
+    aprobada = true,
   ): Promise<PacienteSembrado> {
     const persona = await sembrarPersona(tenant, nombres);
 
@@ -314,6 +321,22 @@ describe.skipIf(!puedeEjecutarse)('API self-scope del Paciente', () => {
     });
 
     sembrado.pacientes.add(patient.id);
+
+    if (aprobada) {
+      await prisma.accessRequest.create({
+        data: {
+          tenantId: tenant,
+          personId: persona.personId,
+          requestedProfile: 'PATIENT',
+          status: 'APPROVED',
+          provisioningStatus: 'SUCCEEDED',
+          source: 'TEST_DATA',
+          reference: `AR-${randomBytes(12).toString('hex').toUpperCase()}`,
+          humanAccountId: persona.humanAccountId,
+          externalAuthIdentityId: persona.externalAuthIdentityId,
+        },
+      });
+    }
 
     return { ...persona, patientId: patient.id };
   }
@@ -488,6 +511,9 @@ describe.skipIf(!puedeEjecutarse)('API self-scope del Paciente', () => {
     }
 
     if (sembrado.cuentas.size > 0) {
+      await cliente.accessRequest.deleteMany({
+        where: { humanAccountId: { in: ids(sembrado.cuentas) } },
+      });
       await cliente.humanSession.deleteMany({
         where: { humanAccountId: { in: ids(sembrado.cuentas) } },
       });
@@ -895,6 +921,7 @@ describe.skipIf(!puedeEjecutarse)('API self-scope del Paciente', () => {
       const caducada = await crearSesionHumana(prisma, {
         tenantId,
         humanAccountId: cuenta.humanAccountId,
+        externalAuthIdentityId: cuenta.bindingId,
         // El CHECK `human_session_period_order` exige `expiresAt > createdAt`:
         // una sesión ya caducada nació antes, no se crea caducada al revés.
         createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
@@ -904,6 +931,7 @@ describe.skipIf(!puedeEjecutarse)('API self-scope del Paciente', () => {
       const inactiva = await crearSesionHumana(prisma, {
         tenantId,
         humanAccountId: cuenta.humanAccountId,
+        externalAuthIdentityId: cuenta.bindingId,
         // Caducada por inactividad, pero no por su vigencia absoluta.
         createdAt: new Date(Date.now() - (HUMAN_SESSION_IDLE_SECONDS + 60) * 1000),
         expiresAt: new Date(Date.now() + 60 * 60 * 1000),
@@ -913,6 +941,7 @@ describe.skipIf(!puedeEjecutarse)('API self-scope del Paciente', () => {
       const revocada = await crearSesionHumana(prisma, {
         tenantId,
         humanAccountId: cuenta.humanAccountId,
+        externalAuthIdentityId: cuenta.bindingId,
         createdAt: new Date(Date.now() - 10 * 60 * 1000),
         revokedAt: new Date(Date.now() - 60 * 1000),
       });
@@ -931,6 +960,7 @@ describe.skipIf(!puedeEjecutarse)('API self-scope del Paciente', () => {
       const sesionDeshabilitada = await crearSesionHumana(prisma, {
         tenantId,
         humanAccountId: cuentaDeshabilitada.humanAccountId,
+        externalAuthIdentityId: cuentaDeshabilitada.bindingId,
       });
 
       // Vínculo externo DESVINCULADO, con su propia persona.
@@ -947,6 +977,7 @@ describe.skipIf(!puedeEjecutarse)('API self-scope del Paciente', () => {
       const sesionDesvinculada = await crearSesionHumana(prisma, {
         tenantId,
         humanAccountId: cuentaDesvinculada.humanAccountId,
+        externalAuthIdentityId: cuentaDesvinculada.bindingId,
       });
 
       return [
@@ -1024,6 +1055,101 @@ describe.skipIf(!puedeEjecutarse)('API self-scope del Paciente', () => {
   /* ====================================================================== */
 
   describe('T5.3 / T5.11 — sesión humana SIN contexto PATIENT: fail-closed', () => {
+    it('una participación PATIENT activa sin aprobación institucional recibe 403', async () => {
+      for (const ruta of RUTAS) {
+        const respuesta = await pedir(ruta, pacienteSinAprobacion.cookie).expect(403);
+        expect(respuesta.body.code).toBe(PATIENT_SELF_ERROR_CODES.contextRequired);
+        expect(respuesta.body).not.toHaveProperty('items');
+      }
+    });
+
+    it.each(['PENDING', 'REJECTED', 'SUSPENDED', 'REVOKED'] as const)(
+      'una solicitud %s no concede acceso propio',
+      async (status) => {
+        const requestRow = await prisma.accessRequest.findFirstOrThrow({
+          where: {
+            tenantId,
+            humanAccountId: paciente.humanAccountId,
+            requestedProfile: 'PATIENT',
+          },
+          select: { id: true },
+        });
+
+        try {
+          await prisma.accessRequest.update({
+            where: { id: requestRow.id },
+            data: { status },
+          });
+          const response = await pedir(SUMMARY_PATH, paciente.cookie).expect(403);
+          expect(response.body.code).toBe(PATIENT_SELF_ERROR_CODES.contextRequired);
+        } finally {
+          await prisma.accessRequest.update({
+            where: { id: requestRow.id },
+            data: { status: 'APPROVED' },
+          });
+        }
+      },
+    );
+
+    it('una sesión histórica sin vínculo exacto no reutiliza una aprobación', async () => {
+      const session = await crearSesionHumana(prisma, {
+        tenantId,
+        humanAccountId: paciente.humanAccountId,
+      });
+      const response = await pedir(
+        SUMMARY_PATH,
+        `${HUMAN_COOKIE}=${session.token}`,
+      ).expect(403);
+
+      expect(response.body.code).toBe(PATIENT_SELF_ERROR_CODES.contextRequired);
+    });
+
+    it('una aprobación ligada a un alias de identidad no autoriza el vínculo de la sesión', async () => {
+      const alias = await prisma.externalAuthIdentity.create({
+        data: {
+          tenantId,
+          humanAccountId: pacienteSinAprobacion.humanAccountId,
+          issuer: process.env['MERDN_HUMAN_AUTH_ISSUER']!,
+          subject: `alias-ficticio-${randomBytes(12).toString('hex')}`,
+          status: 'ACTIVE',
+        },
+        select: { id: true },
+      });
+      await prisma.accessRequest.create({
+        data: {
+          tenantId,
+          personId: pacienteSinAprobacion.personId,
+          requestedProfile: 'PATIENT',
+          status: 'APPROVED',
+          provisioningStatus: 'SUCCEEDED',
+          reference: `AR-${randomBytes(12).toString('hex').toUpperCase()}`,
+          humanAccountId: pacienteSinAprobacion.humanAccountId,
+          externalAuthIdentityId: alias.id,
+        },
+      });
+
+      const response = await pedir(SUMMARY_PATH, pacienteSinAprobacion.cookie).expect(403);
+      expect(response.body.code).toBe(PATIENT_SELF_ERROR_CODES.contextRequired);
+    });
+
+    it('una aprobación de otra cuenta no autoriza a la cuenta del paciente', async () => {
+      await prisma.accessRequest.create({
+        data: {
+          tenantId,
+          personId: pacienteSinAprobacion.personId,
+          requestedProfile: 'PATIENT',
+          status: 'APPROVED',
+          provisioningStatus: 'SUCCEEDED',
+          reference: `AR-${randomBytes(12).toString('hex').toUpperCase()}`,
+          humanAccountId: sinContextoPaciente.humanAccountId,
+          externalAuthIdentityId: sinContextoPaciente.externalAuthIdentityId,
+        },
+      });
+
+      const response = await pedir(SUMMARY_PATH, pacienteSinAprobacion.cookie).expect(403);
+      expect(response.body.code).toBe(PATIENT_SELF_ERROR_CODES.contextRequired);
+    });
+
     it('las tres rutas deniegan con 403 y el MISMO cuerpo', async () => {
       const observadas: RespuestaObservada[] = [];
 

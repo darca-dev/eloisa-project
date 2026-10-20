@@ -1,34 +1,24 @@
 import {
-  Body,
   Controller,
   Get,
+  GoneException,
   HttpCode,
   HttpStatus,
   Inject,
   Logger,
   Post,
   Req,
-  Res,
   ServiceUnavailableException,
   UnauthorizedException,
-  UnprocessableEntityException,
-  BadRequestException,
-  ConflictException,
-  UseGuards,
 } from '@nestjs/common';
 import {
-  ApiBadRequestResponse,
-  ApiBody,
-  ApiConflictResponse,
-  ApiCreatedResponse,
+  ApiGoneResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
-  ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
-  ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
-import { type Request, type Response } from 'express';
+import { type Request } from 'express';
 
 import { API_ENVIRONMENT, type ApiEnvironmentProvider } from '../config/api-environment.provider';
 import { RuntimeContextUnavailableError } from '../database/runtime-context.error';
@@ -37,19 +27,14 @@ import { readCookie } from '../enrollment-sessions/enrollment-session.cookie';
 import { EnrollmentSessionService } from '../enrollment-sessions/enrollment-session.service';
 
 import { ENROLLMENT_ERROR_CODES } from './enrollment.contract';
-import { EnrollmentRateLimitGuard } from './enrollment-rate-limit.guard';
-import {
-  ApiErrorDto,
-  PatientEnrollmentRequestDto,
-  PatientSummaryDto,
-} from './patient-enrollment.dto';
+import { ApiErrorDto, PatientSummaryDto } from './patient-enrollment.dto';
 import { PatientEnrollmentService } from './patient-enrollment.service';
 
 /**
  * API de inscripción y recuperación de paciente (TASK-MVP-CORE-01 §6).
  *
  * Superficie deliberadamente mínima:
- * - `POST /api/v1/patients/enrollments` crea la inscripción en una transacción;
+ * - `POST /api/v1/patients/enrollments` está retirado y nunca crea datos;
  * - `GET  /api/v1/patients/me` recupera SOLO el paciente de la sesión vigente.
  *
  * No existe `GET /patients/:id`, no existe búsqueda por documento, no existe
@@ -71,53 +56,22 @@ export class PatientEnrollmentController {
   ) {}
 
   @Post('enrollments')
-  @HttpCode(HttpStatus.CREATED)
-  @UseGuards(EnrollmentRateLimitGuard)
+  @HttpCode(HttpStatus.GONE)
   @ApiOperation({
     operationId: 'createPatientEnrollment',
-    summary: 'Inscribe un paciente y abre su sesión de inscripción',
+    summary: 'Informa que la inscripción heredada fue retirada',
     description:
-      'Crea persona, paciente, pertenencias poblacionales, dirección, consentimiento, sesión y evento mínimo de auditoría en una sola transacción. ' +
-      'El servidor resuelve el tenant institucional activo, asigna el origen de autoinscripción pública y deriva la pertenencia de 60 años o más desde la fecha de nacimiento. ' +
-      'No acepta tenant, edad, estado, origen, fecha de inscripción ni creador desde el cliente.',
+      'No procesa el cuerpo ni crea registros. El alta vigente se realiza mediante una solicitud en /acceso?accion=registro y requiere aprobación institucional.',
   })
-  // El tipo del cuerpo se declara de forma explícita y no por metadatos del
-  // decorador: la validación real la hace `enrollment.validation.ts`, y esta
-  // anotación solo documenta el contrato en OpenAPI.
-  @ApiBody({ type: PatientEnrollmentRequestDto })
-  @ApiCreatedResponse({
-    description:
-      'Inscripción creada. La respuesta incluye una cookie HttpOnly con la sesión de inscripción.',
-    type: PatientSummaryDto,
-  })
-  @ApiBadRequestResponse({ description: 'Cuerpo mal formado.', type: ApiErrorDto })
-  @ApiUnprocessableEntityResponse({
-    description: 'Validación semántica fallida.',
+  @ApiGoneResponse({
+    description: 'La inscripción pública heredada fue retirada y no creó datos.',
     type: ApiErrorDto,
   })
-  @ApiConflictResponse({
-    description:
-      'El documento ya está registrado en la institución. No se fusiona, no se sobrescribe y no se revela ningún dato del registro existente.',
-    type: ApiErrorDto,
-  })
-  @ApiTooManyRequestsResponse({
-    description: 'Demasiadas peticiones desde el mismo origen.',
-    type: ApiErrorDto,
-  })
-  public async create(
-    @Body() body: PatientEnrollmentRequestDto,
-    @Res({ passthrough: true }) response: Response,
-  ): Promise<PatientSummaryDto> {
-    const result = await this.protegido(() =>
-      this.enrollment.enroll(body as unknown, new Date()),
-    );
-
-    if (!result.ok) {
-      throw toHttpException(result.failure);
-    }
-
-    response.setHeader('Set-Cookie', result.setCookieHeader);
-    return result.patient as unknown as PatientSummaryDto;
+  public create(): never {
+    throw new GoneException({
+      code: ENROLLMENT_ERROR_CODES.registrationRetired,
+      message: 'La inscripción anterior fue retirada. Use el registro vigente de acceso.',
+    });
   }
 
   /**
@@ -200,35 +154,5 @@ function sessionRequiredException(): UnauthorizedException {
   return new UnauthorizedException({
     code: ENROLLMENT_ERROR_CODES.sessionRequired,
     message: 'No hay una sesión de inscripción vigente.',
-  });
-}
-
-function toHttpException(
-  failure:
-    | { readonly kind: 'INVALID_BODY'; readonly fields: readonly string[] }
-    | { readonly kind: 'VALIDATION'; readonly fields: readonly string[] }
-    | { readonly kind: 'DOCUMENT_CONFLICT' },
-): BadRequestException | UnprocessableEntityException | ConflictException {
-  if (failure.kind === 'INVALID_BODY') {
-    return new BadRequestException({
-      code: ENROLLMENT_ERROR_CODES.invalidRequestBody,
-      message: 'El cuerpo de la petición no cumple el contrato de inscripción.',
-      fields: [...failure.fields],
-    });
-  }
-
-  if (failure.kind === 'VALIDATION') {
-    return new UnprocessableEntityException({
-      code: ENROLLMENT_ERROR_CODES.validationFailed,
-      message: 'Revise los datos de la inscripción: algunos valores no son válidos.',
-      fields: [...failure.fields],
-    });
-  }
-
-  // No se revela ningún dato del registro existente ni se confirma a quién
-  // pertenece: solo que ese documento ya está inscrito en la institución.
-  return new ConflictException({
-    code: ENROLLMENT_ERROR_CODES.documentConflict,
-    message: 'Ese documento ya está inscrito en esta institución.',
   });
 }

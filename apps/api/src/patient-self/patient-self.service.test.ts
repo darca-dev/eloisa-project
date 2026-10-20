@@ -47,6 +47,7 @@ const PRINCIPAL: HumanPrincipal = {
   humanAccountId: CUENTA,
   personId: PERSONA,
   tenantId: TENANT,
+  externalAuthIdentityId: '00000000-0000-0000-0000-0000000000a5',
 };
 
 const AHORA = new Date('2026-08-26T15:00:00.000Z');
@@ -86,7 +87,7 @@ interface Espia {
 }
 
 interface OpcionesEspia {
-  /** Resultado de `resolvePatient`. `null` = sin contexto PATIENT. */
+  /** Resultado de la autorización aprobada. `null` = sin acceso PATIENT. */
   readonly paciente?: { readonly patientId: string } | null;
   /** Filas devueltas por cada modelo. */
   readonly filaPaciente?: unknown;
@@ -146,7 +147,7 @@ function espiar(opciones: OpcionesEspia = {}): Espia {
   } as unknown as PrismaService;
 
   const identity = {
-    resolvePatient: async (): Promise<{ readonly patientId: string } | null> =>
+    resolveApprovedPatientWithin: async (): Promise<{ readonly patientId: string } | null> =>
       opciones.paciente === undefined ? { patientId: PACIENTE } : opciones.paciente,
   } as unknown as IdentityAccessService;
 
@@ -531,7 +532,7 @@ describe('Denegaciones uniformes y fail-closed (§3.4, §3.5)', () => {
 
   it('un paciente NO ACTIVE es fail-closed: mismo 403, sin filas y sin revelar existencia', async () => {
     /*
-     * `resolvePatient` exige `status = 'ACTIVE'`, de modo que un paciente dado
+     * La resolución aprobada exige `status = 'ACTIVE'`, de modo que un paciente dado
      * de baja devuelve `null`. El desenlace debe ser INDISTINGUIBLE del de una
      * persona sin participación de paciente.
      */

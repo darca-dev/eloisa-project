@@ -29,9 +29,8 @@ import { MalformedJsonFilter } from '../src/patients/malformed-json.filter';
 import { createTestPrismaClient, unavailableBanner } from './database-availability';
 import {
   cleanupTestData,
-  enrollmentBody,
+  crearSesionInscripcionHistorica,
   ensureOtherTenant,
-  sessionTokenFromSetCookie,
 } from './enrollment-fixtures';
 import {
   CODIGO_IDENTIDAD_HOSPITAL,
@@ -313,18 +312,21 @@ describe.skipIf(!puedeEjecutarse)('API Hospital · Profesionales', () => {
     });
 
     it('la cookie de paciente recibe 401 en operaciones', async () => {
-      const inscripcion = await request(app.getHttpServer())
-        .post('/api/v1/patients/enrollments')
-        .send(enrollmentBody())
-        .expect(201);
-
-      const tokenPaciente = sessionTokenFromSetCookie(inscripcion.headers['set-cookie']);
-
-      expect(tokenPaciente).not.toBeNull();
+      const patient = await crearPacienteHospital(prisma, {
+        tenantId,
+        givenNames: 'Paciente',
+        familyNames: 'Sesión Histórica Ficticia',
+        birthDate: new Date(Date.UTC(1978, 0, 15)),
+      });
+      const tokenPaciente = await crearSesionInscripcionHistorica(
+        prisma,
+        tenantId,
+        patient.patientId,
+      );
 
       await request(app.getHttpServer())
         .get(LIST_PATH)
-        .set('Cookie', `${PATIENT_COOKIE}=${tokenPaciente ?? ''}`)
+        .set('Cookie', `${PATIENT_COOKIE}=${tokenPaciente}`)
         .expect(401);
     });
 

@@ -208,6 +208,7 @@ export async function crearCuentaHumana(
 export interface SesionHumanaOptions {
   readonly tenantId: string;
   readonly humanAccountId: string;
+  readonly externalAuthIdentityId?: string;
   /** Caducidad ABSOLUTA. Por defecto, dentro de la vigencia contratada. */
   readonly expiresAt?: Date;
   readonly createdAt?: Date;
@@ -233,6 +234,7 @@ export async function crearSesionHumana(
     data: {
       tenantId: options.tenantId,
       humanAccountId: options.humanAccountId,
+      externalAuthIdentityId: options.externalAuthIdentityId ?? null,
       tokenHash: hashSessionToken(token),
       expiresAt: options.expiresAt ?? new Date(createdAt.getTime() + 8 * 60 * 60 * 1000),
       createdAt,

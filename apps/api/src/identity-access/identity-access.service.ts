@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 
+import { type PrismaTransaction } from '../database/prisma-transaction';
 import { PrismaService } from '../database/prisma.service';
 
 import { type HumanPrincipal } from './human-principal';
@@ -28,6 +29,79 @@ export class IdentityAccessService {
         select: { id: true },
       }),
     );
+
+    return patient === null ? null : { patientId: patient.id };
+  }
+
+  /**
+   * Resuelve el paciente que esta cuenta puede abrir como experiencia propia.
+   *
+   * A diferencia de `resolvePatient`, esta es una decisión de AUTORIZACIÓN:
+   * exige la cuenta y el vínculo exactos de la sesión, una solicitud PATIENT
+   * aprobada para ambos y la participación activa de la misma persona. La
+   * transacción la aporta el consumidor para que decisión, lectura y auditoría
+   * tengan un solo punto de commit.
+   */
+  public async resolveApprovedPatientWithin(
+    tx: PrismaTransaction,
+    principal: HumanPrincipal,
+  ): Promise<ResolvedPatient | null> {
+    const externalAuthIdentityId = principal.externalAuthIdentityId;
+
+    if (externalAuthIdentityId === undefined) {
+      return null;
+    }
+
+    /*
+     * El bloqueo compartido serializa esta lectura contra deshabilitación,
+     * recuperación y revocación de cuenta. No se bloquea AccessRequest: los
+     * flujos de revisión toman primero esa fila y después la cuenta.
+     */
+    const accounts = await tx.$queryRaw<{ readonly id: string }[]>`
+      SELECT "id"
+        FROM "human_account"
+       WHERE "id" = ${principal.humanAccountId}::uuid
+         AND "tenantId" = ${principal.tenantId}::uuid
+         AND "personId" = ${principal.personId}::uuid
+         AND "status" = 'ACTIVE'
+         AND NOT "passwordRecoveryBlocked"
+       FOR SHARE
+    `;
+
+    if (accounts.length !== 1) {
+      return null;
+    }
+
+    const approved = await tx.accessRequest.findFirst({
+      where: {
+        tenantId: principal.tenantId,
+        personId: principal.personId,
+        humanAccountId: principal.humanAccountId,
+        externalAuthIdentityId,
+        requestedProfile: 'PATIENT',
+        status: 'APPROVED',
+        externalIdentity: {
+          id: externalAuthIdentityId,
+          tenantId: principal.tenantId,
+          humanAccountId: principal.humanAccountId,
+          status: 'ACTIVE',
+        },
+      },
+      select: { id: true },
+    });
+
+    if (approved === null) {
+      return null;
+    }
+
+    const patient = await tx.patient.findFirst({
+      where: {
+        tenantId: principal.tenantId,
+        personId: principal.personId,
+        status: 'ACTIVE',
+      },
+      select: { id: true },
+    });
 
     return patient === null ? null : { patientId: patient.id };
   }

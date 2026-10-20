@@ -111,14 +111,22 @@ export class ApprovedExperiencesService {
        * a qué portada se entra.
        */
       const perfiles =
-        cuentaActiva === null
+        cuentaActiva === null || principal.externalAuthIdentityId === undefined
           ? []
           : await tx.accessRequest.findMany({
               where: {
                 tenantId: principal.tenantId,
+                personId: principal.personId,
                 humanAccountId: principal.humanAccountId,
+                externalAuthIdentityId: principal.externalAuthIdentityId,
                 status: 'APPROVED',
                 requestedProfile: { in: [...REQUESTABLE_PROFILES] },
+                externalIdentity: {
+                  id: principal.externalAuthIdentityId,
+                  tenantId: principal.tenantId,
+                  humanAccountId: principal.humanAccountId,
+                  status: 'ACTIVE',
+                },
               },
               select: { requestedProfile: true },
               distinct: ['requestedProfile'],

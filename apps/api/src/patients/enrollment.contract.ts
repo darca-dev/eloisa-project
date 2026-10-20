@@ -24,6 +24,8 @@ export const ENROLLMENT_ERROR_CODES = {
   sessionRequired: 'ENROLLMENT_SESSION_REQUIRED',
   /** Demasiadas peticiones al endpoint público. */
   rateLimited: 'ENROLLMENT_RATE_LIMITED',
+  /** La vía heredada fue retirada; el registro vigente usa solicitudes. */
+  registrationRetired: 'PATIENT_ENROLLMENT_RETIRED',
   /** Fallo interno; nunca incluye detalle técnico ni datos personales. */
   internal: 'INTERNAL_ERROR',
 } as const;

@@ -32,6 +32,7 @@ const PRINCIPAL: HumanPrincipal = {
   humanAccountId: '00000000-0000-0000-0000-0000000000a2',
   personId: '00000000-0000-0000-0000-0000000000a3',
   tenantId: '00000000-0000-0000-0000-0000000000a4',
+  externalAuthIdentityId: '00000000-0000-0000-0000-0000000000a5',
 };
 
 const AHORA = new Date('2026-09-30T12:00:00.000Z');
@@ -235,9 +236,17 @@ describe('ApprovedExperiencesService.resolve', () => {
     });
     expect(doble.whereSolicitudes).toEqual({
       tenantId: PRINCIPAL.tenantId,
+      personId: PRINCIPAL.personId,
       humanAccountId: PRINCIPAL.humanAccountId,
+      externalAuthIdentityId: PRINCIPAL.externalAuthIdentityId,
       status: 'APPROVED',
       requestedProfile: { in: ['PATIENT', 'CAREGIVER', 'FIELD_PROFESSIONAL'] },
+      externalIdentity: {
+        id: PRINCIPAL.externalAuthIdentityId,
+        tenantId: PRINCIPAL.tenantId,
+        humanAccountId: PRINCIPAL.humanAccountId,
+        status: 'ACTIVE',
+      },
     });
   });
 
@@ -303,7 +312,7 @@ describe('ApprovedExperiencesService.resolve', () => {
     );
   });
 
-  it('no recibe identificadores de paciente ni de profesional: solo el principal', async () => {
+  it('no recibe identificadores de paciente ni de profesional: los deriva del principal', async () => {
     const doble = crearDoble({
       cuentaActiva: true,
       perfiles: ['PATIENT'],
@@ -318,7 +327,7 @@ describe('ApprovedExperiencesService.resolve', () => {
     await doble.service.resolve(PRINCIPAL, AHORA, CORRELACION);
 
     const serializado = JSON.stringify([doble.whereCuenta, doble.whereSolicitudes]);
-    expect(serializado).not.toContain(PRINCIPAL.personId);
+    expect(serializado).toContain(PRINCIPAL.personId);
     expect(serializado).not.toContain('patientId');
     expect(serializado).not.toContain('professionalId');
   });

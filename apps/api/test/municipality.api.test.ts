@@ -23,8 +23,7 @@ import {
   DEPARTMENT_CODE,
   MUNICIPALITY_CODE,
   cleanupTestData,
-  enrollmentBody,
-  sessionTokenFromSetCookie,
+  crearSesionInscripcionHistorica,
   territorialUnitId,
 } from './enrollment-fixtures';
 import {
@@ -251,21 +250,22 @@ describe.skipIf(!puedeEjecutarse)('API municipal agregada', () => {
       }
     });
 
-    it('la cookie de autoinscripción de paciente NO autentica a Alcaldía', async () => {
-      const inscripcion = await request(app.getHttpServer())
-        .post('/api/v1/patients/enrollments')
-        .send(enrollmentBody())
-        .expect(201);
-
-      const tokenPaciente = sessionTokenFromSetCookie(
-        inscripcion.headers['set-cookie'],
+    it('una cookie heredada válida de paciente NO autentica a Alcaldía', async () => {
+      const patient = await crearPacienteSintetico(prisma, {
+        tenantId,
+        departmentUnitId: departmentId,
+        municipalityUnitId: municipalityId,
+        condiciones: { mayor: false, discapacidad: false, cuidadoEnCasa: false },
+      });
+      const tokenPaciente = await crearSesionInscripcionHistorica(
+        prisma,
+        tenantId,
+        patient.patientId,
       );
-
-      expect(tokenPaciente).not.toBeNull();
 
       await request(app.getHttpServer())
         .get(POPULATION_PATH)
-        .set('Cookie', `${PATIENT_COOKIE}=${tokenPaciente ?? ''}`)
+        .set('Cookie', `${PATIENT_COOKIE}=${tokenPaciente}`)
         .expect(401);
 
       // Y a la inversa: la sesión institucional no abre el registro individual.
@@ -365,7 +365,7 @@ describe.skipIf(!puedeEjecutarse)('API municipal agregada', () => {
       expect(respuesta.body.populations.olderAdult60Plus.value).toBe(9);
     });
 
-    it('los agregados cambian al inscribir a otra persona (T-13)', async () => {
+    it('los agregados cambian al persistir otra persona aprobada (T-13)', async () => {
       await crear(9, true);
 
       const antes = await request(app.getHttpServer())
@@ -375,10 +375,12 @@ describe.skipIf(!puedeEjecutarse)('API municipal agregada', () => {
 
       expect(antes.body.uniqueRegistered.value).toBe(9);
 
-      await request(app.getHttpServer())
-        .post('/api/v1/patients/enrollments')
-        .send(enrollmentBody())
-        .expect(201);
+      await crearPacienteSintetico(prisma, {
+        tenantId,
+        departmentUnitId: departmentId,
+        municipalityUnitId: municipalityId,
+        condiciones: { mayor: true, discapacidad: false, cuidadoEnCasa: false },
+      });
 
       const despues = await request(app.getHttpServer())
         .get(POPULATION_PATH)
@@ -418,10 +420,12 @@ describe.skipIf(!puedeEjecutarse)('API municipal agregada', () => {
     });
 
     it('no devuelve ningún dato individual en ninguno de los dos agregados (T-06)', async () => {
-      await request(app.getHttpServer())
-        .post('/api/v1/patients/enrollments')
-        .send(enrollmentBody({ givenNames: 'Ana María' }))
-        .expect(201);
+      await crearPacienteSintetico(prisma, {
+        tenantId,
+        departmentUnitId: departmentId,
+        municipalityUnitId: municipalityId,
+        condiciones: { mayor: true, discapacidad: false, cuidadoEnCasa: false },
+      });
 
       await crear(8, true);
 
@@ -434,7 +438,7 @@ describe.skipIf(!puedeEjecutarse)('API municipal agregada', () => {
         const serializado = JSON.stringify(respuesta.body);
 
         for (const prohibido of [
-          'Ana María',
+          'Persona',
           'Ejemplo Ficticio',
           'Cra 45',
           'La Esperanza',

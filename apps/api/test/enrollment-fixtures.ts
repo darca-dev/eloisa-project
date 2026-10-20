@@ -1,4 +1,8 @@
 import { type PrismaClient } from '../src/generated/prisma/client';
+import {
+  generateSessionToken,
+  hashSessionToken,
+} from '../src/enrollment-sessions/enrollment-session.tokens';
 import { LOCAL_UNIT_PENDING_NORMALIZATION } from '../src/patients/enrollment.contract';
 
 /**
@@ -29,6 +33,28 @@ let secuencia = 0;
 export function nextTestDocument(): string {
   secuencia += 1;
   return `${TEST_DOCUMENT_PREFIX}${String(secuencia).padStart(5, '0')}`;
+}
+
+/**
+ * Siembra una sesión de inscripción histórica VÁLIDA para probar que su cookie
+ * sigue siendo incapaz de autenticar superficies institucionales. No crea una
+ * persona ni reabre el endpoint público retirado.
+ */
+export async function crearSesionInscripcionHistorica(
+  prisma: PrismaClient,
+  tenantId: string,
+  patientId: string,
+): Promise<string> {
+  const token = generateSessionToken();
+  await prisma.enrollmentSession.create({
+    data: {
+      tenantId,
+      patientId,
+      tokenHash: hashSessionToken(token),
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+    },
+  });
+  return token;
 }
 
 export interface EnrollmentBodyOverrides {

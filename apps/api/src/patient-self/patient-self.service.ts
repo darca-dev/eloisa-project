@@ -29,9 +29,9 @@ import {
  * EL SUJETO NO ENTRA, SALE. Ninguna función pública de este servicio recibe
  * `patientId`, `personId`, documento, tenant ni institución: todas parten del
  * `HumanPrincipal`, que solo puede haber construido el validador de sesión, y
- * derivan el paciente con `resolvePatient` del módulo de identidad, que se
- * reutiliza TAL CUAL y no se duplica aquí (§13 lo prohíbe modificar, y además
- * duplicar la resolución duplicaría la superficie de seguridad).
+ * derivan el paciente con `resolveApprovedPatientWithin` del módulo de
+ * identidad. Esa puerta exige la solicitud PATIENT aprobada de la cuenta y del
+ * vínculo exactos que autenticaron la sesión.
  *
  * DOS BARRERAS DE AISLAMIENTO, NO UNA. Toda consulta va dentro de
  * `withTenant()` —rol `merdn_runtime` de mínimo privilegio, tenant activo fijado
@@ -100,57 +100,28 @@ export class PatientSelfService {
     correlationId: string,
     now: Date,
   ): Promise<PatientSelfSummaryView> {
-    const { patientId } = await this.exigirPacientePropio(
+    return this.withApprovedPatient(
       principal,
       correlationId,
       PATIENT_SELF_RESOURCES.summary,
       now,
+      async (tx, patientId) => {
+        const persona = await tx.patient.findFirst({
+          where: pacientePropio(principal, patientId),
+          // Se seleccionan DOS columnas de nombre y ninguna más: ni documento, ni
+          // fecha de nacimiento, ni sexo, ni EPS, ni territorio, ni contacto.
+          select: { person: { select: { givenNames: true, familyNames: true } } },
+        });
+
+        return persona === null
+          ? null
+          : {
+              givenName: primerNombre(persona.person.givenNames),
+              initials: iniciales(persona.person.givenNames, persona.person.familyNames),
+              label: PATIENT_SELF_LABEL,
+            };
+      },
     );
-
-    return this.prisma.withTenant(principal.tenantId, async (tx) => {
-      const persona = await tx.patient.findFirst({
-        where: pacientePropio(principal, patientId),
-        // Se seleccionan DOS columnas de nombre y ninguna más: ni documento, ni
-        // fecha de nacimiento, ni sexo, ni EPS, ni territorio, ni contacto.
-        select: { person: { select: { givenNames: true, familyNames: true } } },
-      });
-
-      if (persona === null) {
-        /*
-         * Inalcanzable con `resolvePatient` recién resuelto, salvo cambio
-         * concurrente. Se resuelve CERRADO y con el MISMO desenlace que la
-         * ausencia de contexto: no se inventa un resumen y no se distingue el
-         * caso hacia fuera.
-         */
-        await this.registrarDenegacion(
-          tx,
-          principal,
-          correlationId,
-          PATIENT_SELF_RESOURCES.summary,
-          now,
-        );
-
-        throw new PatientSelfAccessDeniedError('NO_PATIENT_CONTEXT');
-      }
-
-      // La traza se escribe ANTES de devolver y DENTRO de esta transacción.
-      await this.audit.recordPatientSelfAccessGrantedWithin(
-        tx,
-        {
-          tenantId: principal.tenantId,
-          humanAccountId: principal.humanAccountId,
-          resource: PATIENT_SELF_RESOURCES.summary,
-          correlationId,
-        },
-        now,
-      );
-
-      return {
-        givenName: primerNombre(persona.person.givenNames),
-        initials: iniciales(persona.person.givenNames, persona.person.familyNames),
-        label: PATIENT_SELF_LABEL,
-      };
-    });
   }
 
   /**
@@ -165,59 +136,39 @@ export class PatientSelfService {
     correlationId: string,
     now: Date,
   ): Promise<PatientSelfListView<PatientSelfAppointmentView>> {
-    const { patientId } = await this.exigirPacientePropio(
+    return this.withApprovedPatient(
       principal,
       correlationId,
       PATIENT_SELF_RESOURCES.appointments,
       now,
+      async (tx, patientId) => {
+        const citas = await tx.appointment.findMany({
+          where: {
+            tenantId: principal.tenantId,
+            patientId,
+            patient: pacientePropio(principal, patientId),
+            scheduledStart: { gte: now },
+          },
+          select: { id: true, scheduledStart: true, modality: true, status: true },
+          orderBy: [{ scheduledStart: 'asc' }, { id: 'asc' }],
+          take: PATIENT_SELF_MAX_ITEMS,
+        });
+
+        return {
+          items: citas.flatMap((cita) =>
+            cita.scheduledStart === null
+              ? []
+              : [
+                  {
+                    scheduledStart: cita.scheduledStart.toISOString(),
+                    modality: cita.modality,
+                    status: cita.status,
+                  },
+                ],
+          ),
+        };
+      },
     );
-
-    return this.prisma.withTenant(principal.tenantId, async (tx) => {
-      const citas = await tx.appointment.findMany({
-        where: {
-          // Filtro explícito por tenant ADEMÁS de Row Level Security.
-          tenantId: principal.tenantId,
-          patientId,
-          // Self-scope reafirmado en el lado del paciente: la fila debe ser del
-          // MISMO tenant y de la MISMA persona autenticada.
-          patient: pacientePropio(principal, patientId),
-          scheduledStart: { gte: now },
-        },
-        // Ni un campo más de los tres del contrato. `id` se selecciona SOLO para
-        // desempatar el orden y NO se proyecta.
-        select: { id: true, scheduledStart: true, modality: true, status: true },
-        // Orden ESTABLE: dos citas del mismo instante no pueden alternar.
-        orderBy: [{ scheduledStart: 'asc' }, { id: 'asc' }],
-        take: PATIENT_SELF_MAX_ITEMS,
-      });
-
-      await this.audit.recordPatientSelfAccessGrantedWithin(
-        tx,
-        {
-          tenantId: principal.tenantId,
-          humanAccountId: principal.humanAccountId,
-          resource: PATIENT_SELF_RESOURCES.appointments,
-          correlationId,
-        },
-        now,
-      );
-
-      return {
-        items: citas.flatMap((cita) =>
-          cita.scheduledStart === null
-            ? // Inalcanzable con el filtro activo; defensa explícita que se
-              // resuelve CERRADO: se descarta la fila en vez de inventar fecha.
-              []
-            : [
-                {
-                  scheduledStart: cita.scheduledStart.toISOString(),
-                  modality: cita.modality,
-                  status: cita.status,
-                },
-              ],
-        ),
-      };
-    });
   }
 
   /**
@@ -236,113 +187,98 @@ export class PatientSelfService {
     correlationId: string,
     now: Date,
   ): Promise<PatientSelfListView<PatientSelfVisitView>> {
-    const { patientId } = await this.exigirPacientePropio(
+    return this.withApprovedPatient(
       principal,
       correlationId,
       PATIENT_SELF_RESOURCES.visits,
       now,
-    );
-
-    return this.prisma.withTenant(principal.tenantId, async (tx) => {
-      const visitas = await tx.homeVisit.findMany({
-        where: {
-          tenantId: principal.tenantId,
-          patientId,
-          patient: pacientePropio(principal, patientId),
-          appointment: {
+      async (tx, patientId) => {
+        const visitas = await tx.homeVisit.findMany({
+          where: {
             tenantId: principal.tenantId,
-            // «Recientes»: ya ocurridas o en curso según el instante del servidor.
-            scheduledStart: { lte: now },
+            patientId,
+            patient: pacientePropio(principal, patientId),
+            appointment: {
+              tenantId: principal.tenantId,
+              scheduledStart: { lte: now },
+            },
           },
-        },
-        select: {
-          id: true,
-          status: true,
-          appointment: { select: { scheduledStart: true } },
-        },
-        orderBy: [{ appointment: { scheduledStart: 'desc' } }, { id: 'desc' }],
-        take: PATIENT_SELF_MAX_ITEMS,
-      });
+          select: {
+            id: true,
+            status: true,
+            appointment: { select: { scheduledStart: true } },
+          },
+          orderBy: [{ appointment: { scheduledStart: 'desc' } }, { id: 'desc' }],
+          take: PATIENT_SELF_MAX_ITEMS,
+        });
+
+        return {
+          items: visitas.flatMap((visita) => {
+            const inicio = visita.appointment.scheduledStart;
+
+            return inicio === null
+              ? []
+              : [
+                  {
+                    scheduledStart: inicio.toISOString(),
+                    modality: 'HOME' as const,
+                    status: visita.status,
+                  },
+                ];
+          }),
+        };
+      },
+    );
+  }
+
+  /**
+   * Autoriza, lee y audita en una sola transacción tenant-scoped.
+   *
+   * Una denegación retorna una etiqueta desde la transacción y lanza después
+   * del commit. Lanzar dentro de `withTenant` revertiría precisamente el evento
+   * DENIED que debe conservarse como evidencia.
+   */
+  private async withApprovedPatient<T>(
+    principal: HumanPrincipal,
+    correlationId: string,
+    resource: PatientSelfResource,
+    now: Date,
+    work: (tx: PrismaTransaction, patientId: string) => Promise<T | null>,
+  ): Promise<T> {
+    const outcome = await this.prisma.withTenant(principal.tenantId, async (tx) => {
+      const resolved = await this.identity.resolveApprovedPatientWithin(tx, principal);
+
+      if (resolved === null) {
+        await this.registrarDenegacion(tx, principal, correlationId, resource, now);
+        return { granted: false as const };
+      }
+
+      const value = await work(tx, resolved.patientId);
+
+      if (value === null) {
+        await this.registrarDenegacion(tx, principal, correlationId, resource, now);
+        return { granted: false as const };
+      }
 
       await this.audit.recordPatientSelfAccessGrantedWithin(
         tx,
         {
           tenantId: principal.tenantId,
           humanAccountId: principal.humanAccountId,
-          resource: PATIENT_SELF_RESOURCES.visits,
+          resource,
           correlationId,
         },
         now,
       );
 
-      return {
-        items: visitas.flatMap((visita) => {
-          const inicio = visita.appointment.scheduledStart;
-
-          return inicio === null
-            ? []
-            : [
-                {
-                  scheduledStart: inicio.toISOString(),
-                  // Constante del contrato, no reflejo de una columna.
-                  modality: 'HOME' as const,
-                  status: visita.status,
-                },
-              ];
-        }),
-      };
+      return { granted: true as const, value };
     });
-  }
 
-  /**
-   * Deriva el paciente propio o DENIEGA, registrando el intento.
-   *
-   * Se llama al principio de las tres lecturas y es el ÚNICO origen del
-   * `patientId` del módulo. `resolvePatient` ya exige `status = 'ACTIVE'` y la
-   * `personId` del principal: un paciente inexistente, ajeno o no `ACTIVE`
-   * devuelve `null`, y aquí eso es una denegación, no una lista vacía.
-   *
-   * La denegación SÍ produce evento —hay principal humano resoluble— y por eso
-   * se registra antes de lanzar. Una petición SIN principal nunca llega hasta
-   * aquí: la corta el guard con un `401` uniforme y sin evento (§9.2-1, §9.2-2).
-   */
-  private async exigirPacientePropio(
-    principal: HumanPrincipal,
-    correlationId: string,
-    resource: PatientSelfResource,
-    now: Date,
-  ): Promise<{ readonly patientId: string }> {
-    const resuelto = await this.identity.resolvePatient(principal);
-
-    if (resuelto !== null) {
-      return resuelto;
+    if (!outcome.granted) {
+      throw new PatientSelfAccessDeniedError('NO_PATIENT_CONTEXT');
     }
 
-    /*
-     * ATRIBUCIÓN DEL INTENTO DENEGADO. El evento registra la proyección que se
-     * SOLICITÓ —`resource`, que cada lectura pasa desde su propia ruta—, y no
-     * una fija. Registrar siempre el resumen atribuiría a `/summary` un intento
-     * hecho contra `/appointments` o `/visits`: la traza describiría un acceso
-     * que nunca se intentó y perdería el que sí ocurrió. La correspondencia
-     * `resourceType` ↔ `endpoint` es CERRADA y uno a uno (§9.1, §17.D-1), de
-     * modo que atribuir mal el recurso atribuye mal también el endpoint.
-     *
-     * Esto NO revela nada de más: el `resourceType` describe la RUTA que atendió
-     * la petición, que el cliente ya conoce porque es la que llamó. Lo que la
-     * spec prohíbe registrar es el MOTIVO detallado de la denegación (§9.2-5),
-     * y ese sigue sin escribirse: el evento no dice si existe un paciente
-     * asociado ni por qué no resolvió.
-     *
-     * La denegación se audita en su propia transacción porque no hay lectura de
-     * datos que proteger: no se sirve ninguna fila. Si el evento obligatorio no
-     * se persiste, el error se propaga y la respuesta NO es un `403` limpio sin
-     * traza: falla, que es el desenlace fail-closed correcto (§9.2-6).
-     */
-    await this.prisma.withTenant(principal.tenantId, async (tx) => {
-      await this.registrarDenegacion(tx, principal, correlationId, resource, now);
-    });
-
-    throw new PatientSelfAccessDeniedError('NO_PATIENT_CONTEXT');
+    return outcome.value;
   }
 
   /** Registro del intento DENEGADO. Solo con principal humano resoluble. */
@@ -371,7 +307,7 @@ export class PatientSelfService {
  *
  * Repite las tres condiciones a la vez —tenant, identificador ya resuelto y
  * persona autenticada— además de exigir `ACTIVE`. `patientId` NO viene del
- * cliente: lo produjo `resolvePatient` unas líneas antes, desde el principal.
+ * cliente: lo produjo la autorización aprobada, desde el principal.
  */
 function pacientePropio(
   principal: HumanPrincipal,
