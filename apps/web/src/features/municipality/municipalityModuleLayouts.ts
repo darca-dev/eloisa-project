@@ -1,3 +1,5 @@
+import { branding } from '@/config/branding';
+
 import type { MunicipalityModuloId } from './municipalityViews';
 
 export type MunicipalityPendingModule = Exclude<MunicipalityModuloId, 'inicio' | 'poblacion' | 'territorio'>;
@@ -45,7 +47,7 @@ export const MUNICIPALITY_MODULE_LAYOUTS: Readonly<Record<MunicipalityPendingMod
     title: 'ADRES', description: 'Información oficial y contraste agregado con los registros municipales.',
     notice: 'No hay una fuente ADRES conectada. No se presentan afiliaciones, recursos o coincidencias como verificados.',
     sections: [{ title: 'Información oficial disponible', description: 'La información debe provenir de una fuente autorizada, con fecha de corte y trazabilidad.' },
-      { title: 'Población en Eloisa frente a la información oficial', description: 'El contraste agregado aún no está disponible.', columns: ['Dato agregado', 'Registro en plataforma', 'Fuente oficial', 'Fecha de corte'] }],
+      { title: `Población en ${branding.platformDisplayName} frente a la información oficial`, description: 'El contraste agregado aún no está disponible.', columns: ['Dato agregado', 'Registro en plataforma', 'Fuente oficial', 'Fecha de corte'] }],
   },
   cuidado: {
     title: 'Seguimiento al derecho al cuidado', description: 'Acciones, evidencia y seguimiento institucional de la atención y el cuidado.',
