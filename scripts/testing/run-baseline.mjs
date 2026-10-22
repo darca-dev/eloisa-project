@@ -92,6 +92,13 @@ export const BASELINE_STAGES = Object.freeze([
     'db/access-request-registration.db.test.ts',
     'db/institutional-administrator.api.test.ts',
     'db/personal-registration.db.test.ts',
+    // SPEC 055 / MP01: custodia institucional de cuidado.
+    'db/care-context-foundation.db.test.ts',
+    // Catálogo FORCE RLS completo (hallazgo 3 de la revisión Codex de 055/MP01).
+    'db/force-rls-catalog.db.test.ts',
+    // SPEC 055 / MP02–MP03. ULTIMA a proposito: su historia es append-only y no
+    // se borra; el cluster aislado se elimina completo en `cleanup`.
+    'db/care-records-alarms.api.test.ts',
   ]),
   'cleanup',
 ]);

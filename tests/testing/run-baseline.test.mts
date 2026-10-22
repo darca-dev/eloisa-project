@@ -216,11 +216,11 @@ describe('MP14 - parser cerrado y run-id', () => {
 });
 
 describe('MP14 - matriz de stages', () => {
-  test('31 etapas, 25 DB-gated y cleanup final', () => {
-    assert.equal(runner.BASELINE_STAGES.length, 31);
-    assert.equal(runner.DB_GATED_STAGES.length, 25);
+  test('34 etapas, 28 DB-gated y cleanup final', () => {
+    assert.equal(runner.BASELINE_STAGES.length, 34);
+    assert.equal(runner.DB_GATED_STAGES.length, 28);
     assert.equal(runner.BASELINE_STAGES[0], 'provision');
-    assert.equal(runner.BASELINE_STAGES[30], 'cleanup');
+    assert.equal(runner.BASELINE_STAGES[33], 'cleanup');
     assert.equal(runner.STAGE_MATRIX.filter((s) => s.kind === 'lifecycle').map((s) => s.id).join(','), 'provision,cleanup');
     assert.equal(runner.STAGE_MATRIX.find((s) => s.id === 'typecheck')?.kind, 'static');
   });
@@ -246,7 +246,7 @@ describe('MP14 - matriz de stages', () => {
     assert.throws(() => runner.assertMatrixComplete(['*']), /no autorizado/u);
     assert.throws(() => runner.resolveStageIds('db/inventada.test.ts'), /fuera de la matriz/u);
     assert.equal(runner.resolveStageIds('web').length, 1);
-    assert.equal(runner.resolveStageIds('all').length, 31);
+    assert.equal(runner.resolveStageIds('all').length, 34);
   });
 
   test('los comandos de typecheck cubren los tres proyectos y no emiten', () => {
@@ -481,11 +481,11 @@ describe('MP14 - ciclo completo con dobles inyectados', () => {
     }
   });
 
-  test('un ciclo sano recorre las 31 etapas, termina en cleanup y conserva el run-id', async () => {
+  test('un ciclo sano recorre las 34 etapas, termina en cleanup y conserva el run-id', async () => {
     const { resultado, conteo } = await correrStages({});
     assert.equal(resultado.ok, true);
     assert.equal(resultado.failedStage, null);
-    assert.equal(resultado.evidence.length, 31);
+    assert.equal(resultado.evidence.length, 34);
     assert.equal(resultado.evidence.at(-1)?.stage, 'cleanup');
     assert.equal(resultado.evidence.at(-1)?.outcome, 'pass');
     assert.ok(resultado.evidence.every((e) => e.runId === RUN_ID));

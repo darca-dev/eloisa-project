@@ -126,6 +126,10 @@ export const REQUIRED_MIGRATIONS = Object.freeze([
   '20261012190000_recovery_authentication_cutoff',
   '20261014190000_institutional_login_return_targets',
   '20261015170000_municipal_section_revisions',
+  '20261021120000_care_context_foundation',
+  '20261021130000_care_records_manual_alarms',
+  '20261021140000_care_alarm_criteria',
+  '20261021150000_care_administration',
 ]);
 
 /**
@@ -137,7 +141,19 @@ export const PROTECTED_TABLES = Object.freeze([
   'access_password_recovery',
   'appointment',
   'audit_event',
+  'care_alarm',
+  'care_alarm_criterion',
+  'care_alarm_criterion_version',
+  'care_alarm_evidence',
+  'care_alarm_transition',
   'care_assignment',
+  'care_authorization',
+  'care_observable_definition',
+  'care_observation',
+  'care_record',
+  'care_record_amendment',
+  'care_request_receipt',
+  'clinical_competence_attestation',
   'consent_record',
   'enrollment_session',
   'external_auth_identity',
@@ -150,8 +166,11 @@ export const PROTECTED_TABLES = Object.freeze([
   'institutional_administrator_registration',
   'institutional_session',
   'municipality_section_revision',
+  'organization',
+  'organization_care_manager',
   'patient',
   'patient_address',
+  'patient_care_context',
   'patient_caregiver_relationship',
   'patient_caregiver_relationship_scope',
   'patient_population_membership',
@@ -165,8 +184,13 @@ export const PROTECTED_TABLES = Object.freeze([
   'territorial_unit',
 ]);
 
-/** Numero de policies esperado sobre las 27 tablas del catalogo completo. */
-export const EXPECTED_POLICY_COUNT = 31;
+/**
+ * Numero de policies esperado sobre el catalogo completo. SPEC 055 / MP01 anade
+ * cinco policies de organizacion y la RESTRICTIVE `audit_event_organization_scope`;
+ * MP02–MP03, siete de alcance de bitacoras/alarmas y tres de directorio propio;
+ * MP04, tres de criterios y evidencia; MP05b, dos de descubrimiento del gestor.
+ */
+export const EXPECTED_POLICY_COUNT = 52;
 
 /**
  * Familia de nombres de contenedor admitida. Es deliberadamente estrecha:

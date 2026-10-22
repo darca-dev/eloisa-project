@@ -96,6 +96,31 @@ export const RLS_POLICY_PAIRS = Object.freeze([
   Object.freeze({ policy: 'platform_support_capability_home_tenant', table: 'platform_support_capability' }),
   Object.freeze({ policy: 'support_grant_home_tenant', table: 'support_grant' }),
   Object.freeze({ policy: 'support_context_session_home_tenant', table: 'support_context_session' }),
+  // SPEC 055 / MP01: custodia institucional de cuidado.
+  Object.freeze({ policy: 'organization_scope', table: 'organization' }),
+  Object.freeze({ policy: 'organization_care_manager_scope', table: 'organization_care_manager' }),
+  Object.freeze({ policy: 'patient_care_context_scope', table: 'patient_care_context' }),
+  Object.freeze({ policy: 'clinical_competence_attestation_scope', table: 'clinical_competence_attestation' }),
+  Object.freeze({ policy: 'care_authorization_scope', table: 'care_authorization' }),
+  Object.freeze({ policy: 'audit_event_organization_scope', table: 'audit_event' }),
+  // SPEC 055 / MP02–MP03: bitacoras, alarmas y directorio de contextos propios.
+  Object.freeze({ policy: 'care_observable_definition_scope', table: 'care_observable_definition' }),
+  Object.freeze({ policy: 'care_record_scope', table: 'care_record' }),
+  Object.freeze({ policy: 'care_observation_scope', table: 'care_observation' }),
+  Object.freeze({ policy: 'care_record_amendment_scope', table: 'care_record_amendment' }),
+  Object.freeze({ policy: 'care_alarm_scope', table: 'care_alarm' }),
+  Object.freeze({ policy: 'care_alarm_transition_scope', table: 'care_alarm_transition' }),
+  Object.freeze({ policy: 'care_request_receipt_scope', table: 'care_request_receipt' }),
+  Object.freeze({ policy: 'care_authorization_discovery', table: 'care_authorization' }),
+  Object.freeze({ policy: 'patient_care_context_discovery', table: 'patient_care_context' }),
+  Object.freeze({ policy: 'organization_discovery', table: 'organization' }),
+  // SPEC 055 / MP04: criterios individuales y evidencia.
+  Object.freeze({ policy: 'care_alarm_criterion_scope', table: 'care_alarm_criterion' }),
+  Object.freeze({ policy: 'care_alarm_criterion_version_scope', table: 'care_alarm_criterion_version' }),
+  Object.freeze({ policy: 'care_alarm_evidence_scope', table: 'care_alarm_evidence' }),
+  // SPEC 055 / MP05b: organizaciones que la propia cuenta gestiona.
+  Object.freeze({ policy: 'organization_care_manager_discovery', table: 'organization_care_manager' }),
+  Object.freeze({ policy: 'organization_manager_discovery', table: 'organization' }),
 ]);
 
 /** Atributos de rol que deben ser `false` en runtime y en el owner de pruebas. */

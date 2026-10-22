@@ -7,6 +7,10 @@ import { HospitalModule } from './hospital/hospital.module';
 import { HumanAuthModule } from './human-auth/human-auth.module';
 import { IdentityAccessModule } from './identity-access/identity-access.module';
 import { InstitutionalAuthModule } from './institutional-auth/institutional-auth.module';
+import { CareAdminModule } from './care-admin/care-admin.module';
+import { CareAlertsModule } from './care-alerts/care-alerts.module';
+import { CareCriteriaModule } from './care-criteria/care-criteria.module';
+import { CareRecordsModule } from './care-records/care-records.module';
 import { MunicipalityModule } from './municipality/municipality.module';
 import { PatientSelfModule } from './patient-self/patient-self.module';
 import { PatientsModule } from './patients/patients.module';
@@ -77,6 +81,13 @@ import { VisitsModule } from './visits/visits.module';
     VisitsModule,
     PatientSelfModule,
     AccessRequestsModule,
+    // SPEC 055 / MP02–MP03: bitácoras y alarmas manuales sobre la custodia de MP01.
+    CareRecordsModule,
+    CareAlertsModule,
+    // SPEC 055 / MP04–MP05: criterios individuales, alarmas automáticas y semáforo.
+    CareCriteriaModule,
+    // SPEC 055 / MP05b: administración de permisos de cuidado por el gestor.
+    CareAdminModule,
   ],
 })
 export class AppModule {}

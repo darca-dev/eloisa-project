@@ -33,6 +33,25 @@ describe('documento OpenAPI', () => {
     expect(Object.keys(document.paths).sort()).toStrictEqual([
       '/api/v1/access-requests',
       '/api/v1/access-requests/registration-attempt',
+      '/api/v1/care/admin/organizations',
+      '/api/v1/care/admin/organizations/{organizationId}',
+      '/api/v1/care/admin/organizations/{organizationId}/competences',
+      '/api/v1/care/admin/organizations/{organizationId}/competences/{competenceId}/revoke',
+      '/api/v1/care/admin/organizations/{organizationId}/contexts',
+      '/api/v1/care/admin/organizations/{organizationId}/contexts/{contextId}/grants',
+      '/api/v1/care/admin/organizations/{organizationId}/grants/{grantId}/revoke',
+      '/api/v1/care/contexts',
+      '/api/v1/care/contexts/{contextId}/alarms',
+      '/api/v1/care/contexts/{contextId}/alarms/{alarmId}',
+      '/api/v1/care/contexts/{contextId}/alarms/{alarmId}/resolution-reports',
+      '/api/v1/care/contexts/{contextId}/alarms/{alarmId}/transitions',
+      '/api/v1/care/contexts/{contextId}/criteria',
+      '/api/v1/care/contexts/{contextId}/criteria/{criterionId}/retire',
+      '/api/v1/care/contexts/{contextId}/observables',
+      '/api/v1/care/contexts/{contextId}/records',
+      '/api/v1/care/contexts/{contextId}/records/{recordId}/amendments',
+      '/api/v1/care/contexts/{contextId}/semaphore',
+      '/api/v1/care/review-queue',
       '/api/v1/caregiver-relationships',
       '/api/v1/caregiver-relationships/{relationshipId}',
       '/api/v1/caregiver-relationships/{relationshipId}/activate',
@@ -324,6 +343,12 @@ describe('documento OpenAPI', () => {
        * las tres transiciones profesionales de la visita domiciliaria. La
        * prueba dedicada de MP04 comprueba que esa apertura es EXACTAMENTE de
        * tres operaciones y que no arrastro consigo ningun dominio vecino.
+       *
+       * `alert` deja de estar prohibido en SPEC 055 / MP03, que aprueba
+       * EXPRESAMENTE la solicitud manual de revision y su seguimiento por un
+       * revisor autorizado (modulo `care-alerts`). `semaforo` y `triage`
+       * siguen prohibidos: MP03 no clasifica automaticamente ni ofrece un
+       * semaforo; la clasificacion la decide un profesional.
        */
       'cuidador',
       'furag',
@@ -339,7 +364,6 @@ describe('documento OpenAPI', () => {
       'patolog',
       'triage',
       'semaforo',
-      'alert',
     ]) {
       expect(serialized).not.toContain(forbidden);
     }

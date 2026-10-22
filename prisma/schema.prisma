@@ -212,6 +212,32 @@ enum AuditEventType {
   DEMO_DATASET_RESET_STARTED
   DEMO_DATASET_RESET_COMPLETED
   DEMO_DATASET_RESET_FAILED
+  /// SPEC 055 / MP01. Decisión de autorización sobre un contexto de cuidado
+  /// institucional. Siempre con cuenta humana como actor, `actorRole` NULO y
+  /// sin cuerpo, respuesta ni referencia clínica.
+  CARE_CONTEXT_ACCESS_GRANTED
+  CARE_CONTEXT_ACCESS_DENIED
+  /// SPEC 055 / MP02–MP03. Mutaciones de bitácora y alarma: actor humano,
+  /// organización y recurso obligatorios; sin cuerpo, nota ni valor clínico.
+  CARE_OBSERVABLE_VALIDATED
+  CARE_RECORD_CREATED
+  CARE_RECORD_AMENDED
+  CARE_ALARM_CREATED
+  CARE_ALARM_TRANSITIONED
+  /// SPEC 055 / MP04. Criterio individual validado o retirado por el visitador.
+  CARE_CRITERION_VALIDATED
+  CARE_CRITERION_RETIRED
+  /// SPEC 055 / MP05b. Administración por el gestor de la organización.
+  CARE_ADMIN_MANAGER_PROVISIONED
+  CARE_ADMIN_CONTEXT_CREATED
+  CARE_ADMIN_GRANT_ISSUED
+  CARE_ADMIN_GRANT_REVOKED
+  CARE_ADMIN_COMPETENCE_ATTESTED
+  CARE_ADMIN_COMPETENCE_REVOKED
+  CARE_ADMIN_READ
+  /// Consulta del directorio de contextos propios. Sin organización: abarca
+  /// todas las que la cuenta pueda tener.
+  CARE_CONTEXT_DIRECTORY_READ
 }
 
 /// Tipo de actor del evento de auditoría. CORE-01 no inventa un usuario
@@ -373,6 +399,14 @@ model Tenant {
   supportContextSessions        SupportContextSession[]
   auditEventsAsSupportActorHome AuditEvent[]                @relation("AuditEventActorHomeTenant")
 
+  /// Custodia institucional de cuidado (SPEC 055 / MP01). Un tenant puede
+  /// contener varias organizaciones: el tenant NO equivale a una institución.
+  organizations                  Organization[]
+  organizationCareManagers       OrganizationCareManager[]
+  patientCareContexts            PatientCareContext[]
+  clinicalCompetenceAttestations ClinicalCompetenceAttestation[]
+  careAuthorizations             CareAuthorization[]
+
   @@map("tenant")
 }
 
@@ -474,6 +508,9 @@ model Patient {
   appointments           Appointment[]
   caregiverRelationships PatientCaregiverRelationship[]
   homeVisits             HomeVisit[]
+
+  /// Contextos de custodia institucional explícitos (SPEC 055 / MP01).
+  careContexts PatientCareContext[]
 
   @@unique([personId, tenantId], map: "patient_person_tenant_unique")
   @@unique([id, tenantId], map: "patient_id_tenant_unique")
@@ -737,6 +774,12 @@ model AuditEvent {
   /// Referencia opcional de ticket. Opaca y acotada.
   supportTicketReference String?
 
+  /// Ámbito INSTITUCIONAL del evento (SPEC 055 / MP01). NULO en las filas y
+  /// familias de eventos anteriores, que conservan sus políticas. Los eventos
+  /// `CARE_CONTEXT_ACCESS_GRANTED` lo exigen por CHECK; una política RLS
+  /// RESTRICTIVA oculta las filas con organización a otro ámbito institucional.
+  organizationId String? @db.Uuid
+
   occurredAt DateTime @default(now()) @db.Timestamptz(6)
 
   tenant Tenant @relation("AuditEventTenant", fields: [tenantId], references: [id], onDelete: Restrict)
@@ -748,7 +791,11 @@ model AuditEvent {
   supportGrant          SupportGrant?          @relation(fields: [supportGrantId], references: [id], onDelete: NoAction)
   supportContextSession SupportContextSession? @relation(fields: [supportContextSessionId], references: [id], onDelete: NoAction)
 
+  /// FK COMPUESTA: la organización debe pertenecer al MISMO tenant del evento.
+  organization Organization? @relation(fields: [organizationId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+
   @@index([tenantId, occurredAt])
+  @@index([tenantId, organizationId, occurredAt], map: "audit_event_tenant_organization_occurred_idx")
   @@index([resourceType, resourceId])
   /// Sostiene la traza completa de UN contexto de soporte concreto.
   @@index([supportContextSessionId])
@@ -1042,6 +1089,10 @@ model CareAssignment {
   appointments Appointment[]
   homeVisits   HomeVisit[]
 
+  /// Concesiones de cuidado que citan esta asignación como prueba de vínculo.
+  /// La asignación por sí sola NO autoriza nada clínico.
+  careAuthorizations CareAuthorization[]
+
   @@unique([id, tenantId], map: "care_assignment_id_tenant_unique")
   @@index([tenantId, patientId, status])
   @@index([tenantId, professionalId, status])
@@ -1208,6 +1259,31 @@ model HumanAccount {
   platformSupportCapabilities PlatformSupportCapability[]
   supportContextSessions      SupportContextSession[]
   municipalSectionRevisions MunicipalitySectionRevision[]
+
+  /// Custodia institucional de cuidado (SPEC 055 / MP01). Cada participación
+  /// es una fila explícita; ninguna se deduce de otra.
+  careManagerships                OrganizationCareManager[]       @relation("CareManagerAccount")
+  grantedCareManagerships         OrganizationCareManager[]       @relation("CareManagerGrantor")
+  createdCareContexts             PatientCareContext[]            @relation("CareContextCreator")
+  competenceAttestations          ClinicalCompetenceAttestation[] @relation("CompetenceSubject")
+  validatedCompetenceAttestations ClinicalCompetenceAttestation[] @relation("CompetenceValidator")
+  careAuthorizations              CareAuthorization[]             @relation("CareAuthorizationSubject")
+  grantedCareAuthorizations       CareAuthorization[]             @relation("CareAuthorizationGrantor")
+
+  /// Bitácoras y alarmas (SPEC 055 / MP02–MP03).
+  validatedObservables CareObservableDefinition[] @relation("ObservableValidator")
+  retiredObservables   CareObservableDefinition[] @relation("ObservableRetirer")
+  careRecords          CareRecord[]               @relation("CareRecordAuthor")
+  careAmendments       CareRecordAmendment[]      @relation("CareAmendmentAuthor")
+  initiatedCareAlarms  CareAlarm[]                @relation("CareAlarmInitiator")
+  assignedCareAlarms   CareAlarm[]                @relation("CareAlarmAssignee")
+  careAlarmTransitions CareAlarmTransition[]      @relation("CareAlarmTransitionActor")
+  careRequestReceipts  CareRequestReceipt[]       @relation("CareReceiptActor")
+
+  /// Criterios individuales (SPEC 055 / MP04).
+  createdAlarmCriteria   CareAlarmCriterion[]        @relation("CriterionCreator")
+  retiredAlarmCriteria   CareAlarmCriterion[]        @relation("CriterionRetirer")
+  validatedCriterionVers CareAlarmCriterionVersion[] @relation("CriterionValidator")
 
   /// Permite FKs compuestas que impiden asociaciones entre tenants distintos.
   @@unique([id, tenantId], map: "human_account_id_tenant_unique")
@@ -1407,6 +1483,10 @@ model PatientCaregiverRelationship {
   revokedByIdentity   InstitutionalIdentity? @relation("CaregiverRelationshipRevoker", fields: [revokedByInstitutionalIdentityId, tenantId], references: [id, tenantId], onDelete: Restrict)
 
   scopes PatientCaregiverRelationshipScope[]
+
+  /// Concesiones de cuidado que citan esta relación como prueba de vínculo. La
+  /// relación y `VISITS_VIEW` NO son fundamento clínico por sí mismos.
+  careAuthorizations CareAuthorization[]
 
   @@unique([id, tenantId], map: "patient_caregiver_relationship_id_tenant_unique")
   @@index([tenantId, patientId, status])
@@ -1974,4 +2054,640 @@ model MunicipalitySectionRevision {
   author HumanAccount @relation(fields: [createdByHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict)
   @@unique([tenantId, section, version], map: "municipality_section_revision_version_unique")
   @@map("municipality_section_revision")
+}
+
+/**
+ * --------------------------------------------------------------------------
+ */
+/**
+ * Custodia institucional y autorización de cuidado (SPEC 055 / MP01)
+ */
+/**
+ * --------------------------------------------------------------------------
+ */
+
+/// Tipo de organización compartida. Es UNA entidad genérica para Hospital,
+/// Alcaldía y Prestador, no una segunda arquitectura de producto. Una
+/// organización `MUNICIPALITY` queda representada, pero NUNCA habilita acciones
+/// clínicas o nominales de cuidado en MP01.
+enum OrganizationKind {
+  HOSPITAL
+  MUNICIPALITY
+  PROVIDER
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  DISABLED
+}
+
+/// Estado de una fuente de autorización de cuidado. Se REVOCA, no se borra: la
+/// fila revocada conserva la historia de quién, qué y cuándo.
+enum CareAuthorityStatus {
+  ACTIVE
+  REVOKED
+}
+
+/// Actor de una concesión explícita. El paciente propio NO necesita concesión:
+/// su acceso se deriva de la experiencia aprobada exacta y nunca administra.
+enum CareActorKind {
+  CAREGIVER
+  PROFESSIONAL
+  HOSPITAL_REVIEWER
+}
+
+/// Acciones de cuidado CERRADAS. No hay comodín ni permiso administrativo.
+enum CarePermission {
+  VIEW_RECORDS
+  CONTRIBUTE_RECORDS
+  REQUEST_ALARM
+  MANAGE_RULES
+  REVIEW_ALARMS
+}
+
+/// Finalidad NUEVA y propia de la concesión. NO amplía `HOME_CARE_COORDINATION`
+/// ni `VISITS_VIEW`, que conservan su alcance previo.
+enum CarePurpose {
+  CARE_RECORDING_AND_ALERTS
+}
+
+/// Organización dentro de un tenant. NO es una reserva administrativa
+/// (`InstitutionalAdministratorRegistration`) ni se deduce del tenant.
+model Organization {
+  id       String @id @default(uuid(7)) @db.Uuid
+  tenantId String @db.Uuid
+
+  /// Código técnico estable y único por tenant. No es un nombre de persona.
+  code        String
+  displayName String
+  kind        OrganizationKind
+  status      OrganizationStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  careManagers           OrganizationCareManager[]
+  careContexts           PatientCareContext[]
+  competenceAttestations ClinicalCompetenceAttestation[]
+  auditEvents            AuditEvent[]
+
+  @@unique([tenantId, code], map: "organization_tenant_code_unique")
+  /// Permite FKs compuestas que impiden asociaciones entre tenants distintos.
+  @@unique([id, tenantId], map: "organization_id_tenant_unique")
+  @@map("organization")
+}
+
+/// Capacidad ADMINISTRATIVA expresa de una cuenta humana sobre una
+/// organización: emitir y revocar concesiones. NO da acceso clínico por sí
+/// misma, NO se infiere de una cuenta antigua y NO la crea ninguna migración.
+model OrganizationCareManager {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  organizationId String @db.Uuid
+  humanAccountId String @db.Uuid
+
+  status   CareAuthorityStatus @default(ACTIVE)
+  startsAt DateTime            @db.Timestamptz(6)
+  endsAt   DateTime?           @db.Timestamptz(6)
+
+  /// Referencia técnica OPACA de la decisión institucional. Nunca texto libre.
+  authorizationReference  String
+  grantedByHumanAccountId String @db.Uuid
+
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  revokedAt DateTime? @db.Timestamptz(6)
+  version   Int       @default(1)
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  organization Organization @relation(fields: [organizationId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  account      HumanAccount @relation("CareManagerAccount", fields: [humanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  grantedBy    HumanAccount @relation("CareManagerGrantor", fields: [grantedByHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict, map: "organization_care_manager_grantor_fkey")
+
+  @@unique([id, tenantId, organizationId], map: "organization_care_manager_scope_unique")
+  @@unique([organizationId, humanAccountId], map: "organization_care_manager_org_account_unique")
+  @@index([tenantId, organizationId, humanAccountId, status], map: "organization_care_manager_lookup_idx")
+  @@map("organization_care_manager")
+}
+
+/// Fuente EXPLÍCITA de custodia: esta organización custodia el cuidado de este
+/// paciente. Un paciente puede tener contextos en organizaciones distintas sin
+/// compartir contenido entre ellas.
+model PatientCareContext {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  organizationId String @db.Uuid
+  patientId      String @db.Uuid
+
+  status                  CareAuthorityStatus @default(ACTIVE)
+  authorizationReference  String
+  createdByHumanAccountId String              @db.Uuid
+
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  revokedAt DateTime? @db.Timestamptz(6)
+  version   Int       @default(1)
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  organization Organization @relation(fields: [organizationId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  patient      Patient      @relation(fields: [patientId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  createdBy    HumanAccount @relation("CareContextCreator", fields: [createdByHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+
+  authorizations CareAuthorization[]
+
+  observableDefinitions CareObservableDefinition[]
+  records               CareRecord[]
+  alarms                CareAlarm[]
+  requestReceipts       CareRequestReceipt[]
+  alarmCriteria         CareAlarmCriterion[]
+
+  @@unique([tenantId, organizationId, patientId], map: "patient_care_context_tenant_org_patient_unique")
+  /// Sostiene la FK de la concesión por los CUATRO campos del contexto.
+  @@unique([id, tenantId, organizationId, patientId], map: "patient_care_context_scope_unique")
+  @@map("patient_care_context")
+}
+
+/// Competencia clínica DECLARADA por la organización para una cuenta humana. No
+/// acredita título ni consulta RETHUS; no se deduce de `ProfessionalProfile` ni
+/// de una asignación. El validador es una persona distinta del sujeto.
+model ClinicalCompetenceAttestation {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  organizationId String @db.Uuid
+  humanAccountId String @db.Uuid
+
+  status                    CareAuthorityStatus @default(ACTIVE)
+  /// Referencia técnica OPACA del soporte. Nunca texto libre ni documento.
+  evidenceReference         String
+  validatedByHumanAccountId String              @db.Uuid
+  startsAt                  DateTime            @db.Timestamptz(6)
+  endsAt                    DateTime?           @db.Timestamptz(6)
+
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  revokedAt DateTime? @db.Timestamptz(6)
+  version   Int       @default(1)
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  organization Organization @relation(fields: [organizationId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  account      HumanAccount @relation("CompetenceSubject", fields: [humanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  validatedBy  HumanAccount @relation("CompetenceValidator", fields: [validatedByHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict, map: "clinical_competence_attestation_validator_fkey")
+
+  authorizations CareAuthorization[]
+
+  @@unique([id, tenantId, organizationId, humanAccountId], map: "clinical_competence_attestation_scope_unique")
+  @@index([tenantId, organizationId, humanAccountId, status], map: "clinical_competence_attestation_lookup_idx")
+  @@map("clinical_competence_attestation")
+}
+
+/// Concesión humana EXPLÍCITA de una acción de cuidado sobre UN contexto. La
+/// relación de cuidado o la asignación son prueba de vínculo, no fundamento:
+/// la finalidad y la referencia de autorización propias son obligatorias. La
+/// base exige emisor manager vigente al emitir, coherencia de sujeto/paciente
+/// y forma por tipo de actor. Revocar conserva la fila.
+model CareAuthorization {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  organizationId String @db.Uuid
+  contextId      String @db.Uuid
+  patientId      String @db.Uuid
+  humanAccountId String @db.Uuid
+
+  actorKind  CareActorKind
+  permission CarePermission
+  purpose    CarePurpose
+  status     CareAuthorityStatus @default(ACTIVE)
+
+  startsAt DateTime  @db.Timestamptz(6)
+  endsAt   DateTime? @db.Timestamptz(6)
+
+  caregiverRelationshipId String? @db.Uuid
+  careAssignmentId        String? @db.Uuid
+  competenceAttestationId String? @db.Uuid
+
+  authorizationReference  String
+  grantedByHumanAccountId String @db.Uuid
+
+  /// Instante de EMISIÓN. Lo fija la base al insertar; no lo aporta el cliente.
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  revokedAt DateTime? @db.Timestamptz(6)
+  version   Int       @default(1)
+
+  tenant                Tenant                         @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  context               PatientCareContext             @relation(fields: [contextId, tenantId, organizationId, patientId], references: [id, tenantId, organizationId, patientId], onDelete: Restrict, onUpdate: Restrict, map: "care_authorization_context_fkey")
+  account               HumanAccount                   @relation("CareAuthorizationSubject", fields: [humanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  grantedBy             HumanAccount                   @relation("CareAuthorizationGrantor", fields: [grantedByHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  caregiverRelationship PatientCaregiverRelationship?  @relation(fields: [caregiverRelationshipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  careAssignment        CareAssignment?                @relation(fields: [careAssignmentId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  competenceAttestation ClinicalCompetenceAttestation? @relation(fields: [competenceAttestationId, tenantId, organizationId, humanAccountId], references: [id, tenantId, organizationId, humanAccountId], onDelete: Restrict, onUpdate: Restrict, map: "care_authorization_competence_fkey")
+
+  @@unique([id, tenantId, organizationId], map: "care_authorization_id_tenant_org_unique")
+  @@index([tenantId, organizationId, contextId, humanAccountId, status], map: "care_authorization_lookup_idx")
+  @@map("care_authorization")
+}
+
+/**
+ * --------------------------------------------------------------------------
+ */
+/**
+ * Bitácoras persistentes y alarmas manuales (SPEC 055 / MP02–MP03)
+ */
+/**
+ * --------------------------------------------------------------------------
+ */
+
+/// Tipo del valor de un observable. No hay fórmulas ni texto ejecutable.
+enum CareObservableType {
+  BOOLEAN
+  NUMBER
+  CHOICE
+}
+
+/// Una versión se RETIRA, no se edita ni se borra: los registros previos la
+/// siguen referenciando.
+enum CareObservableStatus {
+  ACTIVE
+  RETIRED
+}
+
+/// Vía por la que se aportó un registro. La deriva el servidor de la política.
+enum CareRecordSource {
+  PATIENT
+  CAREGIVER
+  PROFESSIONAL
+}
+
+/// MP03 solo produce `MANUAL`; `AUTOMATIC` queda reservado al motor de MP04.
+enum CareAlarmOrigin {
+  MANUAL
+  AUTOMATIC
+}
+
+/// Clasificación decidida por un profesional autorizado. Una alarma manual nace
+/// SIN clasificación (nulo = pendiente de clasificación), nunca verde.
+enum CareAlarmSeverity {
+  ROJA
+  AMARILLA
+  ESTABLE
+}
+
+enum CareAlarmState {
+  NUEVA
+  EN_GESTION
+  RESUELTA
+  CERRADA
+}
+
+enum CareAlarmAction {
+  CREATE
+  ACKNOWLEDGE
+  CLASSIFY
+  ASSIGN
+  RESOLVE
+  CLOSE
+  REOPEN
+  REPORT_RESOLUTION
+}
+
+/// Definición VERSIONADA de un observable de un contexto, validada por un
+/// profesional con MANAGE_RULES y competencia. Inmutable salvo su retiro.
+model CareObservableDefinition {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  organizationId String @db.Uuid
+  contextId      String @db.Uuid
+  patientId      String @db.Uuid
+
+  code      String
+  version   Int
+  label     String
+  valueType CareObservableType
+  unit      String?
+  /// Solo CHOICE: lista cerrada de `{ code, label }`.
+  options   Json?              @db.JsonB
+
+  validatedByHumanAccountId String               @db.Uuid
+  validatedAt               DateTime             @default(now()) @db.Timestamptz(6)
+  status                    CareObservableStatus @default(ACTIVE)
+  retiredAt                 DateTime?            @db.Timestamptz(6)
+  retiredByHumanAccountId   String?              @db.Uuid
+  createdAt                 DateTime             @default(now()) @db.Timestamptz(6)
+
+  context     PatientCareContext @relation(fields: [contextId, tenantId, organizationId, patientId], references: [id, tenantId, organizationId, patientId], onDelete: Restrict, onUpdate: Restrict)
+  validatedBy HumanAccount       @relation("ObservableValidator", fields: [validatedByHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  retiredBy   HumanAccount?      @relation("ObservableRetirer", fields: [retiredByHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+
+  observations CareObservation[]
+
+  @@unique([contextId, code, version], map: "care_observable_definition_version_unique")
+  @@unique([id, contextId], map: "care_observable_definition_id_context_unique")
+  @@index([tenantId, organizationId, contextId, status], map: "care_observable_definition_lookup_idx")
+  @@map("care_observable_definition")
+}
+
+/// Entrada de bitácora atribuida. Inmutable: se corrige con enmiendas.
+model CareRecord {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  organizationId String @db.Uuid
+  contextId      String @db.Uuid
+  patientId      String @db.Uuid
+
+  authorHumanAccountId String           @db.Uuid
+  source               CareRecordSource
+  /// Momento REPORTADO de la ocurrencia. Nunca futuro.
+  occurredAt           DateTime         @db.Timestamptz(6)
+  /// Recepción del SERVIDOR. La fija la base.
+  receivedAt           DateTime         @default(now()) @db.Timestamptz(6)
+  note                 String?
+  createdAt            DateTime         @default(now()) @db.Timestamptz(6)
+
+  context PatientCareContext @relation(fields: [contextId, tenantId, organizationId, patientId], references: [id, tenantId, organizationId, patientId], onDelete: Restrict, onUpdate: Restrict)
+  author  HumanAccount       @relation("CareRecordAuthor", fields: [authorHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+
+  observations CareObservation[]
+  amendments   CareRecordAmendment[]
+
+  @@unique([id, contextId], map: "care_record_id_context_unique")
+  @@index([tenantId, organizationId, contextId, receivedAt], map: "care_record_lookup_idx")
+  @@map("care_record")
+}
+
+/// Valor tipado de un observable dentro de un registro. Una ocurrencia se
+/// identifica por `occurrenceKey`; otra observación puede referenciar
+/// expresamente la canónica para no contarla dos veces.
+model CareObservation {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  organizationId String @db.Uuid
+  contextId      String @db.Uuid
+  patientId      String @db.Uuid
+
+  recordId               String   @db.Uuid
+  definitionId           String   @db.Uuid
+  occurrenceKey          String   @db.Uuid
+  valueBoolean           Boolean?
+  valueNumber            Decimal? @db.Decimal(30, 10)
+  valueChoice            String?
+  canonicalObservationId String?  @db.Uuid
+  createdAt              DateTime @default(now()) @db.Timestamptz(6)
+
+  record     CareRecord               @relation(fields: [recordId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  definition CareObservableDefinition @relation(fields: [definitionId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  canonical  CareObservation?         @relation("CanonicalObservation", fields: [canonicalObservationId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  duplicates CareObservation[]        @relation("CanonicalObservation")
+
+  amendments CareRecordAmendment[]
+  evidence   CareAlarmEvidence[]
+
+  @@unique([id, contextId], map: "care_observation_id_context_unique")
+  @@index([tenantId, organizationId, contextId, definitionId], map: "care_observation_lookup_idx")
+  @@map("care_observation")
+}
+
+/// Corrección APPEND-ONLY de un registro o de una de sus observaciones. Solo el
+/// autor del registro la escribe; nunca reescribe el original.
+model CareRecordAmendment {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  organizationId String @db.Uuid
+  contextId      String @db.Uuid
+  patientId      String @db.Uuid
+
+  recordId             String   @db.Uuid
+  observationId        String?  @db.Uuid
+  authorHumanAccountId String   @db.Uuid
+  sequence             Int
+  reason               String
+  note                 String?
+  replacementBoolean   Boolean?
+  replacementNumber    Decimal? @db.Decimal(30, 10)
+  replacementChoice    String?
+  createdAt            DateTime @default(now()) @db.Timestamptz(6)
+
+  record      CareRecord       @relation(fields: [recordId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  observation CareObservation? @relation(fields: [observationId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  author      HumanAccount     @relation("CareAmendmentAuthor", fields: [authorHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([recordId, sequence], map: "care_record_amendment_sequence_unique")
+  @@map("care_record_amendment")
+}
+
+/// Alarma de un contexto. La manual nace NUEVA y sin clasificación. Estado,
+/// severidad y asignación son ejes separados; cada cambio deja transición.
+model CareAlarm {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  organizationId String @db.Uuid
+  contextId      String @db.Uuid
+  patientId      String @db.Uuid
+
+  origin                         CareAlarmOrigin
+  initiatedByHumanAccountId      String             @db.Uuid
+  reasonCode                     String
+  note                           String?
+  severity                       CareAlarmSeverity?
+  state                          CareAlarmState     @default(NUEVA)
+  assignedReviewerHumanAccountId String?            @db.Uuid
+  /// Criterio individual que la produjo (MP04). Nulo en toda alarma manual.
+  criterionId                    String?            @db.Uuid
+  /// Versión del criterio vigente al abrir el episodio (MP04).
+  criterionVersionId             String?            @db.Uuid
+  /// Episodio cerrado anterior del mismo criterio, si existe (MP04, D05).
+  previousAlarmId                String?            @db.Uuid
+  version                        Int                @default(1)
+  createdAt                      DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt                      DateTime           @default(now()) @db.Timestamptz(6)
+  resolvedAt                     DateTime?          @db.Timestamptz(6)
+  closedAt                       DateTime?          @db.Timestamptz(6)
+
+  context     PatientCareContext @relation(fields: [contextId, tenantId, organizationId, patientId], references: [id, tenantId, organizationId, patientId], onDelete: Restrict, onUpdate: Restrict)
+  initiatedBy HumanAccount       @relation("CareAlarmInitiator", fields: [initiatedByHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  assignedTo  HumanAccount?      @relation("CareAlarmAssignee", fields: [assignedReviewerHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+
+  criterion        CareAlarmCriterion?        @relation(fields: [criterionId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  criterionVersion CareAlarmCriterionVersion? @relation(fields: [criterionVersionId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  previousAlarm    CareAlarm?                 @relation("AlarmEpisodes", fields: [previousAlarmId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  nextAlarms       CareAlarm[]                @relation("AlarmEpisodes")
+
+  transitions CareAlarmTransition[]
+  evidence    CareAlarmEvidence[]
+
+  @@unique([id, contextId], map: "care_alarm_id_context_unique")
+  @@index([tenantId, organizationId, contextId, state], map: "care_alarm_lookup_idx")
+  @@map("care_alarm")
+}
+
+/// Historia APPEND-ONLY de una alarma: quién hizo qué y con qué antes/después.
+model CareAlarmTransition {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  organizationId String @db.Uuid
+  contextId      String @db.Uuid
+  patientId      String @db.Uuid
+
+  alarmId             String             @db.Uuid
+  actorHumanAccountId String             @db.Uuid
+  action              CareAlarmAction
+  stateBefore         CareAlarmState?
+  stateAfter          CareAlarmState
+  severityBefore      CareAlarmSeverity?
+  severityAfter       CareAlarmSeverity?
+  assignedBefore      String?            @db.Uuid
+  assignedAfter       String?            @db.Uuid
+  reason              String?
+  createdAt           DateTime           @default(now()) @db.Timestamptz(6)
+
+  alarm CareAlarm    @relation(fields: [alarmId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  actor HumanAccount @relation("CareAlarmTransitionActor", fields: [actorHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([tenantId, organizationId, contextId, alarmId, createdAt], map: "care_alarm_transition_lookup_idx")
+  @@map("care_alarm_transition")
+}
+
+/// Recibo de idempotencia: mismo intento y contenido devuelven el mismo
+/// recurso; contenido distinto con la misma clave es un conflicto.
+model CareRequestReceipt {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  organizationId String @db.Uuid
+  contextId      String @db.Uuid
+  patientId      String @db.Uuid
+
+  actorHumanAccountId String   @db.Uuid
+  action              String
+  idempotencyKey      String   @db.Uuid
+  payloadHash         String
+  responseResourceId  String   @db.Uuid
+  createdAt           DateTime @default(now()) @db.Timestamptz(6)
+
+  context PatientCareContext @relation(fields: [contextId, tenantId, organizationId, patientId], references: [id, tenantId, organizationId, patientId], onDelete: Restrict, onUpdate: Restrict)
+  actor   HumanAccount       @relation("CareReceiptActor", fields: [actorHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([contextId, actorHumanAccountId, action, idempotencyKey], map: "care_request_receipt_key_unique")
+  @@map("care_request_receipt")
+}
+
+/**
+ * --------------------------------------------------------------------------
+ */
+/**
+ * Criterios individuales y alarmas automáticas (SPEC 055 / MP04)
+ */
+/**
+ * --------------------------------------------------------------------------
+ */
+
+/// Comparación estructurada. No hay fórmulas, texto ejecutable ni condiciones
+/// compuestas: EQ/NEQ/GT/GTE/LT/LTE para números, EQ para sí/no, IN para opciones.
+enum CareCriterionComparator {
+  EQ
+  NEQ
+  GT
+  GTE
+  LT
+  LTE
+  IN
+}
+
+enum CareCriterionStatus {
+  ACTIVE
+  RETIRED
+}
+
+enum CareCriterionVersionStatus {
+  ACTIVE
+  SUPERSEDED
+  RETIRED
+}
+
+/// Identidad ESTABLE de un criterio entre versiones: una alarma abierta lo
+/// sigue citando aunque el visitador lo ajuste.
+model CareAlarmCriterion {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  organizationId String @db.Uuid
+  contextId      String @db.Uuid
+  patientId      String @db.Uuid
+
+  status                  CareCriterionStatus @default(ACTIVE)
+  createdByHumanAccountId String              @db.Uuid
+  createdAt               DateTime            @default(now()) @db.Timestamptz(6)
+  retiredAt               DateTime?           @db.Timestamptz(6)
+  retiredByHumanAccountId String?             @db.Uuid
+  retiredReason           String?
+
+  context   PatientCareContext @relation(fields: [contextId, tenantId, organizationId, patientId], references: [id, tenantId, organizationId, patientId], onDelete: Restrict, onUpdate: Restrict)
+  createdBy HumanAccount       @relation("CriterionCreator", fields: [createdByHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  retiredBy HumanAccount?      @relation("CriterionRetirer", fields: [retiredByHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+
+  versions CareAlarmCriterionVersion[]
+  alarms   CareAlarm[]
+
+  @@unique([id, contextId], map: "care_alarm_criterion_id_context_unique")
+  @@index([tenantId, organizationId, contextId, status], map: "care_alarm_criterion_lookup_idx")
+  @@map("care_alarm_criterion")
+}
+
+/// Versión INMUTABLE de un criterio. Todos los valores los aporta el visitador;
+/// la plataforma no precarga ninguno como estándar.
+model CareAlarmCriterionVersion {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  organizationId String @db.Uuid
+  contextId      String @db.Uuid
+  patientId      String @db.Uuid
+
+  criterionId    String                     @db.Uuid
+  version        Int
+  observableCode String
+  valueType      CareObservableType
+  comparator     CareCriterionComparator
+  numberValue    Decimal?                   @db.Decimal(30, 10)
+  booleanValue   Boolean?
+  /// Solo IN: códigos de opción admitidos.
+  choiceValues   Json?                      @db.JsonB
+  requiredCount  Int
+  windowMinutes  Int
+  severity       CareAlarmSeverity
+  activatedAt    DateTime                   @default(now()) @db.Timestamptz(6)
+  validUntil     DateTime?                  @db.Timestamptz(6)
+  status         CareCriterionVersionStatus @default(ACTIVE)
+  supersededAt   DateTime?                  @db.Timestamptz(6)
+
+  validatedByHumanAccountId String   @db.Uuid
+  createdAt                 DateTime @default(now()) @db.Timestamptz(6)
+
+  criterion   CareAlarmCriterion @relation(fields: [criterionId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  validatedBy HumanAccount       @relation("CriterionValidator", fields: [validatedByHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+
+  alarms   CareAlarm[]
+  evidence CareAlarmEvidence[]
+
+  @@unique([criterionId, version], map: "care_alarm_criterion_version_unique")
+  @@unique([id, contextId], map: "care_alarm_criterion_version_id_context_unique")
+  @@index([tenantId, organizationId, contextId, status], map: "care_alarm_criterion_version_lookup_idx")
+  @@map("care_alarm_criterion_version")
+}
+
+/// Evidencia APPEND-ONLY: qué observación admitió qué versión del criterio
+/// para qué alarma. Una observación usada no vuelve a abrir otro episodio.
+model CareAlarmEvidence {
+  id             String @id @default(uuid(7)) @db.Uuid
+  tenantId       String @db.Uuid
+  organizationId String @db.Uuid
+  contextId      String @db.Uuid
+  patientId      String @db.Uuid
+
+  alarmId            String   @db.Uuid
+  observationId      String   @db.Uuid
+  criterionVersionId String   @db.Uuid
+  createdAt          DateTime @default(now()) @db.Timestamptz(6)
+
+  alarm            CareAlarm                 @relation(fields: [alarmId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  observation      CareObservation           @relation(fields: [observationId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  criterionVersion CareAlarmCriterionVersion @relation(fields: [criterionVersionId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([alarmId, observationId], map: "care_alarm_evidence_unique")
+  @@index([tenantId, organizationId, contextId, observationId], map: "care_alarm_evidence_lookup_idx")
+  @@map("care_alarm_evidence")
 }
