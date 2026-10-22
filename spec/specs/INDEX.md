@@ -137,3 +137,4 @@ por Hospital/Alcaldía y difiere otros empleados y roles. Véase
 | 052 | hospital-sin-datos-demostrativos | Aplicado en Docker: Inicio con agenda real, fixtures excluidos y nombre técnico neutral;877pruebas/E2E12vistas/axe0 correctos | Alta | Codex y Product Owner | 2026-10-15 |
 | 053 | configuracion-municipal-y-fuentes | Aprobado; captura municipal versionada y fuentes oficiales en curso | Alta | Codex y Product Owner | 2026-10-15 |
 | 054 | cierre-registro-heredado-y-acceso-paciente | Código publicado y aplicado localmente; 279 pruebas focales/API/DB correctas, revisión independiente y aceptación final pendientes | Alta | Codex y Product Owner | 2026-10-20 |
+| 055 | bitacoras-y-semaforo-configurable | D01–D07 aprobadas; MP01–MP06 entregados por Claude; auditoría Codex requiere correcciones de semáforo, atribución entre pacientes, reglas, episodios y bandeja antes de aceptación | Alta | Codex y Product Owner | 2026-10-21 |
