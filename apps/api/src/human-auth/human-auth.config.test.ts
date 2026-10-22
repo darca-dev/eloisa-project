@@ -311,8 +311,14 @@ describe('Configuración del acceso humano', () => {
   });
 
   describe('destinos de retorno posteriores al login', () => {
-    it('admite exactamente la raíz y el selector de experiencias', () => {
-      expect([...HUMAN_AUTH_RETURN_TARGETS]).toStrictEqual(['/', '/acceso']);
+    /*
+     * Spec 049 (destino del login institucional) amplía la allowlist EXACTA a
+     * las dos entradas institucionales, para que Hospital no termine en Alcaldía
+     * por SSO. El destino no es autorización: cada panel verifica su
+     * administrador en el servidor.
+     */
+    it('admite exactamente la raíz, el selector y las dos entradas institucionales', () => {
+      expect([...HUMAN_AUTH_RETURN_TARGETS]).toStrictEqual(['/', '/acceso', '/hospital', '/municipality']);
     });
 
     it('usa la raíz como destino por defecto', () => {
@@ -330,6 +336,12 @@ describe('Configuración del acceso humano', () => {
       expect(isAllowedReturnTarget('/\\acceso')).toBe(false);
       expect(isAllowedReturnTarget('https://ajeno.test/acceso')).toBe(false);
       expect(isAllowedReturnTarget(undefined)).toBe(false);
+
+      expect(isAllowedReturnTarget('/hospital')).toBe(true);
+      expect(isAllowedReturnTarget('/municipality')).toBe(true);
+      for (const parecido of ['/hospital/', '/hospital/../admin', '/Hospital', '/municipality?x=1', '//hospital', 'https://ajeno.test/hospital']) {
+        expect(isAllowedReturnTarget(parecido)).toBe(false);
+      }
     });
   });
 });
