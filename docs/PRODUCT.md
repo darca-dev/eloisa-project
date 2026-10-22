@@ -55,8 +55,16 @@ The following are approved product decisions. Their presence in the product is n
 16. The MVP may initially manage controlled payment references or states. Production payment processing may be implemented later after separate approval.
 17. Institutional evidence, indicators, percentages, traceability, audit, and institutional and executive reports are central MERDN functions.
 18. Where a live integration is not initially available, an MVP capability may use approved manual configuration, controlled data, documentary upload, or controlled import, while clearly identifying its source and status.
+19. The Product Owner reaffirmed Municipal Government as the principal customer on 2026-10-21; its complete experience remains central. FURAG, ADRES and care-right information may initially use public online sources; official municipality-specific exchanges require authorization by the responsible entities.
+20. Hospital must authorize its own team and external independent professionals, with an institution-issued operating code, application/selection and contracting or program-adherence workflows, and clearly recorded terms. A declared affiliation is not a contract or clinical authorization.
+21. Memberships, adaptable service offerings, own/government programs and clear appointment scheduling across on-site, virtual and home care are mandatory parts of hospital sustainability. Reports must support traceable, reusable/editable exchange with authorized external programs.
+22. The medical professional experience must retain all its agreed functional capabilities, including a wallet to consult recorded payments, and clearly distinguish hospital-team participation from independent program enrollment and its accepted conditions.
+23. Patient and caregiver experiences must be installable and support work without connectivity followed by synchronization when network access returns, including the intended charging-time workflow. Local saving and hospital receipt must be visibly different states; offline architecture and protection require a specific approved implementation contract.
+24. Patient and caregiver wallets to consult recorded payments and financial incentives are required capabilities. The Product Owner explicitly selected consultation of registered information, rather than receipt, withdrawal or transfer of money through the application. Source, status, attribution, access and reconciliation must be specified; a financial-provider integration is not required by this wallet scope.
 
 These decisions approve product direction and structural presence. They do not silently approve exact formulas, official sources, legal interpretations, commercial rules, prices, providers, data fields, integrations, or technical architecture.
+
+The 2026-10-21 experience-specific requirements and their current gaps are tracked in [02-ALCANCE-OBLIGATORIO-POR-EXPERIENCIA.md](plan-funcional/02-ALCANCE-OBLIGATORIO-POR-EXPERIENCIA.md), with the Product Owner act recorded under `spec/bitacora/decisiones/2026-10-21-alcance-obligatorio-por-experiencia.md`. These requirements must not be dropped merely because their implementation is pending.
 
 ---
 
