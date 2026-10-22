@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 
+import { CareWorkspace } from '@/features/care/CareWorkspace';
 import { branding } from '@/config/branding';
 import {
   CONTEXTOS_HUMANOS,
@@ -402,6 +403,12 @@ export function ProfesionalPortalProtegido(): ReactNode {
           ventana={ventana}
           onCerrarSesion={() => void cerrar()}
         />
+        {/*
+         * SPEC 055 / MP02–MP03. Independiente de la worklist: el acceso a la
+         * bitácora lo decide el servidor por concesión y asignación, nunca la
+         * lista de visitas ni un botón.
+         */}
+        <CareWorkspace perfil="profesional" />
       </div>
     );
   }

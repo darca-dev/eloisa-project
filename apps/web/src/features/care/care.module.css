@@ -1,0 +1,305 @@
+/* Espacio de cuidado (SPEC 055 / MP02–MP03). Contraste AA y foco visible. */
+
+.espacio {
+  display: grid;
+  gap: 1rem;
+  margin-block: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.espacio h1,
+.espacio h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.espacio h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.vivo:empty {
+  display: none;
+}
+
+.vivo p,
+.aviso,
+.alertaError,
+.recibo {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+.vivo p,
+.aviso {
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+}
+
+.alertaError {
+  background: #fef2f2;
+  border: 1px solid #f87171;
+}
+
+.recibo {
+  margin-top: 0.75rem;
+  background: #f0fdf4;
+  border: 1px solid #4ade80;
+}
+
+.apartados {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.formulario {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.campo {
+  display: grid;
+  gap: 0.35rem;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.campo label,
+.campo legend {
+  font-weight: 600;
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  font: inherit;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #64748b;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.opcion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-inline-end: 1rem;
+  font-weight: 400;
+}
+
+.ayuda {
+  margin: 0;
+  color: #334155;
+  font-size: 0.95rem;
+}
+
+.primario,
+.secundario {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primario {
+  border: 1px solid #1d4ed8;
+  background: #1d4ed8;
+  color: #ffffff;
+}
+
+.secundario {
+  border: 1px solid #1e3a8a;
+  background: #ffffff;
+  color: #1e3a8a;
+}
+
+.primario:disabled,
+.secundario:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.primario:focus-visible,
+.secundario:focus-visible,
+.campo input:focus-visible,
+.campo select:focus-visible,
+.campo textarea:focus-visible {
+  outline: 3px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.lista {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  padding: 0.85rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.item p {
+  margin: 0.25rem 0;
+}
+
+.meta {
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.valores {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.5rem 0;
+}
+
+.valores div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.valores dt {
+  font-weight: 600;
+}
+
+.valores dd {
+  margin: 0;
+}
+
+.enmiendas {
+  margin: 0.5rem 0 0;
+  padding-inline-start: 1.25rem;
+  color: #334155;
+  font-size: 0.92rem;
+}
+
+.enmendar summary {
+  cursor: pointer;
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+.revisor {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.contextoUnico {
+  margin: 0;
+}
+
+/* La severidad SIEMPRE lleva texto; el borde de color es solo refuerzo. */
+.severidad {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border: 2px solid #64748b;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.sevROJA {
+  border-color: #b91c1c;
+  background: #fef2f2;
+}
+
+.sevAMARILLA {
+  border-color: #a16207;
+  background: #fefce8;
+}
+
+.sevESTABLE {
+  border-color: #15803d;
+  background: #f0fdf4;
+}
+
+.sevPENDIENTE {
+  border-style: dashed;
+}
+
+@media (max-width: 480px) {
+  .espacio {
+    padding: 0.9rem;
+  }
+}
+
+/* MP04–MP05: semáforo SIEMPRE con texto; el color solo refuerza. */
+.semaforo {
+  padding: 0.75rem 1rem;
+  border: 2px solid #64748b;
+  border-radius: 10px;
+  background: #f8fafc;
+  line-height: 1.5;
+}
+
+.nivelROJO {
+  border-color: #b91c1c;
+  background: #fef2f2;
+}
+
+.nivelAMARILLO {
+  border-color: #a16207;
+  background: #fefce8;
+}
+
+.nivelPENDIENTE {
+  border-style: dashed;
+  border-color: #1e3a8a;
+}
+
+.nivelESTABLE {
+  border-color: #15803d;
+  background: #f0fdf4;
+}
+
+.nivelSIN_CRITERIOS {
+  border-style: dotted;
+}
+
+.detalle {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-inline-start: 3px solid #cbd5e1;
+}
+
+.detalle h4 {
+  margin: 0.25rem 0;
+  font-size: 1rem;
+}
+
+.oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

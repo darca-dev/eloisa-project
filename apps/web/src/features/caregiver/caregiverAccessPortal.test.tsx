@@ -68,21 +68,20 @@ describe('CaregiverAccessPortal — sin relación no hay datos nominales', () =>
     }
   });
 
-  it('solo el estado autorizado monta la demostración de liquidaciones', () => {
+  /*
+   * SPEC 055 / MP02–MP03 sustituye la demostración de liquidaciones por el
+   * espacio de cuidado real. La garantía es la misma: el contenido operativo
+   * se monta SOLO en el estado autorizado, y la demostración ya no se monta.
+   */
+  it('solo el estado autorizado monta el espacio de cuidado; la demo ya no se monta', () => {
     const bloques = CODIGO.split('\n');
 
-    const lineaDemo = bloques.findIndex((linea) =>
-      linea.includes('<CaregiverLiquidationsDemo'),
-    );
-
-    expect(lineaDemo).toBeGreaterThan(-1);
-
     // El componente de contenido no aparece en ninguna otra rama del render.
-    const apariciones = bloques.filter((linea) =>
-      linea.includes('<CaregiverLiquidationsDemo'),
-    );
+    const apariciones = bloques.filter((linea) => linea.includes('<CareWorkspace'));
 
     expect(apariciones).toHaveLength(1);
+    expect(CODIGO).toContain('<CareWorkspace perfil="cuidador"');
+    expect(CODIGO).not.toContain('<CaregiverLiquidationsDemo');
     expect(CODIGO).toContain("fase === 'autorizado'");
   });
 });

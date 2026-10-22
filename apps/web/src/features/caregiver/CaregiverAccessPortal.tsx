@@ -13,7 +13,7 @@ import {
   consultarSesionHumana,
   urlDeLoginHumano,
 } from '@/features/auth/humanSessionClient';
-import { CaregiverLiquidationsDemo } from './CaregiverLiquidationsDemo';
+import { CareWorkspace } from '@/features/care/CareWorkspace';
 import styles from './caregiverAccessPortal.module.css';
 
 /**
@@ -250,7 +250,13 @@ export function CaregiverAccessPortal(): ReactNode {
               {CIERRE_TEXTO[cierre]}
             </p>
 
-            <CaregiverLiquidationsDemo />
+            {/*
+             * SPEC 055 / MP02–MP03: bitácora real, solicitud manual y seguimiento
+             * del contexto autorizado. La demostración de liquidaciones se
+             * conserva como archivo de referencia del alcance financiero futuro,
+             * pero ya no es el contenido operativo de esta portada.
+             */}
+            <CareWorkspace perfil="cuidador" />
           </div>
         ) : null}
       </section>

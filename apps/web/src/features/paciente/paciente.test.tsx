@@ -655,10 +655,17 @@ describe('corrección 3 — la carga se anuncia por región viva polite (T-C3)',
     expect(mensajeDeCarga(activo())).toBe('');
   });
 
-  it('usa UNA sola región viva, no una por sección', () => {
+  /*
+   * Las secciones de LECTURA del portal comparten UNA región viva. SPEC 055 /
+   * MP02–MP03 añade el espacio de cuidado, un área interactiva distinta que
+   * anuncia en su propia región el resultado de sus envíos (registro guardado,
+   * solicitud recibida). Son exactamente dos, nunca una por sección.
+   */
+  it('usa UNA sola región viva para sus secciones, más la del espacio de cuidado', () => {
     const html = portal(activo({ citas: { fase: 'cargando' } }));
 
-    expect(html.match(/aria-live="polite"/gu) ?? []).toHaveLength(1);
+    expect(html.match(/aria-live="polite"/gu) ?? []).toHaveLength(2);
+    expect(html.split('cuidado-paciente-titulo')[0]?.match(/aria-live="polite"/gu) ?? []).toHaveLength(1);
   });
 
   it('el anuncio convive con el estado de sesión en la misma región', () => {

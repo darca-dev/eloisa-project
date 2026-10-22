@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 
+import { CareAdministration } from '@/features/care/CareAdministration';
+
 import { hospitalAdminStyles as styles } from './HospitalAdminPieces';
-import { hospitalAdministracionDemo } from './hospitalAdministrationConfig';
+import { HOSPITAL_ADMIN_PESTANA_CUIDADO, hospitalAdministracionDemo } from './hospitalAdministrationConfig';
 import type {
   HospitalAdminPestanaId,
   HospitalAdministrationConfig,
@@ -70,6 +72,10 @@ function ContenidoAdministracion({
       return canReviewAccessRequests
         ? <HospitalAccessRequests fetchImpl={fetchImpl} onSessionInvalid={onSessionInvalid} />
         : <p>Esta sesión no tiene la capacidad de revisar solicitudes de acceso.</p>;
+    case HOSPITAL_ADMIN_PESTANA_CUIDADO:
+      return canReviewAccessRequests
+        ? <CareAdministration {...(fetchImpl === undefined ? {} : { fetchImpl })} />
+        : <p>Esta sesión no administra espacios de cuidado.</p>;
     case 'Historia clínica':
       return <HospitalClinicalImport config={config.clinica} />;
     case 'Personal y accesos':
@@ -109,7 +115,7 @@ export function HospitalAdministration({
   readonly onSessionInvalid?: () => void;
 }): ReactNode {
   const pestanas = canReviewAccessRequests
-    ? (['Solicitudes de acceso'] as const)
+    ? (['Solicitudes de acceso', HOSPITAL_ADMIN_PESTANA_CUIDADO] as const)
     : config.pestanas.filter((opcion) => opcion !== 'Solicitudes de acceso');
   const pestanaVisible = pestanas.includes(pestana as never) ? pestana : pestanas[0]!;
 

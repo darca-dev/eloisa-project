@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
+import { CareWorkspace } from '@/features/care/CareWorkspace';
 import { Button } from '@/components/ui/Button';
 import { DeviceStatusBar, PhoneFrame, Screen } from '@/components/ui/PhoneShell';
 import {
@@ -685,6 +686,9 @@ export function PortalPacienteVista({
                     onReintentar={onReintentarVisitas}
                     fila={filaDeVisita}
                   />
+
+                  {/* SPEC 055 / MP02–MP03: bitácora propia y solicitud manual. */}
+                  <CareWorkspace perfil="paciente" />
                 </>
               ) : null}
 

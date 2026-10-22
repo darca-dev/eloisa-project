@@ -70,14 +70,24 @@ export const HOSPITAL_ADMIN_PESTANAS = [
   'Auditoría',
 ] as const;
 
-export type HospitalAdminPestanaId = (typeof HOSPITAL_ADMIN_PESTANAS)[number];
+/**
+ * SPEC 055 / MP05b (decisión del PO «Pantalla del gestor»): pestaña REAL de la
+ * sesión administrativa humana, fuera de las ocho pestañas demostrativas. Solo
+ * se ofrece junto a «Solicitudes de acceso»; el servidor decide si la cuenta es
+ * gestora de alguna organización.
+ */
+export const HOSPITAL_ADMIN_PESTANA_CUIDADO = 'Espacios de cuidado' as const;
+
+export type HospitalAdminPestanaId =
+  | (typeof HOSPITAL_ADMIN_PESTANAS)[number]
+  | typeof HOSPITAL_ADMIN_PESTANA_CUIDADO;
 
 /** Pestaña de partida cuando todavía no existe selección (FR-01.4). */
 export const HOSPITAL_ADMIN_PESTANA_INICIAL: HospitalAdminPestanaId = 'Membresías';
 
 /** `true` solo para las ocho pestañas autorizadas. */
 export function esPestanaAdministracion(id: string): id is HospitalAdminPestanaId {
-  return (HOSPITAL_ADMIN_PESTANAS as readonly string[]).includes(id);
+  return (HOSPITAL_ADMIN_PESTANAS as readonly string[]).includes(id) || id === HOSPITAL_ADMIN_PESTANA_CUIDADO;
 }
 
 /* ========================================================================== */

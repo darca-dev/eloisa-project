@@ -1,7 +1,6 @@
 import styles from './hospitalOperational.module.css';
 
 export const HOSPITAL_PENDING_MODULES = {
-  alarmas: { title: 'Semáforo de alarmas', description: 'Consulte las alertas registradas y su seguimiento cuando esté disponible este módulo.' },
   virtuales: { title: 'Consultas virtuales', description: 'La consulta y coordinación de atenciones virtuales todavía no están habilitadas.' },
   calificaciones: { title: 'Calidad y experiencia', description: 'La consulta de evaluaciones y satisfacción todavía no está habilitada.' },
   novedades: { title: 'Novedades', description: 'La consulta de novedades institucionales todavía no está habilitada.' },

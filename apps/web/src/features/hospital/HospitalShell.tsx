@@ -10,6 +10,8 @@ import { HOSPITAL_ADMIN_PESTANA_INICIAL } from './hospitalAdministrationConfig';
 import type { HospitalAdminPestanaId } from './hospitalAdministrationConfig';
 import { HospitalAgenda } from './HospitalAgenda';
 import { HospitalAgendaDemo } from './HospitalAgendaDemo';
+import { CareWorkspace } from '@/features/care/CareWorkspace';
+
 import { HospitalAlerts } from './HospitalAlerts';
 import { HospitalDashboard } from './HospitalDashboard';
 import { HospitalOperationalHome } from './HospitalOperationalHome';
@@ -196,6 +198,10 @@ function HospitalContenido({
   if (!modoDemoLocal) {
     if (vista === 'inicio') return <HospitalOperationalHome onNavegar={onNavegar} fetchImpl={fetchImpl} onSessionInvalid={onSessionInvalid} />;
     if (vista === 'administracion' && !canReviewAccessRequests) return <HospitalPendingModule modulo="administracion" />;
+    // SPEC 055 / MP03: bandeja real para la CUENTA HUMANA autorizada. La sesión
+    // institucional compartida no concede nada clínico: sin concesión
+    // REVIEW_ALARMS el servidor no devuelve ningún espacio.
+    if (vista === 'alarmas') return <CareWorkspace perfil="hospital" titulo="Semáforo de alarmas" encabezado="h1" />;
     if (vista !== 'administracion' && vista in HOSPITAL_PENDING_MODULES) return <HospitalPendingModule modulo={vista as keyof typeof HOSPITAL_PENDING_MODULES} />;
   }
   switch (vista) {
