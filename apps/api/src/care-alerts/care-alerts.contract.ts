@@ -43,15 +43,33 @@ export interface CareAlarmView {
   readonly closedAt: string | null;
 }
 
-/** Observación que admitió el criterio (MP04). Solo existe en alarmas automáticas. */
+/**
+ * Observación que admitió el criterio (MP04). Solo existe en alarmas
+ * automáticas. MP07A / A07 distingue el valor ORIGINAL, el valor EVALUADO fijado
+ * al evaluar y las correcciones POSTERIORES a esa evaluación. La evidencia
+ * anterior a MP07A no fijó lo evaluado: se declara indeterminada, sin inventar.
+ */
 export interface CareAlarmEvidenceView {
   readonly label: string;
   readonly unit: string | null;
   readonly valueType: 'BOOLEAN' | 'NUMBER' | 'CHOICE';
+  /** Versión de la definición del dato registrado. */
+  readonly definitionVersion: number;
+  /** Valor ORIGINAL registrado. No es un diagnóstico. */
   readonly value: boolean | string | null;
   readonly occurredAt: string;
-  /** La observación se corrigió después: revisar (D04.5). */
-  readonly correctedAfterwards: boolean;
+  /** `CAPTURED`: se fijó lo evaluado. `LEGACY_UNDETERMINED`: evidencia anterior a MP07A. */
+  readonly snapshot: 'CAPTURED' | 'LEGACY_UNDETERMINED';
+  /** Valor efectivamente evaluado; `null` cuando el snapshot es legado. */
+  readonly evaluatedValue: boolean | string | null;
+  /** Secuencia de la corrección vigente al evaluar; `null` si rigió el original o es legado. */
+  readonly evaluatedAmendmentSequence: number | null;
+  /**
+   * `true`: hay correcciones de la observación POSTERIORES a la evaluación
+   * (D04.5: revisar, no cambian la alarma). `false`: ninguna. `null`: evidencia
+   * legada con correcciones cuyo momento respecto de la evaluación no se conoce.
+   */
+  readonly correctedAfterwards: boolean | null;
 }
 
 export interface CareAlarmDetailView extends CareAlarmView {

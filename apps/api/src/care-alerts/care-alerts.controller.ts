@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
-import { careRequestContext, decodeCursor, pageLimit, toCareHttpError } from '../care-context/care-request';
+import { alarmStateFilter, careRequestContext, decodeCursor, pageLimit, toCareHttpError } from '../care-context/care-request';
 import { HumanAuthRateLimitGuard } from '../human-auth/human-auth-rate-limit.guard';
 import { HumanSessionGuard, type RequestWithHumanSession } from '../human-auth/human-session.guard';
 import { SameOriginGuard } from '../human-auth/same-origin.guard';
@@ -28,13 +28,19 @@ export class CareAlertsController {
 
   @Get('contexts/:contextId/alarms')
   @ApiOperation({ operationId: 'listCareAlarms', summary: 'Alarmas autorizadas del contexto' })
+  @ApiQuery({ name: 'cursor', required: false, description: 'Cursor opaco devuelto por la página anterior' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Alarmas por página (1 a 50)' })
+  @ApiQuery({ name: 'state', required: false, enum: ['all', 'open'], description: '`open` excluye las cerradas en cada página' })
   public async list(
     @Req() request: RequestWithHumanSession,
     @Param('contextId') contextId: string,
     @Query('cursor') cursor?: string,
     @Query('limit') limit?: string,
+    @Query('state') state?: string,
   ): Promise<CareAlarmPage> {
-    return this.handle(() => this.alerts.list(careRequestContext(request), contextId, decodeCursor(cursor), pageLimit(limit)));
+    return this.handle(() =>
+      this.alerts.list(careRequestContext(request), contextId, decodeCursor(cursor), pageLimit(limit), alarmStateFilter(state)),
+    );
   }
 
   @Post('contexts/:contextId/alarms')

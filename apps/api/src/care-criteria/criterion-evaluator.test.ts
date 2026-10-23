@@ -97,17 +97,68 @@ describe('evaluate', () => {
   });
 });
 
-describe('semaphoreLevel', () => {
+describe('evaluate — frontera del episodio (MP07A / A04)', () => {
+  const cierre = minutos(30);
+
+  it('tras un cierre solo cuenta lo ocurrido ESTRICTAMENTE después; el instante del cierre no', () => {
+    const antes = candidato({ occurrenceKey: 'antes', occurredAt: minutos(40) });
+    const enCierre = candidato({ occurrenceKey: 'en-cierre', occurredAt: cierre });
+    const despues = candidato({ occurrenceKey: 'despues', occurredAt: new Date(cierre.getTime() + 1) });
+
+    expect(isAdmissible(NUMERICO, antes, RECEPCION, cierre)).toBe(false);
+    expect(isAdmissible(NUMERICO, enCierre, RECEPCION, cierre)).toBe(false);
+    expect(isAdmissible(NUMERICO, despues, RECEPCION, cierre)).toBe(true);
+
+    const resultado = evaluate(NUMERICO, [antes, enCierre, despues], RECEPCION, cierre);
+    expect(resultado.matching.map((item) => item.occurrenceKey)).toEqual(['despues']);
+    expect(resultado.met).toBe(false);
+  });
+
+  it('un evento tardío anterior al cierre, aunque esté en ventana y tras la activación, no completa el episodio nuevo', () => {
+    const tardio = candidato({ occurrenceKey: 'tardio', occurredAt: minutos(35) });
+    const nuevo = candidato({ occurrenceKey: 'nuevo', occurredAt: minutos(5) });
+
+    expect(evaluate(NUMERICO, [tardio, nuevo], RECEPCION, cierre).met).toBe(false);
+    expect(evaluate(NUMERICO, [tardio, nuevo], RECEPCION, null).met).toBe(true);
+  });
+
+  it('el episodio abierto sigue recibiendo cada coincidencia admisible sin reiniciar N', () => {
+    const resultado = evaluate({ ...NUMERICO, requiredCount: 5 }, [candidato({ occurrenceKey: 'uno' })], RECEPCION, cierre);
+    expect(resultado.met).toBe(false);
+    expect(resultado.matching).toHaveLength(1);
+  });
+
+  it('sin cierre previo la frontera no restringe nada', () => {
+    expect(isAdmissible(NUMERICO, candidato({ occurrenceKey: 'a', occurredAt: minutos(60) }), RECEPCION, null)).toBe(true);
+  });
+});
+
+describe('semaphoreLevel (MP07A / A01)', () => {
   const vacio = { ROJA: 0, AMARILLA: 0, ESTABLE: 0, SIN: 0 };
+  const nivel = (openBySeverity: typeof vacio, activeCriteria = 0, criteriaRequiringRevalidation = 0) =>
+    semaphoreLevel({ openBySeverity, activeCriteria, criteriaRequiringRevalidation });
 
   it('sin criterios ni solicitudes no es verde ni estable', () => {
-    expect(semaphoreLevel({ openBySeverity: vacio, activeCriteria: 0 })).toBe('SIN_CRITERIOS');
+    expect(nivel(vacio)).toBe('SIN_CRITERIOS');
   });
 
   it('prioriza roja, amarilla y pendiente de clasificación', () => {
-    expect(semaphoreLevel({ openBySeverity: { ...vacio, ROJA: 1, AMARILLA: 3 }, activeCriteria: 1 })).toBe('ROJO');
-    expect(semaphoreLevel({ openBySeverity: { ...vacio, AMARILLA: 1, SIN: 2 }, activeCriteria: 0 })).toBe('AMARILLO');
-    expect(semaphoreLevel({ openBySeverity: { ...vacio, SIN: 1 }, activeCriteria: 0 })).toBe('PENDIENTE');
-    expect(semaphoreLevel({ openBySeverity: vacio, activeCriteria: 2 })).toBe('ESTABLE');
+    expect(nivel({ ...vacio, ROJA: 1, AMARILLA: 3, ESTABLE: 2 }, 1)).toBe('ROJO');
+    expect(nivel({ ...vacio, AMARILLA: 1, SIN: 2, ESTABLE: 1 })).toBe('AMARILLO');
+    expect(nivel({ ...vacio, SIN: 1, ESTABLE: 4 }, 3)).toBe('PENDIENTE');
+  });
+
+  it('criterio vigente sin alarmas, sin datos o con datos insuficientes NO es estable', () => {
+    expect(nivel(vacio, 1)).toBe('SIN_EVALUACION');
+    expect(nivel(vacio, 7)).toBe('SIN_EVALUACION');
+  });
+
+  it('criterios que esperan revalidación tampoco clasifican; siguen distinguiéndose de «sin criterios»', () => {
+    expect(nivel(vacio, 0, 1)).toBe('SIN_EVALUACION');
+  });
+
+  it('ESTABLE solo con una alarma abierta clasificada ESTABLE, haya o no criterios vigentes', () => {
+    expect(nivel({ ...vacio, ESTABLE: 1 })).toBe('ESTABLE');
+    expect(nivel({ ...vacio, ESTABLE: 1 }, 2, 1)).toBe('ESTABLE');
   });
 });

@@ -18,7 +18,7 @@ import {
   sanitizeCorrelationId,
 } from './care-context.contract';
 import {
-  type AuthorizedDirectoryEntry,
+  type AuthorizedDirectoryPage,
   CareContextDirectoryService,
   type CareDirectoryPage,
 } from './care-context-directory.service';
@@ -103,6 +103,39 @@ export class CareContextService {
   }
 
   /**
+   * Asignación de una alarma (MP07A / A09). El actor necesita REVIEW_ALARMS en
+   * el contexto de la ruta y el destinatario su elegibilidad COMPLETA, todo en
+   * UNA transacción y con las fuentes de ambos bloqueadas en el orden
+   * contractual ANTES del directorio y del advisory del contexto (ver
+   * `CareContextPolicy`). El actor se deniega primero y de forma uniforme; la
+   * elegibilidad del destinatario llega al trabajo como booleano, sin
+   * proyectar su estado. El destinatario no necesita sesión abierta.
+   */
+  public async withAuthorizedReviewAssignment<T>(
+    principal: HumanPrincipal,
+    contextId: string,
+    recipientAccountId: string,
+    correlationId: string,
+    now: Date,
+    work: (tx: PrismaTransaction, authorized: AuthorizedCareContext, recipientEligible: boolean) => Promise<T>,
+  ): Promise<T> {
+    if (this.directory === undefined) {
+      throw new CareContextUnavailableError('directorio de contextos no disponible');
+    }
+
+    return this.run(
+      principal,
+      contextId,
+      { kind: 'own' },
+      ['REVIEW_ALARMS'],
+      correlationId,
+      now,
+      (tx, authorized, recipientEligible) => work(tx, authorized, recipientEligible === true),
+      { recipientAccountId },
+    );
+  }
+
+  /**
    * Página del directorio de contextos propios, auditada como una lectura sin
    * organización. Ningún contexto se proyecta sin que MP01 conceda al menos una
    * acción sobre él.
@@ -124,7 +157,13 @@ export class CareContextService {
       throw new CareContextUnavailableError('directorio de contextos no disponible');
     }
 
+    // El controlador ya validó el cursor (MP07B / A06): uno mal formado aquí es
+    // un defecto, nunca un regreso silencioso a la primera página.
     const safeCursor = cursor === null ? null : normalizeUuid(cursor);
+
+    if (cursor !== null && safeCursor === null) {
+      throw new CareContextUnavailableError('cursor no utilizable');
+    }
 
     try {
       return await this.prisma.withTenant(principal.tenantId, async (tx) => {
@@ -149,15 +188,18 @@ export class CareContextService {
   }
 
   /**
-   * Ejecuta `work` con TODOS los contextos propios en los que MP01 concede
-   * REVIEW_ALARMS, decididos y bloqueados en la misma transacción. Se audita
-   * como una lectura del directorio, sin organización.
+   * Ejecuta `work` con UNA página de contextos propios en los que MP01 concede
+   * REVIEW_ALARMS, decididos y bloqueados en la misma transacción (MP07B /
+   * A06). Cada página vuelve a decidir; el cursor solo dice desde dónde seguir.
+   * Se audita como una lectura del directorio, sin organización.
    */
   public async withReviewableContexts<T>(
     principal: HumanPrincipal,
+    cursor: string | null,
+    limit: number,
     correlationId: string,
     now: Date,
-    work: (tx: PrismaTransaction, contexts: readonly AuthorizedDirectoryEntry[]) => Promise<T>,
+    work: (tx: PrismaTransaction, page: AuthorizedDirectoryPage) => Promise<T>,
   ): Promise<T> {
     if (!isCanonicalUuid(principal.tenantId) || !isCanonicalUuid(principal.humanAccountId)) {
       throw new CareContextUnavailableError('principal no utilizable');
@@ -169,16 +211,23 @@ export class CareContextService {
       throw new CareContextUnavailableError('directorio de contextos no disponible');
     }
 
+    // El controlador ya validó el cursor; uno mal formado aquí es un defecto.
+    const safeCursor = cursor === null ? null : normalizeUuid(cursor);
+
+    if (cursor !== null && safeCursor === null) {
+      throw new CareContextUnavailableError('cursor no utilizable');
+    }
+
     try {
       return await this.prisma.withTenant(principal.tenantId, async (tx) => {
-        const contexts = await directory.listAuthorizedWithin(tx, principal, 'REVIEW_ALARMS', now);
+        const page = await directory.listAuthorizedPageWithin(tx, principal, 'REVIEW_ALARMS', safeCursor, limit, now);
         await this.audit.recordDirectoryReadWithin(
           tx,
           { tenantId: principal.tenantId, humanAccountId: principal.humanAccountId, correlationId: sanitizeCorrelationId(correlationId) },
           now,
         );
         try {
-          return await work(tx, contexts);
+          return await work(tx, page);
         } catch (error) {
           throw new WorkFailure(error);
         }
@@ -349,7 +398,8 @@ export class CareContextService {
     permissions: readonly CareContextPermission[],
     correlationId: string,
     now: Date,
-    work: (tx: PrismaTransaction, authorized: AuthorizedCareContext) => Promise<T>,
+    work: (tx: PrismaTransaction, authorized: AuthorizedCareContext, recipientEligible: boolean | null) => Promise<T>,
+    assignment: { readonly recipientAccountId: string } | null = null,
   ): Promise<T> {
     if (
       !isCanonicalUuid(principal.tenantId) ||
@@ -371,6 +421,8 @@ export class CareContextService {
     const contextId = normalizeUuid(requestedContextId);
     const givenOrganization =
       organizationSource.kind === 'given' ? normalizeUuid(organizationSource.organizationId) : undefined;
+    // Un destinatario mal formado no se bloquea ni se consulta: no es elegible.
+    const recipient = assignment === null ? null : normalizeUuid(assignment.recipientAccountId);
 
     let outcome: Outcome<T>;
 
@@ -390,6 +442,15 @@ export class CareContextService {
           return unresolved();
         }
 
+        if (assignment !== null) {
+          // A09: cuentas {actor, destinatario} bloqueadas antes del directorio.
+          await this.policy.prelockAccountsWithin(
+            tx,
+            principal.tenantId,
+            recipient === null ? [principal.humanAccountId] : [principal.humanAccountId, recipient],
+          );
+        }
+
         const organizationId =
           givenOrganization ?? (await this.directory?.resolveOrganizationWithin(tx, principal, contextId)) ?? null;
 
@@ -399,10 +460,21 @@ export class CareContextService {
 
         await this.enterOrganization(tx, principal.tenantId, organizationId);
 
+        // A09: resto de fuentes de ambos, por clase y por id, antes de decidir.
+        const pinned =
+          assignment === null
+            ? null
+            : await this.policy.prelockReviewSourcesWithin(
+                tx,
+                principal,
+                { organizationId, contextId },
+                recipient ?? principal.humanAccountId,
+              );
+
         let decision: CareContextDecision | undefined;
 
         for (const permission of permissions) {
-          decision = await this.policy.decideWithin(tx, principal, { organizationId, contextId }, permission, now);
+          decision = await this.policy.decideWithin(tx, principal, { organizationId, contextId }, permission, now, pinned);
 
           if (decision.kind === 'granted' || decision.organizationId === null) {
             break;
@@ -442,8 +514,16 @@ export class CareContextService {
           now,
         );
 
+        // A09: elegibilidad del destinatario con las fuentes ya bloqueadas. Un
+        // fallo aquí es indisponibilidad, nunca elegibilidad.
+        const recipientEligible =
+          pinned === null
+            ? null
+            : recipient !== null &&
+              (await this.policy.reviewRecipientHoldsWithin(tx, decision.authorized, recipient, pinned, now));
+
         try {
-          return { granted: true, result: await work(tx, decision.authorized) };
+          return { granted: true, result: await work(tx, decision.authorized, recipientEligible) };
         } catch (error) {
           throw new WorkFailure(error);
         }

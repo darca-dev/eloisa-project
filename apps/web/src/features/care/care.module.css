@@ -284,6 +284,36 @@
   border-style: dotted;
 }
 
+/* MP07A: sin evaluación NO es estable; nunca verde. */
+.nivelSIN_EVALUACION {
+  border-style: dotted;
+  border-color: #1e3a8a;
+}
+
+/* MP07B / A06: cargado frente a total, siempre en texto. */
+.paginacion {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* MP07B / A05: entrada de revisión clínica de Hospital. */
+.pagina {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.pagina a {
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+.pagina a:focus-visible {
+  outline: 3px solid #f59e0b;
+  outline-offset: 2px;
+}
+
 .detalle {
   margin-top: 0.5rem;
   padding: 0.5rem 0.75rem;

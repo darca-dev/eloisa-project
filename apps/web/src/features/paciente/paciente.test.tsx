@@ -1,6 +1,8 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
+import { TEXTO_ESTADO_GENERAL } from '@/features/care/careViews';
+
 import { BITACORA_INICIAL, TOTAL_ETAPAS, bitacoraReducer } from './bitacoraFlow';
 import type { BitacoraAction, BitacoraState } from './bitacoraFlow';
 import { BitacoraPaciente } from './BitacoraPaciente';
@@ -656,16 +658,35 @@ describe('corrección 3 — la carga se anuncia por región viva polite (T-C3)',
   });
 
   /*
-   * Las secciones de LECTURA del portal comparten UNA región viva. SPEC 055 /
-   * MP02–MP03 añade el espacio de cuidado, un área interactiva distinta que
-   * anuncia en su propia región el resultado de sus envíos (registro guardado,
-   * solicitud recibida). Son exactamente dos, nunca una por sección.
+   * Las secciones de LECTURA del portal comparten UNA región viva explícita.
+   * SPEC 055 añade el espacio de cuidado, un área interactiva distinta. Desde
+   * MP07B / A02 su región explícita de envíos pertenece al subárbol de UN
+   * contexto y solo se monta tras seleccionar paciente; en el render inicial el
+   * espacio anuncia su carga con `role="status"` (polite implícito). No se
+   * exige montar contexto ni borradores antes de la selección, y no hay región
+   * envolvente que anuncie listas clínicas completas.
    */
-  it('usa UNA sola región viva para sus secciones, más la del espacio de cuidado', () => {
+  it('usa UNA sola región viva para sus secciones y el espacio de cuidado anuncia su carga', () => {
     const html = portal(activo({ citas: { fase: 'cargando' } }));
+    const apertura = /<section[^>]*aria-labelledby="cuidado-paciente-titulo"[^>]*>/u.exec(html);
 
-    expect(html.match(/aria-live="polite"/gu) ?? []).toHaveLength(2);
-    expect(html.split('cuidado-paciente-titulo')[0]?.match(/aria-live="polite"/gu) ?? []).toHaveLength(1);
+    expect(apertura).not.toBeNull();
+
+    const inicio = apertura?.index ?? -1;
+    const antes = html.slice(0, inicio);
+    // En el estado inicial el espacio no contiene secciones anidadas.
+    const cuidado = html.slice(inicio, html.indexOf('</section>', inicio));
+
+    // Una única región explícita, la del portal, antes del espacio de cuidado.
+    expect(html.match(/aria-live="polite"/gu) ?? []).toHaveLength(1);
+    expect(antes.match(/aria-live="polite"/gu) ?? []).toHaveLength(1);
+    expect(antes).toMatch(/<p id="paciente-portal-sesion"[^>]*role="status"[^>]*aria-live="polite"/u);
+
+    // El espacio de cuidado anuncia su carga como estado accesible, dentro de él.
+    expect(apertura?.[0]).not.toContain('aria-live');
+    expect(cuidado).toContain('role="status"');
+    expect(cuidado).toContain(TEXTO_ESTADO_GENERAL.cargando);
+    expect(cuidado).not.toContain('aria-live');
   });
 
   it('el anuncio convive con el estado de sesión en la misma región', () => {

@@ -1,13 +1,13 @@
-import { Body, Controller, Get, HttpCode, Inject, Param, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
-import { careRequestContext, toCareHttpError } from '../care-context/care-request';
+import { careRequestContext, decodeContextCursor, pageLimit, toCareHttpError } from '../care-context/care-request';
 import { CARE_BASE_PATH } from '../care-records/care-records.contract';
 import { HumanAuthRateLimitGuard } from '../human-auth/human-auth-rate-limit.guard';
 import { HumanSessionGuard, type RequestWithHumanSession } from '../human-auth/human-session.guard';
 import { SameOriginGuard } from '../human-auth/same-origin.guard';
 
-import { type CriterionView, type ReviewQueueItem, type SemaphoreView } from './care-criteria.contract';
+import { type CriterionView, type ReviewQueuePage, type SemaphoreView } from './care-criteria.contract';
 import { parseCriterionInput, parseRetireInput } from './care-criteria.request';
 import { CareCriteriaService } from './care-criteria.service';
 
@@ -23,9 +23,15 @@ export class CareCriteriaController {
   constructor(@Inject(CareCriteriaService) private readonly criteria: CareCriteriaService) {}
 
   @Get('review-queue')
-  @ApiOperation({ operationId: 'getCareReviewQueue', summary: 'Alarmas abiertas de los contextos que la cuenta revisa' })
-  public async reviewQueue(@Req() request: RequestWithHumanSession): Promise<readonly ReviewQueueItem[]> {
-    return this.handle(() => this.criteria.reviewQueue(careRequestContext(request)));
+  @ApiOperation({ operationId: 'getCareReviewQueue', summary: 'Página de contextos que la cuenta revisa, con sus alarmas abiertas' })
+  @ApiQuery({ name: 'cursor', required: false, description: 'Cursor opaco devuelto por la página anterior' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Contextos candidatos por página (1 a 50)' })
+  public async reviewQueue(
+    @Req() request: RequestWithHumanSession,
+    @Query('cursor') cursor?: string,
+    @Query('limit') limit?: string,
+  ): Promise<ReviewQueuePage> {
+    return this.handle(() => this.criteria.reviewQueue(careRequestContext(request), decodeContextCursor(cursor), pageLimit(limit)));
   }
 
   @Get('contexts/:contextId/criteria')

@@ -134,24 +134,64 @@ export function requiredInteger(body: Record<string, unknown>, field: string, mi
   return value;
 }
 
-/** Cursor opaco de paginación; el contenido lo interpreta solo el servidor. */
-export function decodeCursor(value: unknown): { readonly at: Date; readonly id: string } | null {
+/**
+ * Cursor opaco de paginación de registros y alarmas: la ÚLTIMA fila entregada.
+ *
+ * MP07B / A06: no transporta su instante. Las columnas son `timestamptz(6)` y
+ * JavaScript solo conserva milisegundos: comparar con un instante truncado
+ * saltaría en silencio las filas del mismo milisegundo. El servidor resuelve el
+ * límite dentro de PostgreSQL, con la precisión completa de la fila.
+ */
+export function decodeCursor(value: unknown): { readonly id: string } | null {
   if (value === undefined || value === null || value === '') {
     return null;
   }
   if (typeof value !== 'string' || value.length > 200) {
     throw new CareValidationError('cursor', 'La página solicitada no es válida.');
   }
-  const [at, id] = Buffer.from(value, 'base64url').toString('utf8').split('|');
-  const instant = at === undefined ? new Date(Number.NaN) : new Date(at);
-  if (Number.isNaN(instant.getTime()) || !isCanonicalUuid(id)) {
+  const [kind, id] = Buffer.from(value, 'base64url').toString('utf8').split('|');
+  if (kind !== 'row' || !isCanonicalUuid(id)) {
     throw new CareValidationError('cursor', 'La página solicitada no es válida.');
   }
-  return { at: instant, id };
+  return { id };
 }
 
-export function encodeCursor(at: Date, id: string): string {
-  return Buffer.from(`${at.toISOString()}|${id}`, 'utf8').toString('base64url');
+export function encodeCursor(id: string): string {
+  return Buffer.from(`row|${id}`, 'utf8').toString('base64url');
+}
+
+/** El cursor no corresponde a una fila visible de ESTE contexto. */
+export function invalidCursorError(): CareValidationError {
+  return new CareValidationError('cursor', 'La página solicitada no es válida.');
+}
+
+/**
+ * Cursor de páginas de CONTEXTOS (directorio y cola, MP07B / A06): el último
+ * contexto ya decidido. Uno mal formado es 400, nunca un regreso silencioso a
+ * la primera página.
+ */
+export function decodeContextCursor(value: unknown): string | null {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  const lowered = typeof value === 'string' ? value.toLowerCase() : null;
+  if (!isCanonicalUuid(lowered)) {
+    throw new CareValidationError('cursor', 'La página solicitada no es válida.');
+  }
+  return lowered;
+}
+
+/** Filtro de estado de la bandeja (MP07B / A06). `open` excluye las cerradas. */
+export type AlarmStateFilter = 'all' | 'open';
+
+export function alarmStateFilter(value: unknown): AlarmStateFilter {
+  if (value === undefined || value === null || value === '' || value === 'all') {
+    return 'all';
+  }
+  if (value === 'open') {
+    return 'open';
+  }
+  throw new CareValidationError('state', 'El filtro de estado no es válido.');
 }
 
 export function pageLimit(value: unknown): number {

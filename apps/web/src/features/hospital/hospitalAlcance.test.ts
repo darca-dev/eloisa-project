@@ -273,6 +273,41 @@ const FECHA_DETERMINISTA = /new\s+Date\s*\(\s*[^)\s]/u;
 /** Orígenes de importación autorizados: React, alias interno y rutas locales. */
 const IMPORTS_AUTORIZADOS = /^(?:react|@\/[\w./-]+|\.{1,2}\/[\w./-]+)$/u;
 
+/**
+ * Imports externos autorizados POR ARCHIVO, fuera de `IMPORTS_AUTORIZADOS`.
+ *
+ * SPEC 055 / MP07B (A05, B10): `HospitalShell.tsx` enlaza la página interna
+ * `/hospital/cuidado` con `next/link`, de Next, dependencia ya existente. La
+ * excepción es EXACTA: solo ese módulo y solo en ese archivo. No autoriza
+ * `next/*` ni ningún otro origen, y no relaja las guardas de red, persistencia,
+ * telemetría, entorno, fachadas ni reloj. Añadir una entrada exige una Task.
+ */
+const IMPORTS_EXTERNOS_POR_ARCHIVO: Readonly<Record<string, readonly string[]>> = {
+  'HospitalShell.tsx': ['next/link'],
+};
+
+/** Orígenes `from '…'` de un archivo, con el mismo parser de siempre. */
+function origenesImportados(codigo: string): readonly string[] {
+  return [...codigo.matchAll(/from\s+'(?<origen>[^']+)'/gu)].map(
+    (coincidencia) => coincidencia.groups?.origen ?? '',
+  );
+}
+
+/** Imports no autorizados, como `archivo: origen`. */
+function importsNoAutorizados(
+  fuentes: readonly { readonly archivo: string; readonly codigo: string }[],
+): readonly string[] {
+  return fuentes.flatMap(({ archivo, codigo }) =>
+    origenesImportados(codigo)
+      .filter(
+        (origen) =>
+          !IMPORTS_AUTORIZADOS.test(origen) &&
+          !(IMPORTS_EXTERNOS_POR_ARCHIVO[archivo] ?? []).includes(origen),
+      )
+      .map((origen) => `${archivo}: ${origen}`),
+  );
+}
+
 /** Archivos del módulo que satisfacen un patrón, en orden estable. */
 function infractores(patron: RegExp): readonly string[] {
   return CODIGO_SIN_COMENTARIOS.filter(({ codigo }) => patron.test(codigo))
@@ -298,14 +333,44 @@ describe('T-06 — Alcance del módulo Hospital', () => {
   });
 
   it('no importa dependencias nuevas', () => {
-    const externos = FUENTES.flatMap(({ archivo, codigo }) =>
-      [...codigo.matchAll(/from\s+'(?<origen>[^']+)'/gu)]
-        .map((coincidencia) => coincidencia.groups?.origen ?? '')
-        .filter((origen) => !IMPORTS_AUTORIZADOS.test(origen))
-        .map((origen) => `${archivo}: ${origen}`),
-    );
+    expect(importsNoAutorizados(FUENTES)).toEqual([]);
+  });
 
-    expect(externos).toEqual([]);
+  it('la excepción por archivo se usa realmente: HospitalShell importa `next/link`', () => {
+    const shell = FUENTES.find(({ archivo }) => archivo === 'HospitalShell.tsx');
+
+    expect(shell?.archivo).toBe('HospitalShell.tsx');
+    expect(origenesImportados(shell?.codigo ?? '')).toContain('next/link');
+    expect(Object.keys(IMPORTS_EXTERNOS_POR_ARCHIVO)).toEqual(['HospitalShell.tsx']);
+    expect(IMPORTS_EXTERNOS_POR_ARCHIVO['HospitalShell.tsx']).toEqual(['next/link']);
+  });
+
+  it('la excepción es exacta: rechaza `next/link` en otro archivo y otro origen externo en el shell', () => {
+    // Caso autorizado, con el mismo parser.
+    expect(
+      importsNoAutorizados([
+        { archivo: 'HospitalShell.tsx', codigo: "import Link from 'next/link';" },
+      ]),
+    ).toEqual([]);
+    // El mismo módulo en otro archivo.
+    expect(
+      importsNoAutorizados([
+        { archivo: 'HospitalPatients.tsx', codigo: "import Link from 'next/link';" },
+      ]),
+    ).toEqual(['HospitalPatients.tsx: next/link']);
+    // Otro origen externo en el archivo exceptuado, también de Next.
+    expect(
+      importsNoAutorizados([
+        {
+          archivo: 'HospitalShell.tsx',
+          codigo: [
+            "import Link from 'next/link';",
+            "import { useRouter } from 'next/navigation';",
+            "import axios from 'axios';",
+          ].join('\n'),
+        },
+      ]),
+    ).toEqual(['HospitalShell.tsx: next/navigation', 'HospitalShell.tsx: axios']);
   });
 });
 

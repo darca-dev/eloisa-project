@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 
 import { CareContextAuditService } from '../src/care-context/care-context-audit.service';
+import { CareContextDirectoryService } from '../src/care-context/care-context-directory.service';
 import {
   CareContextAccessDeniedError,
   type CareContextPermission,
@@ -10,6 +11,7 @@ import {
 } from '../src/care-context/care-context.contract';
 import { CareContextPolicy } from '../src/care-context/care-context.policy';
 import { CareContextService } from '../src/care-context/care-context.service';
+import { lockContextForWrite } from '../src/care-context/care-mutation';
 import { type PrismaTransaction } from '../src/database/prisma-transaction';
 import { PrismaService } from '../src/database/prisma.service';
 import { type PrismaClient } from '../src/generated/prisma/client';
@@ -132,6 +134,20 @@ describe.skipIf(!puedeEjecutarse)('Custodia institucional de cuidado en PostgreS
     const policy = new CareContextPolicy(new IdentityAccessService(prismaService), { idleSeconds: 3600 });
 
     return new CareContextService(prismaService, environment, policy, audit);
+  }
+
+  /** Igual, con el directorio de contextos propios que exige una asignación. */
+  function construirServicioConDirectorio(): CareContextService {
+    const identity = new IdentityAccessService(prismaService);
+    const policy = new CareContextPolicy(identity, { idleSeconds: 3600 });
+
+    return new CareContextService(
+      prismaService,
+      entornoEnforce(),
+      policy,
+      new CareContextAuditService(),
+      new CareContextDirectoryService(identity, policy),
+    );
   }
 
   /** Transacción bajo el rol runtime con tenant y, opcionalmente, organización. */
@@ -1103,5 +1119,520 @@ describe.skipIf(!puedeEjecutarse)('Custodia institucional de cuidado en PostgreS
       expect(ejecutado).toBe(false);
       expect(await owner.auditEvent.count({ where: { correlationId } })).toBe(0);
     });
+  });
+
+  /* ====================================================================== */
+  /* P07 — destinatario de una asignación de alarma (MP07A / A09)            */
+  /* ====================================================================== */
+
+  describe('P07 — elegibilidad del destinatario de una asignación (A09)', () => {
+    let asignador: CareContextService;
+
+    beforeAll(() => {
+      asignador = construirServicioConDirectorio();
+    });
+
+    interface Destinatario {
+      readonly cuenta: CuentaFicticia;
+      readonly grantId: string;
+      readonly competenceId: string;
+    }
+
+    interface ProfesionalDestinatario extends Destinatario {
+      readonly assignmentId: string;
+      readonly professionalId: string;
+    }
+
+    /** Revisora hospitalaria con REVIEW_ALARMS y competencia; sin experiencia de solicitante. */
+    async function revisoraElegible(
+      patientId: string,
+      contextId: string,
+      nombre = 'Revisora',
+      opciones: { readonly endsAt?: Date } = {},
+    ): Promise<Destinatario> {
+      const cuenta = await seed.cuenta(tenantA, nombre);
+      const competenceId = await seed.competencia(tenantA, orgHospital, cuenta.humanAccountId, gestor.humanAccountId);
+      const grantId = await seed.concesion({
+        tenantId: tenantA,
+        organizationId: orgHospital,
+        contextId,
+        patientId,
+        humanAccountId: cuenta.humanAccountId,
+        actorKind: 'HOSPITAL_REVIEWER',
+        permission: 'REVIEW_ALARMS',
+        competenceAttestationId: competenceId,
+        grantedByHumanAccountId: gestor.humanAccountId,
+        ...(opciones.endsAt === undefined ? {} : { endsAt: opciones.endsAt }),
+      });
+
+      return { cuenta, grantId, competenceId };
+    }
+
+    /** Profesional asignado al paciente con REVIEW_ALARMS, competencia, perfil y afiliación. */
+    async function profesionalElegible(patientId: string, contextId: string): Promise<ProfesionalDestinatario> {
+      const profesional = await profesionalAsignado(patientId);
+      const grantId = await seed.concesion({
+        tenantId: tenantA,
+        organizationId: orgHospital,
+        contextId,
+        patientId,
+        humanAccountId: profesional.cuenta.humanAccountId,
+        actorKind: 'PROFESSIONAL',
+        permission: 'REVIEW_ALARMS',
+        careAssignmentId: profesional.assignmentId,
+        competenceAttestationId: profesional.competenceId,
+        grantedByHumanAccountId: gestor.humanAccountId,
+      });
+      const { professionalId } = await owner.careAssignment.findUniqueOrThrow({
+        where: { id: profesional.assignmentId },
+        select: { professionalId: true },
+      });
+
+      return { ...profesional, grantId, professionalId };
+    }
+
+    /**
+     * Asignación por el servicio REAL: el trabajo devuelve la elegibilidad que
+     * el servidor decidió con las fuentes bloqueadas; `denied` si el actor no
+     * puede revisar.
+     */
+    async function asignar(
+      actor: CuentaFicticia,
+      contextId: string,
+      destinatario: string,
+      opciones: { readonly correlationId?: string; readonly now?: Date } = {},
+    ): Promise<boolean | 'denied'> {
+      try {
+        return await asignador.withAuthorizedReviewAssignment(
+          principalDe(actor),
+          contextId,
+          destinatario,
+          opciones.correlationId ?? correlacion(),
+          opciones.now ?? new Date(),
+          async (_tx, _authorized, elegible) => elegible,
+        );
+      } catch (error) {
+        if (error instanceof CareContextAccessDeniedError) {
+          return 'denied';
+        }
+
+        throw error;
+      }
+    }
+
+    async function esperarHasta(condicion: () => Promise<boolean>, mensaje: string): Promise<void> {
+      const limite = Date.now() + 15_000;
+
+      while (Date.now() < limite) {
+        if (await condicion()) {
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+
+      throw new Error(mensaje);
+    }
+
+    /** PostgreSQL informa que el backend `pid` espera un bloqueo. */
+    function esperarBloqueoDe(pid: number): Promise<void> {
+      return esperarHasta(async () => {
+        const [fila] = await owner.$queryRaw<{ readonly espera: string | null }[]>`
+          SELECT wait_event_type AS espera FROM pg_stat_activity WHERE pid = ${pid}`;
+        return fila?.espera === 'Lock';
+      }, 'La revocación nunca quedó esperando el bloqueo de la asignación.');
+    }
+
+    /** PostgreSQL informa que algún backend está bloqueado por `pid`. */
+    function esperarBloqueadoPor(pid: number): Promise<void> {
+      return esperarHasta(async () => {
+        const [fila] = await owner.$queryRaw<{ readonly n: number }[]>`
+          SELECT count(*)::int AS n FROM pg_stat_activity WHERE ${pid}::int = ANY(pg_blocking_pids(pid))`;
+        return (fila?.n ?? 0) > 0;
+      }, 'La asignación nunca quedó esperando el bloqueo de la revocación.');
+    }
+
+    /** Revocaciones reales de cada fuente del destinatario, como las haría su flujo. */
+    const REVOCACIONES: readonly {
+      readonly fuente: string;
+      readonly aplicar: (tx: PrismaTransaction, d: ProfesionalDestinatario) => Promise<unknown>;
+    }[] = [
+      {
+        fuente: 'cuenta deshabilitada',
+        aplicar: (tx, d) =>
+          tx.$executeRaw`UPDATE "human_account" SET "status" = 'DISABLED' WHERE "id" = ${d.cuenta.humanAccountId}::uuid`,
+      },
+      {
+        fuente: 'concesión revocada',
+        aplicar: (tx, d) => tx.$executeRaw`
+          UPDATE "care_authorization"
+             SET "status" = 'REVOKED', "revokedAt" = now(), "version" = "version" + 1
+           WHERE "id" = ${d.grantId}::uuid`,
+      },
+      {
+        fuente: 'competencia revocada',
+        aplicar: (tx, d) => tx.$executeRaw`
+          UPDATE "clinical_competence_attestation"
+             SET "status" = 'REVOKED', "revokedAt" = now(), "version" = "version" + 1
+           WHERE "id" = ${d.competenceId}::uuid`,
+      },
+      {
+        fuente: 'asignación terminada',
+        aplicar: (tx, d) => tx.$executeRaw`
+          UPDATE "care_assignment" SET "status" = 'ENDED', "endsAt" = now() WHERE "id" = ${d.assignmentId}::uuid`,
+      },
+    ];
+
+    it('un destinatario SIN sesión válida pero con todas sus capacidades es elegible; también la propia cuenta', async () => {
+      const { patientId, ctxHospital } = await escenarioPaciente();
+      const actora = await revisoraElegible(patientId, ctxHospital, 'Revisora actora');
+      const revisora = await revisoraElegible(patientId, ctxHospital, 'Revisora destinataria');
+      const profesional = await profesionalElegible(patientId, ctxHospital);
+
+      for (const destinatario of [revisora.cuenta, profesional.cuenta]) {
+        await owner.humanSession.update({ where: { id: destinatario.sessionId }, data: { revokedAt: new Date() } });
+        // Corte de autenticación posterior a toda sesión emitida: ninguna sirve.
+        await owner.humanAccount.update({
+          where: { id: destinatario.humanAccountId },
+          data: { authenticationNotBefore: new Date() },
+        });
+
+        expect(await asignar(actora.cuenta, ctxHospital, destinatario.humanAccountId)).toBe(true);
+      }
+
+      expect(await asignar(actora.cuenta, ctxHospital, actora.cuenta.humanAccountId)).toBe(true);
+    });
+
+    it('no es elegible si falla CUALQUIER fuente propia; antes de romperla sí lo era', async () => {
+      const rupturas: readonly {
+        readonly fuente: string;
+        readonly romper: (d: ProfesionalDestinatario) => Promise<unknown>;
+      }[] = [
+        ...REVOCACIONES.map((revocacion) => ({
+          fuente: revocacion.fuente,
+          romper: (d: ProfesionalDestinatario) => owner.$transaction((tx) => revocacion.aplicar(tx, d)),
+        })),
+        {
+          fuente: 'recuperación de contraseña bloqueada',
+          romper: (d) =>
+            owner.humanAccount.update({ where: { id: d.cuenta.humanAccountId }, data: { passwordRecoveryBlocked: true } }),
+        },
+        {
+          fuente: 'vínculo desvinculado',
+          romper: (d) =>
+            owner.externalAuthIdentity.update({
+              where: { id: d.cuenta.bindingId },
+              data: { status: 'UNLINKED', unlinkedAt: new Date() },
+            }),
+        },
+        {
+          fuente: 'perfil profesional inactivo',
+          romper: (d) => owner.professionalProfile.update({ where: { id: d.professionalId }, data: { status: 'INACTIVE' } }),
+        },
+        {
+          fuente: 'afiliación inactiva',
+          romper: (d) =>
+            owner.professionalAffiliation.updateMany({ where: { professionalId: d.professionalId }, data: { status: 'INACTIVE' } }),
+        },
+      ];
+
+      for (const { fuente, romper } of rupturas) {
+        const { patientId, ctxHospital } = await escenarioPaciente();
+        const actora = await revisoraElegible(patientId, ctxHospital, 'Revisora actora');
+        const destinatario = await profesionalElegible(patientId, ctxHospital);
+
+        expect(await asignar(actora.cuenta, ctxHospital, destinatario.cuenta.humanAccountId), fuente).toBe(true);
+        await romper(destinatario);
+        expect(await asignar(actora.cuenta, ctxHospital, destinatario.cuenta.humanAccountId), fuente).toBe(false);
+      }
+    }, 60_000);
+
+    it('no es elegible sin experiencia aprobada, en otra organización, otro tenant, sin concesión o inexistente; la concesión de un emisor no manager ni llega a existir', async () => {
+      const { paciente, patientId, ctxHospital, ctxHospital2 } = await escenarioPaciente();
+      const actora = await revisoraElegible(patientId, ctxHospital, 'Revisora actora');
+      const comun = { tenantId: tenantA, patientId, permission: 'REVIEW_ALARMS' as const };
+
+      // Profesional sin FIELD_PROFESSIONAL aprobada, con todo lo demás.
+      const sinExperiencia = await seed.cuenta(tenantA, 'Profesional sin experiencia');
+      const perfil = await seed.profesional(sinExperiencia);
+      const asignacion = await seed.asignacion(tenantA, patientId, perfil);
+      await seed.concesion({
+        ...comun,
+        organizationId: orgHospital,
+        contextId: ctxHospital,
+        humanAccountId: sinExperiencia.humanAccountId,
+        actorKind: 'PROFESSIONAL',
+        careAssignmentId: asignacion,
+        competenceAttestationId: await seed.competencia(tenantA, orgHospital, sinExperiencia.humanAccountId, gestor.humanAccountId),
+        grantedByHumanAccountId: gestor.humanAccountId,
+      });
+
+      // Fuente inválida rechazada AL INSERTAR: la base no admite una concesión
+      // emitida por quien nunca fue manager de la organización. No se finge que
+      // exista; esa cuenta queda sin concesión persistida y se evalúa como tal.
+      const emisorAjeno = await seed.cuenta(tenantA, 'Revisora de emisor ajeno');
+      await expect(
+        seed.concesion({
+          ...comun,
+          organizationId: orgHospital,
+          contextId: ctxHospital,
+          humanAccountId: emisorAjeno.humanAccountId,
+          actorKind: 'HOSPITAL_REVIEWER',
+          competenceAttestationId: await seed.competencia(tenantA, orgHospital, emisorAjeno.humanAccountId, gestor.humanAccountId),
+          grantedByHumanAccountId: fundador.humanAccountId,
+        }),
+      ).rejects.toThrow(/el emisor no es manager vigente de la organizacion/u);
+      expect(await owner.careAuthorization.count({ where: { humanAccountId: emisorAjeno.humanAccountId } })).toBe(0);
+
+      // Revisora solo de OTRA organización del mismo tenant y paciente.
+      const otraOrganizacion = await seed.cuenta(tenantA, 'Revisora de otra organización');
+      await seed.concesion({
+        ...comun,
+        organizationId: orgHospital2,
+        contextId: ctxHospital2,
+        humanAccountId: otraOrganizacion.humanAccountId,
+        actorKind: 'HOSPITAL_REVIEWER',
+        competenceAttestationId: await seed.competencia(tenantA, orgHospital2, otraOrganizacion.humanAccountId, gestor.humanAccountId),
+        grantedByHumanAccountId: gestor.humanAccountId,
+      });
+
+      // Revisora con concesión de OTRA acción en este contexto.
+      const otraAccion = await seed.cuenta(tenantA, 'Revisora de solo lectura');
+      await seed.concesion({
+        ...comun,
+        permission: 'VIEW_RECORDS',
+        organizationId: orgHospital,
+        contextId: ctxHospital,
+        humanAccountId: otraAccion.humanAccountId,
+        actorKind: 'HOSPITAL_REVIEWER',
+        competenceAttestationId: await seed.competencia(tenantA, orgHospital, otraAccion.humanAccountId, gestor.humanAccountId),
+        grantedByHumanAccountId: gestor.humanAccountId,
+      });
+
+      const otroTenant = await seed.cuenta(tenantC, 'Cuenta de otro tenant');
+
+      for (const destinatario of [
+        sinExperiencia.humanAccountId,
+        emisorAjeno.humanAccountId,
+        otraOrganizacion.humanAccountId,
+        otraAccion.humanAccountId,
+        otroTenant.humanAccountId,
+        paciente.humanAccountId,
+        gestor.humanAccountId,
+        randomUUID(),
+        'no-es-uuid',
+      ]) {
+        expect(await asignar(actora.cuenta, ctxHospital, destinatario)).toBe(false);
+      }
+    });
+
+    it('la concesión del destinatario vence exactamente en su endsAt', async () => {
+      const { patientId, ctxHospital } = await escenarioPaciente();
+      const actora = await revisoraElegible(patientId, ctxHospital, 'Revisora actora');
+      const fin = new Date(Date.now() + 10 * 60 * 1000);
+      const destinataria = await revisoraElegible(patientId, ctxHospital, 'Revisora temporal', { endsAt: fin });
+
+      expect(
+        await asignar(actora.cuenta, ctxHospital, destinataria.cuenta.humanAccountId, { now: new Date(fin.getTime() - 1) }),
+      ).toBe(true);
+      expect(await asignar(actora.cuenta, ctxHospital, destinataria.cuenta.humanAccountId, { now: fin })).toBe(false);
+    });
+
+    it('el actor sin revisión se deniega PRIMERO y uniformemente: no se evalúa al destinatario ni corre el trabajo', async () => {
+      const { paciente, patientId, ctxHospital } = await escenarioPaciente();
+      const elegible = await revisoraElegible(patientId, ctxHospital, 'Revisora destinataria');
+      const conSesionRevocada = await revisoraElegible(patientId, ctxHospital, 'Revisora sin sesión');
+      await owner.humanSession.update({ where: { id: conSesionRevocada.cuenta.sessionId }, data: { revokedAt: new Date() } });
+
+      for (const actor of [paciente, conSesionRevocada.cuenta]) {
+        for (const destinatario of [elegible.cuenta.humanAccountId, randomUUID(), 'no-es-uuid']) {
+          const correlationId = correlacion();
+          let ejecutado = false;
+
+          await expect(
+            asignador.withAuthorizedReviewAssignment(principalDe(actor), ctxHospital, destinatario, correlationId, new Date(), async () => {
+              ejecutado = true;
+            }),
+          ).rejects.toBeInstanceOf(CareContextAccessDeniedError);
+          expect(ejecutado).toBe(false);
+
+          const eventos = await owner.auditEvent.findMany({ where: { correlationId } });
+          expect(eventos).toHaveLength(1);
+          expect(eventos[0]).toMatchObject({ outcome: 'DENIED', actorUserId: actor.humanAccountId, resourceId: null });
+        }
+      }
+    });
+
+    it('si el trabajo falla tras decidir, la asignación no deja auditoría concedida ni cambios', async () => {
+      const { patientId, ctxHospital } = await escenarioPaciente();
+      const actora = await revisoraElegible(patientId, ctxHospital, 'Revisora actora');
+      const destinataria = await revisoraElegible(patientId, ctxHospital, 'Revisora destinataria');
+      const correlationId = correlacion();
+      const fallo = new Error('fallo del trabajo de asignación');
+
+      await expect(
+        asignador.withAuthorizedReviewAssignment(
+          principalDe(actora.cuenta),
+          ctxHospital,
+          destinataria.cuenta.humanAccountId,
+          correlationId,
+          new Date(),
+          async () => {
+            throw fallo;
+          },
+        ),
+      ).rejects.toBe(fallo);
+
+      expect(await owner.auditEvent.count({ where: { correlationId } })).toBe(0);
+    });
+
+    it('una revocación concurrente de cada fuente del destinatario ESPERA al commit de la asignación', async () => {
+      for (const revocacion of REVOCACIONES) {
+        const { patientId, ctxHospital } = await escenarioPaciente();
+        const actora = await revisoraElegible(patientId, ctxHospital, 'Revisora actora');
+        const destinatario = await profesionalElegible(patientId, ctxHospital);
+
+        let anunciarTrabajo!: () => void;
+        let liberarTrabajo!: () => void;
+        const trabajoEnCurso = new Promise<void>((resolve) => {
+          anunciarTrabajo = resolve;
+        });
+        const trabajoLiberado = new Promise<void>((resolve) => {
+          liberarTrabajo = resolve;
+        });
+        let anunciarPid!: (pid: number) => void;
+        const pidRevocacion = new Promise<number>((resolve) => {
+          anunciarPid = resolve;
+        });
+        const orden: string[] = [];
+
+        const asignacion = asignador.withAuthorizedReviewAssignment(
+          principalDe(actora.cuenta),
+          ctxHospital,
+          destinatario.cuenta.humanAccountId,
+          correlacion(),
+          new Date(),
+          async (_tx, _authorized, elegible) => {
+            anunciarTrabajo();
+            await trabajoLiberado;
+            orden.push('asignacion-terminada');
+            return elegible;
+          },
+        );
+
+        await trabajoEnCurso;
+
+        const revocada = owner.$transaction(
+          async (tx) => {
+            const [fila] = await tx.$queryRaw<{ readonly pid: number }[]>`SELECT pg_backend_pid() AS pid`;
+            anunciarPid(fila?.pid ?? -1);
+            await revocacion.aplicar(tx, destinatario);
+            orden.push('revocacion-aplicada');
+          },
+          { maxWait: 10_000, timeout: 20_000 },
+        );
+
+        try {
+          // Barrera: PostgreSQL informa que el backend que revoca espera el bloqueo SHARE.
+          await esperarBloqueoDe(await pidRevocacion);
+          expect(orden, revocacion.fuente).toEqual([]);
+        } finally {
+          liberarTrabajo();
+        }
+
+        await expect(asignacion, revocacion.fuente).resolves.toBe(true);
+        await revocada;
+
+        expect(orden, revocacion.fuente).toEqual(['asignacion-terminada', 'revocacion-aplicada']);
+        expect(await asignar(actora.cuenta, ctxHospital, destinatario.cuenta.humanAccountId), revocacion.fuente).toBe(false);
+      }
+    }, 90_000);
+
+    it('si la revocación de cada fuente gana antes, la asignación espera su commit y ya la ve', async () => {
+      for (const revocacion of REVOCACIONES) {
+        const { patientId, ctxHospital } = await escenarioPaciente();
+        const actora = await revisoraElegible(patientId, ctxHospital, 'Revisora actora');
+        const destinatario = await profesionalElegible(patientId, ctxHospital);
+
+        let anunciarPid!: (pid: number) => void;
+        const pidRevocacion = new Promise<number>((resolve) => {
+          anunciarPid = resolve;
+        });
+        let confirmarRevocacion!: () => void;
+        const revocacionLiberada = new Promise<void>((resolve) => {
+          confirmarRevocacion = resolve;
+        });
+
+        const revocada = owner.$transaction(
+          async (tx) => {
+            await revocacion.aplicar(tx, destinatario);
+            const [fila] = await tx.$queryRaw<{ readonly pid: number }[]>`SELECT pg_backend_pid() AS pid`;
+            anunciarPid(fila?.pid ?? -1);
+            await revocacionLiberada;
+          },
+          { maxWait: 10_000, timeout: 20_000 },
+        );
+
+        const pid = await pidRevocacion;
+        let resuelta = false;
+        const asignacion = asignar(actora.cuenta, ctxHospital, destinatario.cuenta.humanAccountId).finally(() => {
+          resuelta = true;
+        });
+
+        try {
+          // Barrera: PostgreSQL informa que la asignación espera la fila revocada.
+          await esperarBloqueadoPor(pid);
+          expect(resuelta, revocacion.fuente).toBe(false);
+        } finally {
+          confirmarRevocacion();
+        }
+
+        await revocada;
+        await expect(asignacion, revocacion.fuente).resolves.toBe(false);
+      }
+    }, 90_000);
+
+    it('dos asignaciones cruzadas A→B y B→A concurrentes no se bloquean mutuamente ni se interbloquean', async () => {
+      const { patientId, ctxHospital } = await escenarioPaciente();
+      const a = await revisoraElegible(patientId, ctxHospital, 'Revisora A');
+      const b = await profesionalElegible(patientId, ctxHospital);
+
+      let enTrabajo = 0;
+      let abrir!: () => void;
+      const puerta = new Promise<void>((resolve) => {
+        abrir = resolve;
+      });
+      const orden: string[] = [];
+
+      const cruzada = (actor: CuentaFicticia, destinatario: CuentaFicticia, etiqueta: string): Promise<boolean> =>
+        asignador.withAuthorizedReviewAssignment(
+          principalDe(actor),
+          ctxHospital,
+          destinatario.humanAccountId,
+          correlacion(),
+          new Date(),
+          async (tx, authorized, elegible) => {
+            // Ambas transacciones retienen a la vez sus bloqueos SHARE de las dos cuentas y fuentes.
+            enTrabajo += 1;
+            await puerta;
+            // Después, el advisory del contexto las serializa como en una transición real.
+            await lockContextForWrite(tx, authorized);
+            orden.push(etiqueta);
+            return elegible;
+          },
+        );
+
+      const deAaB = cruzada(a.cuenta, b.cuenta, 'A→B');
+      const deBaA = cruzada(b.cuenta, a.cuenta, 'B→A');
+
+      try {
+        await esperarHasta(async () => enTrabajo === 2, 'Las asignaciones cruzadas no llegaron juntas al trabajo.');
+      } finally {
+        abrir();
+      }
+
+      await expect(Promise.all([deAaB, deBaA])).resolves.toEqual([true, true]);
+      expect([...orden].sort()).toEqual(['A→B', 'B→A']);
+    }, 30_000);
   });
 });

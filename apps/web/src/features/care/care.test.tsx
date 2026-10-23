@@ -4,22 +4,84 @@ import { fileURLToPath } from 'node:url';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
-import { type AlarmaDto, careClient, type DatoDto, describirCriterio, type RegistroDto, valorLegible } from './careClient';
-import { BannerSemaforo, comparadoresPara, DetalleAlarma, GestorCriterios } from './careCriteriaViews';
+import {
+  acumular,
+  type AlarmaDto,
+  careClient,
+  careCriteriosClient,
+  type CriterioDto,
+  type DatoDto,
+  type DefinicionCriterioDto,
+  describirCriterio,
+  type EvidenciaDto,
+  type RegistroDto,
+  valorLegible,
+  type VersionCriterioDto,
+} from './careClient';
+import {
+  BannerSemaforo,
+  BORRADOR_VACIO,
+  borradorDesdeCriterio,
+  ColaRevision,
+  comparadoresPara,
+  DetalleAlarma,
+  envioDesdeBorrador,
+  GestorCriterios,
+  textoEvidencia,
+  vigenciaDesdeLocal,
+} from './careCriteriaViews';
+import { CareHospitalEntry } from './CareHospitalEntry';
 import {
   accionesPara,
   BandejaAlarmas,
   codigoDesde,
+  ControlPagina,
   FormularioRegistro,
   instanteDesdeLocal,
   ListaRegistros,
   opcionesDesdeTexto,
+  SelectorContexto,
   SolicitudRevision,
+  TEXTO_ERROR_PAGINA,
   TEXTO_ESTADO_GENERAL,
 } from './careViews';
-import { CareWorkspace } from './CareWorkspace';
+import { CareWorkspace, TEXTO_MOTOR_HOSPITAL } from './CareWorkspace';
 
 const CONTEXTO = '00000000-0000-4000-8000-0000000000c1';
+
+/* Definiciones FICTICIAS: unidades y valores sin significado clínico. */
+const DATO_V1: DatoDto = { id: '00000000-0000-4000-8000-0000000000d1', code: 'dato', version: 1, label: 'Dato ficticio', valueType: 'NUMBER', unit: 'u1', options: null, validatedAt: '' };
+const DATO_V2: DatoDto = { ...DATO_V1, id: '00000000-0000-4000-8000-0000000000d2', version: 2, unit: 'u2' };
+const DEFINICION_V1: DefinicionCriterioDto = { id: DATO_V1.id, version: 1, label: 'Dato ficticio', valueType: 'NUMBER', unit: 'u1', options: null, status: 'ACTIVE' };
+const VERSION: VersionCriterioDto = {
+  id: 'v',
+  version: 1,
+  observableDefinition: DEFINICION_V1,
+  requiresRevalidation: false,
+  observableCode: 'dato',
+  valueType: 'NUMBER',
+  comparator: 'GTE',
+  value: '38',
+  requiredCount: 2,
+  windowMinutes: 120,
+  severity: 'AMARILLA',
+  activatedAt: '',
+  validUntil: null,
+  status: 'ACTIVE',
+};
+const CRITERIO: CriterioDto = { id: '00000000-0000-4000-8000-0000000000e1', status: 'ACTIVE', retiredReason: null, current: VERSION };
+const EVIDENCIA: EvidenciaDto = {
+  label: 'Dato ficticio',
+  unit: 'u1',
+  valueType: 'NUMBER',
+  definitionVersion: 1,
+  value: '40',
+  occurredAt: '2026-10-21T10:00:00.000Z',
+  snapshot: 'CAPTURED',
+  evaluatedValue: '40',
+  evaluatedAmendmentSequence: null,
+  correctedAfterwards: false,
+};
 
 function fetchEspia(status: number, body: unknown) {
   const llamadas: { url: string; init: RequestInit }[] = [];
@@ -116,7 +178,7 @@ describe('vistas', () => {
   });
 
   it('el formulario sale de los datos validados y, sin ellos, permite una nota sin fingir evaluación', () => {
-    const datos: DatoDto[] = [
+    const datos: readonly DatoDto[] = [
       { id: 'd1', code: 'si-no', version: 1, label: 'Dato sí/no ficticio', valueType: 'BOOLEAN', unit: null, options: null, validatedAt: '' },
       { id: 'd2', code: 'numero', version: 1, label: 'Dato numérico ficticio', valueType: 'NUMBER', unit: 'u', options: null, validatedAt: '' },
     ];
@@ -174,46 +236,224 @@ describe('criterios y semáforo (MP04–MP05)', () => {
 
   it('el semáforo siempre se escribe; sin criterios ni solicitudes nunca es verde', () => {
     const html = renderToStaticMarkup(
-      <BannerSemaforo semaforo={{ level: 'SIN_CRITERIOS', label: 'Sin criterios ni solicitudes: no hay evaluación automática', openAlarms: vacio, activeCriteria: 0 }} />,
+      <BannerSemaforo
+        semaforo={{ level: 'SIN_CRITERIOS', label: 'Sin criterios ni solicitudes: no hay evaluación automática', openAlarms: vacio, activeCriteria: 0, criteriaRequiringRevalidation: 0 }}
+      />,
     );
     expect(html).toContain('Semáforo: Sin criterios ni solicitudes: no hay evaluación automática.');
     expect(html).toContain('role="status"');
     expect(html).not.toMatch(/verde/iu);
   });
 
+  it('MP07A: «sin evaluación» se escribe y dice cuántos criterios esperan revalidación', () => {
+    const html = renderToStaticMarkup(
+      <BannerSemaforo
+        semaforo={{
+          level: 'SIN_EVALUACION',
+          label: 'Sin evaluación: hay criterios, pero ninguna clasificación autorizada; esto no indica estabilidad',
+          openAlarms: vacio,
+          activeCriteria: 1,
+          criteriaRequiringRevalidation: 2,
+        }}
+      />,
+    );
+    expect(html).toContain('Semáforo: Sin evaluación');
+    expect(html).toContain('esto no indica estabilidad');
+    expect(html).toContain('Criterios vigentes que se evalúan: 1.');
+    expect(html).toContain('no se evalúan hasta que un profesional los revalide: 2');
+    expect(html).toContain('_nivelSIN_EVALUACION_');
+    expect(html).not.toContain('_nivelESTABLE_');
+  });
+
   it('describe el criterio en palabras, con frecuencia y ventana', () => {
-    expect(
-      describirCriterio(
-        { id: 'v', version: 1, observableCode: 'x', valueType: 'NUMBER', comparator: 'GTE', value: '38', requiredCount: 2, windowMinutes: 120, severity: 'AMARILLA', activatedAt: '', validUntil: null, status: 'ACTIVE' },
-        'Dato ficticio',
-      ),
-    ).toBe('Dato ficticio mayor o igual que 38, 2 vez/veces en 2 hora(s) → alarma amarilla');
+    expect(describirCriterio(VERSION, 'Dato ficticio')).toBe('Dato ficticio mayor o igual que 38, 2 vez/veces en 2 hora(s) → alarma amarilla');
   });
 
   it('el formulario de criterios no trae valores sugeridos y ofrece comparaciones según el tipo', () => {
-    const datos: DatoDto[] = [{ id: 'd1', code: 'dato', version: 1, label: 'Dato ficticio', valueType: 'NUMBER', unit: null, options: null, validatedAt: '' }];
-    const html = renderToStaticMarkup(<GestorCriterios datos={datos} criterios={[]} enviando={false} onDefinir={() => undefined} onRetirar={() => undefined} />);
+    const html = renderToStaticMarkup(<GestorCriterios datos={[DATO_V2]} criterios={[]} enviando={false} ronda={0} onDefinir={() => undefined} onRetirar={() => undefined} />);
     expect(html).toContain('La plataforma no sugiere valores clínicos');
     expect(html).toContain('No hay criterios definidos.');
     expect(html).toContain('Validar criterio');
     expect(html).toContain('disabled=""');
+    // La vigencia es opcional y se explica; el dato ofrecido nombra versión y unidad exactas.
+    expect(html).toContain('Vigente hasta (opcional)');
+    expect(html).toContain('Al vencer deja de evaluarse; eso no indica estabilidad.');
+    expect(html).toContain('Dato ficticio, versión 2, unidad u2');
     expect(comparadoresPara('BOOLEAN')).toEqual(['EQ']);
     expect(comparadoresPara('CHOICE')).toEqual(['IN']);
   });
 
-  it('la evidencia corregida después se marca para revisar', () => {
+  it('A08: cada criterio activo ofrece ajustarlo como versión nueva y muestra su definición exacta', () => {
+    const html = renderToStaticMarkup(
+      <GestorCriterios datos={[DATO_V1]} criterios={[CRITERIO]} enviando={false} ronda={0} onDefinir={() => undefined} onRetirar={() => undefined} />,
+    );
+    expect(html).toContain('Ajustar (nueva versión)');
+    expect(html).toContain('Evalúa: Dato ficticio, versión 1, unidad u1.');
+    expect(html).toContain('Sin fecha de fin.');
+    expect(html).not.toContain('Pendiente de revalidar');
+
+    const pendiente = renderToStaticMarkup(
+      <GestorCriterios
+        datos={[DATO_V2]}
+        criterios={[{ ...CRITERIO, current: { ...VERSION, requiresRevalidation: true, observableDefinition: { ...DEFINICION_V1, status: 'RETIRED' } } }]}
+        enviando={false}
+        ronda={0}
+        onDefinir={() => undefined}
+        onRetirar={() => undefined}
+      />,
+    );
+    expect(pendiente).toContain('Pendiente de revalidar');
+    expect(pendiente).toContain('Revalidar (nueva versión)');
+  });
+
+  it('A08: con la MISMA definición el ajuste parte de lo validado y conserva la identidad del criterio', () => {
+    const ahora = new Date('2026-10-22T10:00:00.000Z');
+    const borrador = borradorDesdeCriterio({ ...CRITERIO, current: { ...VERSION, validUntil: '2026-12-01T00:00:00.000Z' } }, [DATO_V1], ahora);
+    expect(borrador).toMatchObject({ definicionId: DATO_V1.id, comparador: 'GTE', valor: '38', veces: '2', ventana: '2', unidad: 'horas', severidad: 'AMARILLA' });
+    expect(borrador.vigencia).not.toBe('');
+
+    const envio = envioDesdeBorrador({ ...borrador, veces: '3' }, DATO_V1, CRITERIO.id, ahora);
+    expect(envio).toMatchObject({ criterionId: CRITERIO.id, observableDefinitionId: DATO_V1.id, observableCode: 'dato', requiredCount: 3, windowMinutes: 120 });
+    expect(envio?.validUntil).toBe(new Date(borrador.vigencia).toISOString());
+  });
+
+  it('A08: con OTRA definición no traslada ni convierte comparación ni valor y exige elegir la vigente', () => {
+    const borrador = borradorDesdeCriterio(CRITERIO, [DATO_V2]);
+    expect(borrador).toMatchObject({ definicionId: '', comparador: '', valor: '', opciones: [] });
+    // Sin elegir la definición vigente no hay envío posible.
+    expect(envioDesdeBorrador(borrador, DATO_V2, CRITERIO.id)).toBeNull();
+    expect(envioDesdeBorrador({ ...borrador, definicionId: DATO_V2.id }, DATO_V2, CRITERIO.id)).toBeNull();
+    // Con la vigente elegida y la comparación/valor escritos de nuevo, nombra la definición exacta.
+    const listo = envioDesdeBorrador({ ...borrador, definicionId: DATO_V2.id, comparador: 'GT', valor: '0.04' }, DATO_V2, CRITERIO.id);
+    expect(listo).toMatchObject({ criterionId: CRITERIO.id, observableDefinitionId: DATO_V2.id, comparator: 'GT', value: '0.04' });
+    // El legado sin definición exacta también se revalida desde cero.
+    expect(borradorDesdeCriterio({ ...CRITERIO, current: { ...VERSION, observableDefinition: null, requiresRevalidation: true } }, [DATO_V1]).comparador).toBe('');
+  });
+
+  it('A08: un criterio nuevo siempre nombra la definición exacta y no inventa vigencia', () => {
+    const envio = envioDesdeBorrador(
+      { ...BORRADOR_VACIO, definicionId: DATO_V2.id, comparador: 'LT', valor: '1', veces: '1', ventana: '30', unidad: 'minutos', severidad: 'ROJA' },
+      DATO_V2,
+      null,
+    );
+    expect(envio).toEqual({ observableDefinitionId: DATO_V2.id, observableCode: 'dato', comparator: 'LT', value: '1', requiredCount: 1, windowMinutes: 30, severity: 'ROJA' });
+    expect(vigenciaDesdeLocal('2000-01-01T00:00')).toBeNull();
+    expect(envioDesdeBorrador({ ...BORRADOR_VACIO, definicionId: DATO_V2.id, comparador: 'LT', valor: '1', veces: '1', ventana: '1', severidad: 'ROJA', vigencia: '2000-01-01T00:00' }, DATO_V2, null)).toBeNull();
+  });
+
+  it('A07: distingue el original del valor evaluado y la corrección vigente al evaluar', () => {
     const html = renderToStaticMarkup(
       <DetalleAlarma
         detalle={{
           ...ALARMA,
           origin: 'AUTOMATIC',
           transitions: [],
-          evidence: [{ label: 'Dato ficticio', unit: null, valueType: 'NUMBER', value: '40', occurredAt: '2026-10-21T10:00:00.000Z', correctedAfterwards: true }],
+          evidence: [{ ...EVIDENCIA, value: '1', evaluatedValue: '11', evaluatedAmendmentSequence: 1, correctedAfterwards: true }],
         }}
       />,
     );
     expect(html).toContain('Por qué se generó');
-    expect(html).toContain('Corregida después: revisar');
+    expect(html).toContain('Valor registrado (original): 1 u1');
+    expect(html).toContain('Valor evaluado: 11 u1 (según la corrección 1, vigente al evaluar)');
+    expect(html).toContain('Corregida después de la evaluación: revisar');
+    expect(html).toContain('no es un diagnóstico');
+  });
+
+  it('A07: la evidencia legada es indeterminada; `null` no se presenta como «sin corrección»', () => {
+    const legado = textoEvidencia({ ...EVIDENCIA, snapshot: 'LEGACY_UNDETERMINED', evaluatedValue: null, correctedAfterwards: null });
+    expect(legado).toContain('Valor evaluado: no determinado (evidencia anterior al registro del valor evaluado)');
+    expect(legado.join(' ')).toContain('no se puede saber si fueron anteriores o posteriores');
+    expect(legado.join(' ')).not.toContain('Valor evaluado: 40');
+
+    const sinCorreccion = textoEvidencia({ ...EVIDENCIA, correctedAfterwards: false });
+    expect(sinCorreccion).toEqual(['Valor registrado (original): 40 u1', 'Valor evaluado: 40 u1 (el original)']);
+  });
+
+  it('A06: la cola dice cuántas abiertas hay, no trunca en silencio y abre la bandeja filtrada', () => {
+    const abiertas: string[] = [];
+    const html = renderToStaticMarkup(
+      <ColaRevision
+        cola={[
+          {
+            contextId: CONTEXTO,
+            organizationId: CONTEXTO,
+            organizationName: 'Organización ficticia',
+            patientLabel: 'Paciente F.',
+            actorKind: 'HOSPITAL_REVIEWER',
+            actions: ['REVIEW_ALARMS'],
+            semaphore: { level: 'ROJO', label: 'Rojo: hay alarmas rojas abiertas', openAlarms: { ...vacio, ROJA: 1, SIN: 54 }, activeCriteria: 0, criteriaRequiringRevalidation: 0 },
+            openAlarmCount: 55,
+            hasMoreOpenAlarms: true,
+            alarms: [{ id: 'a1', origin: 'MANUAL', severity: null, state: 'NUEVA', createdAt: '2026-10-21T12:00:00.000Z', assignedToMe: false }],
+          },
+        ]}
+        onAbrir={(_elemento, filtro) => abiertas.push(filtro)}
+      />,
+    );
+    expect(html).toContain('Se muestran las 1 más recientes de 55 abiertas');
+    expect(html).toContain('también las más antiguas');
+    expect(html).toContain('Ver todas las abiertas (55)');
+    expect(html).toContain('1 roja(s)');
+  });
+});
+
+describe('paginación (MP07B / A06)', () => {
+  it('acumula páginas sin duplicar y conserva el orden del servidor', () => {
+    const clave = (item: { id: string }) => item.id;
+    expect(acumular([{ id: 'a' }, { id: 'b' }], [{ id: 'b' }, { id: 'c' }, { id: 'c' }], clave)).toEqual([{ id: 'a' }, { id: 'b' }, { id: 'c' }]);
+  });
+
+  it('pide cada página con el cursor recibido y conserva el filtro de abiertas', async () => {
+    const espia = fetchEspia(200, { items: [], nextCursor: null, canReview: true });
+    await careClient.alarmas(CONTEXTO, espia.impl, undefined, 'cursor/opaco+1', 'abiertas');
+    await careClient.contextos(espia.impl, undefined, 'c-1');
+    await careClient.registros(CONTEXTO, espia.impl, undefined, 'r-1');
+    await careCriteriosClient.cola(espia.impl, undefined, 'q-1');
+    const [alarmas, contextos, registros, cola] = espia.llamadas.map((llamada) => new URL(llamada.url));
+    expect(alarmas?.searchParams.get('state')).toBe('open');
+    expect(alarmas?.searchParams.get('cursor')).toBe('cursor/opaco+1');
+    expect(alarmas?.searchParams.get('limit')).toBe('50');
+    expect(contextos?.searchParams.get('cursor')).toBe('c-1');
+    expect(registros?.searchParams.get('cursor')).toBe('r-1');
+    expect(registros?.searchParams.get('limit')).toBe('20');
+    expect(cola?.pathname).toContain('/review-queue');
+    expect(cola?.searchParams.get('cursor')).toBe('q-1');
+
+    const primera = fetchEspia(200, { items: [], nextCursor: null });
+    await careClient.alarmas(CONTEXTO, primera.impl);
+    expect(new URL(primera.llamadas[0]?.url ?? '').searchParams.has('state')).toBe(false);
+    expect(new URL(primera.llamadas[0]?.url ?? '').searchParams.has('cursor')).toBe(false);
+  });
+
+  it('el control distingue lo cargado de lo que queda y un fallo de página no es el final', () => {
+    const conMas = renderToStaticMarkup(
+      <ControlPagina cargados={50} nombre="solicitudes" hayMas cargando={false} error={null} textoBoton="Cargar más solicitudes" onMas={() => undefined} />,
+    );
+    expect(conMas).toContain('50 solicitudes cargados. Hay más por cargar: esto no es el total.');
+    expect(conMas).toContain('Cargar más solicitudes');
+    expect(conMas).toContain('aria-live="polite"');
+
+    const fallo = renderToStaticMarkup(
+      <ControlPagina cargados={20} nombre="entradas" hayMas cargando={false} error={TEXTO_ERROR_PAGINA} textoBoton="Cargar entradas anteriores" onMas={() => undefined} />,
+    );
+    expect(fallo).toContain('role="alert"');
+    expect(fallo).toContain('esto no significa que no haya más');
+
+    const fin = renderToStaticMarkup(
+      <ControlPagina cargados={3} nombre="espacios" hayMas={false} cargando={false} error={null} textoBoton="x" onMas={() => undefined} />,
+    );
+    expect(fin).toContain('No hay más.');
+    expect(fin).not.toContain('<button');
+  });
+
+  it('un único espacio cargado no se presenta como el único mientras quedan páginas', () => {
+    const contexto = { contextId: CONTEXTO, organizationId: CONTEXTO, organizationName: 'Org', patientLabel: 'Paciente F.', actorKind: 'HOSPITAL_REVIEWER' as const, actions: ['REVIEW_ALARMS' as const] };
+    expect(renderToStaticMarkup(<SelectorContexto contextos={[contexto]} seleccionado={null} onSeleccionar={() => undefined} />)).not.toContain('<select');
+    expect(renderToStaticMarkup(<SelectorContexto contextos={[contexto]} seleccionado={null} onSeleccionar={() => undefined} definitivo={false} />)).toContain('<select');
+  });
+
+  it('la bandeja filtrada a abiertas lo dice al estar vacía', () => {
+    expect(renderToStaticMarkup(<BandejaAlarmas alarmas={[]} puedeRevisar ocupado={false} soloAbiertas />)).toContain('No hay solicitudes abiertas en este espacio.');
   });
 });
 
@@ -224,14 +464,48 @@ describe('CareWorkspace', () => {
     expect(html).toContain('<h2');
   });
 
-  it('en Hospital es la vista principal y explica que no hay evaluación automática', () => {
+  it('A10: en Hospital describe el motor vigente, sus límites y que la clasificación manual es humana', () => {
     const html = renderToStaticMarkup(<CareWorkspace perfil="hospital" titulo="Semáforo de alarmas" encabezado="h1" />);
     expect(html).toContain('<h1 id="cuidado-hospital-titulo">Semáforo de alarmas</h1>');
-    expect(html).toContain('la evaluación automática por criterios individuales todavía no está habilitada');
+    expect(html).toContain(TEXTO_MOTOR_HOSPITAL);
+    expect(TEXTO_MOTOR_HOSPITAL).toContain('se genera al guardar una entrada, cuando se cumple un criterio individual');
+    expect(TEXTO_MOTOR_HOSPITAL).toContain('no evalúa por reloj ni envía avisos fuera de esta bandeja');
+    expect(TEXTO_MOTOR_HOSPITAL).toContain('la clasificación la decide un profesional autorizado');
+    expect(html).not.toContain('todavía no está habilitada');
+    expect(html).not.toMatch(/whatsapp|correo|sms/iu);
+  });
+
+  it('A10: la confirmación manual sigue siendo la aprobada por el Product Owner', () => {
+    const fuente = readFileSync(fileURLToPath(new URL('../../../../api/src/care-alerts/care-alerts.contract.ts', import.meta.url)), 'utf8');
+    expect(fuente).toContain(
+      'Solicitud registrada para revisión. Esto no confirma que un profesional ya la haya atendido ni sustituye los canales de urgencias.',
+    );
+  });
+
+  it('A02: todo el estado de un paciente vive en un subárbol con clave de contexto y ciclo', () => {
+    const fuente = readFileSync(fileURLToPath(new URL('./CareWorkspace.tsx', import.meta.url)), 'utf8');
+    expect(fuente).toContain('key={`${contexto.contextId}:${seleccion.ciclo}`}');
+    // Las respuestas se comprueban contra la señal de la instancia que las pidió.
+    expect(fuente).toContain('if (signal.aborted) return;');
+    expect(fuente).not.toContain('generacion.current');
+  });
+
+  it('A05: la entrada de revisión clínica usa la sesión humana existente y no lee la URL', () => {
+    const entrada = readFileSync(fileURLToPath(new URL('./CareHospitalEntry.tsx', import.meta.url)), 'utf8');
+    expect(entrada).toContain("urlDeLoginAdministrador('hospital')");
+    expect(entrada).toContain('perfil="hospital"');
+    for (const prohibido of ['searchParams', 'useSearchParams', 'window.location', 'returnTo', 'HospitalAdministration', 'CareAdministration']) {
+      expect(entrada).not.toContain(prohibido);
+    }
+    const html = renderToStaticMarkup(<CareHospitalEntry />);
+    expect(html).toContain('<h1 id="cuidado-hospital-titulo">Revisión clínica de cuidado</h1>');
+    expect(html).toContain('href="/hospital"');
+    expect(html).toContain('no requiere ser administradora o administrador');
+    expect(html).toContain(TEXTO_ESTADO_GENERAL.cargando);
   });
 
   it('no usa almacenamiento del navegador ni lee cookies', () => {
-    const fuentes = ['CareWorkspace.tsx', 'careViews.tsx', 'careClient.ts'].map((archivo) =>
+    const fuentes = ['CareWorkspace.tsx', 'careViews.tsx', 'careClient.ts', 'careCriteriaViews.tsx', 'CareHospitalEntry.tsx'].map((archivo) =>
       readFileSync(fileURLToPath(new URL(`./${archivo}`, import.meta.url)), 'utf8'),
     );
     for (const fuente of fuentes) {

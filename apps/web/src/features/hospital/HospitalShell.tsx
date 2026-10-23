@@ -1,4 +1,6 @@
 'use client';
+import Link from 'next/link';
+
 import { InstitutionalAccess } from '@/features/auth/InstitutionalAccess';
 import { consultarAdministradorHospital, cerrarSesionAdministrador } from '@/features/auth/institutionalAdministratorClient';
 
@@ -364,6 +366,26 @@ function HospitalAccesoInstitucional({
         </p>
       </form>
     </section>
+  );
+}
+
+/** Ruta de la entrada de revisión clínica con cuenta personal (SPEC 055 / MP07B, A05). */
+export const RUTA_REVISION_CUIDADO = '/hospital/cuidado';
+
+/**
+ * Enlace VISIBLE a la revisión clínica de cuidado (SPEC 055 / MP07B, A05).
+ *
+ * Existe para que la persona revisora con REVIEW_ALARMS, que no es
+ * administradora institucional, encuentre su bandeja sin conocer rutas. Es solo
+ * navegación: no concede nada, no muestra datos y la página destino pregunta al
+ * servidor qué puede ver esa cuenta.
+ */
+function EntradaRevisionCuidado(): ReactNode {
+  return (
+    <p className={styles.ingresoTexto} data-hospital-entrada="revision-cuidado">
+      <Link href={RUTA_REVISION_CUIDADO}>Revisión clínica de cuidado</Link>
+      {' '}— para revisoras y revisores con cuenta personal autorizada, sin administración institucional.
+    </p>
   );
 }
 
@@ -764,7 +786,7 @@ export function HospitalShell({
   if (sesion === null) {
     return (
       <HospitalMarcoNeutral etiquetaPlataforma={etiquetaPlataforma}>
-        {administracionHumana ? <InstitutionalAccess experience="hospital" /> : <HospitalAccesoInstitucional
+        {administracionHumana ? <><InstitutionalAccess experience="hospital" /><EntradaRevisionCuidado /></> : <HospitalAccesoInstitucional
           accesoDemo={accesoDemo}
           aviso={aviso}
           ocupado={ocupado}
@@ -832,6 +854,7 @@ export function HospitalShell({
             </p>
           )}
           {modoDemoLocal ? <p className={styles.intencion}>Datos ficticios de demostración local. No se guardan cambios.</p> : null}
+          {administracionHumana && !modoDemoLocal ? <EntradaRevisionCuidado /> : null}
           <HospitalContenido
             vista={vistaVisible}
             pestanaAdministracion={pestanaVisible}

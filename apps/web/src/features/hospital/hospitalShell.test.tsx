@@ -497,6 +497,52 @@ function shellConSesion(
   return renderToStaticMarkup(<HospitalShell sesionInicial={sesion} />);
 }
 
+/* -------------------------------------------------------------------------- */
+/* SPEC 055 / MP07B (A05) — Entrada visible de revisión clínica               */
+/* -------------------------------------------------------------------------- */
+
+describe('A05 — Entrada visible a la revisión clínica de cuidado', () => {
+  const ENLACE = 'href="/hospital/cuidado"';
+
+  it('la envolvente neutral de /hospital la ofrece junto al acceso humano existente', () => {
+    const html = renderToStaticMarkup(<HospitalShell administracionHumana sesionInicial="sin-sesion" />);
+    const contenido = mainDe(html);
+
+    expect(contenido).toContain(ENLACE);
+    expect(contenido).toContain('Revisión clínica de cuidado');
+    expect(contenido).toContain('sin administración institucional');
+    expect(contenido).toContain('Acceso al Hospital');
+    // Sigue siendo el marco neutral: sin módulo, sin datos y con el menú inerte.
+    expect(html).not.toContain('data-hospital-content');
+    expect(navDe(html)).not.toContain('href');
+    for (const demo of DATOS_DEMOSTRATIVOS) {
+      expect(html).not.toContain(demo);
+    }
+  });
+
+  it('Hospital autenticado también la ofrece, fuera del menú y sin montar nada clínico', () => {
+    const html = renderToStaticMarkup(<HospitalShell administracionHumana sesionInicial={SESION_INSTITUCIONAL_FICTICIA} />);
+
+    expect(mainDe(html)).toContain(ENLACE);
+    expect(navDe(html)).not.toContain('href');
+    expect(html).toContain('data-hospital-content="dashboard"');
+    expect(html).not.toContain('cuidado-hospital-titulo');
+  });
+
+  it('el enlace es solo navegación: no lleva identificadores, sesión ni parámetros', () => {
+    const html = renderToStaticMarkup(<HospitalShell administracionHumana sesionInicial="sin-sesion" />);
+    const enlaces = html.match(/href="\/hospital\/cuidado[^"]*"/gu) ?? [];
+
+    expect(enlaces).toEqual([ENLACE]);
+  });
+
+  it('la credencial institucional compartida y el estado de comprobación no la ofrecen', () => {
+    expect(shellConSesion('sin-sesion')).not.toContain(ENLACE);
+    expect(shellConSesion()).not.toContain(ENLACE);
+    expect(renderToStaticMarkup(<HospitalShell administracionHumana />)).not.toContain(ENLACE);
+  });
+});
+
 describe('T-H11 — Contexto de sesión institucional en el shell', () => {
   const html = shellConSesion();
   const envolvente = envolventeDe(html);

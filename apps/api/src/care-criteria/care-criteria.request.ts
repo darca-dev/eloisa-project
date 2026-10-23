@@ -33,6 +33,7 @@ export function parseCriterionInput(body: unknown, now: Date): CriterionInput {
   onlyFields(input, [
     'idempotencyKey',
     'criterionId',
+    'observableDefinitionId',
     'observableCode',
     'comparator',
     'value',
@@ -69,6 +70,7 @@ export function parseCriterionInput(body: unknown, now: Date): CriterionInput {
   return {
     idempotencyKey: requiredUuid(input, 'idempotencyKey'),
     criterionId: optionalUuid(input, 'criterionId'),
+    observableDefinitionId: optionalUuid(input, 'observableDefinitionId'),
     observableCode: requiredCode(input, 'observableCode'),
     comparator: comparator as Comparator,
     value: input['value'],

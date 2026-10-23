@@ -6,6 +6,7 @@ import { type HumanPrincipal } from '../src/identity-access/human-principal';
 
 import {
   crearCuentaHumana,
+  crearPacienteFicticio,
   crearPersona,
   crearSesionHumana,
   identidadValidadoraFicticia,
@@ -256,14 +257,31 @@ export class CareSeed {
     return manager.id;
   }
 
+  /**
+   * Paciente FICTICIO sin cuenta humana (MP07B / A06): solo para sembrar
+   * muchos contextos de paginación sin crear sesiones que no se usan.
+   */
+  public async pacienteFicticio(tenantId: string): Promise<string> {
+    const { patientId, personId } = await crearPacienteFicticio(this.owner, tenantId);
+    this.persons.add(personId);
+    this.patients.add(patientId);
+    return patientId;
+  }
+
+  /**
+   * `id` opcional (MP07B / A06): fija el orden de los candidatos, que el
+   * directorio recorre por id, sin depender del azar de los UUID.
+   */
   public async contexto(
     tenantId: string,
     organizationId: string,
     patientId: string,
     createdByHumanAccountId: string,
+    options: { readonly id?: string } = {},
   ): Promise<string> {
     const context = await this.owner.patientCareContext.create({
       data: {
+        ...(options.id === undefined ? {} : { id: options.id }),
         tenantId,
         organizationId,
         patientId,

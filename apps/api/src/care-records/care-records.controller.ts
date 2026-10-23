@@ -1,8 +1,8 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import { type CareDirectoryPage } from '../care-context/care-context-directory.service';
-import { careRequestContext, decodeCursor, pageLimit, toCareHttpError } from '../care-context/care-request';
+import { careRequestContext, decodeContextCursor, decodeCursor, pageLimit, toCareHttpError } from '../care-context/care-request';
 import { HumanAuthRateLimitGuard } from '../human-auth/human-auth-rate-limit.guard';
 import { HumanSessionGuard, type RequestWithHumanSession } from '../human-auth/human-session.guard';
 import { SameOriginGuard } from '../human-auth/same-origin.guard';
@@ -32,15 +32,15 @@ export class CareRecordsController {
   constructor(@Inject(CareRecordsService) private readonly records: CareRecordsService) {}
 
   @Get('contexts')
-  @ApiOperation({ operationId: 'listCareContexts', summary: 'Contextos de cuidado autorizados para la cuenta' })
+  @ApiOperation({ operationId: 'listCareContexts', summary: 'Página de contextos de cuidado autorizados para la cuenta' })
+  @ApiQuery({ name: 'cursor', required: false, description: 'Cursor opaco devuelto por la página anterior' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Contextos candidatos por página (1 a 50)' })
   public async contexts(
     @Req() request: RequestWithHumanSession,
     @Query('cursor') cursor?: string,
     @Query('limit') limit?: string,
   ): Promise<CareDirectoryPage> {
-    return this.handle(() =>
-      this.records.directory(careRequestContext(request), typeof cursor === 'string' ? cursor : null, pageLimit(limit)),
-    );
+    return this.handle(() => this.records.directory(careRequestContext(request), decodeContextCursor(cursor), pageLimit(limit)));
   }
 
   @Get('contexts/:contextId/observables')
@@ -66,6 +66,8 @@ export class CareRecordsController {
 
   @Get('contexts/:contextId/records')
   @ApiOperation({ operationId: 'listCareRecords', summary: 'Bitácora autorizada del contexto' })
+  @ApiQuery({ name: 'cursor', required: false, description: 'Cursor opaco devuelto por la página anterior' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Entradas por página (1 a 50)' })
   public async listRecords(
     @Req() request: RequestWithHumanSession,
     @Param('contextId') contextId: string,

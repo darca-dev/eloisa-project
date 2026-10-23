@@ -200,6 +200,46 @@ describe('documento OpenAPI', () => {
     }
   });
 
+  /*
+   * SPEC 055 / MP07B (A06). Directorio, cola, bitácora y bandeja son páginas
+   * con cursor opaco OPCIONAL: ninguna exige recorrer desde un valor fabricado
+   * por el cliente y la bandeja declara su filtro de abiertas. Ningún parámetro
+   * nombra tenant, organización, paciente ni cuenta.
+   */
+  it('las listas de cuidado declaran cursor, tamaño y filtro opcionales, y nada de identidad', () => {
+    const esperados: Readonly<Record<string, readonly string[]>> = {
+      '/api/v1/care/contexts': ['cursor', 'limit'],
+      '/api/v1/care/review-queue': ['cursor', 'limit'],
+      '/api/v1/care/contexts/{contextId}/records': ['contextId', 'cursor', 'limit'],
+      '/api/v1/care/contexts/{contextId}/alarms': ['contextId', 'cursor', 'limit', 'state'],
+    };
+
+    for (const [ruta, nombres] of Object.entries(esperados)) {
+      const parametros = (document.paths[ruta]?.get?.parameters ?? []) as readonly {
+        readonly name?: string;
+        readonly in?: string;
+        readonly required?: boolean;
+        readonly schema?: { readonly enum?: readonly string[] };
+      }[];
+
+      expect(parametros.map((parametro) => parametro.name).sort()).toStrictEqual([...nombres].sort());
+      for (const parametro of parametros.filter((item) => item.in === 'query')) {
+        expect(parametro.required ?? false).toBe(false);
+      }
+      for (const prohibido of ['tenantId', 'organizationId', 'patientId', 'humanAccountId']) {
+        expect(parametros.map((parametro) => parametro.name)).not.toContain(prohibido);
+      }
+    }
+
+    const estado = (
+      (document.paths['/api/v1/care/contexts/{contextId}/alarms']?.get?.parameters ?? []) as readonly {
+        readonly name?: string;
+        readonly schema?: { readonly enum?: readonly string[] };
+      }[]
+    ).find((parametro) => parametro.name === 'state');
+    expect(estado?.schema?.enum).toStrictEqual(['all', 'open']);
+  });
+
   it('el contrato municipal no declara ningún campo individual', () => {
     const municipales = JSON.stringify([
       document.components?.schemas?.['PopulationSummaryDto'],

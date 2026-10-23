@@ -52,10 +52,20 @@ export const TEXTO_ESTADO_GENERAL: Readonly<Record<EstadoGeneral, string>> = {
     'Todavía no tiene ningún espacio de cuidado autorizado. La institución debe registrarlo y concederle acceso.',
 };
 
-export function VistaEstadoGeneral({ estado, onReintentar }: { readonly estado: EstadoGeneral; readonly onReintentar?: () => void }): ReactNode {
+export function VistaEstadoGeneral({
+  estado,
+  onReintentar,
+  accesoSinSesion,
+}: {
+  readonly estado: EstadoGeneral;
+  readonly onReintentar?: () => void;
+  /** Entrada humana existente que la página ofrece cuando no hay sesión. */
+  readonly accesoSinSesion?: ReactNode;
+}): ReactNode {
   return (
     <div className={estado === 'indisponible' || estado === 'denegado' ? styles.alertaError : styles.aviso} role="status">
       <p>{TEXTO_ESTADO_GENERAL[estado]}</p>
+      {estado === 'sin-sesion' && accesoSinSesion !== undefined ? accesoSinSesion : null}
       {estado === 'indisponible' && onReintentar !== undefined ? (
         <button className={styles.secundario} type="button" onClick={onReintentar}>
           Volver a intentar
@@ -66,6 +76,60 @@ export function VistaEstadoGeneral({ estado, onReintentar }: { readonly estado: 
 }
 
 /* -------------------------------------------------------------------------- */
+/* Paginación (MP07B / A06)                                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Estado de una lista paginada. Distingue lo CARGADO de lo que queda: «hay
+ * más» nunca se presenta como total, y un fallo de página no se presenta como
+ * fin de la lista ni borra lo ya cargado.
+ */
+export function ControlPagina({
+  cargados,
+  nombre,
+  hayMas,
+  cargando,
+  error,
+  textoBoton,
+  onMas,
+}: {
+  readonly cargados: number;
+  /** Sustantivo en plural: «espacios», «entradas», «solicitudes». */
+  readonly nombre: string;
+  readonly hayMas: boolean;
+  readonly cargando: boolean;
+  readonly error: string | null;
+  readonly textoBoton: string;
+  readonly onMas: () => void;
+}): ReactNode {
+  return (
+    <div className={styles.paginacion}>
+      <p className={styles.ayuda} aria-live="polite">
+        {cargando
+          ? `Cargando más ${nombre}…`
+          : hayMas
+            ? `${cargados} ${nombre} cargados. Hay más por cargar: esto no es el total.`
+            : `${cargados} ${nombre} cargados. No hay más.`}
+      </p>
+      {error === null ? null : (
+        <p className={styles.alertaError} role="alert">
+          {error}
+        </p>
+      )}
+      {hayMas ? (
+        <button className={styles.secundario} type="button" disabled={cargando} onClick={onMas}>
+          {textoBoton}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+/** Mensaje de una página que no se pudo cargar. No es el fin de la lista. */
+export const TEXTO_ERROR_PAGINA =
+  'No se pudo cargar la página siguiente. Lo ya cargado se conserva y puede volver a intentarlo; esto no significa que no haya más.';
+
+/* -------------------------------------------------------------------------- */
 /* Selector de contexto                                                        */
 /* -------------------------------------------------------------------------- */
 
@@ -73,14 +137,21 @@ export function SelectorContexto({
   contextos,
   seleccionado,
   onSeleccionar,
+  definitivo = true,
 }: {
   readonly contextos: readonly ContextoCuidadoDto[];
   readonly seleccionado: string | null;
   readonly onSeleccionar: (contextId: string) => void;
+  /** `false` mientras quedan páginas: un único espacio cargado no es «el único». */
+  readonly definitivo?: boolean;
 }): ReactNode {
   const id = useId();
 
-  if (contextos.length === 1) {
+  if (contextos.length === 0) {
+    return null;
+  }
+
+  if (contextos.length === 1 && definitivo) {
     const unico = contextos[0];
     return unico === undefined ? null : (
       <p className={styles.contextoUnico}>
@@ -308,7 +379,7 @@ export function ListaRegistros({
               ))}
             </ul>
           ) : null}
-          {registro.authoredByMe && onEnmendar !== undefined ? <FormularioEnmienda registro={registro} onEnmendar={onEnmendar} /> : null}
+          {registro.authoredByMe && onEnmendar !== undefined ? <FormularioEnmienda key={registro.amendments.length} registro={registro} onEnmendar={onEnmendar} /> : null}
         </li>
       ))}
     </ol>
@@ -440,6 +511,7 @@ export function BandejaAlarmas({
   alarmas,
   puedeRevisar,
   ocupado,
+  soloAbiertas = false,
   onRevisar,
   onInformarResolucion,
   renderDetalle,
@@ -448,6 +520,8 @@ export function BandejaAlarmas({
   readonly alarmas: readonly AlarmaDto[];
   readonly puedeRevisar: boolean;
   readonly ocupado: boolean;
+  /** La lista está filtrada a las abiertas: el vacío lo dice así. */
+  readonly soloAbiertas?: boolean;
   readonly onRevisar?: (intencion: IntencionRevisor) => void;
   readonly onInformarResolucion?: (alarma: AlarmaDto) => void;
   /** Detalle ya cargado (historia y evidencia), si la persona lo pidió. */
@@ -455,7 +529,15 @@ export function BandejaAlarmas({
   readonly onVerDetalle?: (alarma: AlarmaDto) => void;
 }): ReactNode {
   if (alarmas.length === 0) {
-    return <p className={styles.ayuda}>{puedeRevisar ? 'No hay solicitudes en este espacio.' : 'Usted no ha enviado solicitudes en este espacio.'}</p>;
+    return (
+      <p className={styles.ayuda}>
+        {soloAbiertas
+          ? 'No hay solicitudes abiertas en este espacio.'
+          : puedeRevisar
+            ? 'No hay solicitudes en este espacio.'
+            : 'Usted no ha enviado solicitudes en este espacio.'}
+      </p>
+    );
   }
 
   return (

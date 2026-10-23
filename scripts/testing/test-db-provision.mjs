@@ -130,6 +130,7 @@ export const REQUIRED_MIGRATIONS = Object.freeze([
   '20261021130000_care_records_manual_alarms',
   '20261021140000_care_alarm_criteria',
   '20261021150000_care_administration',
+  '20261022120000_care_alarm_audit_corrections',
 ]);
 
 /**

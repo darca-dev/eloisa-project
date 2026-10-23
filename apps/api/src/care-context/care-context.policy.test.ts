@@ -4,7 +4,7 @@ import { type PrismaTransaction } from '../database/prisma-transaction';
 import { type HumanPrincipal } from '../identity-access/human-principal';
 import { type IdentityAccessService } from '../identity-access/identity-access.service';
 
-import { type CareContextPermission } from './care-context.contract';
+import { CARE_PERMISSIONS, type CareContextPermission, PATIENT_SELF_PERMISSIONS } from './care-context.contract';
 import { CareContextPolicy } from './care-context.policy';
 
 const PRINCIPAL: HumanPrincipal = {
@@ -63,6 +63,8 @@ interface SpyOptions {
 function spy(options: SpyOptions = {}) {
   const operations: string[] = [];
   const sql: string[] = [];
+  const accessRequestWheres: Record<string, unknown>[] = [];
+  const parameters: unknown[][] = [];
 
   const defaults: Record<Table, readonly Record<string, unknown>[]> = {
     human_account: [{ authenticationNotBefore: null }],
@@ -92,7 +94,7 @@ function spy(options: SpyOptions = {}) {
   };
 
   const tx = {
-    $queryRaw: async (strings: TemplateStringsArray) => {
+    $queryRaw: async (strings: TemplateStringsArray, ...values: unknown[]) => {
       const text = strings.join('?');
       const table = TABLES.find((name) => text.includes(`FROM "${name}"`));
       if (table === undefined) {
@@ -100,11 +102,20 @@ function spy(options: SpyOptions = {}) {
       }
       operations.push(`${table}${/FOR SHARE\s*$/u.test(text) ? ':share' : ''}`);
       sql.push(text);
-      return options.rows?.[table] ?? defaults[table];
+      parameters.push(values);
+      const rows = options.rows?.[table] ?? defaults[table];
+      if (!text.includes('"permission"::text = ANY(')) {
+        return rows;
+      }
+      // La concesión ficticia existe para cada acción pedida, con esa acción.
+      const permissions =
+        values.find((value): value is string[] => Array.isArray(value) && value.every((item) => (CARE_PERMISSIONS as readonly unknown[]).includes(item))) ?? [];
+      return permissions.flatMap((permission) => rows.map((row) => ({ ...row, permission })));
     },
     accessRequest: {
-      findFirst: async () => {
+      findFirst: async (args: { readonly where: Record<string, unknown> }) => {
         operations.push('access_request:read');
+        accessRequestWheres.push(args.where);
         return options.experience === false ? null : { id: 'aprobada' };
       },
     },
@@ -122,7 +133,7 @@ function spy(options: SpyOptions = {}) {
     },
   } as unknown as PrismaTransaction;
 
-  return { tx, operations, sql };
+  return { tx, operations, sql, accessRequestWheres, parameters };
 }
 
 function policy(ownPatient: string | null = null, limits: { idleSeconds: number } | null = { idleSeconds: 3_600 }) {
@@ -180,14 +191,15 @@ describe('CareContextPolicy — orden de bloqueo', () => {
   });
 
   it('las consultas de identidad fijan cuenta, persona, tenant, sesión y vínculo exactos', async () => {
-    const { sql } = await decide({}, 'MANAGE_RULES');
+    const { sql, parameters } = await decide({}, 'MANAGE_RULES');
 
     expect(sql[0]).toMatch(/"personId" = \?::uuid/u);
     expect(sql[0]).toContain('NOT "passwordRecoveryBlocked"');
     expect(sql[1]).toMatch(/"externalAuthIdentityId" = \?::uuid/u);
     expect(sql[1]).toContain('"revokedAt" IS NULL');
     expect(sql[2]).toContain('"status" = \'ACTIVE\'');
-    expect(sql[5]).toMatch(/"permission"::text = \?/u);
+    expect(sql[5]).toMatch(/"permission"::text = ANY\(\?::text\[\]\)/u);
+    expect(parameters[5]).toContainEqual(['MANAGE_RULES']);
     expect(sql[5]).toMatch(/"purpose"::text = \?/u);
     expect(sql[5]).toContain('ORDER BY "id"');
   });
@@ -198,6 +210,92 @@ describe('CareContextPolicy — orden de bloqueo', () => {
     expect(decision.kind).toBe('granted');
     expect(decision.kind === 'granted' ? decision.authorized.actorKind : null).toBe('PATIENT');
     expect(operations).not.toContain('care_authorization:share');
+  });
+});
+
+describe('CareContextPolicy — varias acciones de un contexto (MP07B / B06)', () => {
+  async function decideMany(options: SpyOptions, principal: HumanPrincipal = PRINCIPAL, instance = policy()) {
+    const harness = spy(options);
+    const granted = await instance.decideManyWithin(harness.tx, principal, RESOURCE, CARE_PERMISSIONS, NOW);
+
+    return { granted, ...harness };
+  }
+
+  /** Lo que concede `decideWithin` llamado acción por acción, en el orden de CARE_PERMISSIONS. */
+  async function oneByOne(options: SpyOptions, principal: HumanPrincipal = PRINCIPAL, instance = policy()) {
+    const granted: [CareContextPermission, unknown][] = [];
+    for (const permission of CARE_PERMISSIONS) {
+      const { decision } = await decide(options, permission, principal, instance);
+      if (decision.kind === 'granted') {
+        granted.push([permission, decision.authorized]);
+      }
+    }
+    return granted;
+  }
+
+  const ESCENARIOS: readonly [string, SpyOptions, HumanPrincipal, CareContextPermission[] | null, string | null][] = [
+    ['profesional con competencia', {}, PRINCIPAL, null, null],
+    ['cuidador', { grant: { actorKind: 'CAREGIVER', caregiverRelationshipId: RELATIONSHIP } }, PRINCIPAL, null, null],
+    ['revisor institucional', { grant: { actorKind: 'HOSPITAL_REVIEWER', competenceAttestationId: COMPETENCE } }, PRINCIPAL, null, null],
+    ['revisor con competencia revocada', { grant: { actorKind: 'HOSPITAL_REVIEWER', competenceAttestationId: COMPETENCE }, rows: { clinical_competence_attestation: [] } }, PRINCIPAL, [], null],
+    ['emisor que no era manager', { manager: false }, PRINCIPAL, [], null],
+    ['sin concesión', { grant: null }, PRINCIPAL, [], null],
+    ['paciente propio sin concesión', { grant: null }, PRINCIPAL, [...PATIENT_SELF_PERMISSIONS], PATIENT],
+    ['sesión revocada', { rows: { human_session: [] } }, PRINCIPAL, [], null],
+    ['organización municipal', { rows: { organization: [{ id: ORG, kind: 'MUNICIPALITY', status: 'ACTIVE' }] } }, PRINCIPAL, [], null],
+    ['contexto inactivo', { rows: { patient_care_context: [] } }, PRINCIPAL, [], null],
+    ['principal sin vínculo', {}, { ...PRINCIPAL, externalAuthIdentityId: undefined }, [], null],
+  ];
+
+  for (const [nombre, options, principal, esperadas, propio] of ESCENARIOS) {
+    it(`concede exactamente lo mismo que decidir acción por acción: ${nombre}`, async () => {
+      const { granted } = await decideMany(options, principal, policy(propio));
+      const referencia = await oneByOne(options, principal, policy(propio));
+
+      expect([...granted.entries()]).toEqual(referencia);
+      if (esperadas !== null) {
+        expect([...granted.keys()]).toEqual(esperadas);
+      }
+    });
+  }
+
+  it('comprueba sesión, organización y contexto UNA vez y bloquea las concesiones de todas las acciones juntas, antes de sus fuentes', async () => {
+    const { granted, operations, sql, parameters } = await decideMany({});
+
+    // La concesión ficticia existe para cada acción: todas se conceden.
+    expect([...granted.keys()]).toEqual([...CARE_PERMISSIONS]);
+    const share = operations.filter((operation) => operation.endsWith(':share'));
+    for (const unica of ['human_session:share', 'external_auth_identity:share', 'organization:share', 'patient_care_context:share', 'care_authorization:share']) {
+      expect(share.filter((operation) => operation === unica)).toHaveLength(1);
+    }
+    // Orden MP01: cuenta → sesión → vínculo → organización → contexto → concesiones → fuentes.
+    expect(share.slice(0, 6)).toEqual([
+      'human_account:share',
+      'human_session:share',
+      'external_auth_identity:share',
+      'organization:share',
+      'patient_care_context:share',
+      'care_authorization:share',
+    ]);
+    const indiceConcesiones = sql.findIndex((text) => text.includes('FROM "care_authorization"'));
+    expect(parameters[indiceConcesiones]).toContainEqual([...CARE_PERMISSIONS]);
+    expect(sql[indiceConcesiones]).toContain('ORDER BY "id"');
+  });
+
+  it('el paciente propio no bloquea concesiones de sus acciones propias; solo de las demás', async () => {
+    const { operations, sql, parameters } = await decideMany({ grant: null }, PRINCIPAL, policy(PATIENT));
+    const indiceConcesiones = sql.findIndex((text) => text.includes('FROM "care_authorization"'));
+
+    expect(operations.filter((operation) => operation === 'care_authorization:share')).toHaveLength(1);
+    expect(parameters[indiceConcesiones]).toContainEqual(CARE_PERMISSIONS.filter((permission) => !PATIENT_SELF_PERMISSIONS.includes(permission)));
+  });
+
+  it('sin acciones pedidas no consulta nada', async () => {
+    const harness = spy({});
+    const granted = await policy().decideManyWithin(harness.tx, PRINCIPAL, RESOURCE, [], NOW);
+
+    expect(granted.size).toBe(0);
+    expect(harness.operations).toEqual([]);
   });
 });
 
@@ -338,5 +436,192 @@ describe('CareContextPolicy — denegaciones', () => {
     expect((await decide({ grant, experience: false }, 'VIEW_RECORDS')).decision.kind).toBe('granted');
     expect((await decide({ grant, rows: { clinical_competence_attestation: [] } }, 'REVIEW_ALARMS')).decision.kind).toBe('denied');
     expect((await decide({ grant }, 'CONTRIBUTE_RECORDS')).decision.kind).toBe('denied');
+  });
+});
+
+/* ======================================================================== */
+/* MP07A / A09 — asignación: prebloqueo conjunto y elegibilidad sin sesión   */
+/* ======================================================================== */
+
+const RECIPIENT = '00000000-0000-4000-8000-0000000000b2';
+const RECIPIENT_PERSON = '00000000-0000-4000-8000-0000000000b3';
+const RECIPIENT_BINDING = '00000000-0000-4000-8000-0000000000b5';
+
+const AUTHORIZED_ACTOR = {
+  tenantId: PRINCIPAL.tenantId,
+  organizationId: ORG,
+  contextId: CONTEXT,
+  patientId: PATIENT,
+  humanAccountId: PRINCIPAL.humanAccountId,
+  actorKind: 'HOSPITAL_REVIEWER' as const,
+  permission: 'REVIEW_ALARMS' as const,
+  careAuthorizationId: GRANT,
+  caregiverRelationshipId: null,
+  careAssignmentId: null,
+  competenceAttestationId: COMPETENCE,
+};
+
+const PINNED = {
+  bindingIds: [PRINCIPAL.externalAuthIdentityId ?? '', RECIPIENT_BINDING],
+  grantIds: [GRANT],
+  assignmentIds: [ASSIGNMENT],
+  profileIds: [PROFESSIONAL],
+  affiliationIds: ['afiliacion'],
+  competenceIds: [COMPETENCE],
+};
+
+const RECIPIENT_ACCOUNT = { human_account: [{ personId: RECIPIENT_PERSON }] };
+
+describe('CareContextPolicy — prebloqueo de una asignación (A09)', () => {
+  it('las cuentas {actor, destinatario} se bloquean por id, deduplicadas y ordenadas, sin filtrar estado antes del bloqueo', async () => {
+    const harness = spy();
+
+    await policy().prelockAccountsWithin(harness.tx, PRINCIPAL.tenantId, [RECIPIENT, PRINCIPAL.humanAccountId, RECIPIENT]);
+
+    expect(harness.operations).toEqual(['human_account:share']);
+    expect(harness.sql[0]).not.toContain('"status"');
+    expect(harness.sql[0]).toContain('ORDER BY "id"');
+    expect(harness.parameters[0]).toContainEqual([PRINCIPAL.humanAccountId, RECIPIENT]);
+  });
+
+  it('el resto de fuentes de ambos se bloquea por clase en el orden contractual', async () => {
+    const harness = spy({ rows: { care_assignment: [{ id: ASSIGNMENT, professionalId: PROFESSIONAL }] } });
+
+    const pinned = await policy().prelockReviewSourcesWithin(harness.tx, PRINCIPAL, RESOURCE, RECIPIENT);
+
+    expect(harness.operations).toEqual([
+      'human_session:share',
+      'external_auth_identity:share',
+      'organization:share',
+      'patient_care_context:share',
+      'care_authorization:share',
+      'care_assignment:share',
+      'professional_profile:share',
+      'professional_affiliation:share',
+      'clinical_competence_attestation:share',
+    ]);
+    // Las concesiones REVIEW_ALARMS de AMBAS cuentas, sin filtrar estado: una
+    // revocación concurrente espera o ya se ve después del bloqueo.
+    expect(harness.sql[4]).toContain('"permission" = \'REVIEW_ALARMS\'');
+    expect(harness.sql[4]).not.toContain('"status"');
+    expect(harness.parameters[4]).toContainEqual([PRINCIPAL.humanAccountId, RECIPIENT]);
+    expect(pinned).toEqual({
+      bindingIds: [PRINCIPAL.externalAuthIdentityId],
+      grantIds: [GRANT],
+      assignmentIds: [ASSIGNMENT],
+      profileIds: [PROFESSIONAL],
+      affiliationIds: ['afiliacion'],
+      competenceIds: [COMPETENCE],
+    });
+  });
+
+  it('con fuentes prebloqueadas, la decisión del actor no sale de ellas: un vínculo no prebloqueado deniega', async () => {
+    const harness = spy();
+    const decision = await policy().decideWithin(harness.tx, PRINCIPAL, RESOURCE, 'REVIEW_ALARMS', NOW, { ...PINNED, bindingIds: [] });
+
+    expect(decision.kind).toBe('denied');
+    expect(harness.operations).not.toContain('external_auth_identity:share');
+    expect(harness.operations).not.toContain('care_authorization:share');
+  });
+
+  it('con fuentes prebloqueadas, las concesiones del actor se restringen a las ids fijadas', async () => {
+    const grant = { actorKind: 'HOSPITAL_REVIEWER', competenceAttestationId: COMPETENCE };
+    const harness = spy({ grant });
+    const decision = await policy().decideWithin(harness.tx, PRINCIPAL, RESOURCE, 'REVIEW_ALARMS', NOW, PINNED);
+
+    expect(decision.kind).toBe('granted');
+    const concesiones = harness.parameters[harness.operations.indexOf('care_authorization:share')] ?? [];
+    expect(JSON.stringify(concesiones)).toContain(GRANT);
+  });
+});
+
+describe('CareContextPolicy — elegibilidad del destinatario (A09)', () => {
+  const reviewerGrant = { actorKind: 'HOSPITAL_REVIEWER', competenceAttestationId: COMPETENCE };
+
+  async function eligible(options: SpyOptions, instance = policy()) {
+    const harness = spy({ ...options, rows: { ...RECIPIENT_ACCOUNT, external_auth_identity: [{ id: RECIPIENT_BINDING }], ...options.rows } });
+    const result = await instance.reviewRecipientHoldsWithin(harness.tx, AUTHORIZED_ACTOR, RECIPIENT, PINNED, NOW);
+    return { result, ...harness };
+  }
+
+  it('revisor hospitalario: cuenta, vínculo, concesión con emisor manager y competencia; SIN sesión ni experiencia de solicitante', async () => {
+    const { result, operations } = await eligible({ grant: reviewerGrant, experience: false });
+
+    expect(result).toBe(true);
+    expect(operations).not.toContain('human_session:share');
+    expect(operations).not.toContain('access_request:read');
+    expect(operations.filter((operation) => operation.endsWith(':share'))).toEqual([
+      'human_account:share',
+      'external_auth_identity:share',
+      'care_authorization:share',
+      'clinical_competence_attestation:share',
+    ]);
+  });
+
+  it('la consulta de cuenta exige ACTIVE y no bloqueada; la de vínculos solo los prebloqueados ACTIVE', async () => {
+    const { sql } = await eligible({ grant: reviewerGrant });
+
+    expect(sql[0]).toContain('"status" = \'ACTIVE\'');
+    expect(sql[0]).toContain('NOT "passwordRecoveryBlocked"');
+    expect(sql[1]).toContain('"status" = \'ACTIVE\'');
+    expect(sql[1]).toContain('ANY(');
+  });
+
+  it.each([
+    ['cuenta deshabilitada o con recuperación bloqueada', { human_account: [] }],
+    ['sin vínculo ACTIVE', { external_auth_identity: [] }],
+    ['concesión revocada, vencida o de otro contexto', { care_authorization: [] }],
+    ['competencia revocada, vencida o propia', { clinical_competence_attestation: [] }],
+  ] as const)('revisor: %s → no elegible', async (_caso, rows) => {
+    expect((await eligible({ grant: reviewerGrant, rows })).result).toBe(false);
+  });
+
+  it('una concesión que el propio destinatario se emitió no lo habilita para revisar', async () => {
+    const autoemitida = {
+      care_authorization: [
+        {
+          id: GRANT,
+          actorKind: 'HOSPITAL_REVIEWER',
+          caregiverRelationshipId: null,
+          careAssignmentId: null,
+          competenceAttestationId: COMPETENCE,
+          grantedByHumanAccountId: RECIPIENT,
+          createdAt: new Date(NOW.getTime() - 86_400_000),
+        },
+      ],
+    };
+
+    expect((await eligible({ rows: autoemitida })).result).toBe(false);
+  });
+
+  it('una concesión emitida por quien no era manager vigente no habilita', async () => {
+    expect((await eligible({ grant: reviewerGrant, manager: false })).result).toBe(false);
+  });
+
+  it('profesional: exige el vínculo que coincide EXACTAMENTE con su FIELD_PROFESSIONAL aprobada, asignación, perfil, afiliación y competencia', async () => {
+    const { result, accessRequestWheres } = await eligible({});
+
+    expect(result).toBe(true);
+    expect(accessRequestWheres[0]).toMatchObject({
+      humanAccountId: RECIPIENT,
+      personId: RECIPIENT_PERSON,
+      externalAuthIdentityId: RECIPIENT_BINDING,
+      requestedProfile: 'FIELD_PROFESSIONAL',
+      status: 'APPROVED',
+    });
+  });
+
+  it.each([
+    ['sin experiencia FIELD_PROFESSIONAL aprobada exacta', { experience: false }],
+    ['asignación terminada o de otro paciente', { rows: { care_assignment: [] } }],
+    ['perfil inactivo o de otra persona', { rows: { professional_profile: [] } }],
+    ['sin afiliación vigente', { rows: { professional_affiliation: [] } }],
+    ['sin competencia vigente', { rows: { clinical_competence_attestation: [] } }],
+  ] as const)('profesional: %s → no elegible', async (_caso, options) => {
+    expect((await eligible(options)).result).toBe(false);
+  });
+
+  it('sin autenticación humana aprovisionada nadie es elegible', async () => {
+    expect((await eligible({ grant: reviewerGrant }, policy(null, null))).result).toBe(false);
   });
 });

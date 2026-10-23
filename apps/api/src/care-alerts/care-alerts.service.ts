@@ -4,7 +4,13 @@ import { CareContextAuditService } from '../care-context/care-context-audit.serv
 import { type AuthorizedCareContext } from '../care-context/care-context.contract';
 import { CareContextService } from '../care-context/care-context.service';
 import { CareConflictError, findReceipt, lockContextForWrite, payloadHash, writeReceipt } from '../care-context/care-mutation';
-import { CareNotFoundError, CareValidationError, encodeCursor } from '../care-context/care-request';
+import {
+  type AlarmStateFilter,
+  CareNotFoundError,
+  CareValidationError,
+  encodeCursor,
+  invalidCursorError,
+} from '../care-context/care-request';
 import { type PrismaTransaction } from '../database/prisma-transaction';
 import { type Prisma } from '../generated/prisma/client';
 import { type HumanPrincipal } from '../identity-access/human-principal';
@@ -12,6 +18,7 @@ import { type HumanPrincipal } from '../identity-access/human-principal';
 import { applyTransition } from './care-alarm-transitions';
 import {
   type CareAlarmDetailView,
+  type CareAlarmEvidenceView,
   type CareAlarmPage,
   type CareAlarmView,
   MANUAL_RECEIPT_MESSAGE,
@@ -56,12 +63,18 @@ export class CareAlertsService {
     @Inject(CareContextAuditService) private readonly audit: CareContextAuditService,
   ) {}
 
-  /** Revisor: todas las del contexto. Solicitante: solo las que inició. */
+  /**
+   * Revisor: todas las del contexto. Solicitante: solo las que inició. Con
+   * `open` (MP07B / A06) el filtro se aplica en CADA página, de modo que las
+   * cerradas no ocupan el lugar de las pendientes; el orden (creación, id) es
+   * total y el cursor continúa exactamente donde terminó la página.
+   */
   public list(
     request: Request,
     contextId: string,
-    cursor: { readonly at: Date; readonly id: string } | null,
+    cursor: { readonly id: string } | null,
     limit: number,
+    state: AlarmStateFilter = 'all',
   ): Promise<CareAlarmPage> {
     return this.care.withAuthorizedOwnContext(
       request.principal,
@@ -70,23 +83,45 @@ export class CareAlertsService {
       request.correlationId,
       request.now,
       async (tx, authorized) => {
-        const rows = await tx.careAlarm.findMany({
-          where: {
-            ...scopeOf(authorized),
-            ...visibleTo(authorized),
-            ...(cursor === null
-              ? {}
-              : { OR: [{ createdAt: { lt: cursor.at } }, { createdAt: cursor.at, id: { lt: cursor.id } }] }),
-          },
-          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-          take: limit + 1,
-        });
-        const page = rows.slice(0, limit);
-        const last = page.at(-1);
+        const initiator = authorized.permission === 'REVIEW_ALARMS' ? null : authorized.humanAccountId;
+
+        // El cursor es una alarma que ESTA cuenta ve en ESTE contexto. No se le
+        // aplica el filtro de estado: pudo cerrarse entre una página y otra.
+        if (
+          cursor !== null &&
+          (await tx.careAlarm.findFirst({ where: { ...scopeOf(authorized), ...visibleTo(authorized), id: cursor.id }, select: { id: true } })) === null
+        ) {
+          throw invalidCursorError();
+        }
+
+        // Orden total (creación, id) y límite comparado en la base con
+        // precisión de microsegundos: nada del mismo milisegundo se salta.
+        const ids = await tx.$queryRaw<{ readonly id: string }[]>`
+          SELECT a."id"
+            FROM "care_alarm" a
+           WHERE a."tenantId" = ${authorized.tenantId}::uuid
+             AND a."organizationId" = ${authorized.organizationId}::uuid
+             AND a."contextId" = ${authorized.contextId}::uuid
+             AND a."patientId" = ${authorized.patientId}::uuid
+             AND (${initiator}::uuid IS NULL OR a."initiatedByHumanAccountId" = ${initiator}::uuid)
+             AND (${state === 'open'}::boolean = false OR a."state" <> 'CERRADA')
+             AND (${cursor?.id ?? null}::uuid IS NULL
+                  OR (a."createdAt", a."id") < (SELECT b."createdAt", b."id"
+                                                  FROM "care_alarm" b
+                                                 WHERE b."id" = ${cursor?.id ?? null}::uuid
+                                                   AND b."contextId" = ${authorized.contextId}::uuid))
+           ORDER BY a."createdAt" DESC, a."id" DESC
+           LIMIT ${limit + 1}`;
+
+        const pageIds = ids.slice(0, limit).map((row) => row.id);
+        const rows = await tx.careAlarm.findMany({ where: { ...scopeOf(authorized), ...visibleTo(authorized), id: { in: pageIds } } });
+        const byId = new Map(rows.map((row) => [row.id, row]));
+        const page = pageIds.map((id) => byId.get(id)).filter((row): row is (typeof rows)[number] => row !== undefined);
+        const last = pageIds.at(-1);
 
         return {
           items: page.map((row) => alarmView(row, authorized.humanAccountId)),
-          nextCursor: rows.length > limit && last !== undefined ? encodeCursor(last.createdAt, last.id) : null,
+          nextCursor: ids.length > limit && last !== undefined ? encodeCursor(last) : null,
           canReview: authorized.permission === 'REVIEW_ALARMS',
         };
       },
@@ -166,6 +201,11 @@ export class CareAlertsService {
   /**
    * Transición del revisor con CAS sobre `version`. Una carrera devuelve
    * conflicto; estado, historia y auditoría cambian en la misma transacción.
+   *
+   * ASIGNAR (MP07A / A09): el destinatario sale de la sesión (`self`) o es una
+   * referencia que el servidor verifica por completo; nunca es autoridad. Su
+   * elegibilidad se decide con sus fuentes bloqueadas junto con las del actor,
+   * antes del bloqueo de negocio del contexto.
    */
   public transition(
     request: Request,
@@ -173,98 +213,101 @@ export class CareAlertsService {
     alarmId: string,
     input: TransitionInput,
   ): Promise<CareAlarmDetailView> {
-    return this.care.withAuthorizedOwnContext(
-      request.principal,
-      contextId,
-      ['REVIEW_ALARMS'],
-      request.correlationId,
-      request.now,
-      async (tx, authorized) => {
-        await lockContextForWrite(tx, authorized);
-        const alarm = await tx.careAlarm.findFirst({ where: { ...scopeOf(authorized), id: alarmId } });
+    const assignee =
+      input.assignee === undefined
+        ? undefined
+        : input.assignee === 'self'
+          ? request.principal.humanAccountId
+          : input.assignee;
 
-        if (alarm === null) {
-          throw new CareNotFoundError();
-        }
+    const work = async (
+      tx: PrismaTransaction,
+      authorized: AuthorizedCareContext,
+      recipientEligible: boolean | null,
+    ): Promise<CareAlarmDetailView> => {
+      if (assignee !== undefined && recipientEligible !== true) {
+        throw new CareValidationError('assignee', 'Esa persona no puede revisar alarmas en este contexto.');
+      }
 
-        if (alarm.version !== input.expectedVersion) {
-          throw new CareConflictError('VERSION_CONFLICT');
-        }
+      await lockContextForWrite(tx, authorized);
+      const alarm = await tx.careAlarm.findFirst({ where: { ...scopeOf(authorized), id: alarmId } });
 
-        const assignee =
-          input.assignee === undefined
-            ? undefined
-            : input.assignee === 'self'
-              ? authorized.humanAccountId
-              : input.assignee;
+      if (alarm === null) {
+        throw new CareNotFoundError();
+      }
 
-        if (assignee !== undefined && !(await reviewerHolds(tx, authorized, assignee, request.now))) {
-          throw new CareValidationError('assignee', 'Esa persona no puede revisar alarmas en este contexto.');
-        }
+      if (alarm.version !== input.expectedVersion) {
+        throw new CareConflictError('VERSION_CONFLICT');
+      }
 
-        const outcome = applyTransition(
-          { state: alarm.state, severity: alarm.severity, assignedReviewerHumanAccountId: alarm.assignedReviewerHumanAccountId },
-          {
-            action: input.action,
-            reason: input.reason,
-            ...(input.severity === undefined ? {} : { severity: input.severity }),
-            ...(assignee === undefined ? {} : { assigneeHumanAccountId: assignee }),
-          },
-        );
+      const outcome = applyTransition(
+        { state: alarm.state, severity: alarm.severity, assignedReviewerHumanAccountId: alarm.assignedReviewerHumanAccountId },
+        {
+          action: input.action,
+          reason: input.reason,
+          ...(input.severity === undefined ? {} : { severity: input.severity }),
+          ...(assignee === undefined ? {} : { assigneeHumanAccountId: assignee }),
+        },
+      );
 
-        if (!outcome.ok) {
-          throw new CareValidationError(outcome.reason === 'STATE' ? 'action' : 'reason', TRANSITION_MESSAGES[outcome.reason]);
-        }
+      if (!outcome.ok) {
+        throw new CareValidationError(outcome.reason === 'STATE' ? 'action' : 'reason', TRANSITION_MESSAGES[outcome.reason]);
+      }
 
-        const updated = await tx.careAlarm.updateMany({
-          where: { ...scopeOf(authorized), id: alarm.id, version: input.expectedVersion },
-          data: {
-            state: outcome.next.state,
-            severity: outcome.next.severity,
-            assignedReviewerHumanAccountId: outcome.next.assignedReviewerHumanAccountId,
-            version: { increment: 1 },
-            ...(outcome.resolvedNow ? { resolvedAt: request.now } : {}),
-            ...(outcome.closedNow ? { closedAt: request.now } : {}),
-            ...(input.action === 'REOPEN' ? { closedAt: null } : {}),
-          },
-        });
+      const updated = await tx.careAlarm.updateMany({
+        where: { ...scopeOf(authorized), id: alarm.id, version: input.expectedVersion },
+        data: {
+          state: outcome.next.state,
+          severity: outcome.next.severity,
+          assignedReviewerHumanAccountId: outcome.next.assignedReviewerHumanAccountId,
+          version: { increment: 1 },
+          ...(outcome.resolvedNow ? { resolvedAt: request.now } : {}),
+          ...(outcome.closedNow ? { closedAt: request.now } : {}),
+          ...(input.action === 'REOPEN' ? { closedAt: null } : {}),
+        },
+      });
 
-        if (updated.count !== 1) {
-          throw new CareConflictError('VERSION_CONFLICT');
-        }
+      if (updated.count !== 1) {
+        throw new CareConflictError('VERSION_CONFLICT');
+      }
 
-        const transition = await tx.careAlarmTransition.create({
-          data: {
-            ...scopeOf(authorized),
-            alarmId: alarm.id,
-            actorHumanAccountId: authorized.humanAccountId,
-            action: input.action,
-            stateBefore: alarm.state,
-            stateAfter: outcome.next.state,
-            severityBefore: alarm.severity,
-            severityAfter: outcome.next.severity,
-            assignedBefore: alarm.assignedReviewerHumanAccountId,
-            assignedAfter: outcome.next.assignedReviewerHumanAccountId,
-            reason: input.reason,
-          },
-          select: { id: true },
-        });
+      const transition = await tx.careAlarmTransition.create({
+        data: {
+          ...scopeOf(authorized),
+          alarmId: alarm.id,
+          actorHumanAccountId: authorized.humanAccountId,
+          action: input.action,
+          stateBefore: alarm.state,
+          stateAfter: outcome.next.state,
+          severityBefore: alarm.severity,
+          severityAfter: outcome.next.severity,
+          assignedBefore: alarm.assignedReviewerHumanAccountId,
+          assignedAfter: outcome.next.assignedReviewerHumanAccountId,
+          reason: input.reason,
+        },
+        select: { id: true },
+      });
 
-        await this.audit.recordMutationWithin(
-          tx,
-          {
-            ...auditBase(authorized, request),
-            eventType: 'CARE_ALARM_TRANSITIONED',
-            resourceType: 'CareAlarmTransition',
-            resourceId: transition.id,
-            endpoint: ENDPOINTS.transition,
-          },
-          request.now,
-        );
+      await this.audit.recordMutationWithin(
+        tx,
+        {
+          ...auditBase(authorized, request),
+          eventType: 'CARE_ALARM_TRANSITIONED',
+          resourceType: 'CareAlarmTransition',
+          resourceId: transition.id,
+          endpoint: ENDPOINTS.transition,
+        },
+        request.now,
+      );
 
-        return this.readDetail(tx, authorized, alarm.id);
-      },
-    );
+      return this.readDetail(tx, authorized, alarm.id);
+    };
+
+    return assignee === undefined
+      ? this.care.withAuthorizedOwnContext(request.principal, contextId, ['REVIEW_ALARMS'], request.correlationId, request.now, (tx, authorized) =>
+          work(tx, authorized, null),
+        )
+      : this.care.withAuthorizedReviewAssignment(request.principal, contextId, assignee, request.correlationId, request.now, work);
   }
 
   /**
@@ -352,9 +395,10 @@ export class CareAlertsService {
               include: {
                 definition: true,
                 record: { select: { occurredAt: true } },
-                amendments: { select: { id: true }, take: 1 },
+                amendments: { select: { sequence: true } },
               },
             },
+            evaluatedAmendment: { select: { sequence: true } },
           },
         },
       },
@@ -366,15 +410,7 @@ export class CareAlertsService {
 
     return {
       ...alarmView(alarm, authorized.humanAccountId),
-      evidence: alarm.evidence.map((item) => ({
-        label: item.observation.definition.label,
-        unit: item.observation.definition.unit,
-        valueType: item.observation.definition.valueType,
-        value: item.observation.valueBoolean ?? item.observation.valueNumber?.toString() ?? item.observation.valueChoice,
-        occurredAt: item.observation.record.occurredAt.toISOString(),
-        // D04.5: una corrección posterior no retira la evidencia; se señala.
-        correctedAfterwards: item.observation.amendments.length > 0,
-      })),
+      evidence: alarm.evidence.map((item) => evidenceView(item)),
       transitions: alarm.transitions.map((transition) => ({
         id: transition.id,
         action: transition.action,
@@ -390,41 +426,53 @@ export class CareAlertsService {
   }
 }
 
-/**
- * La persona a la que se asigna debe poder revisar ESTE contexto: concesión
- * REVIEW_ALARMS vigente y competencia vigente validada por otra persona. Se
- * bloquean ambas filas hasta el commit.
- */
-async function reviewerHolds(
-  tx: PrismaTransaction,
-  authorized: AuthorizedCareContext,
-  humanAccountId: string,
-  now: Date,
-): Promise<boolean> {
-  const rows = await tx.$queryRaw<{ readonly id: string }[]>`
-    SELECT a."id"
-      FROM "care_authorization" a
-      JOIN "clinical_competence_attestation" c
-        ON c."id" = a."competenceAttestationId"
-       AND c."tenantId" = a."tenantId"
-       AND c."organizationId" = a."organizationId"
-       AND c."humanAccountId" = a."humanAccountId"
-     WHERE a."tenantId" = ${authorized.tenantId}::uuid
-       AND a."organizationId" = ${authorized.organizationId}::uuid
-       AND a."contextId" = ${authorized.contextId}::uuid
-       AND a."humanAccountId" = ${humanAccountId}::uuid
-       AND a."permission" = 'REVIEW_ALARMS'
-       AND a."status" = 'ACTIVE'
-       AND a."startsAt" <= ${now}::timestamptz
-       AND (a."endsAt" IS NULL OR a."endsAt" > ${now}::timestamptz)
-       AND c."status" = 'ACTIVE'
-       AND c."validatedByHumanAccountId" <> c."humanAccountId"
-       AND c."startsAt" <= ${now}::timestamptz
-       AND (c."endsAt" IS NULL OR c."endsAt" > ${now}::timestamptz)
-     ORDER BY a."id"
-     FOR SHARE`;
+function shownValue(valueBoolean: boolean | null, valueNumber: Prisma.Decimal | null, valueChoice: string | null) {
+  return valueBoolean ?? valueNumber?.toString() ?? valueChoice;
+}
 
-  return rows.length > 0;
+/**
+ * Evidencia con su snapshot (MP07A / A07). Una corrección es «posterior» solo
+ * si su secuencia supera la fijada al evaluar; en la evidencia legada no se
+ * afirma ni se niega ese orden.
+ */
+function evidenceView(
+  item: Prisma.CareAlarmEvidenceGetPayload<{
+    include: {
+      observation: { include: { definition: true; record: { select: { occurredAt: true } }; amendments: { select: { sequence: true } } } };
+      evaluatedAmendment: { select: { sequence: true } };
+    };
+  }>,
+): CareAlarmEvidenceView {
+  const observation = item.observation;
+  const sequences = observation.amendments.map((amendment) => amendment.sequence);
+  const capturedThrough = item.amendmentSequenceAtEvaluation;
+  const common = {
+    label: observation.definition.label,
+    unit: observation.definition.unit,
+    valueType: observation.definition.valueType,
+    definitionVersion: observation.definition.version,
+    value: shownValue(observation.valueBoolean, observation.valueNumber, observation.valueChoice),
+    occurredAt: observation.record.occurredAt.toISOString(),
+  };
+
+  if (capturedThrough === null) {
+    return {
+      ...common,
+      snapshot: 'LEGACY_UNDETERMINED',
+      evaluatedValue: null,
+      evaluatedAmendmentSequence: null,
+      correctedAfterwards: sequences.length === 0 ? false : null,
+    };
+  }
+
+  return {
+    ...common,
+    snapshot: 'CAPTURED',
+    evaluatedValue: shownValue(item.evaluatedValueBoolean, item.evaluatedValueNumber, item.evaluatedValueChoice),
+    evaluatedAmendmentSequence: item.evaluatedAmendment?.sequence ?? null,
+    // D04.5: una corrección posterior no retira la evidencia; se señala.
+    correctedAfterwards: sequences.some((sequence) => sequence > capturedThrough),
+  };
 }
 
 function scopeOf(authorized: AuthorizedCareContext) {

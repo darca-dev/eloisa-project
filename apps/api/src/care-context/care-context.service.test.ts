@@ -6,6 +6,7 @@ import { type PrismaService } from '../database/prisma.service';
 import { type HumanPrincipal } from '../identity-access/human-principal';
 
 import { type CareContextAuditService } from './care-context-audit.service';
+import { type CareContextDirectoryService } from './care-context-directory.service';
 import {
   type AuthorizedCareContext,
   CareContextAccessDeniedError,
@@ -47,7 +48,18 @@ interface HarnessOptions {
   readonly organizationGuc?: string | null;
   readonly role?: string;
   readonly mode?: 'enforce' | 'disabled';
+  readonly recipientEligible?: boolean | 'falla';
 }
+
+const RECIPIENT = '00000000-0000-4000-8000-0000000000b2';
+const PINNED = {
+  bindingIds: [],
+  grantIds: [],
+  assignmentIds: [],
+  profileIds: [],
+  affiliationIds: [],
+  competenceIds: [],
+};
 
 function harness(options: HarnessOptions = {}) {
   const log: string[] = [];
@@ -82,12 +94,37 @@ function harness(options: HarnessOptions = {}) {
     },
   } as unknown as PrismaService;
 
+  const prelockedAccounts: string[][] = [];
+  const decidedWith: unknown[] = [];
   const policy = {
-    decideWithin: async () => {
+    decideWithin: async (...args: unknown[]) => {
       log.push('policy');
+      decidedWith.push(args[5]);
       return options.decision ?? { kind: 'granted', authorized: AUTHORIZED };
     },
+    prelockAccountsWithin: async (_tx: PrismaTransaction, _tenant: string, ids: string[]) => {
+      log.push('prelock:accounts');
+      prelockedAccounts.push(ids);
+    },
+    prelockReviewSourcesWithin: async () => {
+      log.push('prelock:sources');
+      return PINNED;
+    },
+    reviewRecipientHoldsWithin: async () => {
+      log.push('recipient');
+      if (options.recipientEligible === 'falla') {
+        throw new Error('fallo simulado de elegibilidad');
+      }
+      return options.recipientEligible ?? true;
+    },
   } as unknown as CareContextPolicy;
+
+  const directory = {
+    resolveOrganizationWithin: async () => {
+      log.push('directory');
+      return ORG;
+    },
+  } as unknown as CareContextDirectoryService;
 
   const auditCalls: { readonly kind: string; readonly input: Record<string, unknown> }[] = [];
   const record = (kind: string) => async (_tx: PrismaTransaction, input: Record<string, unknown>) => {
@@ -105,8 +142,9 @@ function harness(options: HarnessOptions = {}) {
 
   const environment = { runtimeRoleMode: options.mode ?? 'enforce' } as ApiEnvironmentProvider;
   const service = new CareContextService(prisma, environment, policy, audit);
+  const withDirectory = new CareContextService(prisma, environment, policy, audit, directory);
 
-  return { service, log, auditCalls, gucValues };
+  return { service, withDirectory, log, auditCalls, gucValues, prelockedAccounts, decidedWith };
 }
 
 function run(
@@ -254,5 +292,78 @@ describe('CareContextService.withAuthorizedContext', () => {
     );
     expect(log).toContain('audit:granted');
     expect(auditCalls[0]?.input['correlationId']).toBeNull();
+  });
+});
+
+describe('CareContextService.withAuthorizedReviewAssignment (MP07A / A09)', () => {
+  function asignar(
+    service: CareContextService,
+    log: string[],
+    recipient: string = RECIPIENT,
+  ) {
+    return service.withAuthorizedReviewAssignment(PRINCIPAL, CONTEXT, recipient, 'corr-0001', NOW, async (_tx, _authorized, eligible) => {
+      log.push(`work:${String(eligible)}`);
+      return eligible;
+    });
+  }
+
+  it('cuentas antes del directorio; fuentes antes de decidir; destinatario después del actor y antes del trabajo', async () => {
+    const { withDirectory, log, prelockedAccounts, decidedWith } = harness();
+
+    await expect(asignar(withDirectory, log)).resolves.toBe(true);
+    expect(log).toEqual([
+      `begin:${PRINCIPAL.tenantId}`,
+      'prelock:accounts',
+      'directory',
+      'set_config',
+      'prelock:sources',
+      'policy',
+      'audit:granted',
+      'recipient',
+      'work:true',
+      'commit',
+    ]);
+    expect(prelockedAccounts).toEqual([[PRINCIPAL.humanAccountId, RECIPIENT]]);
+    // La decisión del actor solo considera las fuentes prebloqueadas.
+    expect(decidedWith).toEqual([PINNED]);
+  });
+
+  it('un destinatario no elegible llega al trabajo como `false`, sin proyectar su estado', async () => {
+    const { withDirectory, log } = harness({ recipientEligible: false });
+
+    await expect(asignar(withDirectory, log)).resolves.toBe(false);
+    expect(log).toContain('work:false');
+  });
+
+  it('el actor denegado se deniega primero y de forma uniforme: no se evalúa al destinatario ni corre el trabajo', async () => {
+    const { withDirectory, log } = harness({ decision: { kind: 'denied', organizationId: ORG } });
+
+    await expect(asignar(withDirectory, log)).rejects.toBeInstanceOf(CareContextAccessDeniedError);
+    expect(log).not.toContain('recipient');
+    expect(log.some((entry) => entry.startsWith('work'))).toBe(false);
+    expect(log.at(-1)).toBe('commit');
+  });
+
+  it('un destinatario mal formado no se bloquea ni se consulta y no es elegible', async () => {
+    const { withDirectory, log, prelockedAccounts } = harness();
+
+    await expect(asignar(withDirectory, log, 'no-es-uuid')).resolves.toBe(false);
+    expect(prelockedAccounts).toEqual([[PRINCIPAL.humanAccountId]]);
+    expect(log).not.toContain('recipient');
+  });
+
+  it('un fallo al evaluar al destinatario es indisponibilidad y revierte todo, nunca elegibilidad', async () => {
+    const { withDirectory, log } = harness({ recipientEligible: 'falla' });
+
+    await expect(asignar(withDirectory, log)).rejects.toBeInstanceOf(CareContextUnavailableError);
+    expect(log.some((entry) => entry.startsWith('work'))).toBe(false);
+    expect(log.at(-1)).toBe('rollback');
+  });
+
+  it('sin directorio disponible no abre transacción', async () => {
+    const { service, log } = harness();
+
+    await expect(asignar(service, log)).rejects.toBeInstanceOf(CareContextUnavailableError);
+    expect(log).toEqual([]);
   });
 });

@@ -198,9 +198,42 @@ export function nuevaClaveEnvio(): string {
   return globalThis.crypto.randomUUID();
 }
 
+/** Tamaños de página pedidos por la interfaz. El servidor acota a 50. */
+export const TAMANO_PAGINA = { contextos: 50, cola: 20, registros: 20, alarmas: 50 } as const;
+
+/** Filtro de la bandeja: `abiertas` excluye las cerradas EN CADA página. */
+export type FiltroAlarmas = 'todas' | 'abiertas';
+
+/** Consulta de una página. El cursor es opaco: se devuelve tal cual llegó. */
+function consulta(parametros: Readonly<Record<string, string | null | undefined>>): string {
+  const query = new URLSearchParams();
+  for (const [clave, valor] of Object.entries(parametros)) {
+    if (valor !== null && valor !== undefined && valor !== '') query.set(clave, valor);
+  }
+  const texto = query.toString();
+  return texto === '' ? '' : `?${texto}`;
+}
+
+/**
+ * Acumula una página nueva sin duplicar elementos ya cargados (MP07B / A06).
+ * Conserva el orden del servidor: primero lo que ya estaba, luego lo nuevo.
+ */
+export function acumular<T>(previos: readonly T[], nuevos: readonly T[], clave: (item: T) => string): readonly T[] {
+  const vistos = new Set(previos.map(clave));
+  const agregados: T[] = [];
+  for (const item of nuevos) {
+    const id = clave(item);
+    if (!vistos.has(id)) {
+      vistos.add(id);
+      agregados.push(item);
+    }
+  }
+  return [...previos, ...agregados];
+}
+
 export const careClient = {
-  contextos: (f: Fetch = fetch, signal?: AbortSignal) =>
-    pedir<PaginaDto<ContextoCuidadoDto>>(f, 'GET', '/contexts?limit=50', undefined, signal),
+  contextos: (f: Fetch = fetch, signal?: AbortSignal, cursor: string | null = null) =>
+    pedir<PaginaDto<ContextoCuidadoDto>>(f, 'GET', `/contexts${consulta({ limit: String(TAMANO_PAGINA.contextos), cursor })}`, undefined, signal),
 
   datos: (contextId: string, f: Fetch = fetch, signal?: AbortSignal) =>
     pedir<readonly DatoDto[]>(f, 'GET', `/contexts/${segmento(contextId)}/observables`, undefined, signal),
@@ -209,10 +242,17 @@ export const careClient = {
     contextId: string,
     entrada: { idempotencyKey: string; code: string; label: string; valueType: TipoDato; unit?: string; options?: readonly OpcionDto[] },
     f: Fetch = fetch,
-  ) => pedir<DatoDto>(f, 'POST', `/contexts/${segmento(contextId)}/observables`, entrada),
+    signal?: AbortSignal,
+  ) => pedir<DatoDto>(f, 'POST', `/contexts/${segmento(contextId)}/observables`, entrada, signal),
 
-  registros: (contextId: string, f: Fetch = fetch, signal?: AbortSignal) =>
-    pedir<PaginaDto<RegistroDto>>(f, 'GET', `/contexts/${segmento(contextId)}/records?limit=20`, undefined, signal),
+  registros: (contextId: string, f: Fetch = fetch, signal?: AbortSignal, cursor: string | null = null) =>
+    pedir<PaginaDto<RegistroDto>>(
+      f,
+      'GET',
+      `/contexts/${segmento(contextId)}/records${consulta({ limit: String(TAMANO_PAGINA.registros), cursor })}`,
+      undefined,
+      signal,
+    ),
 
   registrar: (
     contextId: string,
@@ -223,33 +263,51 @@ export const careClient = {
       observations: readonly { definitionId: string; value: boolean | string }[];
     },
     f: Fetch = fetch,
-  ) => pedir<RegistroCreadoDto>(f, 'POST', `/contexts/${segmento(contextId)}/records`, entrada),
+    signal?: AbortSignal,
+  ) => pedir<RegistroCreadoDto>(f, 'POST', `/contexts/${segmento(contextId)}/records`, entrada, signal),
 
   enmendar: (
     contextId: string,
     recordId: string,
     entrada: { idempotencyKey: string; expectedSequence: number; reason: string; note?: string; observationId?: string; replacement?: boolean | string },
     f: Fetch = fetch,
-  ) => pedir<RegistroDto>(f, 'POST', `/contexts/${segmento(contextId)}/records/${segmento(recordId)}/amendments`, entrada),
+    signal?: AbortSignal,
+  ) => pedir<RegistroDto>(f, 'POST', `/contexts/${segmento(contextId)}/records/${segmento(recordId)}/amendments`, entrada, signal),
 
-  alarmas: (contextId: string, f: Fetch = fetch, signal?: AbortSignal) =>
-    pedir<BandejaDto>(f, 'GET', `/contexts/${segmento(contextId)}/alarms?limit=50`, undefined, signal),
+  alarmas: (contextId: string, f: Fetch = fetch, signal?: AbortSignal, cursor: string | null = null, filtro: FiltroAlarmas = 'todas') =>
+    pedir<BandejaDto>(
+      f,
+      'GET',
+      `/contexts/${segmento(contextId)}/alarms${consulta({
+        limit: String(TAMANO_PAGINA.alarmas),
+        cursor,
+        state: filtro === 'abiertas' ? 'open' : null,
+      })}`,
+      undefined,
+      signal,
+    ),
 
   alarma: (contextId: string, alarmId: string, f: Fetch = fetch, signal?: AbortSignal) =>
     pedir<AlarmaDto>(f, 'GET', `/contexts/${segmento(contextId)}/alarms/${segmento(alarmId)}`, undefined, signal),
 
-  pedirRevision: (contextId: string, entrada: { idempotencyKey: string; note?: string }, f: Fetch = fetch) =>
-    pedir<AlarmaCreadaDto>(f, 'POST', `/contexts/${segmento(contextId)}/alarms`, { ...entrada, reasonCode: 'REQUEST_REVIEW' }),
+  pedirRevision: (contextId: string, entrada: { idempotencyKey: string; note?: string }, f: Fetch = fetch, signal?: AbortSignal) =>
+    pedir<AlarmaCreadaDto>(f, 'POST', `/contexts/${segmento(contextId)}/alarms`, { ...entrada, reasonCode: 'REQUEST_REVIEW' }, signal),
 
   transicion: (
     contextId: string,
     alarmId: string,
     entrada: { action: AccionRevisor; expectedVersion: number; reason?: string; severity?: Severidad; assignee?: 'self' },
     f: Fetch = fetch,
-  ) => pedir<AlarmaDto>(f, 'POST', `/contexts/${segmento(contextId)}/alarms/${segmento(alarmId)}/transitions`, entrada),
+    signal?: AbortSignal,
+  ) => pedir<AlarmaDto>(f, 'POST', `/contexts/${segmento(contextId)}/alarms/${segmento(alarmId)}/transitions`, entrada, signal),
 
-  informarResolucion: (contextId: string, alarmId: string, entrada: { idempotencyKey: string; note?: string }, f: Fetch = fetch) =>
-    pedir<AlarmaDto>(f, 'POST', `/contexts/${segmento(contextId)}/alarms/${segmento(alarmId)}/resolution-reports`, entrada),
+  informarResolucion: (
+    contextId: string,
+    alarmId: string,
+    entrada: { idempotencyKey: string; note?: string },
+    f: Fetch = fetch,
+    signal?: AbortSignal,
+  ) => pedir<AlarmaDto>(f, 'POST', `/contexts/${segmento(contextId)}/alarms/${segmento(alarmId)}/resolution-reports`, entrada, signal),
 };
 
 /* -------------------------------------------------------------------------- */
@@ -257,11 +315,26 @@ export const careClient = {
 /* -------------------------------------------------------------------------- */
 
 export type Comparador = 'EQ' | 'NEQ' | 'GT' | 'GTE' | 'LT' | 'LTE' | 'IN';
-export type NivelSemaforo = 'ROJO' | 'AMARILLO' | 'PENDIENTE' | 'ESTABLE' | 'SIN_CRITERIOS';
+export type NivelSemaforo = 'ROJO' | 'AMARILLO' | 'PENDIENTE' | 'ESTABLE' | 'SIN_EVALUACION' | 'SIN_CRITERIOS';
+
+/** Definición EXACTA que evalúa una versión de criterio (MP07A, A03). */
+export interface DefinicionCriterioDto {
+  readonly id: string;
+  readonly version: number;
+  readonly label: string;
+  readonly valueType: TipoDato;
+  readonly unit: string | null;
+  readonly options: readonly OpcionDto[] | null;
+  readonly status: 'ACTIVE' | 'RETIRED';
+}
 
 export interface VersionCriterioDto {
   readonly id: string;
   readonly version: number;
+  /** `null` solo en versiones anteriores a MP07A: no se evalúan. */
+  readonly observableDefinition: DefinicionCriterioDto | null;
+  /** No se evalúa hasta que el profesional valide una versión nueva. */
+  readonly requiresRevalidation: boolean;
   readonly observableCode: string;
   readonly valueType: TipoDato;
   readonly comparator: Comparador;
@@ -285,16 +358,29 @@ export interface SemaforoDto {
   readonly level: NivelSemaforo;
   readonly label: string;
   readonly openAlarms: { readonly ROJA: number; readonly AMARILLA: number; readonly ESTABLE: number; readonly SIN: number };
+  /** Versiones vigentes y evaluables. */
   readonly activeCriteria: number;
+  /** Versiones vigentes que NO se evalúan hasta revalidarse (MP07A, A03). */
+  readonly criteriaRequiringRevalidation: number;
 }
 
+/**
+ * Evidencia de una alarma automática (MP07A, A07). `value` es el ORIGINAL;
+ * `evaluatedValue` lo que el motor evaluó, conocido solo si `snapshot` es
+ * `CAPTURED`. `correctedAfterwards: null` = no se sabe si una corrección fue
+ * anterior o posterior a la evaluación: no es «falso».
+ */
 export interface EvidenciaDto {
   readonly label: string;
   readonly unit: string | null;
   readonly valueType: TipoDato;
+  readonly definitionVersion: number;
   readonly value: ValorMostrado;
   readonly occurredAt: string;
-  readonly correctedAfterwards: boolean;
+  readonly snapshot: 'CAPTURED' | 'LEGACY_UNDETERMINED';
+  readonly evaluatedValue: ValorMostrado;
+  readonly evaluatedAmendmentSequence: number | null;
+  readonly correctedAfterwards: boolean | null;
 }
 
 export interface DetalleAlarmaDto extends AlarmaDto {
@@ -302,11 +388,16 @@ export interface DetalleAlarmaDto extends AlarmaDto {
   readonly evidence: readonly EvidenciaDto[];
 }
 
-export interface ElementoColaDto {
-  readonly contextId: string;
-  readonly organizationName: string;
-  readonly patientLabel: string;
+/**
+ * Contexto de la cola (MP07B / A06). Trae las acciones que el servidor confirma
+ * hoy, para abrirlo aunque no esté en la página cargada del directorio.
+ */
+export interface ElementoColaDto extends ContextoCuidadoDto {
   readonly semaphore: SemaforoDto;
+  /** Alarmas no cerradas del contexto: un CONTEO del servidor, no lo cargado. */
+  readonly openAlarmCount: number;
+  /** El anticipo no incluye todas las abiertas. */
+  readonly hasMoreOpenAlarms: boolean;
   readonly alarms: readonly {
     readonly id: string;
     readonly origin: 'MANUAL' | 'AUTOMATIC';
@@ -319,7 +410,10 @@ export interface ElementoColaDto {
 
 export interface EntradaCriterio {
   readonly idempotencyKey: string;
+  /** Presente al AJUSTAR: crea una versión nueva del mismo criterio (A08). */
   readonly criterionId?: string;
+  /** Definición exacta mostrada al profesional. Obligatoria (MP07A, A03). */
+  readonly observableDefinitionId: string;
   readonly observableCode: string;
   readonly comparator: Comparador;
   readonly value: boolean | string | readonly string[];
@@ -333,19 +427,20 @@ export const careCriteriosClient = {
   criterios: (contextId: string, f: Fetch = fetch, signal?: AbortSignal) =>
     pedir<readonly CriterioDto[]>(f, 'GET', `/contexts/${segmento(contextId)}/criteria`, undefined, signal),
 
-  definir: (contextId: string, entrada: EntradaCriterio, f: Fetch = fetch) =>
-    pedir<CriterioDto>(f, 'POST', `/contexts/${segmento(contextId)}/criteria`, entrada),
+  definir: (contextId: string, entrada: EntradaCriterio, f: Fetch = fetch, signal?: AbortSignal) =>
+    pedir<CriterioDto>(f, 'POST', `/contexts/${segmento(contextId)}/criteria`, entrada, signal),
 
-  retirar: (contextId: string, criterionId: string, reason: string, f: Fetch = fetch) =>
-    pedir<CriterioDto>(f, 'POST', `/contexts/${segmento(contextId)}/criteria/${segmento(criterionId)}/retire`, { reason }),
+  retirar: (contextId: string, criterionId: string, reason: string, f: Fetch = fetch, signal?: AbortSignal) =>
+    pedir<CriterioDto>(f, 'POST', `/contexts/${segmento(contextId)}/criteria/${segmento(criterionId)}/retire`, { reason }, signal),
 
   semaforo: (contextId: string, f: Fetch = fetch, signal?: AbortSignal) =>
     pedir<SemaforoDto>(f, 'GET', `/contexts/${segmento(contextId)}/semaphore`, undefined, signal),
 
-  detalle: (contextId: string, alarmId: string, f: Fetch = fetch) =>
-    pedir<DetalleAlarmaDto>(f, 'GET', `/contexts/${segmento(contextId)}/alarms/${segmento(alarmId)}`),
+  detalle: (contextId: string, alarmId: string, f: Fetch = fetch, signal?: AbortSignal) =>
+    pedir<DetalleAlarmaDto>(f, 'GET', `/contexts/${segmento(contextId)}/alarms/${segmento(alarmId)}`, undefined, signal),
 
-  cola: (f: Fetch = fetch, signal?: AbortSignal) => pedir<readonly ElementoColaDto[]>(f, 'GET', '/review-queue', undefined, signal),
+  cola: (f: Fetch = fetch, signal?: AbortSignal, cursor: string | null = null) =>
+    pedir<PaginaDto<ElementoColaDto>>(f, 'GET', `/review-queue${consulta({ limit: String(TAMANO_PAGINA.cola), cursor })}`, undefined, signal),
 };
 
 export const TEXTO_COMPARADOR: Readonly<Record<Comparador, string>> = {

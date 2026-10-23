@@ -25,8 +25,8 @@ test('el catalogo completo cubre exactamente los 45 modelos/tablas del esquema',
   assert.deepEqual(createdTables.sort(), [...PROTECTED_TABLES].sort());
 });
 
-test('las 29 migraciones exigidas corresponden exactamente al arbol versionado', () => {
-  assert.equal(migrations.length, 29);
+test('las 30 migraciones exigidas corresponden exactamente al arbol versionado', () => {
+  assert.equal(migrations.length, 30);
   assert.deepEqual([...REQUIRED_MIGRATIONS].sort(), migrations);
 });
 

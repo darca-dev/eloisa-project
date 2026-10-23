@@ -10,10 +10,15 @@ import { Prisma } from '../generated/prisma/client';
  * 1. ADMISIBLE: la ocurrencia está en `[recepción − ventana, recepción]` (ambos
  *    límites inclusivos), es posterior o igual a la activación de la versión y
  *    anterior a su `validUntil` si existe. Nada futuro respecto de la recepción.
+ *    Si el criterio tiene un episodio anterior CERRADO, solo cuenta lo ocurrido
+ *    ESTRICTAMENTE después de ese cierre (MP07A, A04): un evento tardío anterior
+ *    se conserva como registro, pero no dispara ni alimenta el episodio nuevo.
  * 2. UNA VEZ POR OCURRENCIA: observaciones con la misma `occurrenceKey` cuentan
  *    una sola vez; las no canónicas nunca llegan aquí.
  * 3. EVIDENCIA CONSUMIDA: lo ya usado por una alarma del mismo criterio no
- *    vuelve a contar para abrir otro episodio.
+ *    vuelve a contar para abrir otro episodio. El llamador lo decide por la
+ *    identidad del evento (código del observable + `occurrenceKey`), no solo
+ *    por la fila de observación.
  * 4. COINCIDE: el valor efectivo cumple la comparación estructurada.
  *
  * Se cumple cuando las coincidencias son al menos `requiredCount`.
@@ -50,7 +55,16 @@ export interface Evaluation {
   readonly matching: readonly Candidate[];
 }
 
-export function isAdmissible(spec: CriterionSpec, candidate: Candidate, receivedAt: Date): boolean {
+/**
+ * `closedBoundary` es el último `closedAt` de un episodio CERRADO del mismo
+ * criterio, o `null` si nunca hubo uno.
+ */
+export function isAdmissible(
+  spec: CriterionSpec,
+  candidate: Candidate,
+  receivedAt: Date,
+  closedBoundary: Date | null = null,
+): boolean {
   const at = candidate.occurredAt.getTime();
   const end = receivedAt.getTime();
   const start = end - spec.windowMinutes * 60_000;
@@ -59,7 +73,8 @@ export function isAdmissible(spec: CriterionSpec, candidate: Candidate, received
     at >= start &&
     at <= end &&
     at >= spec.activatedAt.getTime() &&
-    (spec.validUntil === null || at < spec.validUntil.getTime())
+    (spec.validUntil === null || at < spec.validUntil.getTime()) &&
+    (closedBoundary === null || at > closedBoundary.getTime())
   );
 }
 
@@ -100,14 +115,19 @@ export function matchesValue(spec: CriterionSpec, value: boolean | string | null
   }
 }
 
-export function evaluate(spec: CriterionSpec, candidates: readonly Candidate[], receivedAt: Date): Evaluation {
+export function evaluate(
+  spec: CriterionSpec,
+  candidates: readonly Candidate[],
+  receivedAt: Date,
+  closedBoundary: Date | null = null,
+): Evaluation {
   const seen = new Set<string>();
   const matching: Candidate[] = [];
 
   const ordered = [...candidates].sort((a, b) => a.occurredAt.getTime() - b.occurredAt.getTime());
 
   for (const candidate of ordered) {
-    if (candidate.alreadyEvidence || !isAdmissible(spec, candidate, receivedAt)) {
+    if (candidate.alreadyEvidence || !isAdmissible(spec, candidate, receivedAt, closedBoundary)) {
       continue;
     }
     if (seen.has(candidate.occurrenceKey)) {
@@ -124,20 +144,34 @@ export function evaluate(spec: CriterionSpec, candidates: readonly Candidate[], 
 }
 
 /**
- * Semáforo de UN contexto (MP05). Nunca verde por falta de datos: sin criterios
- * ni solicitudes abiertas se dice exactamente eso.
+ * Semáforo de UN contexto (MP05, corregido en MP07A / A01). Nunca verde por
+ * falta de datos:
+ *
+ * - ROJO, AMARILLO y PENDIENTE siguen la prioridad de las alarmas ABIERTAS.
+ * - ESTABLE exige una alarma abierta clasificada ESTABLE: por una regla
+ *   validada que se cumplió o por un revisor competente. Tener criterios, no
+ *   tener datos o no tener alarmas NO clasifica estabilidad.
+ * - SIN_EVALUACION: hay criterios (evaluables o pendientes de revalidación),
+ *   pero ninguna clasificación autorizada abierta.
+ * - SIN_CRITERIOS: ni criterios ni solicitudes abiertas.
+ *
+ * No hay vencimiento por reloj: el nivel solo cambia con alarmas y criterios.
  */
-export type SemaphoreLevel = 'ROJO' | 'AMARILLO' | 'PENDIENTE' | 'ESTABLE' | 'SIN_CRITERIOS';
+export type SemaphoreLevel = 'ROJO' | 'AMARILLO' | 'PENDIENTE' | 'ESTABLE' | 'SIN_EVALUACION' | 'SIN_CRITERIOS';
 
 export interface SemaphoreInput {
   readonly openBySeverity: { readonly ROJA: number; readonly AMARILLA: number; readonly ESTABLE: number; readonly SIN: number };
+  /** Versiones vigentes y evaluables (con definición exacta vigente). */
   readonly activeCriteria: number;
+  /** Versiones vigentes NO evaluables hasta que el visitador las revalide. */
+  readonly criteriaRequiringRevalidation: number;
 }
 
 export function semaphoreLevel(input: SemaphoreInput): SemaphoreLevel {
   if (input.openBySeverity.ROJA > 0) return 'ROJO';
   if (input.openBySeverity.AMARILLA > 0) return 'AMARILLO';
   if (input.openBySeverity.SIN > 0) return 'PENDIENTE';
-  if (input.openBySeverity.ESTABLE > 0 || input.activeCriteria > 0) return 'ESTABLE';
+  if (input.openBySeverity.ESTABLE > 0) return 'ESTABLE';
+  if (input.activeCriteria > 0 || input.criteriaRequiringRevalidation > 0) return 'SIN_EVALUACION';
   return 'SIN_CRITERIOS';
 }

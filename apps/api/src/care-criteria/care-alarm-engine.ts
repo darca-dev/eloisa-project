@@ -3,6 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CareContextAuditService } from '../care-context/care-context-audit.service';
 import { type AuthorizedCareContext } from '../care-context/care-context.contract';
 import { type PrismaTransaction } from '../database/prisma-transaction';
+import { Prisma } from '../generated/prisma/client';
 
 import { type Candidate, type CriterionSpec, evaluate } from './criterion-evaluator';
 
@@ -20,6 +21,10 @@ interface CandidateRow {
   readonly valueBoolean: boolean | null;
   readonly valueNumber: string | null;
   readonly valueChoice: string | null;
+  /** Enmienda cuyo reemplazo es el valor efectivo, o `null` si rige el original. */
+  readonly amendmentId: string | null;
+  /** Última secuencia de enmiendas del registro en este instante (0 = ninguna). */
+  readonly amendmentSequence: number;
   readonly alreadyEvidence: boolean;
   readonly amended: boolean;
 }
@@ -27,16 +32,26 @@ interface CandidateRow {
 const ENDPOINT = 'POST /api/v1/care/contexts/{contextId}/records';
 
 /**
- * Motor SÍNCRONO de alarmas automáticas (SPEC 055 / MP04, D04–D05, D07).
+ * Motor SÍNCRONO de alarmas automáticas (SPEC 055 / MP04, D04–D05, D07;
+ * corregido en MP07A: A03, A04 y A07).
  *
  * Se invoca DENTRO de la transacción que creó el registro, después del bloqueo
  * de negocio del contexto: decisión de MP01, registro, evaluación, alarma,
  * evidencia y auditoría confirman o revierten juntos. Sin worker, sin cola y sin
  * notificaciones externas.
  *
- * Solo evalúa versiones ACTIVE vigentes de criterios ACTIVE cuyo dato coincide
- * con alguna observación del registro recién creado. Una enmienda NO llama al
- * motor (D04.5, ver contrato MP04–05 §4).
+ * - A03: solo evalúa versiones ACTIVE vigentes de criterios ACTIVE que citan la
+ *   definición EXACTA y vigente de una observación canónica nueva del registro.
+ *   Una versión legada sin definición, o cuya definición fue reemplazada, no se
+ *   evalúa: no se trasladan reglas ni se convierten unidades.
+ * - A04: lo consumido se decide por la identidad del evento (contexto + código
+ *   del observable + `occurrenceKey`) en cualquier alarma del criterio. Tras un
+ *   episodio cerrado solo cuenta lo ocurrido estrictamente después del cierre,
+ *   también al agregar evidencia al episodio siguiente.
+ * - A07: cada evidencia nueva fija el valor efectivo evaluado, la definición, la
+ *   enmienda vigente y la secuencia de enmiendas del registro.
+ *
+ * Una enmienda NO llama al motor (D04.5, ver contrato MP04–05 §4).
  */
 @Injectable()
 export class CareAlarmEngine {
@@ -51,12 +66,16 @@ export class CareAlarmEngine {
   ): Promise<EngineOutcome> {
     const record = await tx.careRecord.findFirstOrThrow({
       where: { id: recordId, contextId: authorized.contextId },
-      select: { receivedAt: true, observations: { select: { definition: { select: { code: true } } } } },
+      select: {
+        receivedAt: true,
+        // Una observación vinculada a un evento ya registrado no es una ocurrencia nueva.
+        observations: { where: { canonicalObservationId: null }, select: { definitionId: true } },
+      },
     });
 
-    const codes = [...new Set(record.observations.map((observation) => observation.definition.code))];
+    const definitionIds = [...new Set(record.observations.map((observation) => observation.definitionId))];
 
-    if (codes.length === 0) {
+    if (definitionIds.length === 0) {
       return { alarmsOpened: 0, evidenceAdded: 0 };
     }
 
@@ -64,7 +83,8 @@ export class CareAlarmEngine {
       where: {
         ...scope(authorized),
         status: 'ACTIVE',
-        observableCode: { in: codes },
+        observableDefinitionId: { in: definitionIds },
+        observableDefinition: { status: 'ACTIVE' },
         activatedAt: { lte: record.receivedAt },
         OR: [{ validUntil: null }, { validUntil: { gt: record.receivedAt } }],
         criterion: { status: 'ACTIVE' },
@@ -76,6 +96,13 @@ export class CareAlarmEngine {
     let evidenceAdded = 0;
 
     for (const version of versions) {
+      const definitionId = version.observableDefinitionId;
+
+      if (definitionId === null) {
+        // Inalcanzable por el filtro; una versión legada nunca se evalúa.
+        continue;
+      }
+
       const spec: CriterionSpec = {
         valueType: version.valueType,
         comparator: version.comparator,
@@ -88,7 +115,15 @@ export class CareAlarmEngine {
         validUntil: version.validUntil,
       };
 
-      const candidates = (await this.candidates(tx, authorized, version.criterionId, version.observableCode, version.valueType, spec, record.receivedAt)).map(
+      const lastClosure = await tx.careAlarm.aggregate({
+        where: { ...scope(authorized), criterionId: version.criterionId, origin: 'AUTOMATIC', state: 'CERRADA' },
+        _max: { closedAt: true },
+      });
+      const closedBoundary = lastClosure._max.closedAt;
+
+      const rows = await this.candidates(tx, authorized, version.criterionId, definitionId, spec, record.receivedAt);
+      const byObservation = new Map(rows.map((row) => [row.observationId, row]));
+      const candidates = rows.map(
         (row): Candidate => ({
           observationId: row.observationId,
           occurrenceKey: row.occurrenceKey,
@@ -99,7 +134,26 @@ export class CareAlarmEngine {
         }),
       );
 
-      const result = evaluate(spec, candidates, record.receivedAt);
+      const result = evaluate(spec, candidates, record.receivedAt, closedBoundary);
+
+      const addEvidence = async (alarmId: string, observationId: string): Promise<void> => {
+        const row = byObservation.get(observationId);
+
+        if (row === undefined) {
+          throw new Error('care-alarm-engine: coincidencia sin fila de candidato');
+        }
+
+        await tx.careAlarmEvidence.create({
+          data: {
+            ...scope(authorized),
+            alarmId,
+            observationId,
+            criterionVersionId: version.id,
+            ...snapshotOf(definitionId, row),
+          },
+          select: { id: true },
+        });
+      };
 
       const open = await tx.careAlarm.findFirst({
         where: { ...scope(authorized), criterionId: version.criterionId, origin: 'AUTOMATIC', state: { not: 'CERRADA' } },
@@ -109,10 +163,7 @@ export class CareAlarmEngine {
       if (open !== null) {
         // Episodio abierto: las coincidencias nuevas son evidencia, no otra alarma.
         for (const match of result.matching) {
-          await tx.careAlarmEvidence.create({
-            data: { ...scope(authorized), alarmId: open.id, observationId: match.observationId, criterionVersionId: version.id },
-            select: { id: true },
-          });
+          await addEvidence(open.id, match.observationId);
           evidenceAdded += 1;
         }
         continue;
@@ -158,10 +209,7 @@ export class CareAlarmEngine {
       });
 
       for (const match of result.matching) {
-        await tx.careAlarmEvidence.create({
-          data: { ...scope(authorized), alarmId: alarm.id, observationId: match.observationId, criterionVersionId: version.id },
-          select: { id: true },
-        });
+        await addEvidence(alarm.id, match.observationId);
       }
 
       await this.audit.recordMutationWithin(
@@ -186,16 +234,16 @@ export class CareAlarmEngine {
   }
 
   /**
-   * Observaciones canónicas del mismo dato en la ventana, con su valor
-   * EFECTIVO (último reemplazo de enmienda o el original) y si ya son evidencia
-   * de alguna alarma de este criterio.
+   * Observaciones canónicas de la definición EXACTA en la ventana, con su valor
+   * EFECTIVO (último reemplazo de enmienda o el original), la enmienda y la
+   * secuencia vigentes, y si su IDENTIDAD de evento ya es evidencia de alguna
+   * alarma de este criterio.
    */
   private candidates(
     tx: PrismaTransaction,
     authorized: AuthorizedCareContext,
     criterionId: string,
-    observableCode: string,
-    valueType: string,
+    definitionId: string,
     spec: CriterionSpec,
     receivedAt: Date,
   ): Promise<CandidateRow[]> {
@@ -208,10 +256,22 @@ export class CareAlarmEngine {
              COALESCE(last."replacementBoolean", CASE WHEN last."id" IS NULL THEN o."valueBoolean" END) AS "valueBoolean",
              COALESCE(last."replacementNumber", CASE WHEN last."id" IS NULL THEN o."valueNumber" END)::text AS "valueNumber",
              COALESCE(last."replacementChoice", CASE WHEN last."id" IS NULL THEN o."valueChoice" END) AS "valueChoice",
+             last."id" AS "amendmentId",
+             COALESCE((
+               SELECT max(s."sequence")
+                 FROM "care_record_amendment" s
+                WHERE s."recordId" = o."recordId" AND s."contextId" = o."contextId"
+             ), 0)::int AS "amendmentSequence",
              EXISTS (
-               SELECT 1 FROM "care_alarm_evidence" e
-               JOIN "care_alarm" a ON a."id" = e."alarmId" AND a."contextId" = e."contextId"
-              WHERE e."observationId" = o."id" AND e."contextId" = o."contextId" AND a."criterionId" = ${criterionId}::uuid
+               SELECT 1
+                 FROM "care_alarm_evidence" e
+                 JOIN "care_alarm" a ON a."id" = e."alarmId" AND a."contextId" = e."contextId"
+                 JOIN "care_observation" eo ON eo."id" = e."observationId" AND eo."contextId" = e."contextId"
+                 JOIN "care_observable_definition" ed ON ed."id" = eo."definitionId" AND ed."contextId" = eo."contextId"
+                WHERE e."contextId" = o."contextId"
+                  AND a."criterionId" = ${criterionId}::uuid
+                  AND ed."code" = d."code"
+                  AND eo."occurrenceKey" = o."occurrenceKey"
              ) AS "alreadyEvidence",
              EXISTS (
                SELECT 1 FROM "care_record_amendment" am
@@ -232,12 +292,23 @@ export class CareAlarmEngine {
          AND o."organizationId" = ${authorized.organizationId}::uuid
          AND o."contextId" = ${authorized.contextId}::uuid
          AND o."canonicalObservationId" IS NULL
-         AND d."code" = ${observableCode}
-         AND d."valueType"::text = ${valueType}
+         AND o."definitionId" = ${definitionId}::uuid
          AND r."occurredAt" >= ${start}::timestamptz
          AND r."occurredAt" <= ${receivedAt}::timestamptz
        ORDER BY r."occurredAt", o."id"`;
   }
+}
+
+/** Snapshot tipado de lo evaluado (A07). Sin texto clínico. */
+function snapshotOf(definitionId: string, row: CandidateRow) {
+  return {
+    observableDefinitionId: definitionId,
+    evaluatedValueBoolean: row.valueBoolean,
+    evaluatedValueNumber: row.valueNumber === null ? null : new Prisma.Decimal(row.valueNumber),
+    evaluatedValueChoice: row.valueChoice,
+    evaluatedAmendmentId: row.amendmentId,
+    amendmentSequenceAtEvaluation: row.amendmentSequence,
+  };
 }
 
 function scope(authorized: AuthorizedCareContext) {

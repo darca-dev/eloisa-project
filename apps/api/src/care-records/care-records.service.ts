@@ -12,6 +12,7 @@ import {
   CareNotFoundError,
   CareValidationError,
   encodeCursor,
+  invalidCursorError,
   isChoiceCode,
   isDecimalText,
 } from '../care-context/care-request';
@@ -153,7 +154,7 @@ export class CareRecordsService {
   public listRecords(
     request: Request,
     contextId: string,
-    cursor: { readonly at: Date; readonly id: string } | null,
+    cursor: { readonly id: string } | null,
     limit: number,
   ): Promise<CareRecordPage> {
     return this.care.withAuthorizedOwnContext(
@@ -163,27 +164,52 @@ export class CareRecordsService {
       request.correlationId,
       request.now,
       async (tx, authorized) => {
+        const author = authorized.permission === 'VIEW_RECORDS' ? null : authorized.humanAccountId;
+
+        // El cursor debe ser una fila que ESTA cuenta ve en ESTE contexto.
+        if (
+          cursor !== null &&
+          (await tx.careRecord.findFirst({
+            where: scopeOf(authorized, { id: cursor.id, ...(author === null ? {} : { authorHumanAccountId: author }) }),
+            select: { id: true },
+          })) === null
+        ) {
+          throw invalidCursorError();
+        }
+
+        // MP07B / A06: orden total (recepción, id) y límite comparado en la
+        // base con precisión de microsegundos; nada del mismo milisegundo se salta.
+        const ids = await tx.$queryRaw<{ readonly id: string }[]>`
+          SELECT r."id"
+            FROM "care_record" r
+           WHERE r."tenantId" = ${authorized.tenantId}::uuid
+             AND r."organizationId" = ${authorized.organizationId}::uuid
+             AND r."contextId" = ${authorized.contextId}::uuid
+             AND r."patientId" = ${authorized.patientId}::uuid
+             AND (${author}::uuid IS NULL OR r."authorHumanAccountId" = ${author}::uuid)
+             AND (${cursor?.id ?? null}::uuid IS NULL
+                  OR (r."receivedAt", r."id") < (SELECT b."receivedAt", b."id"
+                                                   FROM "care_record" b
+                                                  WHERE b."id" = ${cursor?.id ?? null}::uuid
+                                                    AND b."contextId" = ${authorized.contextId}::uuid))
+           ORDER BY r."receivedAt" DESC, r."id" DESC
+           LIMIT ${limit + 1}`;
+
+        const pageIds = ids.slice(0, limit).map((row) => row.id);
         const rows = await tx.careRecord.findMany({
-          where: scopeOf(authorized, {
-            ...(authorized.permission === 'VIEW_RECORDS' ? {} : { authorHumanAccountId: authorized.humanAccountId }),
-            ...(cursor === null
-              ? {}
-              : { OR: [{ receivedAt: { lt: cursor.at } }, { receivedAt: cursor.at, id: { lt: cursor.id } }] }),
-          }),
-          orderBy: [{ receivedAt: 'desc' }, { id: 'desc' }],
-          take: limit + 1,
+          where: scopeOf(authorized, { id: { in: pageIds } }),
           include: {
             observations: { include: { definition: true }, orderBy: { createdAt: 'asc' } },
             amendments: { orderBy: { sequence: 'asc' } },
           },
         });
-
-        const page = rows.slice(0, limit);
-        const last = page.at(-1);
+        const byId = new Map(rows.map((row) => [row.id, row]));
+        const page = pageIds.map((id) => byId.get(id)).filter((row): row is (typeof rows)[number] => row !== undefined);
+        const last = pageIds.at(-1);
 
         return {
           items: page.map((row) => recordView(row, authorized.humanAccountId)),
-          nextCursor: rows.length > limit && last !== undefined ? encodeCursor(last.receivedAt, last.id) : null,
+          nextCursor: ids.length > limit && last !== undefined ? encodeCursor(last) : null,
         };
       },
     );
@@ -241,7 +267,8 @@ export class CareRecordsService {
               recordId: record.id,
               definitionId: definition.id,
               occurrenceKey: item.occurrenceKey ?? randomUUID(),
-              canonicalObservationId: item.canonicalObservationId,
+              canonicalObservationId:
+                item.canonicalObservationId ?? (await canonicalOfSameEvent(tx, authorized, definition.code, item.occurrenceKey)),
               ...typedValue(definition, item.value, `observations.${index}.value`),
             },
             select: { id: true },
@@ -368,6 +395,34 @@ export class CareRecordsService {
     });
     return recordView(row, authorized.humanAccountId);
   }
+}
+
+/**
+ * MP07A / A04: identidad estable de una ocurrencia = contexto + código del
+ * observable + `occurrenceKey`, también entre versiones de la definición. Si el
+ * cliente repite expresamente la clave de un evento ya registrado, la nueva
+ * observación se guarda VINCULADA a la canónica existente (la más antigua, para
+ * respetar duplicados históricos sin borrarlos) y no vuelve a contar. Nunca se
+ * infiere identidad por parecido de dato u hora: sin clave explícita no hay
+ * vínculo. Corre bajo el bloqueo de negocio del contexto.
+ */
+async function canonicalOfSameEvent(
+  tx: PrismaTransaction,
+  authorized: AuthorizedCareContext,
+  code: string,
+  occurrenceKey: string | null,
+): Promise<string | null> {
+  if (occurrenceKey === null) {
+    return null;
+  }
+
+  const existing = await tx.careObservation.findFirst({
+    where: scopeOf(authorized, { occurrenceKey, canonicalObservationId: null, definition: { code } }),
+    orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    select: { id: true },
+  });
+
+  return existing?.id ?? null;
 }
 
 /** Filtro explícito por el contexto autorizado, además de RLS. */
@@ -523,4 +578,3 @@ function recordView(
     })),
   };
 }
-

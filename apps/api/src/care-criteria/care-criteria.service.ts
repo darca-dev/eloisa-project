@@ -3,17 +3,20 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CareContextAuditService } from '../care-context/care-context-audit.service';
 import { type AuthorizedCareContext } from '../care-context/care-context.contract';
 import { CareContextService } from '../care-context/care-context.service';
-import { findReceipt, lockContextForWrite, payloadHash, writeReceipt } from '../care-context/care-mutation';
+import { CareConflictError, findReceipt, lockContextForWrite, payloadHash, writeReceipt } from '../care-context/care-mutation';
 import { CareNotFoundError, CareValidationError, isChoiceCode, isDecimalText } from '../care-context/care-request';
 import { type PrismaTransaction } from '../database/prisma-transaction';
-import { Prisma } from '../generated/prisma/client';
+import { type CareObservableDefinition, Prisma } from '../generated/prisma/client';
 import { type HumanPrincipal } from '../identity-access/human-principal';
 
 import {
+  type CriterionDefinitionView,
   type CriterionInput,
   type CriterionVersionView,
   type CriterionView,
+  REVIEW_QUEUE_ALARM_PREVIEW,
   type ReviewQueueItem,
+  type ReviewQueuePage,
   SEMAPHORE_LABELS,
   type SemaphoreView,
 } from './care-criteria.contract';
@@ -65,21 +68,40 @@ export class CareCriteriaService {
       request.now,
       async (tx, authorized) => {
         await lockContextForWrite(tx, authorized);
-        const { idempotencyKey, ...content } = input;
-        const hash = payloadHash({ ...content, validUntil: input.validUntil?.toISOString() ?? null });
+        const { idempotencyKey, observableDefinitionId, ...content } = input;
+        // Sin definición explícita la huella es la misma que antes de MP07A.
+        const hash = payloadHash({
+          ...content,
+          ...(observableDefinitionId === null ? {} : { observableDefinitionId }),
+          validUntil: input.validUntil?.toISOString() ?? null,
+        });
         const replay = await findReceipt(tx, authorized, 'criterion.create', idempotencyKey, hash);
 
         if (replay !== null) {
           return this.readOne(tx, authorized, replay);
         }
 
+        // MP07A / A03: una validación NUEVA nombra la definición exacta que el
+        // visitador vio; nunca se resuelve en silencio por código. Solo la
+        // reproducción de un recibo ya confirmado (arriba) puede omitirla.
+        if (observableDefinitionId === null) {
+          throw new CareValidationError('observableDefinitionId', 'Indique la versión exacta del dato que validó.');
+        }
+
+        // Se compara con la definición vigente del código, bajo el mismo bloqueo
+        // de negocio que reemplaza definiciones.
         const definition = await tx.careObservableDefinition.findFirst({
           where: { ...scope(authorized), code: input.observableCode, status: 'ACTIVE' },
-          select: { valueType: true, options: true },
+          select: { id: true, valueType: true, options: true },
         });
 
         if (definition === null) {
           throw new CareValidationError('observableCode', 'El dato no está habilitado en este contexto.');
+        }
+
+        if (observableDefinitionId !== definition.id) {
+          // El visitador validó otra versión del dato: no se le atribuye esta.
+          throw new CareConflictError('VERSION_CONFLICT');
         }
 
         const value = typedCriterionValue(definition.valueType, input.comparator, input.value, definition.options);
@@ -115,6 +137,7 @@ export class CareCriteriaService {
             ...scope(authorized),
             criterionId,
             version: nextVersion,
+            observableDefinitionId: definition.id,
             observableCode: input.observableCode,
             valueType: definition.valueType,
             comparator: input.comparator,
@@ -210,26 +233,40 @@ export class CareCriteriaService {
     );
   }
 
-  /** Alarmas abiertas de todos los contextos que la cuenta puede revisar. */
-  public reviewQueue(request: Request): Promise<readonly ReviewQueueItem[]> {
-    return this.care.withReviewableContexts(request.principal, request.correlationId, request.now, async (tx, contexts) => {
+  /**
+   * Una página de la cola: contextos que la cuenta puede revisar, cada uno con
+   * su semáforo, el número de alarmas abiertas y un anticipo de las más
+   * recientes (MP07B / A06). Nada se trunca en silencio: si el anticipo no
+   * las incluye todas, `hasMoreOpenAlarms` lo dice y la bandeja del contexto
+   * las recorre con su propio cursor.
+   */
+  public reviewQueue(request: Request, cursor: string | null, limit: number): Promise<ReviewQueuePage> {
+    return this.care.withReviewableContexts(request.principal, cursor, limit, request.correlationId, request.now, async (tx, page) => {
       const items: ReviewQueueItem[] = [];
 
-      for (const { authorized, organizationName, patientLabel } of contexts) {
+      for (const { authorized, entry } of page.entries) {
         await tx.$executeRaw`SELECT set_config('merdn.organization_id', ${authorized.organizationId}, true)`;
+        const open = { ...scope(authorized), state: { not: 'CERRADA' as const } };
         const alarms = await tx.careAlarm.findMany({
-          where: { ...scope(authorized), state: { not: 'CERRADA' } },
-          orderBy: [{ createdAt: 'desc' }],
-          take: 50,
+          where: open,
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          take: REVIEW_QUEUE_ALARM_PREVIEW + 1,
           select: { id: true, origin: true, severity: true, state: true, createdAt: true, assignedReviewerHumanAccountId: true },
         });
+        const openAlarmCount = await tx.careAlarm.count({ where: open });
+        const preview = alarms.slice(0, REVIEW_QUEUE_ALARM_PREVIEW);
 
         items.push({
-          contextId: authorized.contextId,
-          organizationName,
-          patientLabel,
+          contextId: entry.contextId,
+          organizationId: entry.organizationId,
+          organizationName: entry.organizationName,
+          patientLabel: entry.patientLabel,
+          actorKind: entry.actorKind,
+          actions: entry.actions,
           semaphore: await semaphoreWithin(tx, authorized, request.now),
-          alarms: alarms.map((alarm) => ({
+          openAlarmCount,
+          hasMoreOpenAlarms: alarms.length > REVIEW_QUEUE_ALARM_PREVIEW || openAlarmCount > preview.length,
+          alarms: preview.map((alarm) => ({
             id: alarm.id,
             origin: alarm.origin,
             severity: alarm.severity,
@@ -240,7 +277,8 @@ export class CareCriteriaService {
         });
       }
 
-      return items;
+      await tx.$executeRaw`SELECT set_config('merdn.organization_id', '', true)`;
+      return { items, nextCursor: page.nextCursor };
     });
   }
 
@@ -248,7 +286,7 @@ export class CareCriteriaService {
     const rows = await tx.careAlarmCriterion.findMany({
       where: scope(authorized),
       orderBy: [{ createdAt: 'asc' }],
-      include: { versions: { orderBy: { version: 'desc' }, take: 1 } },
+      include: LATEST_VERSION,
     });
     return rows.map(criterionView);
   }
@@ -256,21 +294,42 @@ export class CareCriteriaService {
   private async readOne(tx: PrismaTransaction, authorized: AuthorizedCareContext, criterionId: string): Promise<CriterionView> {
     const row = await tx.careAlarmCriterion.findFirstOrThrow({
       where: { ...scope(authorized), id: criterionId },
-      include: { versions: { orderBy: { version: 'desc' }, take: 1 } },
+      include: LATEST_VERSION,
     });
     return criterionView(row);
   }
 }
 
-/** Semáforo de un contexto: alarmas abiertas por clasificación y criterios vigentes. */
+/** Última versión de cada criterio con su definición exacta, si la tiene. */
+const LATEST_VERSION = {
+  versions: { orderBy: { version: 'desc' }, take: 1, include: { observableDefinition: true } },
+} as const satisfies Prisma.CareAlarmCriterionInclude;
+
+/**
+ * Semáforo de un contexto: alarmas abiertas por clasificación y criterios
+ * vigentes, separando los evaluables de los que esperan revalidación (MP07A).
+ * Un fallo de consulta se propaga: nunca se convierte en cero ni en estable.
+ */
 export async function semaphoreWithin(tx: PrismaTransaction, authorized: AuthorizedCareContext, now: Date): Promise<SemaphoreView> {
   const open = await tx.careAlarm.groupBy({
     by: ['severity'],
     where: { ...scope(authorized), state: { not: 'CERRADA' } },
     _count: { _all: true },
   });
+  const vigentes = {
+    ...scope(authorized),
+    status: 'ACTIVE' as const,
+    criterion: { status: 'ACTIVE' as const },
+    OR: [{ validUntil: null }, { validUntil: { gt: now } }],
+  };
   const activeCriteria = await tx.careAlarmCriterionVersion.count({
-    where: { ...scope(authorized), status: 'ACTIVE', OR: [{ validUntil: null }, { validUntil: { gt: now } }], criterion: { status: 'ACTIVE' } },
+    where: { ...vigentes, observableDefinition: { status: 'ACTIVE' } },
+  });
+  const criteriaRequiringRevalidation = await tx.careAlarmCriterionVersion.count({
+    where: {
+      ...vigentes,
+      AND: [{ OR: [{ observableDefinitionId: null }, { observableDefinition: { status: 'RETIRED' } }] }],
+    },
   });
 
   const openAlarms = { ROJA: 0, AMARILLA: 0, ESTABLE: 0, SIN: 0 };
@@ -278,8 +337,8 @@ export async function semaphoreWithin(tx: PrismaTransaction, authorized: Authori
     openAlarms[group.severity ?? 'SIN'] += group._count._all;
   }
 
-  const level = semaphoreLevel({ openBySeverity: openAlarms, activeCriteria });
-  return { level, label: SEMAPHORE_LABELS[level], openAlarms, activeCriteria };
+  const level = semaphoreLevel({ openBySeverity: openAlarms, activeCriteria, criteriaRequiringRevalidation });
+  return { level, label: SEMAPHORE_LABELS[level], openAlarms, activeCriteria, criteriaRequiringRevalidation };
 }
 
 function scope(authorized: AuthorizedCareContext) {
@@ -331,25 +390,29 @@ function typedCriterionValue(
   return { choiceValues: value as string[] };
 }
 
-function versionView(row: {
-  id: string;
-  version: number;
-  observableCode: string;
-  valueType: 'BOOLEAN' | 'NUMBER' | 'CHOICE';
-  comparator: 'EQ' | 'NEQ' | 'GT' | 'GTE' | 'LT' | 'LTE' | 'IN';
-  numberValue: Prisma.Decimal | null;
-  booleanValue: boolean | null;
-  choiceValues: Prisma.JsonValue | null;
-  requiredCount: number;
-  windowMinutes: number;
-  severity: 'ROJA' | 'AMARILLA' | 'ESTABLE';
-  activatedAt: Date;
-  validUntil: Date | null;
-  status: 'ACTIVE' | 'SUPERSEDED' | 'RETIRED';
-}): CriterionVersionView {
+function definitionView(row: CareObservableDefinition): CriterionDefinitionView {
   return {
     id: row.id,
     version: row.version,
+    label: row.label,
+    valueType: row.valueType,
+    unit: row.unit,
+    options: Array.isArray(row.options) ? (row.options as { code: string; label: string }[]) : null,
+    status: row.status,
+  };
+}
+
+function versionView(
+  row: Prisma.CareAlarmCriterionVersionGetPayload<{ include: { observableDefinition: true } }>,
+): CriterionVersionView {
+  const definition = row.observableDefinition;
+
+  return {
+    id: row.id,
+    version: row.version,
+    observableDefinition: definition === null ? null : definitionView(definition),
+    // Legado sin definición exacta o definición reemplazada: no se evalúa.
+    requiresRevalidation: definition === null || definition.status !== 'ACTIVE',
     observableCode: row.observableCode,
     valueType: row.valueType,
     comparator: row.comparator,
@@ -366,9 +429,7 @@ function versionView(row: {
   };
 }
 
-function criterionView(
-  row: Prisma.CareAlarmCriterionGetPayload<{ include: { versions: true } }>,
-): CriterionView {
+function criterionView(row: Prisma.CareAlarmCriterionGetPayload<{ include: typeof LATEST_VERSION }>): CriterionView {
   const latest = row.versions[0];
   return {
     id: row.id,

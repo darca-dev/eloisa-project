@@ -2377,9 +2377,15 @@ model CareObservableDefinition {
   retiredBy   HumanAccount?      @relation("ObservableRetirer", fields: [retiredByHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
 
   observations CareObservation[]
+  /// Versiones de criterio que citan ESTA definición exacta (MP07A, A03).
+  criterionVersions CareAlarmCriterionVersion[]
+  /// Evidencias cuyo snapshot fija esta definición (MP07A, A07).
+  evidenceSnapshots CareAlarmEvidence[]
 
   @@unique([contextId, code, version], map: "care_observable_definition_version_unique")
   @@unique([id, contextId], map: "care_observable_definition_id_context_unique")
+  /// Destino de la FK compuesta de las versiones de criterio (MP07A, A03).
+  @@unique([id, contextId, code, valueType], map: "care_observable_definition_exact_unique")
   @@index([tenantId, organizationId, contextId, status], map: "care_observable_definition_lookup_idx")
   @@map("care_observable_definition")
 }
@@ -2468,7 +2474,11 @@ model CareRecordAmendment {
   observation CareObservation? @relation(fields: [observationId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
   author      HumanAccount     @relation("CareAmendmentAuthor", fields: [authorHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
 
+  /// Evidencias evaluadas con esta corrección vigente (MP07A, A07).
+  evidenceSnapshots CareAlarmEvidence[]
+
   @@unique([recordId, sequence], map: "care_record_amendment_sequence_unique")
+  @@unique([id, contextId], map: "care_record_amendment_id_context_unique")
   @@map("care_record_amendment")
 }
 
@@ -2639,6 +2649,10 @@ model CareAlarmCriterionVersion {
 
   criterionId    String                     @db.Uuid
   version        Int
+  /// Definición EXACTA del observable que la regla evalúa (MP07A, A03). NULL
+  /// solo en versiones anteriores a MP07A: legado NO evaluable que exige
+  /// revalidación. La base la exige en toda versión nueva.
+  observableDefinitionId String?           @db.Uuid
   observableCode String
   valueType      CareObservableType
   comparator     CareCriterionComparator
@@ -2657,8 +2671,9 @@ model CareAlarmCriterionVersion {
   validatedByHumanAccountId String   @db.Uuid
   createdAt                 DateTime @default(now()) @db.Timestamptz(6)
 
-  criterion   CareAlarmCriterion @relation(fields: [criterionId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
-  validatedBy HumanAccount       @relation("CriterionValidator", fields: [validatedByHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  criterion            CareAlarmCriterion        @relation(fields: [criterionId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  validatedBy          HumanAccount              @relation("CriterionValidator", fields: [validatedByHumanAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  observableDefinition CareObservableDefinition? @relation(fields: [observableDefinitionId, contextId, observableCode, valueType], references: [id, contextId, code, valueType], onDelete: Restrict, onUpdate: Restrict, map: "care_alarm_criterion_version_definition_fkey")
 
   alarms   CareAlarm[]
   evidence CareAlarmEvidence[]
@@ -2666,6 +2681,7 @@ model CareAlarmCriterionVersion {
   @@unique([criterionId, version], map: "care_alarm_criterion_version_unique")
   @@unique([id, contextId], map: "care_alarm_criterion_version_id_context_unique")
   @@index([tenantId, organizationId, contextId, status], map: "care_alarm_criterion_version_lookup_idx")
+  @@index([observableDefinitionId], map: "care_alarm_criterion_version_definition_idx")
   @@map("care_alarm_criterion_version")
 }
 
@@ -2683,9 +2699,23 @@ model CareAlarmEvidence {
   criterionVersionId String   @db.Uuid
   createdAt          DateTime @default(now()) @db.Timestamptz(6)
 
-  alarm            CareAlarm                 @relation(fields: [alarmId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
-  observation      CareObservation           @relation(fields: [observationId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
-  criterionVersion CareAlarmCriterionVersion @relation(fields: [criterionVersionId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  /// Snapshot INMUTABLE de lo evaluado (MP07A, A07). Todo NULL solo en la
+  /// evidencia anterior a MP07A: legado explícitamente indeterminado. La base
+  /// exige un snapshot completo y coherente en toda evidencia nueva.
+  observableDefinitionId        String?  @db.Uuid
+  evaluatedValueBoolean         Boolean?
+  evaluatedValueNumber          Decimal? @db.Decimal(30, 10)
+  evaluatedValueChoice          String?
+  /// Corrección vigente al evaluar; NULL si se evaluó el valor original.
+  evaluatedAmendmentId          String?  @db.Uuid
+  /// Última secuencia de enmiendas del registro al evaluar (0 = ninguna).
+  amendmentSequenceAtEvaluation Int?
+
+  alarm                CareAlarm                 @relation(fields: [alarmId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  observation          CareObservation           @relation(fields: [observationId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  criterionVersion     CareAlarmCriterionVersion @relation(fields: [criterionVersionId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict)
+  observableDefinition CareObservableDefinition? @relation(fields: [observableDefinitionId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict, map: "care_alarm_evidence_definition_fkey")
+  evaluatedAmendment   CareRecordAmendment?      @relation(fields: [evaluatedAmendmentId, contextId], references: [id, contextId], onDelete: Restrict, onUpdate: Restrict, map: "care_alarm_evidence_amendment_fkey")
 
   @@unique([alarmId, observationId], map: "care_alarm_evidence_unique")
   @@index([tenantId, organizationId, contextId, observationId], map: "care_alarm_evidence_lookup_idx")
