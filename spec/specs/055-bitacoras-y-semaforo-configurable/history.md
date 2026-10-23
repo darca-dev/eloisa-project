@@ -28,3 +28,31 @@
 - Codex y tres revisiones especializadas de solo lectura detectaron diez hallazgos: seis P1, tres P2 y uno P3. Dictamen y escenarios en `spec/bitacora/handoffs/055-AUDITORIA-CODEX.md`. No se aceptó el cierre funcional ni se cambió la decisión del PO sobre D01–D07/D04.5.
 - Verificación independiente: 66/66 unitarias de cuidado, 49/49 del runner/catálogos/script, build API y lint focal correctos, scanner de secretos correcto, gate 0 errores/19 avisos históricos y SDD estricta 0/0. Baseline completa `codex055-audit`: 34/34 etapas, 2643 pruebas, 0 fallos/omisiones, provision y cleanup correctos; MP01 ahora 28/28 y catálogo FORCE RLS 6/6. El navegador/axe no se reejecutó por Codex. La batería verde no elimina los diez hallazgos adversos de la revisión.
 - Codex actualizó únicamente documentación de revisión/estado; sin cambios de producción, Git mutante, base de aplicación, prototipo ni despliegue.
+
+## 2026-10-22 — correcciones A01–A10
+
+- El PO pidió corregir los hallazgos de 055. Codex concretó MP07A (datos/motor/elegibilidad) y MP07B (contexto web/entrada clínica/paginación/ajuste de criterios), con migración aditiva, tratamiento explícito de legado y pruebas adversas. D01–D07 y D04.5 se conservan.
+- La revisión especializada de seguridad valida el enfoque de columnas nullable solo para legado y requisitos de inserción nuevos sin reescribir evidencia; se revisa expresamente la elegibilidad sin sesión del destinatario y el orden de locks antes del handoff.
+- La autorización previa de transferencia a Claude para 055 sigue vigente; sin secretos, bases ni datos reales. No se autoriza Git/despliegue por este trabajo ni se ejecuta confirm-user-consent.sh.
+- Claude entregó MP07A y corrigió las preparaciones de tiempo, concesión inválida y conjunto de contextos indicadas por Codex. Verificación independiente: API 39/39, fundación 37/37, FORCE RLS 6/6, unitarias 98/98 y runner/catálogos/script 49/49; migración real 29→30 preserva 12 filas de ocho tablas con duplicados históricos y guardas intactas. Tipos/build API informados por Claude, lint y Prisma validate verificados por Codex, gates 0 errores/19 avisos históricos y strict 0/0. MP07A apto como dependencia técnica de MP07B; no aceptación final ni Git/despliegue.
+
+## 2026-10-23 — Revisión de cambios parciales de Claude
+
+- El PO pidió revisar los cambios. La sesión MP07B quedó interrumpida por cuota tras 163 turnos, sin handoff final. Codex revisó el árbol sin modificar producción.
+- Se documentan B01–B06 en `contracts/MP07B-REVISION-CODEX.md`: envíos rotos por firma de callback, borradores de otros formularios reiniciados, errores de tipos de navegador, paginación interactiva no cubierta, lint y HTTP 503 de paginación por transacción vencida.
+- Verificación: web 127/127, API/OpenAPI 155/155; tipos web/API fallan con 20/3 errores y lint con uno. PostgreSQL aislado `baseline-20261023t154721`: fundación 37/37, FORCE RLS 6/6, API 42/43; provision/preflight/cleanup correctos, sin omitidas. Gates 0 errores/19 avisos históricos y strict 0/0. Navegador y baseline completa pendientes de corrección.
+- MP07B y 055 permanecen sin cierre ni aceptación. Sin base de aplicación, Git mutante o despliegue.
+- Repetida la API sola: `baseline-20261023t155027`, 42/43 y mismo 503 por transacción vencida, sin omitidas y con cleanup correcto. Escáner de secretos correcto en 1392 archivos versionables.
+
+### Entrega posterior y revisión de la propuesta
+
+- El PO pidió revisar la propuesta. Codex localizó `MP07B-FROM-CLAUDE.md` y verificó los cambios sin editar producción. La revisión especializada del nuevo camino de permisos no confirmó defecto de aislamiento; se conserva el límite de cobertura de concesiones distintas indicado en el informe.
+- Verificación actual: tipos web/API y lint exit 0; web 127/127 y API/OpenAPI 169/169. PostgreSQL `baseline-20261023t181840`: fundación 37/37, FORCE RLS 6/6 y API 43/43, sin omitidas y con cleanup correcto. Se resolvió el 503 del caso B06 en este entorno.
+- El recorrido real `baseline-20261023t182027` falla antes de lanzar Chromium: se crean dos administradores HOSPITAL con el mismo tenant/experiencia, prohibidos por la unicidad del modelo. B07/P2; 0 pruebas ejecutadas y 11 omitidas, exit 1. Provision/preflight/cleanup y cierre de servidores temporales propios correctos. No se presenta axe vacío como verificación. Sigue pendiente corregir fixture, navegador/axe, baseline y aceptación final.
+- El PO ratificó «solo debe haber un admin de hospital». Codex registró `2026-10-23-055-admin-hospital-unico.md` y acotó B07 al fixture, manteniendo la unicidad y la separación de permisos clínicos. Sin cambios de producción ni ampliación del modelo administrativo.
+
+### Continuación: B07–B10
+
+- El PO pidió el siguiente paso. Al detectar la entrega B07 simultánea en el árbol, Codex detuvo su sesión duplicada de Claude antes de editar y auditó la existente. La secuencia mantiene un único administrador y revoca su concesión clínica por la API real. Chromium `baseline-20261023t203200`: 9/12, cero omitidas; pasa B07, se especifican B08/B09 para tres fallos restantes.
+- Claude corrigió los selectores/sincronización y persistencia del conteo final dentro de las rutas acotadas. Chromium posterior `baseline-20261023t204020` pasa12/12, cero fallos/omisiones, con móvil, teclado, paginación completa y axe sin serias/críticas en vistas probadas; provision/preflight/cleanup correctos. Builds shared/API/web exit0, lint focal0 y runner49/49.
+- Baseline `codex055-corrections` se detuvo en web1900/1902, después de provision/tipos/API51/51 correctos; cleanup correcto. B10 documenta la ampliación solo a dos pruebas consumidoras para imports y anuncios SSR conforme a055, sin nuevo código de producto ni permisos. Pendiente baseline completa y cierre técnico; Git y aceptación del PO siguen separados.

@@ -2,6 +2,8 @@
 
 Estado: **contrato redactado por Claude Code** por delegación expresa del Product Owner («termina el semáforo», «acceso total»), porque Codex no había cerrado este paquete. Se deriva solo de D03, D04, D05 y D07 aprobadas. **No sustituye la auditoría de Codex** y contiene una decisión que el Product Owner debe ratificar (§4, D04.5). Sin umbrales ni valores clínicos: todos los valores los fija el visitador competente.
 
+Actualización de vigencia 2026-10-22: D04.5 fue ratificada en la decisión del PO del 2026-10-21. Las correcciones de procedencia, episodio, evidencia, semáforo y paginación se rigen por `MP07-CORRECCIONES-A01-A10.md`, autorizado después de la auditoría. Este documento conserva el diseño inicial para trazabilidad y no puede usarse para mantener las desviaciones allí identificadas.
+
 ## 1. Objetivo
 
 Que la alarma automática dependa EXCLUSIVAMENTE de un criterio individual vigente, definido y validado por el profesional con MANAGE_RULES y competencia para ESE paciente, incluida la frecuencia. Que la evaluación sea síncrona y transaccional al recibir un registro (D07), produzca una alarma por episodio (D05) y que Hospital vea un semáforo accesible y conteos autorizados sin inventar verde.
@@ -38,7 +40,7 @@ Se ejecuta DENTRO de la transacción que crea el registro, después del advisory
 5. Una observación tardía dentro de la ventana puede completar el criterio. Fuera de ella queda guardada, no dispara de forma retroactiva y la vía manual sigue disponible.
 6. Sin criterio o sin datos, **nunca** se produce un verde.
 
-## 4. Correcciones (D04.5) — PENDIENTE DE RATIFICACIÓN
+## 4. Correcciones (D04.5) — RATIFICADA POR EL PO
 
 Política adoptada, la más conservadora:
 - las evaluaciones FUTURAS usan el valor efectivo vigente (el corregido, si lo hay);
@@ -54,7 +56,8 @@ Si el Product Owner prefiere otra semántica (por ejemplo, reevaluar al enmendar
   - ROJO si hay alguna alarma abierta ROJA;
   - si no, AMARILLO si hay alguna AMARILLA;
   - si no, «PENDIENTE DE CLASIFICACIÓN» si hay alguna abierta sin severidad;
-  - si no, «ESTABLE» si hay alguna abierta ESTABLE o si existe al menos un criterio vigente sin alarmas abiertas;
+  - si no, «ESTABLE» solo si hay alguna alarma abierta con clasificación ESTABLE autorizada;
+  - con criterios pero sin clasificación autorizada: «SIN EVALUACIÓN»; la ausencia de alarmas no determina estabilidad;
   - «SIN CRITERIOS NI SOLICITUDES» si no hay nada. Nunca «verde» por falta de evaluación.
 
   Siempre texto, nunca solo color.
