@@ -25,7 +25,7 @@ import styles from './care.module.css';
  * (SPEC 055 / MP04–MP05, MP07B). Presentacionales: no consultan ni guardan nada.
  *
  * - El semáforo SIEMPRE se escribe con palabras; el color es refuerzo.
- * - «Sin criterios ni solicitudes» y «sin evaluación» nunca se muestran verdes.
+ * - «Sin criterios vigentes ni solicitudes abiertas» y «sin evaluación» nunca se muestran verdes.
  * - El formulario de criterios no trae valores sugeridos: el visitador escribe
  *   cada valor, la ventana y la clasificación. Al AJUSTAR la misma definición
  *   parte de lo que él mismo validó; con otra definición vuelve a escribir la

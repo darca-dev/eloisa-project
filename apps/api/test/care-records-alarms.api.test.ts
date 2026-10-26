@@ -1195,7 +1195,13 @@ describe.skipIf(!puedeEjecutarse)('Bitácoras y alarmas manuales por HTTP (055/M
       expect(registro.body.evaluation).toEqual({ alarmsOpened: 0, evidenceAdded: 0 });
       const vencido = await semaforo();
       expect(vencido.level).not.toBe('ESTABLE');
-      expect(vencido).toMatchObject({ level: 'SIN_CRITERIOS', activeCriteria: 0, criteriaRequiringRevalidation: 0, openAlarms: { ROJA: 0, AMARILLA: 0, ESTABLE: 0, SIN: 0 } });
+      expect(vencido).toMatchObject({
+        level: 'SIN_CRITERIOS',
+        label: 'Sin criterios vigentes ni solicitudes abiertas: no hay evaluación automática',
+        activeCriteria: 0,
+        criteriaRequiringRevalidation: 0,
+        openAlarms: { ROJA: 0, AMARILLA: 0, ESTABLE: 0, SIN: 0 },
+      });
 
       // El vencimiento es una lectura del reloj: no reescribe la versión ni el criterio.
       expect(

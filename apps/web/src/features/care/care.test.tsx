@@ -234,13 +234,13 @@ describe('vistas', () => {
 describe('criterios y semáforo (MP04–MP05)', () => {
   const vacio = { ROJA: 0, AMARILLA: 0, ESTABLE: 0, SIN: 0 };
 
-  it('el semáforo siempre se escribe; sin criterios ni solicitudes nunca es verde', () => {
+  it('el semáforo siempre se escribe; sin criterios vigentes ni solicitudes abiertas nunca es verde', () => {
     const html = renderToStaticMarkup(
       <BannerSemaforo
-        semaforo={{ level: 'SIN_CRITERIOS', label: 'Sin criterios ni solicitudes: no hay evaluación automática', openAlarms: vacio, activeCriteria: 0, criteriaRequiringRevalidation: 0 }}
+        semaforo={{ level: 'SIN_CRITERIOS', label: 'Sin criterios vigentes ni solicitudes abiertas: no hay evaluación automática', openAlarms: vacio, activeCriteria: 0, criteriaRequiringRevalidation: 0 }}
       />,
     );
-    expect(html).toContain('Semáforo: Sin criterios ni solicitudes: no hay evaluación automática.');
+    expect(html).toContain('Semáforo: Sin criterios vigentes ni solicitudes abiertas: no hay evaluación automática.');
     expect(html).toContain('role="status"');
     expect(html).not.toMatch(/verde/iu);
   });

@@ -88,7 +88,7 @@ export const SEMAPHORE_LABELS: Readonly<Record<SemaphoreLevel, string>> = {
   PENDIENTE: 'Pendiente: hay solicitudes sin clasificar',
   ESTABLE: 'Estable: hay una clasificación estable autorizada y ninguna alarma roja, amarilla o sin clasificar abierta',
   SIN_EVALUACION: 'Sin evaluación: hay criterios, pero ninguna clasificación autorizada; esto no indica estabilidad',
-  SIN_CRITERIOS: 'Sin criterios ni solicitudes: no hay evaluación automática',
+  SIN_CRITERIOS: 'Sin criterios vigentes ni solicitudes abiertas: no hay evaluación automática',
 };
 
 /** Alarmas abiertas que la cola muestra como anticipo de cada contexto. */
