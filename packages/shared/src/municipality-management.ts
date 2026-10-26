@@ -65,7 +65,8 @@ export function validateMunicipalWrite(section: MunicipalSectionId, input: unkno
     const values = row.values as Record<string, unknown>;
     if (Object.keys(values).some(k => !definition.fields.some(f => f.key === k))) return 'El formulario contiene campos no admitidos.';
     for (const descriptor of definition.fields) {
-      const value = values[descriptor.key] ?? '';
+      // Absent optional field equals empty; any present value must already be a string (no null coercion).
+      const value = Object.hasOwn(values, descriptor.key) ? values[descriptor.key] : '';
       if (!cleanText(value, descriptor.kind === 'textarea' ? 2000 : descriptor.kind === 'url' ? 1000 : 255, descriptor.required)) return `Revise ${descriptor.label}.`;
       if (value === '') continue;
       if ((descriptor.kind === 'date' && !validDate(value)) || (descriptor.kind === 'year' && !/^(19|20|21)\d{2}$/u.test(value)) || (descriptor.kind === 'money' && !/^(0|[1-9]\d{0,14})(\.\d{1,2})?$/u.test(value)) || (descriptor.kind === 'integer' && !/^(0|[1-9]\d{0,8})$/u.test(value)) || (descriptor.kind === 'score' && (!/^(0|[1-9]\d{0,2})(\.\d{1,4})?$/u.test(value) || Number(value) > 100)) || (descriptor.kind === 'url' && !isMunicipalSourceUrl(value))) return `Revise ${descriptor.label}.`;

@@ -24,6 +24,23 @@ describe('053 — contrato de captura municipal', () => {
     for (const asignado of ['', '-1', '1,000', '1e9', '12.345', 'Infinity']) expect(validateMunicipalWrite('presupuesto', body({ ...entry, values: { programa: 'Prueba', asignado } }))).not.toBeNull();
     expect(validateMunicipalWrite('furag', body({ ...entry, provenance: 'EXTERNAL_TRANSCRIPTION', sourceUrl: 'https://www.funcionpublica.gov.co/', asOf: '2026-10-15', values: { indice: 'Prueba', puntaje: '100.0001' } }))).not.toBeNull();
   });
+  it('PE-04: todo campo presente debe ser texto; null y otros tipos no se convierten en vacío', () => {
+    const invalid: unknown[] = [null, undefined, true, false, 0, 1, Number.NaN, [], ['Objetivo'], {}, { texto: 'Objetivo' }];
+    for (const value of invalid) {
+      expect(validateMunicipalWrite('programas', body({ ...entry, values: { objetivo: 'Objetivo ficticio', poblacion: value } as unknown as Record<string, string> }))).not.toBeNull();
+      expect(validateMunicipalWrite('programas', body({ ...entry, values: { objetivo: value } as unknown as Record<string, string> }))).not.toBeNull();
+      expect(validateMunicipalWrite('presupuesto', body({ ...entry, values: { programa: 'Rubro ficticio', asignado: '10', ejecutado: value } as unknown as Record<string, string> }))).not.toBeNull();
+    }
+    for (const key of ['title', 'period', 'sourceUrl', 'asOf', 'notes'] as const) expect(validateMunicipalWrite('programas', body({ ...entry, [key]: null } as unknown as MunicipalEntry))).not.toBeNull();
+    expect(validateMunicipalWrite('programas', body({ ...entry, values: { objetivo: 'Objetivo ficticio' } }))).toBeNull();
+    expect(validateMunicipalWrite('programas', body({ ...entry, values: { objetivo: 'Objetivo ficticio', poblacion: '', inicio: '' } }))).toBeNull();
+  });
+  it('PE-04: documento guardado es releíble y su edición posterior sigue siendo válida', () => {
+    const saved = JSON.parse(JSON.stringify({ section: 'presupuesto', version: 1, payloadSchemaVersion: 1, entries: [{ ...entry, values: { programa: 'Rubro ficticio', asignado: '1000.50' } }] })) as { version: number; payloadSchemaVersion: 1; entries: MunicipalEntry[] };
+    expect(validateMunicipalWrite('presupuesto', { expectedVersion: saved.version, payloadSchemaVersion: saved.payloadSchemaVersion, entries: saved.entries })).toBeNull();
+    const edited = saved.entries.map(row => ({ ...row, values: { ...row.values, ejecutado: '0', referencia: '' } }));
+    expect(validateMunicipalWrite('presupuesto', { expectedVersion: saved.version, payloadSchemaVersion: 1, entries: edited })).toBeNull();
+  });
   it('rechaza revisión insegura, registros repetidos y fechas invertidas sin fabricar datos', () => {
     for (const expectedVersion of [-1, 0.5, Number.MAX_SAFE_INTEGER, '0']) expect(validateMunicipalWrite('programas', { ...body(), expectedVersion })).not.toBeNull();
     expect(validateMunicipalWrite('programas', { ...body(), entries: [entry, entry] })).not.toBeNull();

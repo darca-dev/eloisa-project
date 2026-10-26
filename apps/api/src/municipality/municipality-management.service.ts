@@ -18,10 +18,10 @@ export class MunicipalityManagementService {
     }
     const body = input as MunicipalWrite | undefined;
     const result = await this.prisma.withTenant(principal.tenantId, async tx => {
-      // Serialize before reading version, then recheck authorization with a fresh clock.
+      // Serialize before reading version, then recheck authorization with a clock taken after every lock wait.
       if (body !== undefined) await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${principal.tenantId + ':' + section}, 0))`;
-      const now = new Date();
       const accounts = await tx.$queryRaw<{ id: string }[]>`SELECT "id" FROM "human_account" WHERE "id"=${principal.humanAccountId}::uuid AND "tenantId"=${principal.tenantId}::uuid AND "personId"=${principal.personId}::uuid AND "status"='ACTIVE' AND NOT "passwordRecoveryBlocked" FOR SHARE`;
+      const now = new Date();
       const session = principal.externalAuthIdentityId === undefined ? null : await tx.humanSession.findFirst({ where: { id: principal.sessionId, tenantId: principal.tenantId, humanAccountId: principal.humanAccountId, externalAuthIdentityId: principal.externalAuthIdentityId, revokedAt: null, expiresAt: { gt: now } }, select: { id: true } });
       const capability = session === null ? null : await tx.institutionalIdentity.findFirst({ where: { tenantId: principal.tenantId, role: 'MUNICIPAL_VIEWER', status: 'ACTIVE', administratorRegistration: { tenantId: principal.tenantId, experience: 'MUNICIPALITY', status: 'CONFIRMED', humanAccountId: principal.humanAccountId, externalAuthIdentityId: principal.externalAuthIdentityId, externalIdentity: { tenantId: principal.tenantId, humanAccountId: principal.humanAccountId, status: 'ACTIVE' } } }, select: { id: true } });
       if (accounts.length !== 1 || session === null || capability === null) {

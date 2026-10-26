@@ -31,4 +31,22 @@ describe('053 — registros y fuentes municipales', () => {
     const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ ...document, section: 'indicadores' }), { status: 200 }));
     expect((await municipalManagement('programas', undefined, undefined, fetchImpl)).kind).toBe('error');
   });
+  it('PE-04: respuesta con valores null o no textuales es error y no llega al editor', async () => {
+    const row = document.entries[0]!;
+    for (const entries of [[{ ...row, values: { ...row.values, poblacion: null } }], [{ ...row, values: { objetivo: 7 } }], [{ ...row, notes: null }]]) {
+      const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ ...document, entries }), { status: 200 }));
+      const result = await municipalManagement('programas', undefined, undefined, fetchImpl);
+      expect(result.kind).toBe('error'); expect(result).not.toHaveProperty('document');
+    }
+  });
+  it('PE-04: guardado válido, lectura y edición posterior conservan la versión', async () => {
+    const edited: MunicipalDocument = { ...document, version: 2, entries: [{ ...document.entries[0]!, values: { objetivo: 'Objetivo editado de prueba', poblacion: '' } }] };
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValueOnce(new Response(JSON.stringify(document), { status: 200 })).mockResolvedValueOnce(new Response(JSON.stringify(document), { status: 200 })).mockResolvedValueOnce(new Response(JSON.stringify(edited), { status: 200 }));
+    expect(await municipalManagement('programas', { expectedVersion: 0, payloadSchemaVersion: 1, entries: document.entries }, undefined, fetchImpl)).toEqual({ kind: 'ok', document });
+    const read = await municipalManagement('programas', undefined, undefined, fetchImpl);
+    if (read.kind !== 'ok') throw new Error('lectura esperada');
+    const input = { expectedVersion: read.document.version, payloadSchemaVersion: 1 as const, entries: edited.entries };
+    expect(await municipalManagement('programas', input, undefined, fetchImpl)).toEqual({ kind: 'ok', document: edited });
+    expect(JSON.parse(String(fetchImpl.mock.calls[2]![1]?.body))).toEqual({ ...input, expectedVersion: 1 });
+  });
 });
