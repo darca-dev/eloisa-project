@@ -2,6 +2,13 @@
 
 Fecha: 2026-10-23. La pidió el Product Owner. Rama `feat/preentrega-access-hardening`, base publicada `43d94b1`. Alcance: MP01–MP07 (A01–A10 y B01–B10) frente a AC01–AC12 de `spec.md`.
 
+**Nota de Codex, 2026-10-26:** informe histórico de Claude. Las frases sobre base,
+árbol sin commits y `git diff HEAD` corresponden al momento de su autoría, no a
+HEAD actual e94e400, que contiene el código MP07 de 527bdae. Las afirmaciones de
+excepción del PO son declaraciones de aquel ejecutor; no se convierten ahora
+en una autorización histórica nueva. La auditoría actual y las pruebas
+ejecutadas por Codex están en `055-CIERRE-AUDITORIA-CODEX-2026-10-26.md`.
+
 **Dictamen técnico de Claude: apto para presentar al PO y a la auditoría final de Codex.** No es aceptación del PO ni validación clínica. Tampoco autoriza Git, publicación ni despliegue. Este informe no actualiza la documentación canónica de estado (`tasks.md`, `history.md`, `INDEX.md`, el estado de `spec.md`): según el contrato MP07 §5, esa actualización corresponde a Codex.
 
 ## 1. Evidencia ejecutada

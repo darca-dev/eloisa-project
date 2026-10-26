@@ -56,3 +56,89 @@
 - El PO pidió el siguiente paso. Al detectar la entrega B07 simultánea en el árbol, Codex detuvo su sesión duplicada de Claude antes de editar y auditó la existente. La secuencia mantiene un único administrador y revoca su concesión clínica por la API real. Chromium `baseline-20261023t203200`: 9/12, cero omitidas; pasa B07, se especifican B08/B09 para tres fallos restantes.
 - Claude corrigió los selectores/sincronización y persistencia del conteo final dentro de las rutas acotadas. Chromium posterior `baseline-20261023t204020` pasa12/12, cero fallos/omisiones, con móvil, teclado, paginación completa y axe sin serias/críticas en vistas probadas; provision/preflight/cleanup correctos. Builds shared/API/web exit0, lint focal0 y runner49/49.
 - Baseline `codex055-corrections` se detuvo en web1900/1902, después de provision/tipos/API51/51 correctos; cleanup correcto. B10 documenta la ampliación solo a dos pruebas consumidoras para imports y anuncios SSR conforme a055, sin nuevo código de producto ni permisos. Pendiente baseline completa y cierre técnico; Git y aceptación del PO siguen separados.
+
+## 2026-10-26 — Reanudación con Claude y auditoría técnica actual
+
+- El PO pidió continuar055 con apoyo de Claude. Al revisar el árbol limpio
+  e94e400 se encontraron B10 y el cierre de Claude posteriores al índice:
+  implementación527bdae y documentacióne94e400 ya existían. No se hicieron
+  commits, push, merges ni cambios de producto en esta sesión.
+- Se comprobó la evidencia histórica de34etapas/2690pruebas y Chromium12/12.
+  Los informes del23/10 describen sesiones distintas y atribuyen algunas
+  ejecuciones a Claude; no se inventó una aprobación histórica. Codex repitió
+  baseline y navegador para obtener evidencia actual independiente.
+- El control automático rechazó el envío externo a Anthropic y no aceptó como
+  autorización los registros del repositorio. El PO autorizó directamente en
+  esta conversación compartir la spec y código/documentación055, excluyendo
+  secretos, .env, bases y datos reales. Decisión canónica:
+  `2026-10-26-055-continuacion-y-revision-claude.md`. Tras ello, la revisión de
+  lectura de Claude terminó con exit0; no modificó archivos ni ejecutó pruebas.
+- Codex verificó B10: excepción exacta next/link solo enHospitalShell y pruebas
+  positivas/negativas; SSR comprueba región de lectura propia y estado accesible
+  dentro de cuidado. Web1904/1904, API/OpenAPI169/169, runner49/49, tipos y lint
+  focal correctos. Scanner correcto antes de agregar la documentación final.
+- El primer intento de baseline no pudo leer el entorno desde el sandbox; el
+  reintento permitido falló antes de provisionar por Docker apagado. Se inició
+  Docker Desktop existente, sin instalar ni cambiar configuración, y se ejerció
+  exclusivamente el clúster efímero aprobado.
+- Baseline independiente `codex055-review-20261026`, commit e94e400:
+  **34/34etapas,2690pruebas,0fallos/omisiones,exit0**. Incluye fundación37/37,
+  RLS6/6 y API cuidado43/43. Provisión/preflight/cleanup correctos. Evidencia:
+  `.tmp/review055-2026-10-26T16-32-41.083Z.json`.
+- Navegador independiente `baseline-20261026t163801`: **12/12,0fallos/omisiones,
+  exit0**, móvil/teclado/axe, paginación completa, reintento y contextosA→B;
+  provisión/preflight/cleanup correctos. Evidencia:
+  `.tmp/browser055-2026-10-26T16-38-01.149Z.json`. Servidores temporales propios
+  terminados por el arnés. Sin cambios de producto durante las ejecuciones.
+- Dictamen consolidado en `contracts/055-CIERRE-AUDITORIA-CODEX-2026-10-26.md`:
+  apto técnicamente con observaciones para revisión del PO. Se actualizaron
+  estado, tareas, índice y notas de conciliación sin reescribir evidencias
+  históricas. La lectura parcial de Claude se conserva con sus límites.
+- Queda consultada al PO la presentación de criterios vencidos sin alarmas
+  abiertas; no se cambió estado/texto por inferencia. Se registran límites del
+  parser de imports y de pruebas de actores mixtos/revocación concurrente en
+  decideManyWithin, sin confirmar bypass ni generalizarAC11. La clasificación
+  ESTABLE abierta no vence por reloj segúnA01; no certifica salud actual.
+- Pendientes decisión de presentación y aceptación explícita del PO. No se
+  modificaron producción, migraciones, prototipo ni base de aplicación; no se
+  extendió autorización a Git/despliegue/datos reales.
+- Verificación documental final: gate abierto, exit0,0errores/19avisos históricos;
+  SDD estricta exit0,0errores/0avisos; lint focal exit0; scanner final exit0 en
+  1400archivos versionables sin hallazgos; diff-check exit0, únicamente avisos
+  LF/CRLF. Los cambios versionables de esta sesión son documentación055.
+
+### Seguimiento B11 — decisión del PO y ajuste del texto
+
+- El PO eligió conservar SIN_CRITERIOS y mostrar «Sin criterios vigentes ni
+  solicitudes abiertas: no hay evaluación automática». Se registró la decisión
+  directa y el contrato B11 antes de producción; no se modificó consentimiento.
+- Claude implementó solo la etiqueta API, la aserción existente del criterio
+  vencido, el fixture/expectativa web y un comentario. No cambió motor, servicios,
+  cálculo, otros estados, permisos ni persistencia. Primer intento sin cambios
+  por comandos compuestos fuera de la allowlist; reintento con comandos exactos
+  completado. Codex conservó el handoff devuelto, pues Claude no pudo escribirlo
+  por sus permisos locales; no se amplió el acceso para sortear esa restricción.
+- Gates previos correctos; Claude ejecutó tipos API/web y lint, exit0, criterios
+  17/17 y web/care48/48. Codex revisó el diff y repitió criterios17/17, web/care
+  48/48 y lint, todos correctos.
+- PostgreSQL independiente `codex055-b11-20261026`: API43/43, cero fallos/omisiones,
+  preflight/provisión/cleanup correctos, hashes de los cuatro archivos estables
+  durante la prueba, exit0. Evidencia:
+  `.tmp/db055-b11-2026-10-26T16-58-38.528Z.json`.
+- Actualizados spec, plan, tareas, índice e informe: decisión de presentación
+  cerrada e implementación B11 verificada. Baseline2690 y Chromium12/12 son del
+  candidato anterior al ajuste textual; para B11 se ejecuta regresión focal.
+  Pendiente aceptación integral del PO. Sin Git mutante, despliegue ni cambios
+  en la base de aplicación.
+- Cierre de B11: SDD estricta final exit0,0errores/0avisos; scanner final exit0
+  en1403archivos sin hallazgos; diff-check exit0. Solo los cuatro archivos de
+  producto/pruebas/comentario permitidos y documentación055 presentan cambios.
+
+### Aceptación funcional
+
+- Tras la explicación del cálculo implementado y el ajuste textual B11, el PO
+  declaró «si esta correcto prosigue». Se registra aceptación funcional de055 en
+  `2026-10-26-055-aceptacion-funcional.md`, conservando observaciones, límites de
+  pruebas y separación de validación clínica/datos reales/Git/despliegue.
+- Se cierran las casillas de aceptación de055 y se retoma la revisión pendiente
+  de054. No se interpreta esta aceptación como autorización de integrar o desplegar.

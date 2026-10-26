@@ -6,9 +6,10 @@
 - Fecha de propuesta: 2026-10-21.
 - Fecha de aprobación: 2026-10-21.
 - Aprobado por: Product Owner; aprobación expresa de las recomendaciones D01–D07.
+- Aceptación funcional: Product Owner, 2026-10-26, tras auditoría, B11 y explicación del cálculo; decisión `2026-10-26-055-aceptacion-funcional.md`. Se mantienen los límites técnicos, clínicos y operativos documentados; no autoriza Git ni despliegue.
 - Evidencia de objetivo autorizado: el Product Owner solicitó conectar las bitácoras de cuidadores y los registros de visitadores al semáforo; las alarmas automáticas deben depender de parámetros individuales definidos por el visitador, incluida la frecuencia. Confirmó que también puede existir alarma manual y pidió trabajar con Claude para implementarlo.
 - Evidencia de aprobación: tras revisar la propuesta y el documento DECISIONES-PRODUCT-OWNER.md, el Product Owner declaró «apruebo recomendaciones D01-D07». Se registra ese acto explícito; no se ejecuta confirm-user-consent.sh por iniciativa del agente. No autoriza datos reales, Git ni despliegue.
-- Estado de ejecución: Claude entregó MP01–MP06; Codex auditó el árbol posterior y requiere correcciones antes de aceptar el cierre funcional. Informe: `spec/bitacora/handoffs/055-AUDITORIA-CODEX.md`. Esta entrega no equivale a validación clínica, aceptación del Product Owner, autorización Git ni despliegue.
+- Estado de ejecución al 2026-10-26: MP01–MP07 y B10 verificados por Codex sobre `e94e400`: baseline34/34 etapas y2690 pruebas, Chromium12/12 con móvil/teclado/axe, sin fallos/omisiones y con limpieza correcta. Después, el PO aprobó el texto SIN_CRITERIOS; Claude implementó B11 y Codex verificó API PostgreSQL43/43, criterios17/17 y web/care48/48, sin modificar el cálculo. La baseline completa y Chromium corresponden al candidato previo a ese ajuste textual; no se repitieron íntegros para B11. Dictamen técnico con observaciones en `contracts/055-CIERRE-AUDITORIA-CODEX-2026-10-26.md`. Aceptación funcional del PO registrada el 2026-10-26; no implica validación clínica, autorización Git ni despliegue.
 
 ## 1. Task ID y objetivo
 
@@ -215,11 +216,11 @@ La reversión operativa deshabilita nuevas operaciones y restaura imagen/configu
 
 ## 17. Decisiones aprobadas y decisiones pendientes
 
-Propuesta de opciones y semántica concreta para decisión: [contracts/DECISIONES-PRODUCT-OWNER.md](contracts/DECISIONES-PRODUCT-OWNER.md). Su detalle sigue pendiente; no se mezcla con las decisiones de objetivo ya confirmadas.
+Opciones y semántica aprobadas el 2026-10-21: [contracts/DECISIONES-PRODUCT-OWNER.md](contracts/DECISIONES-PRODUCT-OWNER.md). Los contratos por paquete concretan su implementación; no sustituyen la validación clínica ni autorizan datos reales.
 
 Aprobado por el Product Owner en conversación: conectar fuentes de cuidador/visitador; parámetros individualizados decididos por el visitador; frecuencia relevante para alarma automática; permitir también alarma manual; colaboración Codex–Claude. No se inventarán valores médicos.
 
-| ID | Decisión material pendiente | Recomendación para aprobación |
+| ID | Decisión aprobada D01–D07 | Recomendación aprobada, conservada para trazabilidad |
 |---|---|---|
 | D01 | Custodia e institución responsable dentro del tenant y procedencia del acceso | Identificador institucional explícito y concesiones por paciente/contexto; no usar cuenta administradora como institución ni compartir registros por tenant solamente. Resolver mapeo/provisión en contrato MP01 antes de migrar |
 | D02 | Nuevas capacidades y quién revisa en Hospital | Cuidador con alcances de bitácora/alarma expresos; visitador competente con asignación; revisor Hospital humano con concesión específica; sin permisos clínicos automáticos para administración/agenda. La institución habilita las concesiones de forma controlada |
@@ -229,7 +230,20 @@ Aprobado por el Product Owner en conversación: conectar fuentes de cuidador/vis
 | D06 | Seguimiento, resolución/cierre y uso permitido de datos | Paciente/cuidador reportan resolución; profesional/revisor autorizado realiza acciones de cierre según matriz; pruebas solo ficticias. Fundamento, retención y validación clínica deben cerrarse antes de cualquier uso con datos reales |
 | D07 | Secuencia frente al plan general y mecanismo de evaluación | Priorizar un incremento de S06/S12 con evaluación síncrona, bandeja interna y sin worker/canales externos aún; mantener S03/S08/S09/S11 y outbox/Elí/WhatsApp como dependencias futuras, sin declarar S12 completo ni eliminar capacidades |
 
-Las recomendaciones del documento de decisiones quedaron aprobadas el 2026-10-21. D02 incluye expresamente una nueva finalidad/autorización para cuidador y su autoridad concedente; D03 incluye fuente de competencia, taxonomía y mensajes, no solo valores del motor. La aprobación del objetivo de producto no elimina esos bloqueos ni autoriza consentimientos generados por agentes. Si el Product Owner acepta las recomendaciones, Codex completa el contrato concreto de MP01/formulario/tiempo y verifica suficiencia antes de que Claude reciba código.
+Las recomendaciones del documento de decisiones quedaron aprobadas el 2026-10-21. D02 incluye expresamente una nueva finalidad/autorización para cuidador y su autoridad concedente; D03 incluye fuente de competencia, taxonomía y mensajes, no solo valores del motor. Los contratos de MP01–MP07 concretan esas decisiones. Ningún agente puede generar consentimiento por iniciativa propia.
+
+**Decisión de presentación aprobada por el Product Owner el 2026-10-26:**
+conservar `SIN_CRITERIOS` y mostrar exactamente «Sin criterios vigentes ni
+solicitudes abiertas: no hay evaluación automática». No se adopta la alternativa
+de cambiar el estado del caso vencido a `SIN_EVALUACION`. El cálculo y los demás
+estados permanecen iguales. Implementación y pruebas acotadas en
+`contracts/MP07B-B11-TEXTO-SIN-CRITERIOS.md`; la decisión canónica está en
+`spec/bitacora/decisiones/2026-10-26-055-texto-sin-criterios-vigentes.md`.
+
+El comportamiento aprobado A01 conserva una clasificación ESTABLE de una alarma
+abierta aunque venza la regla que la originó; el reloj no cierra ni reclasifica
+alarmas. Es una clasificación histórica autorizada aún abierta, no una nueva
+evaluación del estado de salud ni una validación clínica de MERDN.
 
 ## 18. Evidencia y handoff de Claude
 

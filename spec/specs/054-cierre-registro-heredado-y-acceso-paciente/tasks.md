@@ -8,8 +8,11 @@
 - [x] Añadir y ajustar pruebas focales.
 - [x] Ejecutar pruebas DB con RLS y aislamiento.
 - [x] Ejecutar typecheck, lint, secretos y gates.
-- [ ] Realizar revisión independiente y corregir hallazgos.
-- [ ] Actualizar la revisión preentrega.
+- [x] Realizar revisión independiente: Codex 2026-10-26, apto con observaciones de cobertura; sin defecto bloqueante confirmado ni corrección exigida.
+- [x] Actualizar la revisión preentrega con cierre técnico de PE-01/PE-02 y límites de la evidencia.
+- [ ] Obtener aceptación funcional explícita del Product Owner de054.
 - [x] Crear commits separados y subir la rama (publicación de código hasta `711deec`, 2026-10-20).
 
-La revisión independiente y la actualización de la revisión preentrega siguen pendientes. La publicación no representa aceptación final del Product Owner. Evidencia y alcance de las verificaciones en `history.md`.
+La revisión independiente y la actualización preentrega se completaron el
+2026-10-26; ver `REVISION-CODEX-2026-10-26.md`. Pendiente aceptación final del PO.
+La publicación previa no sustituye esa aceptación ni autoriza nuevas operaciones Git.

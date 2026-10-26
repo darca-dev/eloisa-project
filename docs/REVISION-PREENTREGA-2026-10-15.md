@@ -7,6 +7,24 @@ conservan sus referencias previas.
 
 ## Dictamen
 
+**Seguimiento 2026-10-26:** revisión independiente de054 completada; PE-01 y
+PE-02 corregidos y verificados en el alcance de esa spec, con observaciones de
+cobertura. Informe canónico:
+`spec/specs/054-cierre-registro-heredado-y-acceso-paciente/REVISION-CODEX-2026-10-26.md`.
+El endpoint heredado responde410 sin altas y patient-self exige aprobación
+PATIENT de cuenta/persona/binding/tenant exactos en la transacción de lectura y
+auditoría. Pruebas focales actuales108/108; evidencia PostgreSQL de hoy8/8,
+42/42,31/31 y runtime10/10 reutilizada con diff0 de fuentes054. Redirección
+comprobada en configuración; smoke308 sigue siendo evidencia del20/10.
+Pendiente aceptación del PO de054. La prueba concurrente usa SQL manual y no
+equivale a un E2E de ambos órdenes de revocación. Los apartados y hallazgos
+originales siguientes son el diagnóstico histórico del15/10; este seguimiento
+no cierra S01 completo ni reaudita dependencias, finanzas o entrega integral.
+055 también fue verificada y aceptada funcionalmente por el PO el26/10, con sus
+observaciones: bitácoras, alarmas y semáforo compartidos; no completa por sí sola
+S06/S12 ni sus canales externos. Los estados históricos de esas secciones no
+deben leerse como ausencia actual de lo entregado en055.
+
 El proyecto todavía no cumple la entrega funcional integral del plan S00–S14.
 El plan sí incluye los dominios estratégicos y una matriz de pruebas, pero falta
 convertir buena parte de sus entregables en operaciones implementadas y

@@ -2,6 +2,15 @@
 
 Fecha: 2026-10-23. Task ID `055-MP07B`. Contrato: `MP07-CORRECCIONES-A01-A10.md` §3, §5 y §6. Revisión atendida: `MP07B-REVISION-CODEX.md`. Rama `feat/preentrega-access-hardening`, base publicada `43d94b1`.
 
+**Nota de conciliación de Codex, 2026-10-26:** este informe acumula entregas y
+ejecuciones de momentos diferentes. Los «NO EJECUTADO por Claude» de cada
+seguimiento describen su sesión particular, no niegan la ejecución posterior
+atribuida a Claude en §00. No se ratifica retrospectivamente una excepción sin
+registro directo; la verificación actual de Codex se documenta por separado en
+`055-CIERRE-AUDITORIA-CODEX-2026-10-26.md`. La base 43d94b1 es histórica: hoy HEAD
+es e94e400 y el código MP07 está en 527bdae. Codex no reescribe las declaraciones
+originales ni las presenta como pruebas ejecutadas en esta sesión.
+
 **Estado: implementada con verificación pendiente.** B01, B02, B03 y B05 se corrigieron y verificaron con tipos, lint, build y unitarias. B06 se corrigió en código y tiene unitarias nuevas, pero la regresión PostgreSQL que fallaba **NO LA EJECUTÓ Claude**. B04 y las comprobaciones interactivas de B01/B02 quedan preparadas en la suite real de navegador, **NO EJECUTADAS por Claude**. Claude no usó DB, Docker, servidores, navegador, red, Git ni agentes.
 
 ## 0b. Seguimiento B10 (2026-10-23, tras la baseline `codex055-corrections` web 1900/1902)

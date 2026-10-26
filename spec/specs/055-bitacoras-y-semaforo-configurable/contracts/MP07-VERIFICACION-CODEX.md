@@ -59,3 +59,33 @@ Claude entregó B07 conservando administrador único y revocación clínica real
 Nuevo Chromium `baseline-20261023t204020`: **12/12, 0 fallos/omisiones**, exit 0, incluyendo móvil, teclado, paginación >200/50/20 y axe sin serias/críticas en superficies probadas. Provision/preflight/cleanup correctos; `.tmp/browser055-2026-10-23T20-40-20.391Z.json`. Build shared/API/web exit 0 con DSN ficticio inutilizable/API puerto1; lint focal exit 0, runner/catálogos/gestor 49/49.
 
 Baseline `codex055-corrections` falló en web1900/1902 después de provision/tipos/API51/51 correctos; cleanup correcto. `.tmp/final055-2026-10-23T20-42-38.902Z.json`. Las etapas posteriores no corrieron. B10 acota los dos tests consumidores con expectativas anteriores en `MP07B-REGRESION-WEB.md`; no modificación de producción ni relajación de guardas. Pendiente entrega y baseline completa para cierre técnico.
+
+## 2026-10-26 — B10 verificado y baseline actual completa
+
+El árbol limpio inicial ya contenía B10 en 527bdae y documentación de entrega en
+e94e400. Se comprobó la evidencia histórica 34/2690 y navegador12/12, pero se
+repiten las ejecuciones con Codex para no depender de la atribución a Claude ni
+de una excepción histórica no documentada directamente en esta conversación.
+
+Codex: web1904/1904, API/OpenAPI169/169 con DSN ficticio, runner49/49, tipos web/API
+y lint focal correctos. Baseline `codex055-review-20261026`, sobre e94e400:
+**34/34 etapas, 2690 aprobadas, cero fallos/omisiones, exit0**; incluye fundación
+37/37, FORCE RLS6/6, API de cuidado43/43 y limpieza. Evidencia saneada:
+`.tmp/review055-2026-10-26T16-32-41.083Z.json`.
+
+La revisión parcial de lectura de Claude de hoy terminó correctamente sin
+defecto reproducible confirmado; sus límites están en
+`055-REVISION-LECTURA-CLAUDE-2026-10-26.md`. Recorrido actual y dictamen consolidado:
+`055-CIERRE-AUDITORIA-CODEX-2026-10-26.md`. Se mantiene la decisión de presentación
+de criterios vencidos pendiente del PO, sin cambiar estado ni texto por inferencia.
+
+Chromium actual `baseline-20261026t163801`: **12/12, cero fallos/omisiones, exit0**;
+móvil, teclado, paginación, dos pacientes y axe sin serias/críticas en superficies
+probadas; provisión/preflight/cleanup correctos. Evidencia:
+`.tmp/browser055-2026-10-26T16-38-01.149Z.json`. Dictamen actual: apto técnicamente
+con observaciones para revisión del PO; no aceptación ni despliegue.
+
+Seguimiento posterior: B11 texto aprobado aplicado y verificado con API43/43,
+criterios17/17 y web/care48/48; el PO aceptó funcionalmente055 el2026-10-26.
+Ver decisión `2026-10-26-055-aceptacion-funcional.md` e informe consolidado.
+La aceptación mantiene las observaciones y no autoriza Git/despliegue.

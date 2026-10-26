@@ -18,3 +18,25 @@
 - Smoke HTTP: portada y `/health` responden `200`; descubrimiento OIDC responde `200`; `/inscripcion` responde `308` hacia `/acceso?accion=registro`; el endpoint heredado responde `410` con `PATIENT_ENROLLMENT_RETIRED` sin cookie. Los cuatro servicios de aplicación quedaron saludables.
 - Commits publicados en `eloisa/feat/preentrega-access-hardening`: `72bb5c2` (especificación), `94254eb` (API y pruebas), `711deec` (redirección web). Se configuró seguimiento del remoto `https://github.com/eloisa-platform/Eloisa.git`. Sin merge, PR ni modificación de `main`.
 - Pendientes explícitos: revisión independiente, actualización de la revisión preentrega y aceptación final del Product Owner. La publicación de la rama no cierra esos puntos.
+
+## 2026-10-26 — Revisión independiente de Codex
+
+- Tras aceptación funcional de055, se retoma054 sin modificar su código. Codex
+  contrasta aprobación exacta, transacción de lectura/auditoría, retiro410,
+  redirección Next, RLS, pruebas y orden de locks de revocación.
+- Focales actuales:4archivos/108pruebas,0fallos/omisiones,exit0. Se reutiliza la
+  baseline PostgreSQL de hoy `codex055-review-20261026`: inscripción8/8,
+  patient-selfAPI42/42, DB31/31 y runtime10/10. Se comprueba diff0 de fuentes y
+  pruebas054 respecto a e94e400; no se simula una nueva ejecución DB.
+- Dictamen en `REVISION-CODEX-2026-10-26.md`: apto con observaciones, sin defecto
+  bloqueante confirmado. La prueba concurrente existente utiliza SQL manual;
+  no prueba el endpoint/resolver reales en ambos órdenes. Logout/caducidad en
+  una petición ya admitida tampoco se demuestran con esa prueba. La inyección
+  de fallo de auditoría es unitaria. No se amplían garantías por inferencia.
+- Se actualiza revisión preentrega: PE-01/PE-02 corregidos/verificados dentro de054,
+  sin declarar completo S01 ni los otros dominios. Se cierran las dos tareas
+  documentales de revisión; queda aceptación explícita del PO de054.
+- Sin cambios de producción054, DB de aplicación, migraciones, Git mutante ni
+  despliegue. La aceptación de055 no se traslada automáticamente a054.
+- Verificación final: SDD estricta0errores/0avisos, scanner1405archivos sin
+  hallazgos y diff-check correctos, exit0.

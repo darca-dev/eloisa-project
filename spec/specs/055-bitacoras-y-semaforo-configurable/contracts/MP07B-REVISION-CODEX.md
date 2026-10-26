@@ -2,7 +2,7 @@
 
 Fecha: 2026-10-23. Base publicada: `43d94b1`; rama `feat/preentrega-access-hardening`. Objeto: cambios locales de Claude posteriores a MP07A, contra `MP07-CORRECCIONES-A01-A10.md`. **Dictamen: no apto para cierre de MP07B ni de 055.**
 
-**Seguimiento vigente:** B07–B09 corregidos; Chromium pasa 12/12 y builds pasan. La baseline se detuvo en dos comprobaciones web anteriores (B10, en corrección). Ver seguimientos al final. Los apartados y tablas iniciales conservan evidencia histórica, no describen como fallidos los comandos posteriores.
+**Seguimiento vigente 2026-10-26:** B10 ya está corregido; Codex repitió la baseline con 34/34 etapas y 2690 pruebas correctas y Chromium12/12, sin fallos/omisiones, con móvil/teclado/axe y cleanup correctos. Ver `055-CIERRE-AUDITORIA-CODEX-2026-10-26.md`. El dictamen y los apartados iniciales conservan evidencia histórica; no describen como fallidos los comandos posteriores ni sustituyen la aceptación del PO.
 
 La ejecución de Claude quedó interrumpida por su límite de sesión, con `is_error: true` tras 163 turnos. No existe `MP07B-FROM-CLAUDE.md`; se revisa una implementación parcial, no una entrega final declarada por Claude. Codex no ha modificado producción para esta revisión.
 
